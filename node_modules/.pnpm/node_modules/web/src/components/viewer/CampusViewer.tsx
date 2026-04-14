@@ -6,10 +6,23 @@ import {
 } from "@react-three/fiber";
 import { Html, Line, OrbitControls, useGLTF } from "@react-three/drei";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MutableRefObject,
+} from "react";
 import * as THREE from "three";
+
 import { useBuildingStore } from "../../store/building-store";
+import { useLocationStore } from "../../store/location-store";
+import {
+  startUserLocationTracking,
+  stopUserLocationTracking,
+} from "../../features/location/services/geolocation";
 import { buildings } from "../../features/buildings/data/buildings";
+import { findRouteBetweenBuildings } from "../../features/buildings/navigation/utils/buildingRoute";
 
 const DEFAULT_CAMERA_POSITION = new THREE.Vector3(80, 60, 80);
 const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
@@ -59,49 +72,38 @@ function CampusModel({ onSelectName, onHoverChange }: CampusModelProps) {
   }, [scene]);
 
   useEffect(() => {
-    const meshNames: string[] = [];
-
-    model.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        meshNames.push(child.name || "(sin nombre)");
-      }
-    });
-
-    console.log("MESHES DEL MODELO:");
-    console.log(meshNames);
-  }, [model]);
-
-  useEffect(() => {
     model.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) {
         return;
       }
 
-      const material = child.material;
       const isSelected =
         selectedBuilding !== null &&
         child.name === selectedBuilding.modelNodeName;
+
       const isHovered = hoveredName !== null && child.name === hoveredName;
 
-      let targetColor = "#cccccc";
+      let color = "#cccccc";
 
       if (isSelected) {
-        targetColor = "#ef4444";
+        color = "#ef4444";
       } else if (isHovered) {
-        targetColor = "#f59e0b";
+        color = "#f59e0b";
       }
+
+      const material = child.material;
 
       if (Array.isArray(material)) {
         material.forEach((mat) => {
           if ("color" in mat) {
-            (mat as THREE.MeshStandardMaterial).color.set(targetColor);
+            (mat as THREE.MeshStandardMaterial).color.set(color);
           }
         });
-      } else if ("color" in material) {
-        (material as THREE.MeshStandardMaterial).color.set(targetColor);
+      } else if (material && "color" in material) {
+        (material as THREE.MeshStandardMaterial).color.set(color);
       }
     });
-  }, [selectedBuilding, hoveredName, model]);
+  }, [model, selectedBuilding, hoveredName]);
 
   const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
@@ -116,16 +118,11 @@ function CampusModel({ onSelectName, onHoverChange }: CampusModelProps) {
 
     onSelectName(clickedName);
 
-    const matchedBuilding = buildings.find(
-      (building) => building.modelNodeName === clickedName
-    );
+    const matchedBuilding =
+      buildings.find((building) => building.modelNodeName === clickedName) ??
+      null;
 
-    if (matchedBuilding) {
-      setSelectedBuilding(matchedBuilding);
-      return;
-    }
-
-    setSelectedBuilding(null);
+    setSelectedBuilding(matchedBuilding);
   };
 
   const handlePointerOver = (e: ThreeEvent<PointerEvent>) => {
@@ -138,6 +135,7 @@ function CampusModel({ onSelectName, onHoverChange }: CampusModelProps) {
     }
 
     const name = hoveredObject.name || null;
+
     setHoveredName(name);
     onHoverChange(name, { x: e.clientX, y: e.clientY });
     document.body.style.cursor = "pointer";
@@ -153,6 +151,7 @@ function CampusModel({ onSelectName, onHoverChange }: CampusModelProps) {
     }
 
     const name = hoveredObject.name || null;
+
     setHoveredName(name);
     onHoverChange(name, { x: e.clientX, y: e.clientY });
   };
@@ -175,14 +174,27 @@ function CampusModel({ onSelectName, onHoverChange }: CampusModelProps) {
   );
 }
 
+function SceneControls({
+  controlsRef,
+}: {
+  controlsRef: MutableRefObject<any>;
+}) {
+  return (
+    <OrbitControls
+      ref={(ref) => {
+        controlsRef.current = ref;
+      }}
+      enableDamping
+      dampingFactor={0.08}
+    />
+  );
+}
+
 function CameraFocusController({
   controlsRef,
   resetSignal,
 }: {
-  controlsRef: RefObject<{
-    target: THREE.Vector3;
-    update: () => void;
-  } | null>;
+  controlsRef: MutableRefObject<any>;
   resetSignal: number;
 }) {
   const { camera, scene } = useThree();
@@ -250,7 +262,12 @@ function CameraFocusController({
 
     const categoryFocusConfig: Record<
       string,
-      { distanceMultiplier: number; min: number; max: number; heightFactor: number }
+      {
+        distanceMultiplier: number;
+        min: number;
+        max: number;
+        heightFactor: number;
+      }
     > = {
       aulas: {
         distanceMultiplier: 4.8,
@@ -290,33 +307,67 @@ function CameraFocusController({
       },
     };
 
+    const buildingFocusOverrides: Record<
+      string,
+      {
+        distanceMultiplier?: number;
+        min?: number;
+        max?: number;
+        heightOffset?: number;
+        direction?: THREE.Vector3;
+      }
+    > = {
+      Edificio_H: {
+        distanceMultiplier: 5.8,
+        min: 30,
+        max: 60,
+        heightOffset: 3,
+        direction: new THREE.Vector3(1, 0.42, 1),
+      },
+    };
+
     const focusConfig =
       categoryFocusConfig[selectedBuilding.category] ??
       categoryFocusConfig.otro;
 
-    const rawDistance = maxDimension * focusConfig.distanceMultiplier;
+    const buildingOverride =
+      buildingFocusOverrides[selectedBuilding.modelNodeName] ?? null;
+
+    const distanceMultiplier =
+      buildingOverride?.distanceMultiplier ?? focusConfig.distanceMultiplier;
+    const minDistance = buildingOverride?.min ?? focusConfig.min;
+    const maxDistance = buildingOverride?.max ?? focusConfig.max;
+
+    const rawDistance = maxDimension * distanceMultiplier;
     const distance = THREE.MathUtils.clamp(
       rawDistance,
-      focusConfig.min,
-      focusConfig.max
+      minDistance,
+      maxDistance
     );
 
     const elevatedTarget = center.clone();
-    elevatedTarget.y += Math.max(size.y * 0.2, 1.5);
+    elevatedTarget.y +=
+      buildingOverride?.heightOffset ?? Math.max(size.y * 0.2, 1.5);
 
-    const currentDirection = camera.position.clone().sub(
-      controlsRef.current?.target ?? DEFAULT_CAMERA_TARGET
-    );
+    let focusDirection: THREE.Vector3;
 
-    if (currentDirection.lengthSq() < 0.001) {
-      currentDirection.set(1, 0.7, 1);
+    if (buildingOverride?.direction) {
+      focusDirection = buildingOverride.direction.clone().normalize();
+    } else {
+      focusDirection = camera.position
+        .clone()
+        .sub(controlsRef.current?.target ?? DEFAULT_CAMERA_TARGET);
+
+      if (focusDirection.lengthSq() < 0.001) {
+        focusDirection.set(1, 0.7, 1);
+      }
+
+      focusDirection.normalize();
     }
-
-    currentDirection.normalize();
 
     desiredTarget.current.copy(elevatedTarget);
     desiredCameraPosition.current.copy(
-      elevatedTarget.clone().add(currentDirection.multiplyScalar(distance))
+      elevatedTarget.clone().add(focusDirection.multiplyScalar(distance))
     );
 
     isAnimating.current = true;
@@ -353,7 +404,10 @@ function CameraFocusController({
       if (intendedDistance > 0.001) {
         tempDirection.current.normalize();
 
-        const intersections = getFilteredHits(currentTarget, tempDirection.current);
+        const intersections = getFilteredHits(
+          currentTarget,
+          tempDirection.current
+        );
         const firstValidHit = intersections[0];
 
         if (firstValidHit && firstValidHit.distance < intendedDistance) {
@@ -415,35 +469,11 @@ function CameraFocusController({
   return null;
 }
 
-function SceneControls({
-  controlsRef,
-}: {
-  controlsRef: React.RefObject<{
-    target: THREE.Vector3;
-    update: () => void;
-  } | null>;
-}) {
-  return (
-    <OrbitControls
-      ref={(instance) => {
-        if (instance) {
-          controlsRef.current = instance;
-        }
-      }}
-      enableDamping
-      dampingFactor={0.08}
-    />
-  );
-}
-
 function CameraTracker({
   controlsRef,
   onCameraChange,
 }: {
-  controlsRef: React.RefObject<{
-    target: THREE.Vector3;
-    update: () => void;
-  } | null>;
+  controlsRef: MutableRefObject<any>;
   onCameraChange: (data: CameraMiniMapData) => void;
 }) {
   const { camera } = useThree();
@@ -458,6 +488,7 @@ function CameraTracker({
     const directionWorldZ = target.z - camera.position.z;
 
     const direction2D = new THREE.Vector2(directionWorldX, directionWorldZ);
+
     if (direction2D.lengthSq() > 0.0001) {
       direction2D.normalize();
     }
@@ -548,42 +579,171 @@ function BuildingLabels() {
 }
 
 function RouteLine() {
-  const { scene } = useThree();
   const routeOrigin = useBuildingStore((state) => state.routeOrigin);
   const routeDestination = useBuildingStore((state) => state.routeDestination);
 
-  const routePoints = useMemo(() => {
+  const routeData = useMemo(() => {
     if (!routeOrigin || !routeDestination) {
       return null;
     }
 
-    const originObject = scene.getObjectByName(routeOrigin.modelNodeName);
-    const destinationObject = scene.getObjectByName(routeDestination.modelNodeName);
+    const routeNodes = findRouteBetweenBuildings(
+      routeOrigin.id,
+      routeDestination.id
+    );
 
-    if (!originObject || !destinationObject) {
+    if (routeNodes.length === 0) {
       return null;
     }
 
-    const originBox = new THREE.Box3().setFromObject(originObject);
-    const destinationBox = new THREE.Box3().setFromObject(destinationObject);
+    const routePoints = routeNodes.map(
+      (node) => new THREE.Vector3(node.x, node.y + 2, node.z)
+    );
 
-    const originCenter = new THREE.Vector3();
-    const destinationCenter = new THREE.Vector3();
+    return {
+      routeNodes,
+      routePoints,
+      startPoint: routePoints[0],
+      endPoint: routePoints[routePoints.length - 1],
+    };
+  }, [routeOrigin, routeDestination]);
 
-    originBox.getCenter(originCenter);
-    destinationBox.getCenter(destinationCenter);
-
-    originCenter.y += 2;
-    destinationCenter.y += 2;
-
-    return [originCenter, destinationCenter];
-  }, [routeOrigin, routeDestination, scene]);
-
-  if (!routePoints) {
+  if (!routeData || routeData.routePoints.length < 2) {
     return null;
   }
 
-  return <Line points={routePoints} color="#22c55e" lineWidth={4} />;
+  return (
+    <>
+      <Line points={routeData.routePoints} color="#22c55e" lineWidth={4} />
+
+      <mesh position={routeData.startPoint}>
+        <sphereGeometry args={[1.2, 20, 20]} />
+        <meshStandardMaterial color="#22c55e" />
+      </mesh>
+
+      <mesh position={routeData.endPoint}>
+        <sphereGeometry args={[1.2, 20, 20]} />
+        <meshStandardMaterial color="#ef4444" />
+      </mesh>
+
+      {routeOrigin && (
+        <Html
+          position={[
+            routeData.startPoint.x,
+            routeData.startPoint.y + 2.5,
+            routeData.startPoint.z,
+          ]}
+          center
+        >
+          <div
+            style={{
+              background: "rgba(34, 197, 94, 0.94)",
+              color: "#ffffff",
+              padding: "6px 10px",
+              borderRadius: "999px",
+              fontSize: "11px",
+              fontWeight: 700,
+              whiteSpace: "nowrap",
+              boxShadow: "0 8px 18px rgba(0,0,0,0.18)",
+            }}
+          >
+            Inicio, {routeOrigin.name}
+          </div>
+        </Html>
+      )}
+
+      {routeDestination && (
+        <Html
+          position={[
+            routeData.endPoint.x,
+            routeData.endPoint.y + 2.5,
+            routeData.endPoint.z,
+          ]}
+          center
+        >
+          <div
+            style={{
+              background: "rgba(239, 68, 68, 0.94)",
+              color: "#ffffff",
+              padding: "6px 10px",
+              borderRadius: "999px",
+              fontSize: "11px",
+              fontWeight: 700,
+              whiteSpace: "nowrap",
+              boxShadow: "0 8px 18px rgba(0,0,0,0.18)",
+            }}
+          >
+            Destino, {routeDestination.name}
+          </div>
+        </Html>
+      )}
+
+      {routeData.routeNodes.map((node) => (
+        <Html key={node.id} position={[node.x, node.y + 4, node.z]} center>
+          <div
+            style={{
+              background: "rgba(17, 24, 39, 0.88)",
+              color: "#ffffff",
+              padding: "4px 8px",
+              borderRadius: "8px",
+              fontSize: "10px",
+              fontWeight: 700,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {node.id}
+          </div>
+        </Html>
+      ))}
+    </>
+  );
+}
+
+function UserLocationMarker() {
+  const mapPosition = useLocationStore((state) => state.mapPosition);
+  const permission = useLocationStore((state) => state.permission);
+
+  if (!mapPosition || permission !== "granted") {
+    return null;
+  }
+
+  return (
+    <>
+      <mesh position={[mapPosition.x, mapPosition.y, mapPosition.z]}>
+        <sphereGeometry args={[1.6, 24, 24]} />
+        <meshStandardMaterial
+          color="#2563eb"
+          emissive="#2563eb"
+          emissiveIntensity={0.25}
+        />
+      </mesh>
+
+      <mesh
+        position={[mapPosition.x, mapPosition.y + 0.05, mapPosition.z]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
+        <ringGeometry args={[2.2, 2.8, 32]} />
+        <meshBasicMaterial color="#93c5fd" side={THREE.DoubleSide} />
+      </mesh>
+
+      <Html position={[mapPosition.x, mapPosition.y + 3.5, mapPosition.z]} center>
+        <div
+          style={{
+            background: "rgba(37, 99, 235, 0.95)",
+            color: "#ffffff",
+            padding: "6px 10px",
+            borderRadius: "999px",
+            fontSize: "11px",
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+            boxShadow: "0 8px 18px rgba(0,0,0,0.18)",
+          }}
+        >
+          Tu ubicación
+        </div>
+      </Html>
+    </>
+  );
 }
 
 function BuildingInfoCard() {
@@ -741,12 +901,7 @@ function BuildingInfoCard() {
             {selectedBuilding.description}
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gap: "10px",
-            }}
-          >
+          <div style={{ display: "grid", gap: "10px" }}>
             <div
               style={{
                 background: "#f9fafb",
@@ -1003,6 +1158,7 @@ function MapLegend() {
             fontWeight: 700,
             lineHeight: 1,
           }}
+          title={isOpen ? "Contraer" : "Expandir"}
         >
           {isOpen ? "−" : "+"}
         </button>
@@ -1289,6 +1445,7 @@ export function CampusViewer() {
   const setSelectedBuilding = useBuildingStore(
     (state) => state.setSelectedBuilding
   );
+
   const [hoveredMeshName, setHoveredMeshName] = useState<string | null>(null);
   const [cursorPosition, setCursorPosition] = useState<{
     x: number;
@@ -1302,10 +1459,15 @@ export function CampusViewer() {
     directionY: 14,
   });
 
-  const controlsRef = useRef<{
-    target: THREE.Vector3;
-    update: () => void;
-  } | null>(null);
+  const controlsRef = useRef<any>(null);
+
+  useEffect(() => {
+    startUserLocationTracking();
+
+    return () => {
+      stopUserLocationTracking();
+    };
+  }, []);
 
   const handleResetCamera = () => {
     setSelectedBuilding(null);
@@ -1337,6 +1499,7 @@ export function CampusViewer() {
         <ambientLight intensity={1.5} />
         <directionalLight position={[50, 50, 20]} intensity={2} castShadow />
         <gridHelper args={[500, 100]} />
+
         <SceneControls controlsRef={controlsRef} />
         <CameraFocusController
           controlsRef={controlsRef}
@@ -1346,8 +1509,11 @@ export function CampusViewer() {
           controlsRef={controlsRef}
           onCameraChange={setCameraMarker}
         />
+
         <BuildingLabels />
         <RouteLine />
+        <UserLocationMarker />
+
         <CampusModel
           onSelectName={() => {}}
           onHoverChange={(name, position) => {
