@@ -1,5 +1,6 @@
 import { buildings } from "../data/buildings";
 import { useBuildingStore } from "../../../store/building-store";
+import { RoutePanel } from "./RoutePanel";
 
 export function BuildingSidebar() {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
@@ -66,6 +67,7 @@ export function BuildingSidebar() {
           <p>Selecciona un edificio para ver su información.</p>
         )}
       </div>
+      <RoutePanel />
     </aside>
   );
 }
