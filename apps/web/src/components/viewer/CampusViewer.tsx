@@ -376,6 +376,41 @@ function CameraFocusController({
         heightOffset: 3,
         direction: new THREE.Vector3(1, 0.42, 1),
       },
+      Edificio_I: {
+        distanceMultiplier: 5.6,
+        min: 28,
+        max: 58,
+        heightOffset: 3,
+        direction: new THREE.Vector3(1, 0.4, 1),
+      },
+      Edificio_J_1: {
+        distanceMultiplier: 5.6,
+        min: 28,
+        max: 58,
+        heightOffset: 3,
+        direction: new THREE.Vector3(1, 0.4, 1),
+      },
+      Direccion_: {
+        distanceMultiplier: 5.4,
+        min: 24,
+        max: 52,
+        heightOffset: 4,
+        direction: new THREE.Vector3(1, 0.45, 1),
+      },
+      Biblioteca_: {
+        distanceMultiplier: 5.6,
+        min: 26,
+        max: 54,
+        heightOffset: 4,
+        direction: new THREE.Vector3(1, 0.42, 1),
+      },
+      Centro_de_Computo: {
+        distanceMultiplier: 5.4,
+        min: 24,
+        max: 52,
+        heightOffset: 4,
+        direction: new THREE.Vector3(1, 0.42, 1),
+      },
     };
 
     const focusConfig =
@@ -565,8 +600,8 @@ function BuildingLabels() {
     (state) => state.setSelectedBuilding
   );
 
-    const featuredBuildings = buildings.filter((building) =>
-     ["Direccion_", "Biblioteca_", "Centro_de_Computo"].includes(
+  const featuredBuildings = buildings.filter((building) =>
+    ["Direccion_", "Biblioteca_", "Centro_de_Computo"].includes(
       building.modelNodeName
     )
   );
