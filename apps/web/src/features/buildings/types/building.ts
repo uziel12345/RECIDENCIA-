@@ -1,9 +1,11 @@
+// building.ts
+
 export type BuildingCategory =
-  | "aulas"
-  | "laboratorio"
   | "administrativo"
-  | "servicio"
   | "biblioteca"
+  | "laboratorio"
+  | "servicio"
+  | "aulas"
   | "otro";
 
 export interface Building {

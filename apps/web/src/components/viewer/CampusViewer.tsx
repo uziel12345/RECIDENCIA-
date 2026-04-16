@@ -73,18 +73,6 @@ function copyDebugPointToClipboard(payload: DebugPoint) {
   }
 }
 
-function shouldTriggerDebug(e: ThreeEvent<PointerEvent>): boolean {
-  if (!DEBUG_PICKER) {
-    return false;
-  }
-
-  if (!DEBUG_SHIFT_ONLY) {
-    return true;
-  }
-
-  return e.nativeEvent.shiftKey;
-}
-
 function CampusModel({
   onSelectName,
   onHoverChange,
@@ -152,7 +140,7 @@ function CampusModel({
     });
   }, [model, selectedBuilding, hoveredName]);
 
-  const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
+  const handleModelClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
 
     const clickedObject = e.object;
@@ -163,14 +151,19 @@ function CampusModel({
 
     const clickedName = clickedObject.name || "Edificio sin nombre";
 
-    if (shouldTriggerDebug(e)) {
+    if (DEBUG_PICKER && e.nativeEvent.shiftKey) {
       const payload = formatDebugPoint(e.point, clickedName);
       console.log("DEBUG_MODEL_POINT", payload);
       copyDebugPointToClipboard(payload);
       onDebugPointChange(payload);
+
+      setHoveredName(null);
+      onHoverChange(null);
+      document.body.style.cursor = "default";
       return;
     }
 
+    onDebugPointChange(null);
     onSelectName(clickedName);
 
     const matchedBuilding =
@@ -178,6 +171,10 @@ function CampusModel({
       null;
 
     setSelectedBuilding(matchedBuilding);
+
+    setHoveredName(clickedName);
+    onHoverChange(null);
+    document.body.style.cursor = "default";
   };
 
   const handlePointerOver = (e: ThreeEvent<PointerEvent>) => {
@@ -221,7 +218,7 @@ function CampusModel({
   return (
     <primitive
       object={model}
-      onPointerDown={handlePointerDown}
+      onClick={handleModelClick}
       onPointerOver={handlePointerOver}
       onPointerMove={handlePointerMove}
       onPointerOut={handlePointerOut}
@@ -568,8 +565,8 @@ function BuildingLabels() {
     (state) => state.setSelectedBuilding
   );
 
-  const featuredBuildings = buildings.filter((building) =>
-    ["Direccion_", "Biblioteca", "Centro_Computo_"].includes(
+    const featuredBuildings = buildings.filter((building) =>
+     ["Direccion_", "Biblioteca_", "Centro_de_Computo"].includes(
       building.modelNodeName
     )
   );

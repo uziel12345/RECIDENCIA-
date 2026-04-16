@@ -36,30 +36,31 @@ const DEFAULT_MARKER_HEIGHT = 1.5;
 
 /**
  * IMPORTANTE
- * Estos valores son temporales de ejemplo.
- * Reemplázalos con tus dos puntos reales del campus:
- * 1. GPS real
- * 2. Coordenada del modelo 3D obtenida con Shift + click
+ * Reemplaza latitude y longitude por las coordenadas GPS reales.
+ * Los valores map.x y map.z ya corresponden a tu modelo 3D.
+ *
+ * Referencia A -> Dirección
+ * Referencia B -> Centro de Cómputo
  */
 const referenceA: CampusReference = {
   geo: {
-    latitude: 17.0736,
-    longitude: -96.7262,
+    latitude: 17.0736, // REEMPLAZAR por GPS real de Dirección
+    longitude: -96.7262, // REEMPLAZAR por GPS real de Dirección
   },
   map: {
-    x: 0,
-    z: 0,
+    x: -86.2153,
+    z: 38.0304,
   },
 };
 
 const referenceB: CampusReference = {
   geo: {
-    latitude: 17.0741,
-    longitude: -96.7256,
+    latitude: 17.0741, // REEMPLAZAR por GPS real de Centro de Cómputo
+    longitude: -96.7256, // REEMPLAZAR por GPS real de Centro de Cómputo
   },
   map: {
-    x: 120,
-    z: -85,
+    x: 0.7661,
+    z: -126.9385,
   },
 };
 
@@ -141,11 +142,16 @@ function validateReference(reference: CampusReference, label: string): void {
   }
 
   if (!Number.isFinite(reference.map.x) || !Number.isFinite(reference.map.z)) {
-    throw new Error(`La referencia ${label} tiene coordenadas del modelo inválidas.`);
+    throw new Error(
+      `La referencia ${label} tiene coordenadas del modelo inválidas.`
+    );
   }
 }
 
-function buildTransform(refA: CampusReference, refB: CampusReference): CoordinateTransform {
+function buildTransform(
+  refA: CampusReference,
+  refB: CampusReference
+): CoordinateTransform {
   validateReference(refA, "A");
   validateReference(refB, "B");
 
