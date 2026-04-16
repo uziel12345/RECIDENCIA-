@@ -27,12 +27,16 @@ import { findRouteBetweenBuildings } from "../../features/buildings/navigation/u
 const DEFAULT_CAMERA_POSITION = new THREE.Vector3(80, 60, 80);
 const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
 
+const DEBUG_PICKER = true;
+const DEBUG_SHIFT_ONLY = true;
+
 type CampusModelProps = {
   onSelectName: (name: string) => void;
   onHoverChange: (
     name: string | null,
     position?: { x: number; y: number }
   ) => void;
+  onDebugPointChange: (point: DebugPoint | null) => void;
 };
 
 type CameraMiniMapData = {
@@ -42,7 +46,50 @@ type CameraMiniMapData = {
   directionY: number;
 };
 
-function CampusModel({ onSelectName, onHoverChange }: CampusModelProps) {
+type DebugPoint = {
+  object: string;
+  x: number;
+  y: number;
+  z: number;
+};
+
+function formatDebugPoint(
+  point: THREE.Vector3,
+  objectName?: string
+): DebugPoint {
+  return {
+    object: objectName ?? "sin_nombre",
+    x: Number(point.x.toFixed(4)),
+    y: Number(point.y.toFixed(4)),
+    z: Number(point.z.toFixed(4)),
+  };
+}
+
+function copyDebugPointToClipboard(payload: DebugPoint) {
+  try {
+    void navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+  } catch (error) {
+    console.warn("No se pudo copiar el punto de debug al portapapeles.", error);
+  }
+}
+
+function shouldTriggerDebug(e: ThreeEvent<PointerEvent>): boolean {
+  if (!DEBUG_PICKER) {
+    return false;
+  }
+
+  if (!DEBUG_SHIFT_ONLY) {
+    return true;
+  }
+
+  return e.nativeEvent.shiftKey;
+}
+
+function CampusModel({
+  onSelectName,
+  onHoverChange,
+  onDebugPointChange,
+}: CampusModelProps) {
   const { scene } = useGLTF("/models/campus.glb");
 
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
@@ -115,6 +162,14 @@ function CampusModel({ onSelectName, onHoverChange }: CampusModelProps) {
     }
 
     const clickedName = clickedObject.name || "Edificio sin nombre";
+
+    if (shouldTriggerDebug(e)) {
+      const payload = formatDebugPoint(e.point, clickedName);
+      console.log("DEBUG_MODEL_POINT", payload);
+      copyDebugPointToClipboard(payload);
+      onDebugPointChange(payload);
+      return;
+    }
 
     onSelectName(clickedName);
 
@@ -1441,6 +1496,71 @@ function MiniMap2D({
   );
 }
 
+function DebugPanel({ point }: { point: DebugPoint | null }) {
+  if (!DEBUG_PICKER || !point) {
+    return null;
+  }
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        right: 20,
+        top: 82,
+        width: "300px",
+        background: "rgba(17, 24, 39, 0.96)",
+        color: "#ffffff",
+        borderRadius: "16px",
+        padding: "16px",
+        zIndex: 20,
+        boxShadow: "0 12px 30px rgba(0, 0, 0, 0.2)",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        fontFamily: "Arial, Helvetica, sans-serif",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "12px",
+          fontWeight: 700,
+          color: "#93c5fd",
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          marginBottom: "10px",
+        }}
+      >
+        Debug coordenadas
+      </div>
+
+      <div style={{ display: "grid", gap: "8px", fontSize: "13px" }}>
+        <div>
+          <strong>Objeto:</strong> {point.object}
+        </div>
+        <div>
+          <strong>x:</strong> {point.x}
+        </div>
+        <div>
+          <strong>y:</strong> {point.y}
+        </div>
+        <div>
+          <strong>z:</strong> {point.z}
+        </div>
+      </div>
+
+      <div
+        style={{
+          marginTop: "12px",
+          fontSize: "11px",
+          color: "#cbd5e1",
+          lineHeight: 1.5,
+        }}
+      >
+        Usa Shift + click sobre el modelo. El punto también se copia al
+        portapapeles.
+      </div>
+    </div>
+  );
+}
+
 export function CampusViewer() {
   const setSelectedBuilding = useBuildingStore(
     (state) => state.setSelectedBuilding
@@ -1458,6 +1578,7 @@ export function CampusViewer() {
     directionX: 14,
     directionY: 14,
   });
+  const [debugPoint, setDebugPoint] = useState<DebugPoint | null>(null);
 
   const controlsRef = useRef<any>(null);
 
@@ -1482,6 +1603,7 @@ export function CampusViewer() {
       <MapLegend />
       <MiniMap2D cameraMarker={cameraMarker} />
       <ResetCameraButton onReset={handleResetCamera} />
+      <DebugPanel point={debugPoint} />
       <HoverTooltip
         hoveredMeshName={hoveredMeshName}
         cursorPosition={cursorPosition}
@@ -1520,6 +1642,7 @@ export function CampusViewer() {
             setHoveredMeshName(name);
             setCursorPosition(position ?? null);
           }}
+          onDebugPointChange={setDebugPoint}
         />
       </Canvas>
     </div>
