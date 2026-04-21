@@ -43,22 +43,23 @@ export function startUserLocationTracking(): void {
         accuracy > MAX_ACCEPTABLE_ACCURACY_METERS
       ) {
         setErrorMessage(
-          `La precisión de ubicación es baja (${accuracy.toFixed(
+          `Precisión baja (${accuracy.toFixed(
             1
-          )} m). Esperando una lectura mejor.`
+          )} m). Esperando mejor señal...`
         );
         return;
       }
 
       try {
         const mapPosition = mapGeoToCampusCoordinates(latitude, longitude);
+
         setMapPosition(mapPosition);
         setErrorMessage(null);
       } catch (error) {
         const message =
           error instanceof Error
             ? error.message
-            : "No se pudo convertir la ubicación al mapa del campus.";
+            : "Error al convertir coordenadas.";
 
         setErrorMessage(message);
       }
@@ -71,16 +72,16 @@ export function startUserLocationTracking(): void {
       }
 
       if (error.code === error.POSITION_UNAVAILABLE) {
-        setErrorMessage("La ubicación no está disponible en este momento.");
+        setErrorMessage("La ubicación no está disponible.");
         return;
       }
 
       if (error.code === error.TIMEOUT) {
-        setErrorMessage("Se agotó el tiempo para obtener la ubicación.");
+        setErrorMessage("Tiempo de espera agotado.");
         return;
       }
 
-      setErrorMessage(error.message || "No se pudo obtener la ubicación.");
+      setErrorMessage(error.message || "Error de geolocalización.");
     },
     {
       enableHighAccuracy: true,

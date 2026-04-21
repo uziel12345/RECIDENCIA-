@@ -11,6 +11,7 @@ export type MapPoint = {
 };
 
 export type CampusReference = {
+  name: string;
   geo: GeoPoint;
   map: MapPoint;
 };
@@ -26,55 +27,88 @@ type Vector2 = {
   z: number;
 };
 
-type CoordinateTransform = {
-  scale: number;
-  rotation: number;
+type AffineTransform2D = {
+  a: number;
+  b: number;
+  c: number;
+  d: number;
+  tx: number;
+  tz: number;
 };
 
 const EARTH_RADIUS = 6378137;
 const DEFAULT_MARKER_HEIGHT = 1.5;
 
-/**
- * IMPORTANTE
- * Reemplaza latitude y longitude por las coordenadas GPS reales.
- * Los valores map.x y map.z ya corresponden a tu modelo 3D.
- *
- * Referencia A -> Dirección
- * Referencia B -> Centro de Cómputo
- */
-const referenceA: CampusReference = {
-  geo: {
-    latitude: 17.0736, // REEMPLAZAR por GPS real de Dirección
-    longitude: -96.7262, // REEMPLAZAR por GPS real de Dirección
-  },
-  map: {
-    x: -86.2153,
-    z: 38.0304,
-  },
-};
+const OFFSET_X = 0;
+const OFFSET_Z = 0;
 
-const referenceB: CampusReference = {
-  geo: {
-    latitude: 17.0741, // REEMPLAZAR por GPS real de Centro de Cómputo
-    longitude: -96.7256, // REEMPLAZAR por GPS real de Centro de Cómputo
+/**
+ * Referencias reales del campus.
+ * GPS tomados físicamente.
+ * Coordenadas map tomadas del modelo 3D.
+ */
+const references: CampusReference[] = [
+  {
+    name: "Direccion",
+    geo: {
+      latitude: 17.077497209169888,
+      longitude: -96.74510408714406,
+    },
+    map: {
+      x: -86.2153,
+      z: 38.0304,
+    },
   },
-  map: {
-    x: 0.7661,
-    z: -126.9385,
+  {
+    name: "Biblioteca",
+    geo: {
+      latitude: 17.077629327716817,
+      longitude: -96.74419648210583,
+    },
+    map: {
+      x: 16.3803,
+      z: 12.3014,
+    },
   },
-};
+  {
+    name: "Centro de Computo",
+    geo: {
+      latitude: 17.079046638376777,
+      longitude: -96.74442423422452,
+    },
+    map: {
+      x: 0.7661,
+      z: -126.9385,
+    },
+  },
+];
 
 function degreesToRadians(value: number): number {
   return (value * Math.PI) / 180;
 }
 
-function radiansToDegrees(value: number): number {
-  return (value * 180) / Math.PI;
+function validateReferences(input: CampusReference[]): void {
+  if (input.length < 3) {
+    throw new Error("Se requieren al menos 3 referencias para calibración afín.");
+  }
+
+  input.forEach((ref, index) => {
+    if (
+      !Number.isFinite(ref.geo.latitude) ||
+      !Number.isFinite(ref.geo.longitude)
+    ) {
+      throw new Error(`La referencia ${index + 1} tiene GPS inválido.`);
+    }
+
+    if (!Number.isFinite(ref.map.x) || !Number.isFinite(ref.map.z)) {
+      throw new Error(`La referencia ${index + 1} tiene coordenadas de modelo inválidas.`);
+    }
+  });
 }
 
 /**
  * Convierte lat/lng a coordenadas locales planas en metros
- * tomando como origen un punto de referencia.
+ * usando como origen la primera referencia.
  *
  * x -> este/oeste
  * z -> norte/sur
@@ -94,108 +128,87 @@ function latLngToLocalMeters(origin: GeoPoint, point: GeoPoint): Vector2 {
   return { x, z };
 }
 
-function subtractVectors(a: Vector2, b: Vector2): Vector2 {
-  return {
-    x: a.x - b.x,
-    z: a.z - b.z,
-  };
-}
+/**
+ * Resuelve un sistema lineal 3x3 por eliminación gaussiana.
+ */
+function solve3x3(matrix: number[][], vector: number[]): [number, number, number] {
+  const m = matrix.map((row, i) => [...row, vector[i]]);
 
-function addVectors(a: Vector2, b: Vector2): Vector2 {
-  return {
-    x: a.x + b.x,
-    z: a.z + b.z,
-  };
-}
+  for (let col = 0; col < 3; col++) {
+    let pivotRow = col;
 
-function multiplyVector(vector: Vector2, scalar: number): Vector2 {
-  return {
-    x: vector.x * scalar,
-    z: vector.z * scalar,
-  };
-}
+    for (let row = col + 1; row < 3; row++) {
+      if (Math.abs(m[row][col]) > Math.abs(m[pivotRow][col])) {
+        pivotRow = row;
+      }
+    }
 
-function magnitude(vector: Vector2): number {
-  return Math.sqrt(vector.x * vector.x + vector.z * vector.z);
-}
+    if (Math.abs(m[pivotRow][col]) < 1e-12) {
+      throw new Error(
+        "No se pudo resolver la calibración. Las referencias pueden estar mal alineadas."
+      );
+    }
 
-function rotate2D(point: Vector2, angle: number): Vector2 {
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
+    if (pivotRow !== col) {
+      [m[col], m[pivotRow]] = [m[pivotRow], m[col]];
+    }
 
-  return {
-    x: point.x * cos - point.z * sin,
-    z: point.x * sin + point.z * cos,
-  };
-}
+    const pivot = m[col][col];
+    for (let j = col; j < 4; j++) {
+      m[col][j] /= pivot;
+    }
 
-function angleOf(vector: Vector2): number {
-  return Math.atan2(vector.z, vector.x);
-}
+    for (let row = 0; row < 3; row++) {
+      if (row === col) continue;
 
-function validateReference(reference: CampusReference, label: string): void {
-  if (
-    !Number.isFinite(reference.geo.latitude) ||
-    !Number.isFinite(reference.geo.longitude)
-  ) {
-    throw new Error(`La referencia ${label} tiene coordenadas GPS inválidas.`);
+      const factor = m[row][col];
+      for (let j = col; j < 4; j++) {
+        m[row][j] -= factor * m[col][j];
+      }
+    }
   }
 
-  if (!Number.isFinite(reference.map.x) || !Number.isFinite(reference.map.z)) {
-    throw new Error(
-      `La referencia ${label} tiene coordenadas del modelo inválidas.`
-    );
-  }
+  return [m[0][3], m[1][3], m[2][3]];
 }
 
-function buildTransform(
-  refA: CampusReference,
-  refB: CampusReference
-): CoordinateTransform {
-  validateReference(refA, "A");
-  validateReference(refB, "B");
+/**
+ * Construye una transformación afín 2D:
+ *
+ * mapX = a * geoX + b * geoZ + tx
+ * mapZ = c * geoX + d * geoZ + tz
+ */
+function buildAffineTransform(input: CampusReference[]): AffineTransform2D {
+  validateReferences(input);
 
-  const geoA: Vector2 = { x: 0, z: 0 };
-  const geoB = latLngToLocalMeters(refA.geo, refB.geo);
+  const origin = input[0].geo;
 
-  const mapA: Vector2 = {
-    x: refA.map.x,
-    z: refA.map.z,
-  };
+  const localPoints = input.map((ref) => ({
+    name: ref.name,
+    geo: latLngToLocalMeters(origin, ref.geo),
+    map: ref.map,
+  }));
 
-  const mapB: Vector2 = {
-    x: refB.map.x,
-    z: refB.map.z,
-  };
+  const [p1, p2, p3] = localPoints;
 
-  const geoVector = subtractVectors(geoB, geoA);
-  const mapVector = subtractVectors(mapB, mapA);
+  const matrix = [
+    [p1.geo.x, p1.geo.z, 1],
+    [p2.geo.x, p2.geo.z, 1],
+    [p3.geo.x, p3.geo.z, 1],
+  ];
 
-  const geoDistance = magnitude(geoVector);
-  const mapDistance = magnitude(mapVector);
+  const xVector = [p1.map.x, p2.map.x, p3.map.x];
+  const zVector = [p1.map.z, p2.map.z, p3.map.z];
 
-  if (geoDistance === 0) {
-    throw new Error("Las referencias GPS no pueden ser iguales.");
-  }
+  const [a, b, tx] = solve3x3(matrix, xVector);
+  const [c, d, tz] = solve3x3(matrix, zVector);
 
-  if (mapDistance === 0) {
-    throw new Error("Las referencias del modelo no pueden ser iguales.");
-  }
-
-  const scale = mapDistance / geoDistance;
-  const rotation = angleOf(mapVector) - angleOf(geoVector);
-
-  return {
-    scale,
-    rotation,
-  };
+  return { a, b, c, d, tx, tz };
 }
 
-const transform = buildTransform(referenceA, referenceB);
+const transform = buildAffineTransform(references);
 
 /**
  * Convierte un punto GPS real a coordenadas del modelo 3D.
- * El resultado se posiciona en el plano XZ del campus.
  */
 export function mapGeoToCampusCoordinates(
   latitude: number,
@@ -206,73 +219,56 @@ export function mapGeoToCampusCoordinates(
     throw new Error("Latitude y longitude deben ser números válidos.");
   }
 
-  const localMeters = latLngToLocalMeters(referenceA.geo, {
-    latitude,
-    longitude,
-  });
+  const origin = references[0].geo;
+  const local = latLngToLocalMeters(origin, { latitude, longitude });
 
-  const scaled = multiplyVector(localMeters, transform.scale);
-  const rotated = rotate2D(scaled, transform.rotation);
-
-  const translated = addVectors(
-    {
-      x: referenceA.map.x,
-      z: referenceA.map.z,
-    },
-    rotated
-  );
+  const x = transform.a * local.x + transform.b * local.z + transform.tx + OFFSET_X;
+  const z = transform.c * local.x + transform.d * local.z + transform.tz + OFFSET_Z;
 
   return {
-    x: translated.x,
+    x,
     y: fixedY,
-    z: translated.z,
+    z,
   };
 }
 
-/**
- * Función auxiliar de depuración.
- * Convierte un punto GPS a su representación intermedia.
- */
 export function mapGeoToCampusDebug(
   latitude: number,
   longitude: number,
   fixedY = DEFAULT_MARKER_HEIGHT
 ) {
-  const localMeters = latLngToLocalMeters(referenceA.geo, {
-    latitude,
-    longitude,
-  });
+  const origin = references[0].geo;
+  const local = latLngToLocalMeters(origin, { latitude, longitude });
 
-  const scaled = multiplyVector(localMeters, transform.scale);
-  const rotated = rotate2D(scaled, transform.rotation);
-
-  const result = {
-    x: referenceA.map.x + rotated.x,
-    y: fixedY,
-    z: referenceA.map.z + rotated.z,
-  };
+  const x = transform.a * local.x + transform.b * local.z + transform.tx + OFFSET_X;
+  const z = transform.c * local.x + transform.d * local.z + transform.tz + OFFSET_Z;
 
   return {
     input: {
       latitude,
       longitude,
     },
-    localMeters,
-    scaled,
-    rotated,
-    result,
+    localMeters: local,
+    transform,
+    offsets: {
+      x: OFFSET_X,
+      z: OFFSET_Z,
+    },
+    result: {
+      x,
+      y: fixedY,
+      z,
+    },
   };
 }
 
-/**
- * Útil para imprimir en consola y validar la calibración.
- */
 export function getCoordinateMapperDebugInfo() {
   return {
-    referenceA,
-    referenceB,
-    scale: transform.scale,
-    rotationRadians: transform.rotation,
-    rotationDegrees: radiansToDegrees(transform.rotation),
+    references,
+    transform,
+    offsets: {
+      x: OFFSET_X,
+      z: OFFSET_Z,
+    },
   };
 }
