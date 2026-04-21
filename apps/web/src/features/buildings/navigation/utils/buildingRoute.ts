@@ -1,25 +1,51 @@
 import { buildingEntrances } from "../data/buildingEntrances";
-import { findShortestPath } from "./pathfinding";
-import type { CampusNode } from "../types/campus-node";
+import findPath from "./pathfinding";
+
+type BuildingEntrance = {
+  buildingId: string;
+  nodeId?: string;
+  entranceNodeId?: string;
+  node?: string;
+};
 
 function getEntranceNodeId(buildingId: string): string | null {
-  const entrance = buildingEntrances.find(
-    (item) => item.buildingId === buildingId
+  const entry = (buildingEntrances as BuildingEntrance[]).find(
+    (e) => e.buildingId === buildingId
   );
 
-  return entrance?.nodeId ?? null;
+  if (!entry) {
+    return null;
+  }
+
+  if (typeof entry.nodeId === "string" && entry.nodeId.length > 0) {
+    return entry.nodeId;
+  }
+
+  if (
+    typeof entry.entranceNodeId === "string" &&
+    entry.entranceNodeId.length > 0
+  ) {
+    return entry.entranceNodeId;
+  }
+
+  if (typeof entry.node === "string" && entry.node.length > 0) {
+    return entry.node;
+  }
+
+  return null;
 }
 
 export function findRouteBetweenBuildings(
   originBuildingId: string,
   destinationBuildingId: string
-): CampusNode[] {
-  const originNodeId = getEntranceNodeId(originBuildingId);
-  const destinationNodeId = getEntranceNodeId(destinationBuildingId);
+) {
+  const startNodeId = getEntranceNodeId(originBuildingId);
+  const endNodeId = getEntranceNodeId(destinationBuildingId);
 
-  if (!originNodeId || !destinationNodeId) {
+  if (!startNodeId || !endNodeId) {
+    console.warn("No se encontraron nodos para la ruta");
     return [];
   }
 
-  return findShortestPath(originNodeId, destinationNodeId);
+  return findPath(startNodeId, endNodeId);
 }

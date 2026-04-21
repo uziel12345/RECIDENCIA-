@@ -1,7 +1,8 @@
 import { useLocationStore } from "../../../store/location-store";
 import { mapGeoToCampusCoordinates } from "../utils/coordinate-mapper";
 
-const MAX_ACCEPTABLE_ACCURACY_METERS = 30;
+const MAX_ACCEPTABLE_ACCURACY_METERS = 10;
+const MAX_INITIAL_ACCURACY_METERS = 100;
 
 export function startUserLocationTracking(): void {
   const {
@@ -37,23 +38,30 @@ export function startUserLocationTracking(): void {
         accuracy,
       });
 
+      const hasValidMapPosition =
+        useLocationStore.getState().mapPosition !== null;
+
+      const allowedAccuracy = hasValidMapPosition
+        ? MAX_ACCEPTABLE_ACCURACY_METERS
+        : MAX_INITIAL_ACCURACY_METERS;
+
       if (
         accuracy !== null &&
         Number.isFinite(accuracy) &&
-        accuracy > MAX_ACCEPTABLE_ACCURACY_METERS
+        accuracy > allowedAccuracy
       ) {
         setErrorMessage(
           `Precisión baja (${accuracy.toFixed(
             1
-          )} m). Esperando mejor señal...`
+          )} m). Mostrando la última ubicación válida.`
         );
         return;
       }
 
       try {
-        const mapPosition = mapGeoToCampusCoordinates(latitude, longitude);
+        const nextMapPosition = mapGeoToCampusCoordinates(latitude, longitude);
 
-        setMapPosition(mapPosition);
+        setMapPosition(nextMapPosition);
         setErrorMessage(null);
       } catch (error) {
         const message =

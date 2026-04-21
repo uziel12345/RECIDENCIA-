@@ -23,6 +23,7 @@ import {
 } from "../../features/location/services/geolocation";
 import { buildings } from "../../features/buildings/data/buildings";
 import { findRouteBetweenBuildings } from "../../features/buildings/navigation/utils/buildingRoute";
+import { campusNodes } from "../../features/buildings/navigation/data/campusNodes";
 
 const DEFAULT_CAMERA_POSITION = new THREE.Vector3(80, 60, 80);
 const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
@@ -52,6 +53,37 @@ type DebugPoint = {
   y: number;
   z: number;
 };
+
+type CampusNode = {
+  id: string;
+  x?: number;
+  y?: number;
+  z?: number;
+  position?: {
+    x: number;
+    y?: number;
+    z: number;
+  };
+};
+
+function getNodePosition(node: CampusNode) {
+  if (
+    typeof node.x === "number" &&
+    typeof node.z === "number"
+  ) {
+    return {
+      x: node.x,
+      y: typeof node.y === "number" ? node.y : 0,
+      z: node.z,
+    };
+  }
+
+  return {
+    x: node.position?.x ?? 0,
+    y: node.position?.y ?? 0,
+    z: node.position?.z ?? 0,
+  };
+}
 
 function formatDebugPoint(
   point: THREE.Vector3,
@@ -679,13 +711,25 @@ function RouteLine() {
       routeDestination.id
     );
 
-    if (routeNodes.length === 0) {
+    if (!routeNodes || routeNodes.length === 0) {
       return null;
     }
 
-    const routePoints = routeNodes.map(
-      (node) => new THREE.Vector3(node.x, node.y + 2, node.z)
-    );
+    const routePoints = routeNodes.flatMap((nodeId: string) => {
+      const node = (campusNodes as CampusNode[]).find((n) => n.id === nodeId);
+
+      if (!node) {
+        return [];
+      }
+
+      const pos = getNodePosition(node);
+
+      return [new THREE.Vector3(pos.x, pos.y + 2, pos.z)];
+    });
+
+    if (routePoints.length === 0) {
+      return null;
+    }
 
     return {
       routeNodes,
@@ -765,23 +809,31 @@ function RouteLine() {
         </Html>
       )}
 
-      {routeData.routeNodes.map((node) => (
-        <Html key={node.id} position={[node.x, node.y + 4, node.z]} center>
-          <div
-            style={{
-              background: "rgba(17, 24, 39, 0.88)",
-              color: "#ffffff",
-              padding: "4px 8px",
-              borderRadius: "8px",
-              fontSize: "10px",
-              fontWeight: 700,
-              whiteSpace: "nowrap",
-            }}
-          >
-            {node.id}
-          </div>
-        </Html>
-      ))}
+      {routeData.routeNodes.map((nodeId: string) => {
+        const node = (campusNodes as CampusNode[]).find((n) => n.id === nodeId);
+
+        if (!node) return null;
+
+        const pos = getNodePosition(node);
+
+        return (
+          <Html key={nodeId} position={[pos.x, pos.y + 4, pos.z]} center>
+            <div
+              style={{
+                background: "rgba(17, 24, 39, 0.88)",
+                color: "#ffffff",
+                padding: "4px 8px",
+                borderRadius: "8px",
+                fontSize: "10px",
+                fontWeight: 700,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {nodeId}
+            </div>
+          </Html>
+        );
+      })}
     </>
   );
 }
