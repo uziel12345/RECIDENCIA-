@@ -3,28 +3,21 @@ import type { Building } from "../features/buildings/types/building";
 
 type BuildingStore = {
   selectedBuilding: Building | null;
-
-  routeOrigin: Building | null;
   routeDestination: Building | null;
-
+  currentRouteNodeIds: string[];
   searchTerm: string;
 
   setSelectedBuilding: (building: Building | null) => void;
-
-  setRouteOrigin: (building: Building | null) => void;
   setRouteDestination: (building: Building | null) => void;
-
+  setCurrentRouteNodeIds: (nodeIds: string[]) => void;
   setSearchTerm: (value: string) => void;
-
   clearRoute: () => void;
 };
 
 export const useBuildingStore = create<BuildingStore>((set) => ({
   selectedBuilding: null,
-
-  routeOrigin: null,
   routeDestination: null,
-
+  currentRouteNodeIds: [],
   searchTerm: "",
 
   setSelectedBuilding: (building) =>
@@ -32,14 +25,14 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
       selectedBuilding: building,
     }),
 
-  setRouteOrigin: (building) =>
-    set({
-      routeOrigin: building,
-    }),
-
   setRouteDestination: (building) =>
     set({
       routeDestination: building,
+    }),
+
+  setCurrentRouteNodeIds: (nodeIds) =>
+    set({
+      currentRouteNodeIds: nodeIds,
     }),
 
   setSearchTerm: (value) =>
@@ -49,7 +42,7 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
 
   clearRoute: () =>
     set({
-      routeOrigin: null,
       routeDestination: null,
+      currentRouteNodeIds: [],
     }),
 }));

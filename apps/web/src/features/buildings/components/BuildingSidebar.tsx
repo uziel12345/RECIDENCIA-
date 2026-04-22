@@ -4,7 +4,9 @@ import { RoutePanel } from "./RoutePanel";
 
 export function BuildingSidebar() {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
-  const setSelectedBuilding = useBuildingStore((state) => state.setSelectedBuilding);
+  const setSelectedBuilding = useBuildingStore(
+    (state) => state.setSelectedBuilding
+  );
   const searchTerm = useBuildingStore((state) => state.searchTerm);
 
   const filteredBuildings = buildings.filter((building) =>
@@ -57,17 +59,30 @@ export function BuildingSidebar() {
 
         {selectedBuilding ? (
           <div>
-            <p><strong>Nombre:</strong> {selectedBuilding.name}</p>
-            <p><strong>Código:</strong> {selectedBuilding.code}</p>
-            <p><strong>Categoría:</strong> {selectedBuilding.category}</p>
-            <p><strong>Descripción:</strong> {selectedBuilding.description}</p>
-            <p><strong>Nodo 3D:</strong> {selectedBuilding.modelNodeName}</p>
+            <p>
+              <strong>Nombre:</strong> {selectedBuilding.name}
+            </p>
+            <p>
+              <strong>Código:</strong> {selectedBuilding.code}
+            </p>
+            <p>
+              <strong>Categoría:</strong> {selectedBuilding.category}
+            </p>
+            <p>
+              <strong>Descripción:</strong> {selectedBuilding.description}
+            </p>
+            <p>
+              <strong>Nodo 3D:</strong> {selectedBuilding.modelNodeName}
+            </p>
           </div>
         ) : (
           <p>Selecciona un edificio para ver su información.</p>
         )}
       </div>
-      <RoutePanel />
+
+      <div style={{ marginTop: "16px" }}>
+        <RoutePanel />
+      </div>
     </aside>
   );
 }

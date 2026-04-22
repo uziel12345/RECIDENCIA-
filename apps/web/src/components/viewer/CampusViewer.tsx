@@ -22,14 +22,13 @@ import {
   stopUserLocationTracking,
 } from "../../features/location/services/geolocation";
 import { buildings } from "../../features/buildings/data/buildings";
-import { findRouteBetweenBuildings } from "../../features/buildings/navigation/utils/buildingRoute";
 import { campusNodes } from "../../features/buildings/navigation/data/campusNodes";
+import { findRouteFromUserToBuilding } from "../../features/buildings/navigation/utils/buildingRoute";
 
 const DEFAULT_CAMERA_POSITION = new THREE.Vector3(80, 60, 80);
 const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
 
 const DEBUG_PICKER = true;
-const DEBUG_SHIFT_ONLY = true;
 
 type CampusModelProps = {
   onSelectName: (name: string) => void;
@@ -67,10 +66,7 @@ type CampusNode = {
 };
 
 function getNodePosition(node: CampusNode) {
-  if (
-    typeof node.x === "number" &&
-    typeof node.z === "number"
-  ) {
+  if (typeof node.x === "number" && typeof node.z === "number") {
     return {
       x: node.x,
       y: typeof node.y === "number" ? node.y : 0,
@@ -118,9 +114,11 @@ function CampusModel({
   );
 
   const [hoveredName, setHoveredName] = useState<string | null>(null);
+  const originalColorsRef = useRef(new Map<string, string>());
 
   const model = useMemo(() => {
     const clonedScene = scene.clone(true);
+    originalColorsRef.current.clear();
 
     clonedScene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
@@ -128,9 +126,29 @@ function CampusModel({
         child.receiveShadow = true;
 
         if (Array.isArray(child.material)) {
-          child.material = child.material.map((material) => material.clone());
+          child.material = child.material.map((material) => {
+            const clonedMaterial = material.clone();
+
+            if ("color" in clonedMaterial) {
+              const key = `${child.uuid}-${clonedMaterial.uuid}`;
+              originalColorsRef.current.set(
+                key,
+                (clonedMaterial as THREE.MeshStandardMaterial).color.getHexString()
+              );
+            }
+
+            return clonedMaterial;
+          });
         } else if (child.material) {
           child.material = child.material.clone();
+
+          if ("color" in child.material) {
+            const key = `${child.uuid}`;
+            originalColorsRef.current.set(
+              key,
+              (child.material as THREE.MeshStandardMaterial).color.getHexString()
+            );
+          }
         }
       }
     });
@@ -149,25 +167,38 @@ function CampusModel({
         child.name === selectedBuilding.modelNodeName;
 
       const isHovered = hoveredName !== null && child.name === hoveredName;
-
-      let color = "#cccccc";
-
-      if (isSelected) {
-        color = "#ef4444";
-      } else if (isHovered) {
-        color = "#f59e0b";
-      }
-
       const material = child.material;
 
       if (Array.isArray(material)) {
         material.forEach((mat) => {
-          if ("color" in mat) {
-            (mat as THREE.MeshStandardMaterial).color.set(color);
+          if (!("color" in mat)) {
+            return;
+          }
+
+          const typedMat = mat as THREE.MeshStandardMaterial;
+          const key = `${child.uuid}-${mat.uuid}`;
+          const originalHex = originalColorsRef.current.get(key);
+
+          if (isSelected) {
+            typedMat.color.set("#ef4444");
+          } else if (isHovered) {
+            typedMat.color.set("#f59e0b");
+          } else if (originalHex) {
+            typedMat.color.set(`#${originalHex}`);
           }
         });
       } else if (material && "color" in material) {
-        (material as THREE.MeshStandardMaterial).color.set(color);
+        const typedMat = material as THREE.MeshStandardMaterial;
+        const key = `${child.uuid}`;
+        const originalHex = originalColorsRef.current.get(key);
+
+        if (isSelected) {
+          typedMat.color.set("#ef4444");
+        } else if (isHovered) {
+          typedMat.color.set("#f59e0b");
+        } else if (originalHex) {
+          typedMat.color.set(`#${originalHex}`);
+        }
       }
     });
   }, [model, selectedBuilding, hoveredName]);
@@ -203,49 +234,48 @@ function CampusModel({
       null;
 
     setSelectedBuilding(matchedBuilding);
-
     setHoveredName(clickedName);
     onHoverChange(null);
     document.body.style.cursor = "default";
   };
 
   const handlePointerOver = (e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation();
+  e.stopPropagation();
 
-    const hoveredObject = e.object;
+  const hoveredObject = e.object;
 
-    if (!(hoveredObject instanceof THREE.Mesh)) {
-      return;
-    }
+  if (!(hoveredObject instanceof THREE.Mesh)) {
+    return;
+  }
 
-    const name = hoveredObject.name || null;
+  const name = hoveredObject.name || null;
 
-    setHoveredName(name);
-    onHoverChange(name, { x: e.clientX, y: e.clientY });
-    document.body.style.cursor = "pointer";
-  };
+  setHoveredName(name);
+  onHoverChange(name, { x: e.clientX, y: e.clientY });
+  document.body.style.cursor = "pointer";
+};
 
-  const handlePointerMove = (e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation();
+const handlePointerMove = (e: ThreeEvent<PointerEvent>) => {
+  e.stopPropagation();
 
-    const hoveredObject = e.object;
+  const hoveredObject = e.object;
 
-    if (!(hoveredObject instanceof THREE.Mesh)) {
-      return;
-    }
+  if (!(hoveredObject instanceof THREE.Mesh)) {
+    return;
+  }
 
-    const name = hoveredObject.name || null;
+  const name = hoveredObject.name || null;
 
-    setHoveredName(name);
-    onHoverChange(name, { x: e.clientX, y: e.clientY });
-  };
+  setHoveredName(name);
+  onHoverChange(name, { x: e.clientX, y: e.clientY });
+};
 
-  const handlePointerOut = (e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation();
-    setHoveredName(null);
-    onHoverChange(null);
-    document.body.style.cursor = "default";
-  };
+const handlePointerOut = (e: ThreeEvent<PointerEvent>) => {
+  e.stopPropagation();
+  setHoveredName(null);
+  onHoverChange(null);
+  document.body.style.cursor = "default";
+};
 
   return (
     <primitive
@@ -698,24 +728,28 @@ function BuildingLabels() {
 }
 
 function RouteLine() {
-  const routeOrigin = useBuildingStore((state) => state.routeOrigin);
   const routeDestination = useBuildingStore((state) => state.routeDestination);
+  const mapPosition = useLocationStore((state) => state.mapPosition);
 
   const routeData = useMemo(() => {
-    if (!routeOrigin || !routeDestination) {
+    if (!routeDestination || !mapPosition) {
       return null;
     }
 
-    const routeNodes = findRouteBetweenBuildings(
-      routeOrigin.id,
+    const routeNodeIds = findRouteFromUserToBuilding(
+      {
+        x: mapPosition.x,
+        y: mapPosition.y,
+        z: mapPosition.z,
+      },
       routeDestination.id
     );
 
-    if (!routeNodes || routeNodes.length === 0) {
+    if (!routeNodeIds || routeNodeIds.length === 0) {
       return null;
     }
 
-    const routePoints = routeNodes.flatMap((nodeId: string) => {
+    const nodePoints = routeNodeIds.flatMap((nodeId: string) => {
       const node = (campusNodes as CampusNode[]).find((n) => n.id === nodeId);
 
       if (!node) {
@@ -727,17 +761,27 @@ function RouteLine() {
       return [new THREE.Vector3(pos.x, pos.y + 2, pos.z)];
     });
 
-    if (routePoints.length === 0) {
+    if (nodePoints.length === 0) {
       return null;
     }
 
+    const userStartPoint = new THREE.Vector3(
+      mapPosition.x,
+      mapPosition.y + 2,
+      mapPosition.z
+    );
+
+    const routePoints = [userStartPoint, ...nodePoints];
+
     return {
-      routeNodes,
+      routeNodeIds,
       routePoints,
-      startPoint: routePoints[0],
-      endPoint: routePoints[routePoints.length - 1],
+      userStartPoint,
+      firstNodePoint: nodePoints[0],
+      endPoint: nodePoints[nodePoints.length - 1],
+      destinationName: routeDestination.name,
     };
-  }, [routeOrigin, routeDestination]);
+  }, [routeDestination, mapPosition]);
 
   if (!routeData || routeData.routePoints.length < 2) {
     return null;
@@ -747,7 +791,7 @@ function RouteLine() {
     <>
       <Line points={routeData.routePoints} color="#22c55e" lineWidth={4} />
 
-      <mesh position={routeData.startPoint}>
+      <mesh position={routeData.userStartPoint}>
         <sphereGeometry args={[1.2, 20, 20]} />
         <meshStandardMaterial color="#22c55e" />
       </mesh>
@@ -757,83 +801,53 @@ function RouteLine() {
         <meshStandardMaterial color="#ef4444" />
       </mesh>
 
-      {routeOrigin && (
-        <Html
-          position={[
-            routeData.startPoint.x,
-            routeData.startPoint.y + 2.5,
-            routeData.startPoint.z,
-          ]}
-          center
+      <Html
+        position={[
+          routeData.userStartPoint.x,
+          routeData.userStartPoint.y + 2.5,
+          routeData.userStartPoint.z,
+        ]}
+        center
+      >
+        <div
+          style={{
+            background: "rgba(34, 197, 94, 0.94)",
+            color: "#ffffff",
+            padding: "6px 10px",
+            borderRadius: "999px",
+            fontSize: "11px",
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+            boxShadow: "0 8px 18px rgba(0,0,0,0.18)",
+          }}
         >
-          <div
-            style={{
-              background: "rgba(34, 197, 94, 0.94)",
-              color: "#ffffff",
-              padding: "6px 10px",
-              borderRadius: "999px",
-              fontSize: "11px",
-              fontWeight: 700,
-              whiteSpace: "nowrap",
-              boxShadow: "0 8px 18px rgba(0,0,0,0.18)",
-            }}
-          >
-            Inicio, {routeOrigin.name}
-          </div>
-        </Html>
-      )}
+          Inicio, tu ubicación
+        </div>
+      </Html>
 
-      {routeDestination && (
-        <Html
-          position={[
-            routeData.endPoint.x,
-            routeData.endPoint.y + 2.5,
-            routeData.endPoint.z,
-          ]}
-          center
+      <Html
+        position={[
+          routeData.endPoint.x,
+          routeData.endPoint.y + 2.5,
+          routeData.endPoint.z,
+        ]}
+        center
+      >
+        <div
+          style={{
+            background: "rgba(239, 68, 68, 0.94)",
+            color: "#ffffff",
+            padding: "6px 10px",
+            borderRadius: "999px",
+            fontSize: "11px",
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+            boxShadow: "0 8px 18px rgba(0,0,0,0.18)",
+          }}
         >
-          <div
-            style={{
-              background: "rgba(239, 68, 68, 0.94)",
-              color: "#ffffff",
-              padding: "6px 10px",
-              borderRadius: "999px",
-              fontSize: "11px",
-              fontWeight: 700,
-              whiteSpace: "nowrap",
-              boxShadow: "0 8px 18px rgba(0,0,0,0.18)",
-            }}
-          >
-            Destino, {routeDestination.name}
-          </div>
-        </Html>
-      )}
-
-      {routeData.routeNodes.map((nodeId: string) => {
-        const node = (campusNodes as CampusNode[]).find((n) => n.id === nodeId);
-
-        if (!node) return null;
-
-        const pos = getNodePosition(node);
-
-        return (
-          <Html key={nodeId} position={[pos.x, pos.y + 4, pos.z]} center>
-            <div
-              style={{
-                background: "rgba(17, 24, 39, 0.88)",
-                color: "#ffffff",
-                padding: "4px 8px",
-                borderRadius: "8px",
-                fontSize: "10px",
-                fontWeight: 700,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {nodeId}
-            </div>
-          </Html>
-        );
-      })}
+          Destino, {routeData.destinationName}
+        </div>
+      </Html>
     </>
   );
 }
