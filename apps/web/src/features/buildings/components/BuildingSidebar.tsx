@@ -1,6 +1,8 @@
-import { buildings } from "../data/buildings";
+import { useEffect, useState } from "react";
 import { useBuildingStore } from "../../../store/building-store";
 import { RoutePanel } from "./RoutePanel";
+import { getBuildings } from "../../../services/buildings.service";
+import type { Building } from "../types/building";
 
 export function BuildingSidebar() {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
@@ -9,9 +11,31 @@ export function BuildingSidebar() {
   );
   const searchTerm = useBuildingStore((state) => state.searchTerm);
 
+  const [buildings, setBuildings] = useState<Building[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadBuildings() {
+      try {
+        const data = await getBuildings();
+        setBuildings(data);
+      } catch (error) {
+        console.error("Error cargando edificios:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadBuildings();
+  }, []);
+
   const filteredBuildings = buildings.filter((building) =>
     building.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return <div style={{ padding: "16px" }}>Cargando edificios...</div>;
+  }
 
   return (
     <aside
@@ -46,7 +70,7 @@ export function BuildingSidebar() {
           >
             <strong>{building.name}</strong>
             <div style={{ fontSize: "12px", color: "#6b7280" }}>
-              {building.category}
+              {building.category_name}
             </div>
           </button>
         ))}
@@ -66,13 +90,11 @@ export function BuildingSidebar() {
               <strong>Código:</strong> {selectedBuilding.code}
             </p>
             <p>
-              <strong>Categoría:</strong> {selectedBuilding.category}
+              <strong>Categoría:</strong> {selectedBuilding.category_name}
             </p>
             <p>
-              <strong>Descripción:</strong> {selectedBuilding.description}
-            </p>
-            <p>
-              <strong>Nodo 3D:</strong> {selectedBuilding.modelNodeName}
+              <strong>Descripción:</strong>{" "}
+              {selectedBuilding.description ?? "Sin descripción"}
             </p>
           </div>
         ) : (
@@ -80,9 +102,7 @@ export function BuildingSidebar() {
         )}
       </div>
 
-      <div style={{ marginTop: "16px" }}>
-        <RoutePanel />
-      </div>
+      <RoutePanel />
     </aside>
   );
 }

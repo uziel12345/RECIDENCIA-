@@ -1,75 +1,300 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import { Html, Line } from "@react-three/drei";
 
 import { useBuildingStore } from "../../../store/building-store";
 import { useLocationStore } from "../../../store/location-store";
-import { campusNodes } from "../navigation/data/campusNodes";
-import { findRouteFromUserToBuilding } from "../navigation/utils/buildingRoute";
+import {
+  getBuildingEntrances,
+  getNavigationEdges,
+  getNavigationNodes,
+  type BuildingEntrance,
+  type NavigationEdge,
+  type NavigationNode,
+} from "../../../services/navigation.service";
 
-type CampusNode = {
-  id: string;
-  x?: number;
-  y?: number;
-  z?: number;
-  position?: {
-    x: number;
-    y?: number;
-    z: number;
-  };
+type Position3D = {
+  x: number;
+  y: number;
+  z: number;
 };
 
-function getNodePosition(node: CampusNode) {
-  if (typeof node.x === "number" && typeof node.z === "number") {
-    return {
-      x: node.x,
-      y: typeof node.y === "number" ? node.y : 0,
-      z: node.z,
-    };
+const MAX_EDGE_DISTANCE = 80;
+
+function distance3D(a: Position3D, b: Position3D): number {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  const dz = a.z - b.z;
+  return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+function findNearestNode(
+  position: Position3D,
+  nodes: NavigationNode[]
+): NavigationNode | null {
+  if (nodes.length === 0) return null;
+
+  let nearest: NavigationNode | null = null;
+  let minDistance = Infinity;
+
+  for (const node of nodes) {
+    const d = distance3D(position, {
+      x: Number(node.x),
+      y: Number(node.y),
+      z: Number(node.z),
+    });
+
+    if (d < minDistance) {
+      minDistance = d;
+      nearest = node;
+    }
   }
 
-  return {
-    x: node.position?.x ?? 0,
-    y: node.position?.y ?? 0,
-    z: node.position?.z ?? 0,
-  };
+  return nearest;
+}
+
+function isEdgeValid(edge: NavigationEdge, nodes: NavigationNode[]) {
+  const from = nodes.find((n) => n.id === edge.from_node_id);
+  const to = nodes.find((n) => n.id === edge.to_node_id);
+
+  if (!from || !to) return false;
+
+  const dx = Math.abs(Number(from.x) - Number(to.x));
+  const dz = Math.abs(Number(from.z) - Number(to.z));
+
+  if (dx > 40 && dz > 40) return false;
+
+  return true;
+}
+
+function getEdgeWeight(edge: NavigationEdge): number {
+  let weight = Number(edge.distance);
+
+  if (edge.distance > 25) {
+    weight *= 1.5;
+  }
+
+  if (edge.path_type === "outdoor") {
+    weight *= 1.2;
+  }
+
+  if (edge.path_type === "hallway") {
+    weight *= 0.85;
+  }
+
+  if (edge.path_type === "stairs") {
+    weight *= 3;
+  }
+
+  if (edge.path_type === "ramp") {
+    weight *= 1.4;
+  }
+
+  if (edge.dx > 10 && edge.dz > 10) {
+    weight *= 1.4;
+  }
+
+  return weight;
+}
+
+function buildAdjacencyMap(edges: NavigationEdge[]) {
+  const graph = new Map<string, Array<{ to: string; weight: number }>>();
+
+  for (const edge of edges) {
+    const weight = getEdgeWeight(edge);
+
+    const fromList = graph.get(edge.from_node_id) ?? [];
+    fromList.push({
+      to: edge.to_node_id,
+      weight,
+    });
+    graph.set(edge.from_node_id, fromList);
+
+    if (edge.is_bidirectional) {
+      const reverseList = graph.get(edge.to_node_id) ?? [];
+      reverseList.push({
+        to: edge.from_node_id,
+        weight,
+      });
+      graph.set(edge.to_node_id, reverseList);
+    }
+  }
+
+  return graph;
+}
+
+function dijkstra(
+  startId: string,
+  endId: string,
+  edges: NavigationEdge[]
+): string[] {
+  const graph = buildAdjacencyMap(edges);
+  const distances = new Map<string, number>();
+  const previous = new Map<string, string | null>();
+  const visited = new Set<string>();
+  const queue = new Set<string>();
+
+  distances.set(startId, 0);
+  previous.set(startId, null);
+  queue.add(startId);
+
+  while (queue.size > 0) {
+    let currentNodeId: string | null = null;
+    let smallestDistance = Infinity;
+
+    for (const nodeId of queue) {
+      const distance = distances.get(nodeId) ?? Infinity;
+      if (distance < smallestDistance) {
+        smallestDistance = distance;
+        currentNodeId = nodeId;
+      }
+    }
+
+    if (!currentNodeId) break;
+    if (currentNodeId === endId) break;
+
+    queue.delete(currentNodeId);
+    visited.add(currentNodeId);
+
+    const neighbors = graph.get(currentNodeId) ?? [];
+
+    for (const neighbor of neighbors) {
+      if (visited.has(neighbor.to)) continue;
+
+      const tentativeDistance =
+        (distances.get(currentNodeId) ?? Infinity) + neighbor.weight;
+
+      if (tentativeDistance < (distances.get(neighbor.to) ?? Infinity)) {
+        distances.set(neighbor.to, tentativeDistance);
+        previous.set(neighbor.to, currentNodeId);
+        queue.add(neighbor.to);
+      }
+    }
+  }
+
+  if (!previous.has(endId) && startId !== endId) {
+    return [];
+  }
+
+  const path: string[] = [];
+  let current: string | null = endId;
+
+  while (current) {
+    path.unshift(current);
+    current = previous.get(current) ?? null;
+  }
+
+  return path;
 }
 
 export function RouteLine() {
   const routeDestination = useBuildingStore((state) => state.routeDestination);
+  const setCurrentRouteNodeIds = useBuildingStore(
+    (state) => state.setCurrentRouteNodeIds
+  );
+
   const mapPosition = useLocationStore((state) => state.mapPosition);
+  const permission = useLocationStore((state) => state.permission);
+
+  const [nodes, setNodes] = useState<NavigationNode[]>([]);
+  const [edges, setEdges] = useState<NavigationEdge[]>([]);
+  const [entrances, setEntrances] = useState<BuildingEntrance[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadNavigation() {
+      try {
+        const [nodesData, edgesData, entrancesData] = await Promise.all([
+          getNavigationNodes(),
+          getNavigationEdges(),
+          getBuildingEntrances(),
+        ]);
+
+        const filteredNodes = nodesData.filter(
+          (node) => node.is_active && node.is_walkable
+        );
+
+        const filteredEdges = edgesData.filter(
+          (edge) =>
+            edge.is_active &&
+            edge.is_accessible &&
+            Number(edge.distance) < MAX_EDGE_DISTANCE &&
+            isEdgeValid(edge, filteredNodes)
+        );
+
+        const filteredEntrances = entrancesData.filter(
+          (entry) => entry.is_accessible
+        );
+
+        setNodes(filteredNodes);
+        setEdges(filteredEdges);
+        setEntrances(filteredEntrances);
+      } catch (error) {
+        console.error("Error cargando navegación:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadNavigation();
+  }, []);
 
   const routeData = useMemo(() => {
-    if (!routeDestination || !mapPosition) {
+    if (
+      loading ||
+      !routeDestination ||
+      !mapPosition ||
+      permission !== "granted" ||
+      nodes.length === 0 ||
+      edges.length === 0 ||
+      entrances.length === 0
+    ) {
       return null;
     }
 
-    const routeNodeIds = findRouteFromUserToBuilding(
+    const nearestNode = findNearestNode(
       {
         x: mapPosition.x,
         y: mapPosition.y,
         z: mapPosition.z,
       },
-      routeDestination.id
+      nodes
     );
 
-    if (!routeNodeIds || routeNodeIds.length === 0) {
+    if (!nearestNode) {
+      console.warn("No se encontró nodo cercano al usuario");
       return null;
     }
 
-    const nodePoints = routeNodeIds.flatMap((nodeId: string) => {
-      const node = (campusNodes as CampusNode[]).find((n) => n.id === nodeId);
+    const destinationEntrance =
+      entrances.find(
+        (entry) =>
+          entry.building_id === routeDestination.id && entry.is_primary
+      ) ??
+      entrances.find((entry) => entry.building_id === routeDestination.id) ??
+      null;
 
-      if (!node) {
-        return [];
-      }
+    if (!destinationEntrance) {
+      console.warn("No se encontró entrada para el edificio destino");
+      return null;
+    }
 
-      const pos = getNodePosition(node);
+    const pathNodeIds = dijkstra(
+      nearestNode.id,
+      destinationEntrance.node_id,
+      edges
+    );
 
-      return [new THREE.Vector3(pos.x, pos.y + 2, pos.z)];
-    });
+    if (pathNodeIds.length === 0) {
+      console.warn("No se encontró ruta entre los nodos");
+      return null;
+    }
 
-    if (nodePoints.length === 0) {
+    const pathNodes = pathNodeIds
+      .map((nodeId) => nodes.find((node) => node.id === nodeId) ?? null)
+      .filter(Boolean) as NavigationNode[];
+
+    if (pathNodes.length === 0) {
       return null;
     }
 
@@ -79,6 +304,15 @@ export function RouteLine() {
       mapPosition.z
     );
 
+    const nodePoints = pathNodes.map(
+      (node) =>
+        new THREE.Vector3(
+          Number(node.x),
+          Number(node.y) + 2,
+          Number(node.z)
+        )
+    );
+
     const routePoints = [userStartPoint, ...nodePoints];
 
     if (routePoints.length < 2) {
@@ -86,13 +320,30 @@ export function RouteLine() {
     }
 
     return {
-      routeNodeIds,
+      routeNodeIds: pathNodeIds,
       routePoints,
       userStartPoint,
       endPoint: nodePoints[nodePoints.length - 1],
       destinationName: routeDestination.name,
     };
-  }, [routeDestination, mapPosition]);
+  }, [
+    loading,
+    routeDestination,
+    mapPosition,
+    permission,
+    nodes,
+    edges,
+    entrances,
+  ]);
+
+  useEffect(() => {
+    if (!routeData) {
+      setCurrentRouteNodeIds([]);
+      return;
+    }
+
+    setCurrentRouteNodeIds(routeData.routeNodeIds);
+  }, [routeData, setCurrentRouteNodeIds]);
 
   if (!routeData) {
     return null;

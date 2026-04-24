@@ -1,8 +1,43 @@
 import { useLocationStore } from "../../../store/location-store";
 import { mapGeoToCampusCoordinates } from "../utils/coordinate-mapper";
 
-const MAX_ACCEPTABLE_ACCURACY_METERS = 10;
-const MAX_INITIAL_ACCURACY_METERS = 100;
+const MAX_ACCEPTABLE_ACCURACY_METERS = 60;
+const MIN_MOVEMENT_METERS = 3;
+
+type GeoLikePosition = {
+  latitude: number;
+  longitude: number;
+  accuracy: number | null;
+};
+
+let lastAcceptedPosition: GeoLikePosition | null = null;
+
+function toRadians(value: number): number {
+  return (value * Math.PI) / 180;
+}
+
+function distanceInMeters(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const earthRadius = 6371000;
+
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return earthRadius * c;
+}
 
 export function startUserLocationTracking(): void {
   const {
@@ -32,45 +67,53 @@ export function startUserLocationTracking(): void {
 
       setPermission("granted");
 
-      setGeoPosition({
-        latitude,
-        longitude,
-        accuracy,
-      });
-
-      const hasValidMapPosition =
-        useLocationStore.getState().mapPosition !== null;
-
-      const allowedAccuracy = hasValidMapPosition
-        ? MAX_ACCEPTABLE_ACCURACY_METERS
-        : MAX_INITIAL_ACCURACY_METERS;
-
       if (
         accuracy !== null &&
-        Number.isFinite(accuracy) &&
-        accuracy > allowedAccuracy
+        accuracy > MAX_ACCEPTABLE_ACCURACY_METERS &&
+        lastAcceptedPosition
       ) {
+        setGeoPosition(lastAcceptedPosition);
         setErrorMessage(
           `Precisión baja (${accuracy.toFixed(
             1
           )} m). Mostrando la última ubicación válida.`
         );
+
+        const mapPosition = mapGeoToCampusCoordinates(
+          lastAcceptedPosition.latitude,
+          lastAcceptedPosition.longitude
+        );
+
+        setMapPosition(mapPosition);
         return;
       }
 
-      try {
-        const nextMapPosition = mapGeoToCampusCoordinates(latitude, longitude);
+      if (lastAcceptedPosition) {
+        const distance = distanceInMeters(
+          lastAcceptedPosition.latitude,
+          lastAcceptedPosition.longitude,
+          latitude,
+          longitude
+        );
 
-        setMapPosition(nextMapPosition);
-        setErrorMessage(null);
-      } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Error al convertir coordenadas.";
-
-        setErrorMessage(message);
+        if (distance < MIN_MOVEMENT_METERS) {
+          return;
+        }
       }
+
+      const acceptedPosition: GeoLikePosition = {
+        latitude,
+        longitude,
+        accuracy,
+      };
+
+      lastAcceptedPosition = acceptedPosition;
+
+      setErrorMessage(null);
+      setGeoPosition(acceptedPosition);
+
+      const mapPosition = mapGeoToCampusCoordinates(latitude, longitude);
+      setMapPosition(mapPosition);
     },
     (error) => {
       if (error.code === error.PERMISSION_DENIED) {
@@ -79,21 +122,11 @@ export function startUserLocationTracking(): void {
         return;
       }
 
-      if (error.code === error.POSITION_UNAVAILABLE) {
-        setErrorMessage("La ubicación no está disponible.");
-        return;
-      }
-
-      if (error.code === error.TIMEOUT) {
-        setErrorMessage("Tiempo de espera agotado.");
-        return;
-      }
-
-      setErrorMessage(error.message || "Error de geolocalización.");
+      setErrorMessage(error.message || "No se pudo obtener la ubicación.");
     },
     {
       enableHighAccuracy: true,
-      maximumAge: 5000,
+      maximumAge: 2000,
       timeout: 10000,
     }
   );
