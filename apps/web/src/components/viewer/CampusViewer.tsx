@@ -1,239 +1,41 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-import type { ThreeEvent } from "@react-three/fiber";
-
+import type { Building } from "../../features/buildings/types/building";
 import { useBuildingStore } from "../../store/building-store";
 import { useLocationStore } from "../../store/location-store";
-import type { Building } from "../../features/buildings/types/building";
 import { getBuildings } from "../../services/buildings.service";
-import { RouteLine } from "../../features/buildings/components/RouteLine";
 import { startUserLocationTracking } from "../../features/location/services/geolocation";
+import { RouteLine } from "../../features/buildings/components/RouteLine";
 
 const MODEL_PATH = "/models/campus.glb";
-const DEBUG_PICKER = true;
 
 const CAMPUS_ROTATION_Y = Math.PI / 2;
 const CAMPUS_POSITION_X = 0;
 const CAMPUS_POSITION_Y = 0;
 const CAMPUS_POSITION_Z = 0;
-const CAMPUS_SCALE = 1;
 
 const LABEL_DISTANCE_LIMIT = 190;
 
-type CursorPosition = {
-  x: number;
-  y: number;
-};
+/* ============================= */
+/* 🔁 CONVERSIÓN LOCAL → MUNDO */
+/* ============================= */
+function campusLocalToWorld(x: number, z: number) {
+  const cos = Math.cos(CAMPUS_ROTATION_Y);
+  const sin = Math.sin(CAMPUS_ROTATION_Y);
 
-type CampusModelProps = {
-  buildings: Building[];
-  onSelectName: (name: string | null) => void;
-  onHoverChange: (name: string | null, position?: CursorPosition | null) => void;
-  onDebugPointChange: (payload: string | null) => void;
-};
-
-function formatDebugPoint(point: THREE.Vector3, objectName: string) {
-  return `Objeto: ${objectName}
-x: ${point.x.toFixed(4)}
-y: ${point.y.toFixed(4)}
-z: ${point.z.toFixed(4)}`;
-}
-
-async function copyDebugPointToClipboard(text: string) {
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch (error) {
-    console.error("No se pudo copiar:", error);
-  }
-}
-
-function CampusModel({
-  buildings,
-  onSelectName,
-  onHoverChange,
-  onDebugPointChange,
-}: CampusModelProps) {
-  const { scene } = useGLTF(MODEL_PATH);
-  const setSelectedBuilding = useBuildingStore((state) => state.setSelectedBuilding);
-  const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
-  const [hoveredName, setHoveredName] = useState<string | null>(null);
-
-  useEffect(() => {
-    scene.traverse((child) => {
-      if (!(child instanceof THREE.Mesh)) return;
-      child.castShadow = true;
-      child.receiveShadow = true;
-    });
-  }, [scene]);
-
-  useEffect(() => {
-    scene.traverse((child) => {
-      if (!(child instanceof THREE.Mesh)) return;
-
-      const building = buildings.find((b) => b.model_node_name === child.name);
-      const isSelected = selectedBuilding?.model_node_name === child.name;
-      const isHovered = hoveredName === child.name;
-
-      const baseColor = building ? "#374151" : "#9ca3af";
-      const hoverColor = "#f59e0b";
-      const selectedColor = "#dc2626";
-
-      const applyColor = (mat: THREE.Material) => {
-        if (!(mat instanceof THREE.MeshStandardMaterial)) return;
-        if (isSelected) mat.color.set(selectedColor);
-        else if (isHovered) mat.color.set(hoverColor);
-        else mat.color.set(baseColor);
-      };
-
-      if (Array.isArray(child.material)) child.material.forEach(applyColor);
-      else if (child.material) applyColor(child.material);
-    });
-  }, [scene, buildings, selectedBuilding, hoveredName]);
-
-  const handleClick = (e: ThreeEvent<MouseEvent>) => {
-    e.stopPropagation();
-
-    const obj = e.object;
-    if (!(obj instanceof THREE.Mesh)) return;
-
-    const name = obj.name || "Sin nombre";
-
-    if (DEBUG_PICKER && e.nativeEvent.shiftKey) {
-      const payload = formatDebugPoint(e.point, name);
-      console.log(payload);
-      copyDebugPointToClipboard(payload);
-      onDebugPointChange(payload);
-      return;
-    }
-
-    const match = buildings.find((b) => b.model_node_name === name) ?? null;
-    setSelectedBuilding(match);
-    setHoveredName(name);
-    onSelectName(name);
-    onHoverChange(null);
+  return {
+    x: x * cos + z * sin + CAMPUS_POSITION_X,
+    z: -x * sin + z * cos + CAMPUS_POSITION_Z,
   };
-
-  const handlePointerOver = (e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation();
-
-    const obj = e.object;
-    if (!(obj instanceof THREE.Mesh)) return;
-
-    const name = obj.name || null;
-    setHoveredName(name);
-    onHoverChange(name, { x: e.clientX, y: e.clientY });
-    document.body.style.cursor = "pointer";
-  };
-
-  const handlePointerMove = (e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation();
-
-    const obj = e.object;
-    if (!(obj instanceof THREE.Mesh)) return;
-
-    const name = obj.name || null;
-    setHoveredName(name);
-    onHoverChange(name, { x: e.clientX, y: e.clientY });
-  };
-
-  const handlePointerOut = (e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation();
-    setHoveredName(null);
-    onHoverChange(null);
-    document.body.style.cursor = "default";
-  };
-
-  return (
-    <primitive
-      object={scene}
-      onClick={handleClick}
-      onPointerOver={handlePointerOver}
-      onPointerMove={handlePointerMove}
-      onPointerOut={handlePointerOut}
-    />
-  );
 }
 
-function BuildingLabels({ buildings }: { buildings: Building[] }) {
-  const { camera } = useThree();
-  const [showLabels, setShowLabels] = useState(false);
-
-  useFrame(() => {
-    const distance = camera.position.length();
-    const shouldShow = distance < LABEL_DISTANCE_LIMIT;
-
-    setShowLabels((current) => {
-      if (current === shouldShow) return current;
-      return shouldShow;
-    });
-  });
-
-  if (!showLabels) return null;
-
-  return (
-    <>
-      {buildings.map((building) => {
-        if (building.x === null || building.y === null || building.z === null) {
-          return null;
-        }
-
-        return (
-          <Html
-            key={building.id}
-            position={[Number(building.x), Number(building.y) + 8, Number(building.z)]}
-            center
-            distanceFactor={12}
-            zIndexRange={[50, 0]}
-          >
-            <div
-              style={{
-                background: "rgba(17, 24, 39, 0.9)",
-                color: "#ffffff",
-                padding: "5px 9px",
-                borderRadius: "999px",
-                fontSize: "11px",
-                fontWeight: 700,
-                whiteSpace: "nowrap",
-                pointerEvents: "none",
-                boxShadow: "0 6px 14px rgba(0,0,0,0.25)",
-              }}
-            >
-              {building.name}
-            </div>
-          </Html>
-        );
-      })}
-    </>
-  );
-}
-
-function DebugPanel({ point }: { point: string | null }) {
-  if (!point) return null;
-
-  return (
-    <div
-      style={{
-        position: "absolute",
-        bottom: 16,
-        left: 16,
-        background: "#111827",
-        color: "#fff",
-        padding: "10px",
-        borderRadius: "8px",
-        fontSize: "12px",
-        whiteSpace: "pre-wrap",
-        zIndex: 30,
-      }}
-    >
-      {point}
-    </div>
-  );
-}
-
+/* ============================= */
+/* 📍 PIN DE USUARIO */
+/* ============================= */
 function UserLocationMarker() {
-  const mapPosition = useLocationStore((state) => state.mapPosition);
+  const mapPosition = useLocationStore((s) => s.mapPosition);
 
   if (!mapPosition) return null;
 
@@ -248,74 +50,146 @@ function UserLocationMarker() {
         <sphereGeometry args={[2.2, 32, 32]} />
         <meshStandardMaterial color="#ef1c25" />
       </mesh>
-
-      <mesh
-        position={[0, -6.2, 0]}
-        rotation={[-Math.PI / 2, 0, 0]}
-      >
-        <ringGeometry args={[4.5, 5.5, 32]} />
-        <meshBasicMaterial color="#ef1c25" side={THREE.DoubleSide} />
-      </mesh>
     </group>
   );
 }
 
+/* ============================= */
+/* 🏷️ LABELS */
+/* ============================= */
+function BuildingLabels({ buildings }: any) {
+  const { camera } = useThree();
+  const [visible, setVisible] = useState(false);
+
+  useFrame(() => {
+    setVisible(camera.position.length() < LABEL_DISTANCE_LIMIT);
+  });
+
+  if (!visible) return null;
+
+  return buildings.map((b: any) => {
+    if (!b.x || !b.z) return null;
+
+    return (
+      <Html
+        key={b.id}
+        position={[b.x, b.y + 8, b.z]}
+        center
+      >
+        <div
+          style={{
+            background: "#111827",
+            color: "#fff",
+            padding: "4px 8px",
+            borderRadius: "999px",
+            fontSize: "11px",
+          }}
+        >
+          {b.name}
+        </div>
+      </Html>
+    );
+  });
+}
+
+/* ============================= */
+/* 🧱 MODELO */
+/* ============================= */
+function CampusModel() {
+  const { scene } = useGLTF(MODEL_PATH);
+  return <primitive object={scene} />;
+}
+
+/* ============================= */
+/* 🎯 BOTÓN CENTRAR */
+/* ============================= */
+function FocusUserButton({ onClick }: any) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        position: "absolute",
+        right: "calc(16px + env(safe-area-inset-right))",
+        bottom: "calc(88px + env(safe-area-inset-bottom))",
+        width: 56,
+        height: 56,
+        borderRadius: "50%",
+        border: "none",
+        background: "#fff",
+        fontSize: 24,
+        boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
+        zIndex: 100,
+      }}
+    >
+      📍
+    </button>
+  );
+}
+
+/* ============================= */
+/* 🧠 MAIN */
+/* ============================= */
 export function CampusViewer() {
-  const setSelectedBuilding = useBuildingStore((state) => state.setSelectedBuilding);
-
-  const [buildings, setBuildings] = useState<Building[]>([]);
-  const [debugPoint, setDebugPoint] = useState<string | null>(null);
-
-  useEffect(() => {
-    getBuildings()
-      .then(setBuildings)
-      .catch((error) => {
-        console.error("Error cargando edificios:", error);
-      });
-  }, []);
+  const controlsRef = useRef<any>(null);
+  const mapPosition = useLocationStore((s) => s.mapPosition);
+  const [buildings, setBuildings] = useState<Building[]>([]); 
+  const [focus, setFocus] = useState<any>(null);
 
   useEffect(() => {
+    getBuildings().then(setBuildings);
     startUserLocationTracking();
   }, []);
 
+  /* ============================= */
+  /* 🎯 CENTRAR CÁMARA CORRECTO */
+  /* ============================= */
+  useEffect(() => {
+    if (!focus || !controlsRef.current) return;
+
+    const world = campusLocalToWorld(focus.x, focus.z);
+    const controls = controlsRef.current;
+
+    controls.target.set(world.x, 0, world.z);
+
+    controls.object.position.set(
+      world.x + 40,
+      90,
+      world.z + 60
+    );
+
+    controls.update();
+  }, [focus]);
+
+  const handleFocus = () => {
+    if (!mapPosition) return;
+
+    setFocus({
+      x: mapPosition.x,
+      z: mapPosition.z,
+    });
+  };
+
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
-      <DebugPanel point={debugPoint} />
+      <FocusUserButton onClick={handleFocus} />
 
-      <Canvas
-        camera={{ position: [0, 180, 0], fov: 45 }}
-        onPointerMissed={() => {
-          setSelectedBuilding(null);
-        }}
-      >
+      <Canvas camera={{ position: [0, 180, 0], fov: 45 }}>
         <ambientLight intensity={1.5} />
         <directionalLight position={[50, 80, 20]} intensity={2} />
         <gridHelper args={[500, 100]} />
 
         <OrbitControls
-          enablePan
-          enableZoom
-          enableRotate
+          ref={controlsRef}
           maxPolarAngle={Math.PI / 2.2}
           minDistance={20}
           maxDistance={350}
         />
 
-        <group
-          rotation={[0, CAMPUS_ROTATION_Y, 0]}
-          position={[CAMPUS_POSITION_X, CAMPUS_POSITION_Y, CAMPUS_POSITION_Z]}
-          scale={CAMPUS_SCALE}
-        >
+        <group rotation={[0, CAMPUS_ROTATION_Y, 0]}>
+          <CampusModel />
           <RouteLine />
           <UserLocationMarker />
           <BuildingLabels buildings={buildings} />
-
-          <CampusModel
-            buildings={buildings}
-            onSelectName={() => {}}
-            onHoverChange={() => {}}
-            onDebugPointChange={setDebugPoint}
-          />
         </group>
       </Canvas>
     </div>
