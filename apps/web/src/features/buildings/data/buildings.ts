@@ -58,7 +58,7 @@ export const buildings: Building[] = [
   {
     id: "ed-edificio-3d-1",
     code: "E3D1",
-    name: "Edificio 3D 1",
+    name: "Departamento de Ciencias Basicas",
     category: "otro",
     description: "Edificio identificado como Geom3D_Edificio_3D_1.",
     modelNodeName: "Geom3D_Edificio_3D_1",

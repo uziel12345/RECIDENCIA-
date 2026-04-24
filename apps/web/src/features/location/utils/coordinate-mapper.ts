@@ -49,17 +49,6 @@ const OFFSET_Z = 0;
  */
 const references: CampusReference[] = [
   {
-    name: "Direccion",
-    geo: {
-      latitude: 17.077497209169888,
-      longitude: -96.74510408714406,
-    },
-    map: {
-      x: -86.2153,
-      z: 38.0304,
-    },
-  },
-  {
     name: "Biblioteca",
     geo: {
       latitude: 17.077629327716817,
@@ -71,14 +60,25 @@ const references: CampusReference[] = [
     },
   },
   {
+    name: "Direccion",
+    geo: {
+      latitude: 17.077497209169888,
+      longitude: -96.74510408714406,
+    },
+    map: {
+      x: -86.2153,
+      z: 38.0304,
+    },
+  },
+  {
     name: "Centro de Computo",
     geo: {
       latitude: 17.079046638376777,
       longitude: -96.74442423422452,
     },
     map: {
-      x: 0.7661,
-      z: -126.9385,
+      x: 68.4198,
+      z: -119.45965,
     },
   },
 ];

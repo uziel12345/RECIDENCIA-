@@ -4,7 +4,7 @@ import {
   useFrame,
   useThree,
 } from "@react-three/fiber";
-import { Html, Line, OrbitControls, useGLTF } from "@react-three/drei";
+import { Html, Line, OrbitControls, useGLTF, Outlines } from "@react-three/drei";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   useEffect,
@@ -892,7 +892,7 @@ function UserLocationMarker() {
             boxShadow: "0 8px 18px rgba(0,0,0,0.18)",
           }}
         >
-          Tu ubicación
+          
         </div>
       </Html>
     </>
