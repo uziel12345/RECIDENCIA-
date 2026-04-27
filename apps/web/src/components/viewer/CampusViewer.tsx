@@ -93,7 +93,7 @@ function BuildingLabels({ buildings }: any) {
 }
 
 /* ============================= */
-/* 🧱 MODELO */
+/* MODELO */
 /* ============================= */
 function CampusModel() {
   const { scene } = useGLTF(MODEL_PATH);
@@ -101,7 +101,7 @@ function CampusModel() {
 }
 
 /* ============================= */
-/* 🎯 BOTÓN CENTRAR */
+/* BOTÓN CENTRAR */
 /* ============================= */
 function FocusUserButton({ onClick }: any) {
   return (
@@ -126,9 +126,7 @@ function FocusUserButton({ onClick }: any) {
   );
 }
 
-/* ============================= */
-/* 🧠 MAIN */
-/* ============================= */
+
 export function CampusViewer() {
   const controlsRef = useRef<any>(null);
   const mapPosition = useLocationStore((s) => s.mapPosition);
@@ -141,7 +139,7 @@ export function CampusViewer() {
   }, []);
 
   /* ============================= */
-  /* 🎯 CENTRAR CÁMARA CORRECTO */
+  /* CENTRAR CÁMARA  */
   /* ============================= */
   useEffect(() => {
     if (!focus || !controlsRef.current) return;
