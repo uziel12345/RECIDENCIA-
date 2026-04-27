@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, OrbitControls, useGLTF } from "@react-three/drei";
-import * as THREE from "three";
 import type { Building } from "../../features/buildings/types/building";
-import { useBuildingStore } from "../../store/building-store";
 import { useLocationStore } from "../../store/location-store";
 import { getBuildings } from "../../services/buildings.service";
 import { startUserLocationTracking } from "../../features/location/services/geolocation";
@@ -17,6 +15,11 @@ const CAMPUS_POSITION_Y = 0;
 const CAMPUS_POSITION_Z = 0;
 
 const LABEL_DISTANCE_LIMIT = 190;
+
+type FocusPoint = {
+  x: number;
+  z: number;
+};
 
 /* ============================= */
 /* 🔁 CONVERSIÓN LOCAL → MUNDO */
@@ -57,7 +60,11 @@ function UserLocationMarker() {
 /* ============================= */
 /* 🏷️ LABELS */
 /* ============================= */
-function BuildingLabels({ buildings }: any) {
+type BuildingLabelsProps = {
+  buildings: Building[];
+};
+
+function BuildingLabels({ buildings }: BuildingLabelsProps) {
   const { camera } = useThree();
   const [visible, setVisible] = useState(false);
 
@@ -67,29 +74,37 @@ function BuildingLabels({ buildings }: any) {
 
   if (!visible) return null;
 
-  return buildings.map((b: any) => {
-    if (!b.x || !b.z) return null;
+  return (
+    <>
+      {buildings.map((building) => {
+        if (building.x == null || building.z == null) {
+          return null;
+        }
 
-    return (
-      <Html
-        key={b.id}
-        position={[b.x, b.y + 8, b.z]}
-        center
-      >
-        <div
-          style={{
-            background: "#111827",
-            color: "#fff",
-            padding: "4px 8px",
-            borderRadius: "999px",
-            fontSize: "11px",
-          }}
-        >
-          {b.name}
-        </div>
-      </Html>
-    );
-  });
+        const y = (building.y ?? 0) + 8;
+
+        return (
+          <Html
+            key={building.id}
+            position={[building.x, y, building.z]}
+            center
+          >
+            <div
+              style={{
+                background: "#111827",
+                color: "#fff",
+                padding: "4px 8px",
+                borderRadius: "999px",
+                fontSize: "11px",
+              }}
+            >
+              {building.name}
+            </div>
+          </Html>
+        );
+      })}
+    </>
+  );
 }
 
 /* ============================= */
@@ -103,7 +118,11 @@ function CampusModel() {
 /* ============================= */
 /* BOTÓN CENTRAR */
 /* ============================= */
-function FocusUserButton({ onClick }: any) {
+type FocusUserButtonProps = {
+  onClick: () => void;
+};
+
+function FocusUserButton({ onClick }: FocusUserButtonProps) {
   return (
     <button
       onClick={onClick}
@@ -126,12 +145,11 @@ function FocusUserButton({ onClick }: any) {
   );
 }
 
-
 export function CampusViewer() {
   const controlsRef = useRef<any>(null);
   const mapPosition = useLocationStore((s) => s.mapPosition);
-  const [buildings, setBuildings] = useState<Building[]>([]); 
-  const [focus, setFocus] = useState<any>(null);
+  const [buildings, setBuildings] = useState<Building[]>([]);
+  const [focus, setFocus] = useState<FocusPoint | null>(null);
 
   useEffect(() => {
     getBuildings().then(setBuildings);
@@ -139,7 +157,7 @@ export function CampusViewer() {
   }, []);
 
   /* ============================= */
-  /* CENTRAR CÁMARA  */
+  /* CENTRAR CÁMARA */
   /* ============================= */
   useEffect(() => {
     if (!focus || !controlsRef.current) return;
@@ -149,11 +167,7 @@ export function CampusViewer() {
 
     controls.target.set(world.x, 0, world.z);
 
-    controls.object.position.set(
-      world.x + 40,
-      90,
-      world.z + 60
-    );
+    controls.object.position.set(world.x + 40, 90, world.z + 60);
 
     controls.update();
   }, [focus]);

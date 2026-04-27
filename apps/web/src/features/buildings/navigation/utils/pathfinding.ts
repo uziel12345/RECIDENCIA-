@@ -6,7 +6,7 @@ type NodePosition = {
   z: number;
 };
 
-type CampusNode = {
+export type PathNode = {
   id: string;
   x?: number;
   y?: number;
@@ -15,11 +15,17 @@ type CampusNode = {
   neighbors?: string[];
 };
 
-function getNodePosition(node: CampusNode): NodePosition | null {
-  if (
-    typeof node.x === "number" &&
-    typeof node.z === "number"
-  ) {
+export type WeightedPathEdge = {
+  from: string;
+  to: string;
+  weight: number;
+  bidirectional?: boolean;
+};
+
+type Graph = Map<string, Array<{ to: string; weight: number }>>;
+
+function getNodePosition(node: PathNode): NodePosition | null {
+  if (typeof node.x === "number" && typeof node.z === "number") {
     return {
       x: node.x,
       y: typeof node.y === "number" ? node.y : 0,
@@ -42,7 +48,7 @@ function getNodePosition(node: CampusNode): NodePosition | null {
   return null;
 }
 
-function distanceBetweenNodes(a: CampusNode, b: CampusNode): number {
+function distanceBetweenNodes(a: PathNode, b: PathNode): number {
   const posA = getNodePosition(a);
   const posB = getNodePosition(b);
 
@@ -57,8 +63,8 @@ function distanceBetweenNodes(a: CampusNode, b: CampusNode): number {
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
 
-function buildNodeMap(nodes: CampusNode[]): Map<string, CampusNode> {
-  const nodeMap = new Map<string, CampusNode>();
+function buildNodeMap(nodes: PathNode[]): Map<string, PathNode> {
+  const nodeMap = new Map<string, PathNode>();
 
   for (const node of nodes) {
     if (typeof node.id === "string" && node.id.length > 0) {
@@ -84,9 +90,11 @@ function reconstructPath(
   return path;
 }
 
-export default function findPath(
+function runDijkstra(
   startNodeId: string,
-  endNodeId: string
+  endNodeId: string,
+  graph: Graph,
+  nodeIds: Iterable<string>
 ): string[] {
   if (!startNodeId || !endNodeId) {
     return [];
@@ -96,25 +104,19 @@ export default function findPath(
     return [startNodeId];
   }
 
-  const nodes = campusNodes as CampusNode[];
-  const nodeMap = buildNodeMap(nodes);
-
-  const startNode = nodeMap.get(startNodeId);
-  const endNode = nodeMap.get(endNodeId);
-
-  if (!startNode || !endNode) {
-    console.warn("Nodo inicial o final no encontrado en campusNodes.");
-    return [];
-  }
-
   const distances = new Map<string, number>();
   const previous = new Map<string, string | null>();
   const unvisited = new Set<string>();
 
-  for (const node of nodes) {
-    distances.set(node.id, Infinity);
-    previous.set(node.id, null);
-    unvisited.add(node.id);
+  for (const nodeId of nodeIds) {
+    distances.set(nodeId, Infinity);
+    previous.set(nodeId, null);
+    unvisited.add(nodeId);
+  }
+
+  if (!unvisited.has(startNodeId) || !unvisited.has(endNodeId)) {
+    console.warn("Nodo inicial o final no existe en el grafo.");
+    return [];
   }
 
   distances.set(startNodeId, 0);
@@ -132,7 +134,7 @@ export default function findPath(
       }
     }
 
-    if (currentNodeId === null) {
+    if (currentNodeId === null || currentMinDistance === Infinity) {
       break;
     }
 
@@ -142,36 +144,130 @@ export default function findPath(
 
     unvisited.delete(currentNodeId);
 
-    const currentNode = nodeMap.get(currentNodeId);
-    if (!currentNode || !Array.isArray(currentNode.neighbors)) {
-      continue;
-    }
+    const neighbors = graph.get(currentNodeId) ?? [];
 
-    for (const neighborId of currentNode.neighbors) {
-      if (!unvisited.has(neighborId)) {
-        continue;
-      }
-
-      const neighborNode = nodeMap.get(neighborId);
-      if (!neighborNode) {
-        continue;
-      }
-
-      const edgeWeight = distanceBetweenNodes(currentNode, neighborNode);
-      if (!Number.isFinite(edgeWeight)) {
+    for (const neighbor of neighbors) {
+      if (!unvisited.has(neighbor.to)) {
         continue;
       }
 
       const tentativeDistance =
-        (distances.get(currentNodeId) ?? Infinity) + edgeWeight;
+        (distances.get(currentNodeId) ?? Infinity) + neighbor.weight;
 
-      if (tentativeDistance < (distances.get(neighborId) ?? Infinity)) {
-        distances.set(neighborId, tentativeDistance);
-        previous.set(neighborId, currentNodeId);
+      if (tentativeDistance < (distances.get(neighbor.to) ?? Infinity)) {
+        distances.set(neighbor.to, tentativeDistance);
+        previous.set(neighbor.to, currentNodeId);
       }
     }
   }
 
   console.warn("No se encontró una ruta entre los nodos indicados.");
   return [];
+}
+
+function buildGraphFromNodes(nodes: PathNode[]): {
+  graph: Graph;
+  nodeIds: Set<string>;
+} {
+  const nodeMap = buildNodeMap(nodes);
+  const graph: Graph = new Map();
+  const nodeIds = new Set<string>();
+
+  for (const node of nodes) {
+    nodeIds.add(node.id);
+
+    if (!Array.isArray(node.neighbors)) {
+      continue;
+    }
+
+    const adjacencyList = graph.get(node.id) ?? [];
+
+    for (const neighborId of node.neighbors) {
+      const neighborNode = nodeMap.get(neighborId);
+
+      if (!neighborNode) {
+        continue;
+      }
+
+      const weight = distanceBetweenNodes(node, neighborNode);
+
+      if (!Number.isFinite(weight)) {
+        continue;
+      }
+
+      adjacencyList.push({
+        to: neighborId,
+        weight,
+      });
+    }
+
+    graph.set(node.id, adjacencyList);
+  }
+
+  return { graph, nodeIds };
+}
+
+function buildGraphFromEdges(edges: WeightedPathEdge[]): {
+  graph: Graph;
+  nodeIds: Set<string>;
+} {
+  const graph: Graph = new Map();
+  const nodeIds = new Set<string>();
+
+  for (const edge of edges) {
+    if (
+      !edge ||
+      typeof edge.from !== "string" ||
+      typeof edge.to !== "string" ||
+      !Number.isFinite(edge.weight)
+    ) {
+      continue;
+    }
+
+    nodeIds.add(edge.from);
+    nodeIds.add(edge.to);
+
+    const fromList = graph.get(edge.from) ?? [];
+    fromList.push({
+      to: edge.to,
+      weight: edge.weight,
+    });
+    graph.set(edge.from, fromList);
+
+    if (edge.bidirectional) {
+      const toList = graph.get(edge.to) ?? [];
+      toList.push({
+        to: edge.from,
+        weight: edge.weight,
+      });
+      graph.set(edge.to, toList);
+    }
+  }
+
+  return { graph, nodeIds };
+}
+
+export function findPathFromNodes(
+  startNodeId: string,
+  endNodeId: string,
+  nodes: PathNode[]
+): string[] {
+  const { graph, nodeIds } = buildGraphFromNodes(nodes);
+  return runDijkstra(startNodeId, endNodeId, graph, nodeIds);
+}
+
+export function findPathFromEdges(
+  startNodeId: string,
+  endNodeId: string,
+  edges: WeightedPathEdge[]
+): string[] {
+  const { graph, nodeIds } = buildGraphFromEdges(edges);
+  return runDijkstra(startNodeId, endNodeId, graph, nodeIds);
+}
+
+export default function findPath(
+  startNodeId: string,
+  endNodeId: string
+): string[] {
+  return findPathFromNodes(startNodeId, endNodeId, campusNodes as PathNode[]);
 }

@@ -12,6 +12,8 @@ type BuildingStore = {
   setCurrentRouteNodeIds: (nodeIds: string[]) => void;
   setSearchTerm: (value: string) => void;
   clearRoute: () => void;
+  clearSelection: () => void;
+  resetBuildingState: () => void;
 };
 
 export const useBuildingStore = create<BuildingStore>((set) => ({
@@ -44,5 +46,18 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
     set({
       routeDestination: null,
       currentRouteNodeIds: [],
+    }),
+
+  clearSelection: () =>
+    set({
+      selectedBuilding: null,
+    }),
+
+  resetBuildingState: () =>
+    set({
+      selectedBuilding: null,
+      routeDestination: null,
+      currentRouteNodeIds: [],
+      searchTerm: "",
     }),
 }));

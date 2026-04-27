@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useBuildingStore } from "../../../store/building-store";
 import { RoutePanel } from "./RoutePanel";
 import { getBuildings } from "../../../services/buildings.service";
@@ -29,9 +29,23 @@ export function BuildingSidebar() {
     loadBuildings();
   }, []);
 
-  const filteredBuildings = buildings.filter((building) =>
-    building.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredBuildings = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return buildings
+      .filter((building) => building.is_active)
+      .filter((building) => {
+        if (!normalizedSearch) {
+          return true;
+        }
+
+        return (
+          building.name.toLowerCase().includes(normalizedSearch) ||
+          building.code.toLowerCase().includes(normalizedSearch) ||
+          building.category_name.toLowerCase().includes(normalizedSearch)
+        );
+      });
+  }, [buildings, searchTerm]);
 
   if (loading) {
     return <div style={{ padding: "16px" }}>Cargando edificios...</div>;
@@ -51,29 +65,35 @@ export function BuildingSidebar() {
       <h2 style={{ marginTop: 0, fontSize: "20px" }}>Edificios</h2>
 
       <div style={{ marginBottom: "16px" }}>
-        {filteredBuildings.map((building) => (
-          <button
-            key={building.id}
-            onClick={() => setSelectedBuilding(building)}
-            style={{
-              display: "block",
-              width: "100%",
-              textAlign: "left",
-              marginBottom: "8px",
-              padding: "10px 12px",
-              borderRadius: "8px",
-              border: "1px solid #e5e7eb",
-              background:
-                selectedBuilding?.id === building.id ? "#eef2ff" : "#ffffff",
-              cursor: "pointer",
-            }}
-          >
-            <strong>{building.name}</strong>
-            <div style={{ fontSize: "12px", color: "#6b7280" }}>
-              {building.category_name}
-            </div>
-          </button>
-        ))}
+        {filteredBuildings.length === 0 ? (
+          <p style={{ color: "#6b7280", fontSize: "14px" }}>
+            No se encontraron edificios.
+          </p>
+        ) : (
+          filteredBuildings.map((building) => (
+            <button
+              key={building.id}
+              onClick={() => setSelectedBuilding(building)}
+              style={{
+                display: "block",
+                width: "100%",
+                textAlign: "left",
+                marginBottom: "8px",
+                padding: "10px 12px",
+                borderRadius: "8px",
+                border: "1px solid #e5e7eb",
+                background:
+                  selectedBuilding?.id === building.id ? "#eef2ff" : "#ffffff",
+                cursor: "pointer",
+              }}
+            >
+              <strong>{building.name}</strong>
+              <div style={{ fontSize: "12px", color: "#6b7280" }}>
+                {building.category_name}
+              </div>
+            </button>
+          ))
+        )}
       </div>
 
       <hr />

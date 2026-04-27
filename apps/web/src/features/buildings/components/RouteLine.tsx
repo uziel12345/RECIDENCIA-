@@ -12,6 +12,10 @@ import {
   type NavigationEdge,
   type NavigationNode,
 } from "../../../services/navigation.service";
+import {
+  findPathFromEdges,
+  type WeightedPathEdge,
+} from "../navigation/utils/pathfinding";
 
 type Position3D = {
   x: number;
@@ -32,7 +36,9 @@ function findNearestNode(
   position: Position3D,
   nodes: NavigationNode[]
 ): NavigationNode | null {
-  if (nodes.length === 0) return null;
+  if (nodes.length === 0) {
+    return null;
+  }
 
   let nearest: NavigationNode | null = null;
   let minDistance = Infinity;
@@ -53,16 +59,20 @@ function findNearestNode(
   return nearest;
 }
 
-function isEdgeValid(edge: NavigationEdge, nodes: NavigationNode[]) {
-  const from = nodes.find((n) => n.id === edge.from_node_id);
-  const to = nodes.find((n) => n.id === edge.to_node_id);
+function isEdgeValid(edge: NavigationEdge, nodes: NavigationNode[]): boolean {
+  const from = nodes.find((node) => node.id === edge.from_node_id);
+  const to = nodes.find((node) => node.id === edge.to_node_id);
 
-  if (!from || !to) return false;
+  if (!from || !to) {
+    return false;
+  }
 
   const dx = Math.abs(Number(from.x) - Number(to.x));
   const dz = Math.abs(Number(from.z) - Number(to.z));
 
-  if (dx > 40 && dz > 40) return false;
+  if (dx > 40 && dz > 40) {
+    return false;
+  }
 
   return true;
 }
@@ -70,7 +80,7 @@ function isEdgeValid(edge: NavigationEdge, nodes: NavigationNode[]) {
 function getEdgeWeight(edge: NavigationEdge): number {
   let weight = Number(edge.distance);
 
-  if (edge.distance > 25) {
+  if (Number(edge.distance) > 25) {
     weight *= 1.5;
   }
 
@@ -90,101 +100,11 @@ function getEdgeWeight(edge: NavigationEdge): number {
     weight *= 1.4;
   }
 
-  if (edge.dx > 10 && edge.dz > 10) {
+  if (Number(edge.dx) > 10 && Number(edge.dz) > 10) {
     weight *= 1.4;
   }
 
   return weight;
-}
-
-function buildAdjacencyMap(edges: NavigationEdge[]) {
-  const graph = new Map<string, Array<{ to: string; weight: number }>>();
-
-  for (const edge of edges) {
-    const weight = getEdgeWeight(edge);
-
-    const fromList = graph.get(edge.from_node_id) ?? [];
-    fromList.push({
-      to: edge.to_node_id,
-      weight,
-    });
-    graph.set(edge.from_node_id, fromList);
-
-    if (edge.is_bidirectional) {
-      const reverseList = graph.get(edge.to_node_id) ?? [];
-      reverseList.push({
-        to: edge.from_node_id,
-        weight,
-      });
-      graph.set(edge.to_node_id, reverseList);
-    }
-  }
-
-  return graph;
-}
-
-function dijkstra(
-  startId: string,
-  endId: string,
-  edges: NavigationEdge[]
-): string[] {
-  const graph = buildAdjacencyMap(edges);
-  const distances = new Map<string, number>();
-  const previous = new Map<string, string | null>();
-  const visited = new Set<string>();
-  const queue = new Set<string>();
-
-  distances.set(startId, 0);
-  previous.set(startId, null);
-  queue.add(startId);
-
-  while (queue.size > 0) {
-    let currentNodeId: string | null = null;
-    let smallestDistance = Infinity;
-
-    for (const nodeId of queue) {
-      const distance = distances.get(nodeId) ?? Infinity;
-      if (distance < smallestDistance) {
-        smallestDistance = distance;
-        currentNodeId = nodeId;
-      }
-    }
-
-    if (!currentNodeId) break;
-    if (currentNodeId === endId) break;
-
-    queue.delete(currentNodeId);
-    visited.add(currentNodeId);
-
-    const neighbors = graph.get(currentNodeId) ?? [];
-
-    for (const neighbor of neighbors) {
-      if (visited.has(neighbor.to)) continue;
-
-      const tentativeDistance =
-        (distances.get(currentNodeId) ?? Infinity) + neighbor.weight;
-
-      if (tentativeDistance < (distances.get(neighbor.to) ?? Infinity)) {
-        distances.set(neighbor.to, tentativeDistance);
-        previous.set(neighbor.to, currentNodeId);
-        queue.add(neighbor.to);
-      }
-    }
-  }
-
-  if (!previous.has(endId) && startId !== endId) {
-    return [];
-  }
-
-  const path: string[] = [];
-  let current: string | null = endId;
-
-  while (current) {
-    path.unshift(current);
-    current = previous.get(current) ?? null;
-  }
-
-  return path;
 }
 
 export function RouteLine() {
@@ -239,6 +159,17 @@ export function RouteLine() {
     loadNavigation();
   }, []);
 
+  const graphEdges = useMemo<WeightedPathEdge[]>(
+    () =>
+      edges.map((edge) => ({
+        from: edge.from_node_id,
+        to: edge.to_node_id,
+        weight: getEdgeWeight(edge),
+        bidirectional: edge.is_bidirectional,
+      })),
+    [edges]
+  );
+
   const routeData = useMemo(() => {
     if (
       loading ||
@@ -246,7 +177,7 @@ export function RouteLine() {
       !mapPosition ||
       permission !== "granted" ||
       nodes.length === 0 ||
-      edges.length === 0 ||
+      graphEdges.length === 0 ||
       entrances.length === 0
     ) {
       return null;
@@ -262,7 +193,7 @@ export function RouteLine() {
     );
 
     if (!nearestNode) {
-      console.warn("No se encontró nodo cercano al usuario");
+      console.warn("No se encontró nodo cercano al usuario.");
       return null;
     }
 
@@ -275,18 +206,18 @@ export function RouteLine() {
       null;
 
     if (!destinationEntrance) {
-      console.warn("No se encontró entrada para el edificio destino");
+      console.warn("No se encontró entrada para el edificio destino.");
       return null;
     }
 
-    const pathNodeIds = dijkstra(
+    const pathNodeIds = findPathFromEdges(
       nearestNode.id,
       destinationEntrance.node_id,
-      edges
+      graphEdges
     );
 
     if (pathNodeIds.length === 0) {
-      console.warn("No se encontró ruta entre los nodos");
+      console.warn("No se encontró ruta entre los nodos.");
       return null;
     }
 
@@ -332,7 +263,7 @@ export function RouteLine() {
     mapPosition,
     permission,
     nodes,
-    edges,
+    graphEdges,
     entrances,
   ]);
 
