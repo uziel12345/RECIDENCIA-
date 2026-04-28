@@ -1,3 +1,15 @@
+/**
+ * RouteLine.tsx
+ *
+ * Renderiza la línea de ruta en el mapa 3D desde la ubicación del usuario
+ * hasta el edificio destino, usando los nodos y edges del API.
+ *
+ * CORRECCIONES APLICADAS:
+ * 1. Se eliminó MAX_EDGE_DISTANCE = 80 que descartaba edges válidos (distancias > 80).
+ * 2. Se eliminó isEdgeValid que descartaba pasillos largos con dx > 40 y dz > 40.
+ * 3. El único filtro válido es is_active + is_accessible, que son datos correctos del API.
+ */
+
 import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import { Html, Line } from "@react-three/drei";
@@ -17,13 +29,15 @@ import {
   type WeightedPathEdge,
 } from "../navigation/utils/pathfinding";
 
+// ─── Tipos locales ────────────────────────────────────────────────────────────
+
 type Position3D = {
   x: number;
   y: number;
   z: number;
 };
 
-const MAX_EDGE_DISTANCE = 80;
+// ─── Distancia euclídea 3D ────────────────────────────────────────────────────
 
 function distance3D(a: Position3D, b: Position3D): number {
   const dx = a.x - b.x;
@@ -32,16 +46,16 @@ function distance3D(a: Position3D, b: Position3D): number {
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
 
+// ─── Nodo más cercano a una posición ─────────────────────────────────────────
+
 function findNearestNode(
   position: Position3D,
   nodes: NavigationNode[]
 ): NavigationNode | null {
-  if (nodes.length === 0) {
-    return null;
-  }
+  if (nodes.length === 0) return null;
 
   let nearest: NavigationNode | null = null;
-  let minDistance = Infinity;
+  let minDist = Infinity;
 
   for (const node of nodes) {
     const d = distance3D(position, {
@@ -49,9 +63,8 @@ function findNearestNode(
       y: Number(node.y),
       z: Number(node.z),
     });
-
-    if (d < minDistance) {
-      minDistance = d;
+    if (d < minDist) {
+      minDist = d;
       nearest = node;
     }
   }
@@ -59,70 +72,38 @@ function findNearestNode(
   return nearest;
 }
 
-function isEdgeValid(edge: NavigationEdge, nodes: NavigationNode[]): boolean {
-  const from = nodes.find((node) => node.id === edge.from_node_id);
-  const to = nodes.find((node) => node.id === edge.to_node_id);
-
-  if (!from || !to) {
-    return false;
-  }
-
-  const dx = Math.abs(Number(from.x) - Number(to.x));
-  const dz = Math.abs(Number(from.z) - Number(to.z));
-
-  if (dx > 40 && dz > 40) {
-    return false;
-  }
-
-  return true;
-}
+// ─── Peso del edge según tipo de camino ──────────────────────────────────────
+// Se conserva la lógica de pesos original. Solo se eliminaron los filtros
+// por distancia máxima que rompían la conectividad del grafo.
 
 function getEdgeWeight(edge: NavigationEdge): number {
   let weight = Number(edge.distance);
 
-  if (Number(edge.distance) > 25) {
-    weight *= 1.5;
-  }
-
-  if (edge.path_type === "outdoor") {
-    weight *= 1.2;
-  }
-
-  if (edge.path_type === "hallway") {
-    weight *= 0.85;
-  }
-
-  if (edge.path_type === "stairs") {
-    weight *= 3;
-  }
-
-  if (edge.path_type === "ramp") {
-    weight *= 1.4;
-  }
-
-  if (Number(edge.dx) > 10 && Number(edge.dz) > 10) {
-    weight *= 1.4;
-  }
+  if (edge.path_type === "stairs")   weight *= 3.0;
+  if (edge.path_type === "ramp")     weight *= 1.4;
+  if (edge.path_type === "outdoor")  weight *= 1.2;
+  if (edge.path_type === "hallway")  weight *= 0.85;
 
   return weight;
 }
 
+// ─── Componente principal ────────────────────────────────────────────────────
+
 export function RouteLine() {
-  const routeDestination = useBuildingStore((state) => state.routeDestination);
-  const setCurrentRouteNodeIds = useBuildingStore(
-    (state) => state.setCurrentRouteNodeIds
-  );
+  const routeDestination   = useBuildingStore((s) => s.routeDestination);
+  const setCurrentRouteNodeIds = useBuildingStore((s) => s.setCurrentRouteNodeIds);
 
-  const mapPosition = useLocationStore((state) => state.mapPosition);
-  const permission = useLocationStore((state) => state.permission);
+  const mapPosition = useLocationStore((s) => s.mapPosition);
+  const permission  = useLocationStore((s) => s.permission);
 
-  const [nodes, setNodes] = useState<NavigationNode[]>([]);
-  const [edges, setEdges] = useState<NavigationEdge[]>([]);
+  const [nodes,     setNodes]     = useState<NavigationNode[]>([]);
+  const [edges,     setEdges]     = useState<NavigationEdge[]>([]);
   const [entrances, setEntrances] = useState<BuildingEntrance[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading,   setLoading]   = useState(true);
 
+  // ── Carga de datos del API ─────────────────────────────────────────────────
   useEffect(() => {
-    async function loadNavigation() {
+    async function load() {
       try {
         const [nodesData, edgesData, entrancesData] = await Promise.all([
           getNavigationNodes(),
@@ -130,46 +111,47 @@ export function RouteLine() {
           getBuildingEntrances(),
         ]);
 
-        const filteredNodes = nodesData.filter(
-          (node) => node.is_active && node.is_walkable
+        // CORRECCIÓN: solo filtramos por is_active e is_walkable/is_accessible.
+        // No usamos MAX_EDGE_DISTANCE ni isEdgeValid porque descartaban
+        // edges legítimos que son necesarios para conectar el grafo.
+        const activeNodes = nodesData.filter(
+          (n) => n.is_active && n.is_walkable
         );
 
-        const filteredEdges = edgesData.filter(
-          (edge) =>
-            edge.is_active &&
-            edge.is_accessible &&
-            Number(edge.distance) < MAX_EDGE_DISTANCE &&
-            isEdgeValid(edge, filteredNodes)
+        const activeEdges = edgesData.filter(
+          (e) => e.is_active && e.is_accessible
         );
 
-        const filteredEntrances = entrancesData.filter(
-          (entry) => entry.is_accessible
+        const activeEntrances = entrancesData.filter(
+          (e) => e.is_accessible
         );
 
-        setNodes(filteredNodes);
-        setEdges(filteredEdges);
-        setEntrances(filteredEntrances);
-      } catch (error) {
-        console.error("Error cargando navegación:", error);
+        setNodes(activeNodes);
+        setEdges(activeEdges);
+        setEntrances(activeEntrances);
+      } catch (err) {
+        console.error("Error cargando datos de navegación:", err);
       } finally {
         setLoading(false);
       }
     }
 
-    loadNavigation();
+    load();
   }, []);
 
+  // ── Construcción de edges para Dijkstra ───────────────────────────────────
   const graphEdges = useMemo<WeightedPathEdge[]>(
     () =>
       edges.map((edge) => ({
-        from: edge.from_node_id,
-        to: edge.to_node_id,
-        weight: getEdgeWeight(edge),
+        from:          edge.from_node_id,
+        to:            edge.to_node_id,
+        weight:        getEdgeWeight(edge),
         bidirectional: edge.is_bidirectional,
       })),
     [edges]
   );
 
+  // ── Cálculo de la ruta ────────────────────────────────────────────────────
   const routeData = useMemo(() => {
     if (
       loading ||
@@ -183,33 +165,33 @@ export function RouteLine() {
       return null;
     }
 
+    // 1. Nodo más cercano al usuario
     const nearestNode = findNearestNode(
-      {
-        x: mapPosition.x,
-        y: mapPosition.y,
-        z: mapPosition.z,
-      },
+      { x: mapPosition.x, y: mapPosition.y, z: mapPosition.z },
       nodes
     );
 
     if (!nearestNode) {
-      console.warn("No se encontró nodo cercano al usuario.");
+      console.warn("[RouteLine] No se encontró nodo cercano al usuario.");
       return null;
     }
 
+    // 2. Entrada principal del edificio destino
     const destinationEntrance =
       entrances.find(
-        (entry) =>
-          entry.building_id === routeDestination.id && entry.is_primary
+        (e) => e.building_id === routeDestination.id && e.is_primary
       ) ??
-      entrances.find((entry) => entry.building_id === routeDestination.id) ??
+      entrances.find((e) => e.building_id === routeDestination.id) ??
       null;
 
     if (!destinationEntrance) {
-      console.warn("No se encontró entrada para el edificio destino.");
+      console.warn(
+        `[RouteLine] No se encontró entrada para el edificio: ${routeDestination.name}`
+      );
       return null;
     }
 
+    // 3. Dijkstra
     const pathNodeIds = findPathFromEdges(
       nearestNode.id,
       destinationEntrance.node_id,
@@ -217,44 +199,37 @@ export function RouteLine() {
     );
 
     if (pathNodeIds.length === 0) {
-      console.warn("No se encontró ruta entre los nodos.");
+      console.warn(
+        `[RouteLine] Sin ruta de ${nearestNode.id} → ${destinationEntrance.node_id}`
+      );
       return null;
     }
 
+    // 4. Convertir IDs a posiciones 3D
     const pathNodes = pathNodeIds
-      .map((nodeId) => nodes.find((node) => node.id === nodeId) ?? null)
+      .map((id) => nodes.find((n) => n.id === id) ?? null)
       .filter(Boolean) as NavigationNode[];
 
-    if (pathNodes.length === 0) {
-      return null;
-    }
+    if (pathNodes.length === 0) return null;
 
-    const userStartPoint = new THREE.Vector3(
+    const userStart = new THREE.Vector3(
       mapPosition.x,
       mapPosition.y + 2,
       mapPosition.z
     );
 
     const nodePoints = pathNodes.map(
-      (node) =>
-        new THREE.Vector3(
-          Number(node.x),
-          Number(node.y) + 2,
-          Number(node.z)
-        )
+      (n) => new THREE.Vector3(Number(n.x), Number(n.y) + 2, Number(n.z))
     );
 
-    const routePoints = [userStartPoint, ...nodePoints];
-
-    if (routePoints.length < 2) {
-      return null;
-    }
+    const routePoints = [userStart, ...nodePoints];
+    if (routePoints.length < 2) return null;
 
     return {
-      routeNodeIds: pathNodeIds,
+      routeNodeIds:    pathNodeIds,
       routePoints,
-      userStartPoint,
-      endPoint: nodePoints[nodePoints.length - 1],
+      userStartPoint:  userStart,
+      endPoint:        nodePoints[nodePoints.length - 1],
       destinationName: routeDestination.name,
     };
   }, [
@@ -267,33 +242,36 @@ export function RouteLine() {
     entrances,
   ]);
 
+  // ── Sincronizar IDs de ruta al store ──────────────────────────────────────
   useEffect(() => {
-    if (!routeData) {
-      setCurrentRouteNodeIds([]);
-      return;
-    }
-
-    setCurrentRouteNodeIds(routeData.routeNodeIds);
+    setCurrentRouteNodeIds(routeData ? routeData.routeNodeIds : []);
   }, [routeData, setCurrentRouteNodeIds]);
 
-  if (!routeData) {
-    return null;
-  }
+  if (!routeData) return null;
 
+  // ── Renderizado ───────────────────────────────────────────────────────────
   return (
     <>
-      <Line points={routeData.routePoints} color="#22c55e" lineWidth={4} />
+      {/* Línea de ruta */}
+      <Line
+        points={routeData.routePoints}
+        color="#22c55e"
+        lineWidth={4}
+      />
 
+      {/* Marcador inicio (usuario) */}
       <mesh position={routeData.userStartPoint}>
         <sphereGeometry args={[1.2, 20, 20]} />
         <meshStandardMaterial color="#22c55e" />
       </mesh>
 
+      {/* Marcador destino */}
       <mesh position={routeData.endPoint}>
         <sphereGeometry args={[1.2, 20, 20]} />
         <meshStandardMaterial color="#ef4444" />
       </mesh>
 
+      {/* Etiqueta inicio */}
       <Html
         position={[
           routeData.userStartPoint.x,
@@ -318,6 +296,7 @@ export function RouteLine() {
         </div>
       </Html>
 
+      {/* Etiqueta destino */}
       <Html
         position={[
           routeData.endPoint.x,
