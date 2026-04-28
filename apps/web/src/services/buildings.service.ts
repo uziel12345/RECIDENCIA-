@@ -1,4 +1,7 @@
-import { mapApiBuildings } from "../mappers/building.mapper";
+import {
+  mapApiBuildings,
+  type ApiBuilding,
+} from "../features/buildings/mappers/building.mapper";
 import type { Building } from "../features/buildings/types/building";
 
 type ApiResponse<T> = {
@@ -7,17 +10,8 @@ type ApiResponse<T> = {
   message?: string;
 };
 
-/**
- * Base URL desde variables de entorno
- * Ejemplo en Vite:
- * VITE_API_URL=http://localhost:3001/api
- */
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
-/* ============================= */
-/*  GET ALL BUILDINGS */
-/* ============================= */
 export async function getBuildings(): Promise<Building[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/buildings`);
@@ -26,8 +20,7 @@ export async function getBuildings(): Promise<Building[]> {
       throw new Error("Error al obtener edificios");
     }
 
-    const payload: ApiResponse<unknown[]> = await response.json();
-
+    const payload: ApiResponse<ApiBuilding[]> = await response.json();
     return mapApiBuildings(payload.data);
   } catch (error) {
     console.error("Error en getBuildings:", error);
@@ -35,9 +28,6 @@ export async function getBuildings(): Promise<Building[]> {
   }
 }
 
-/* ============================= */
-/* GET BUILDING BY ID */
-/* ============================= */
 export async function getBuildingById(id: string): Promise<Building | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/buildings/${id}`);
@@ -46,10 +36,8 @@ export async function getBuildingById(id: string): Promise<Building | null> {
       throw new Error("Edificio no encontrado");
     }
 
-    const payload: ApiResponse<unknown> = await response.json();
-
+    const payload: ApiResponse<ApiBuilding> = await response.json();
     const [mapped] = mapApiBuildings([payload.data]);
-
     return mapped || null;
   } catch (error) {
     console.error("Error en getBuildingById:", error);
@@ -57,11 +45,6 @@ export async function getBuildingById(id: string): Promise<Building | null> {
   }
 }
 
-
-/**
- * Tu backend actual no tiene /buildings/search
- * Por ahora hacemos la búsqueda en frontend.
- */
 export async function searchBuildings(query: string): Promise<Building[]> {
   try {
     const buildings = await getBuildings();

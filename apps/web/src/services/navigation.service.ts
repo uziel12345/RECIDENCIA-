@@ -1,10 +1,23 @@
 import { fetchAPI } from "./api";
 
+export type NavigationPathType =
+  | "waypoint"
+  | "building_access"
+  | "intersection"
+  | "poi";
+
+export type EdgePathType =
+  | "walkway"
+  | "ramp"
+  | "stairs"
+  | "hallway"
+  | "outdoor";
+
 export type NavigationNode = {
   id: string;
   code: string;
   name: string | null;
-  node_type: "waypoint" | "building_access" | "intersection" | "poi";
+  node_type: NavigationPathType;
   x: number;
   y: number;
   z: number;
@@ -13,7 +26,7 @@ export type NavigationNode = {
   floor_level: number;
   is_walkable: boolean;
   is_active: boolean;
-  metadata: unknown;
+  metadata: Record<string, unknown> | null;
 };
 
 export type NavigationEdge = {
@@ -23,9 +36,9 @@ export type NavigationEdge = {
   distance: number;
   is_bidirectional: boolean;
   is_accessible: boolean;
-  path_type: "walkway" | "ramp" | "stairs" | "hallway" | "outdoor";
+  path_type: EdgePathType;
   is_active: boolean;
-  metadata: unknown;
+  metadata: Record<string, unknown> | null;
   dx: number;
   dz: number;
 };

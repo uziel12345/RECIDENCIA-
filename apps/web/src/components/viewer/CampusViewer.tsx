@@ -3,6 +3,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, OrbitControls, useGLTF } from "@react-three/drei";
 import type { Building } from "../../features/buildings/types/building";
 import { useLocationStore } from "../../store/location-store";
+import { useBuildingStore } from "../../store/building-store";
 import { getBuildings } from "../../services/buildings.service";
 import { startUserLocationTracking } from "../../features/location/services/geolocation";
 import { RouteLine } from "../../features/buildings/components/RouteLine";
@@ -11,7 +12,6 @@ const MODEL_PATH = "/models/campus.glb";
 
 const CAMPUS_ROTATION_Y = Math.PI / 2;
 const CAMPUS_POSITION_X = 0;
-const CAMPUS_POSITION_Y = 0;
 const CAMPUS_POSITION_Z = 0;
 
 const LABEL_DISTANCE_LIMIT = 190;
@@ -21,9 +21,11 @@ type FocusPoint = {
   z: number;
 };
 
-/* ============================= */
-/* 🔁 CONVERSIÓN LOCAL → MUNDO */
-/* ============================= */
+type CampusViewerProps = {
+  isMobile?: boolean;
+  mobilePanelOpen?: boolean;
+};
+
 function campusLocalToWorld(x: number, z: number) {
   const cos = Math.cos(CAMPUS_ROTATION_Y);
   const sin = Math.sin(CAMPUS_ROTATION_Y);
@@ -34,9 +36,6 @@ function campusLocalToWorld(x: number, z: number) {
   };
 }
 
-/* ============================= */
-/* 📍 PIN DE USUARIO */
-/* ============================= */
 function UserLocationMarker() {
   const mapPosition = useLocationStore((s) => s.mapPosition);
 
@@ -57,15 +56,14 @@ function UserLocationMarker() {
   );
 }
 
-/* ============================= */
-/* 🏷️ LABELS */
-/* ============================= */
 type BuildingLabelsProps = {
   buildings: Building[];
+  isMobile?: boolean;
 };
 
-function BuildingLabels({ buildings }: BuildingLabelsProps) {
+function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
   const { camera } = useThree();
+  const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const [visible, setVisible] = useState(false);
 
   useFrame(() => {
@@ -74,9 +72,13 @@ function BuildingLabels({ buildings }: BuildingLabelsProps) {
 
   if (!visible) return null;
 
+  const buildingsToRender = isMobile
+    ? buildings.filter((building) => building.id === selectedBuilding?.id)
+    : buildings;
+
   return (
     <>
-      {buildings.map((building) => {
+      {buildingsToRender.map((building) => {
         if (building.x == null || building.z == null) {
           return null;
         }
@@ -96,6 +98,9 @@ function BuildingLabels({ buildings }: BuildingLabelsProps) {
                 padding: "4px 8px",
                 borderRadius: "999px",
                 fontSize: "11px",
+                maxWidth: isMobile ? "90px" : "none",
+                textAlign: "center",
+                lineHeight: 1.25,
               }}
             >
               {building.name}
@@ -107,29 +112,26 @@ function BuildingLabels({ buildings }: BuildingLabelsProps) {
   );
 }
 
-/* ============================= */
-/* MODELO */
-/* ============================= */
 function CampusModel() {
   const { scene } = useGLTF(MODEL_PATH);
   return <primitive object={scene} />;
 }
 
-/* ============================= */
-/* BOTÓN CENTRAR */
-/* ============================= */
 type FocusUserButtonProps = {
   onClick: () => void;
+  isMobile?: boolean;
 };
 
-function FocusUserButton({ onClick }: FocusUserButtonProps) {
+function FocusUserButton({ onClick, isMobile = false }: FocusUserButtonProps) {
   return (
     <button
       onClick={onClick}
       style={{
         position: "absolute",
         right: "calc(16px + env(safe-area-inset-right))",
-        bottom: "calc(88px + env(safe-area-inset-bottom))",
+        bottom: isMobile
+          ? "calc(20px + env(safe-area-inset-bottom))"
+          : "calc(88px + env(safe-area-inset-bottom))",
         width: 56,
         height: 56,
         borderRadius: "50%",
@@ -145,9 +147,14 @@ function FocusUserButton({ onClick }: FocusUserButtonProps) {
   );
 }
 
-export function CampusViewer() {
+export function CampusViewer({
+  isMobile = false,
+  mobilePanelOpen = false,
+}: CampusViewerProps) {
   const controlsRef = useRef<any>(null);
   const mapPosition = useLocationStore((s) => s.mapPosition);
+  const selectedBuilding = useBuildingStore((s) => s.selectedBuilding);
+
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [focus, setFocus] = useState<FocusPoint | null>(null);
 
@@ -156,9 +163,22 @@ export function CampusViewer() {
     startUserLocationTracking();
   }, []);
 
-  /* ============================= */
-  /* CENTRAR CÁMARA */
-  /* ============================= */
+  useEffect(() => {
+    if (!controlsRef.current) return;
+
+    const controls = controlsRef.current;
+
+    if (isMobile) {
+      controls.target.set(0, 0, 40);
+      controls.object.position.set(0, 115, 185);
+    } else {
+      controls.target.set(0, 0, 0);
+      controls.object.position.set(0, 180, 0);
+    }
+
+    controls.update();
+  }, [isMobile]);
+
   useEffect(() => {
     if (!focus || !controlsRef.current) return;
 
@@ -167,10 +187,25 @@ export function CampusViewer() {
 
     controls.target.set(world.x, 0, world.z);
 
-    controls.object.position.set(world.x + 40, 90, world.z + 60);
+    if (isMobile) {
+      controls.object.position.set(world.x + 40, 95, world.z + 110);
+    } else {
+      controls.object.position.set(world.x + 40, 90, world.z + 60);
+    }
 
     controls.update();
-  }, [focus]);
+  }, [focus, isMobile]);
+
+  useEffect(() => {
+    if (!selectedBuilding || selectedBuilding.x == null || selectedBuilding.z == null) {
+      return;
+    }
+
+    setFocus({
+      x: selectedBuilding.x,
+      z: selectedBuilding.z,
+    });
+  }, [selectedBuilding]);
 
   const handleFocus = () => {
     if (!mapPosition) return;
@@ -183,16 +218,23 @@ export function CampusViewer() {
 
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
-      <FocusUserButton onClick={handleFocus} />
+      {!mobilePanelOpen && (
+        <FocusUserButton onClick={handleFocus} isMobile={isMobile} />
+      )}
 
-      <Canvas camera={{ position: [0, 180, 0], fov: 45 }}>
+      <Canvas
+        camera={{
+          position: isMobile ? [0, 115, 185] : [0, 180, 0],
+          fov: isMobile ? 42 : 45,
+        }}
+      >
         <ambientLight intensity={1.5} />
         <directionalLight position={[50, 80, 20]} intensity={2} />
         <gridHelper args={[500, 100]} />
 
         <OrbitControls
           ref={controlsRef}
-          maxPolarAngle={Math.PI / 2.2}
+          maxPolarAngle={Math.PI / 2.15}
           minDistance={20}
           maxDistance={350}
         />
@@ -201,7 +243,7 @@ export function CampusViewer() {
           <CampusModel />
           <RouteLine />
           <UserLocationMarker />
-          <BuildingLabels buildings={buildings} />
+          <BuildingLabels buildings={buildings} isMobile={isMobile} />
         </group>
       </Canvas>
     </div>
