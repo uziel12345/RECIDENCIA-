@@ -128,6 +128,14 @@ function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
     ? buildings.filter((building) => building.id === selectedBuilding?.id)
     : buildings;
 
+  // Tamaños responsivos: en móvil las etiquetas se escalan más pequeñas
+  // para no tapar el modelo 3D ni colisionar entre sí.
+  const labelFontSize = isMobile ? 11 : 12;
+  const labelPadding = isMobile ? "5px 10px 5px 6px" : "6px 12px 6px 8px";
+  const labelGap = isMobile ? 6 : 8;
+  const iconSize = isMobile ? 18 : 20;
+  const labelMaxWidth = isMobile ? 140 : 180;
+
   return (
     <>
       {buildingsToRender.map((building) => {
@@ -157,15 +165,15 @@ function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 8,
-                padding: "6px 12px 6px 8px",
+                gap: labelGap,
+                padding: labelPadding,
                 borderRadius: 999,
                 border: `1px solid ${
                   isSelected ? accentColor : "rgba(15,23,42,0.12)"
                 }`,
                 background: isSelected ? accentColor : "rgba(255,255,255,0.97)",
                 color: isSelected ? "#ffffff" : "#0f172a",
-                fontSize: 12,
+                fontSize: labelFontSize,
                 fontWeight: 700,
                 lineHeight: 1.2,
                 whiteSpace: "nowrap",
@@ -178,27 +186,31 @@ function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
                 userSelect: "none",
                 transform: "translateZ(0)",
                 pointerEvents: "auto",
+                touchAction: "manipulation",
               }}
             >
               <span
                 aria-hidden="true"
                 style={{
-                 width: 20,
-                 height: 20,
-                 borderRadius: 999,
-                 background: isSelected ? "#ffffff" : accentColor,
-                 color: isSelected ? accentColor : "#ffffff",
-                 display: "inline-grid",
-                 placeItems: "center",
-                 flexShrink: 0,
-                 }}
->
-                  <Icon name={getBuildingMarkerIcon(building)} size={12} />
+                  width: iconSize,
+                  height: iconSize,
+                  borderRadius: 999,
+                  background: isSelected ? "#ffffff" : accentColor,
+                  color: isSelected ? accentColor : "#ffffff",
+                  display: "inline-grid",
+                  placeItems: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Icon
+                  name={getBuildingMarkerIcon(building)}
+                  size={isMobile ? 11 : 12}
+                />
               </span>
 
               <span
                 style={{
-                  maxWidth: 180,
+                  maxWidth: labelMaxWidth,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                 }}
@@ -347,8 +359,10 @@ export function CampusViewer({
     const controls = controlsRef.current;
 
     if (isMobile) {
-      controls.target.set(0, 0, 40);
-      controls.object.position.set(0, 115, 185);
+      // En móvil queremos ver el campus completo desde un ángulo cómodo
+      // sin que quede demasiado pequeño. Acercamos un poco la cámara.
+      controls.target.set(0, 0, 30);
+      controls.object.position.set(0, 130, 200);
     } else {
       controls.target.set(0, 0, 0);
       controls.object.position.set(0, 180, 0);
@@ -402,8 +416,8 @@ export function CampusViewer({
     const controls = controlsRef.current;
     setFocus(null);
     if (isMobile) {
-      controls.target.set(0, 0, 40);
-      controls.object.position.set(0, 115, 185);
+      controls.target.set(0, 0, 30);
+      controls.object.position.set(0, 130, 200);
     } else {
       controls.target.set(0, 0, 0);
       controls.object.position.set(0, 180, 0);
@@ -440,9 +454,10 @@ export function CampusViewer({
       {!isMobile && !mobilePanelOpen && <CategoryLegend buildings={buildings} />}
 
       <Canvas
+        dpr={[1, 2]}
         camera={{
-          position: isMobile ? [0, 115, 185] : [0, 180, 0],
-          fov: isMobile ? 42 : 45,
+          position: isMobile ? [0, 130, 200] : [0, 180, 0],
+          fov: isMobile ? 45 : 45,
         }}
       >
         <color attach="background" args={["#eef4fb"]} />

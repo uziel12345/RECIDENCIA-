@@ -211,17 +211,23 @@ export function RouteLine() {
       .filter(Boolean) as NavigationNode[];
 
     if (pathNodes.length === 0) return null;
+    
+    const ROUTE_HEIGHT_OFFSET = 5;
 
     const userStart = new THREE.Vector3(
       mapPosition.x,
-      mapPosition.y + 2,
+      mapPosition.y + ROUTE_HEIGHT_OFFSET,
       mapPosition.z
     );
 
     const nodePoints = pathNodes.map(
-      (n) => new THREE.Vector3(Number(n.x), Number(n.y) + 2, Number(n.z))
-    );
-
+  (n) =>
+    new THREE.Vector3(
+      Number(n.x),
+      Number(n.y) + ROUTE_HEIGHT_OFFSET,
+      Number(n.z)
+    )
+);
     const routePoints = [userStart, ...nodePoints];
     if (routePoints.length < 2) return null;
 
