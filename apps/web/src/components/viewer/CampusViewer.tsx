@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, OrbitControls, useGLTF } from "@react-three/drei";
 import type { Building } from "../../features/buildings/types/building";
@@ -7,6 +8,8 @@ import { useBuildingStore } from "../../store/building-store";
 import { getBuildings } from "../../services/buildings.service";
 import { startUserLocationTracking } from "../../features/location/services/geolocation";
 import { RouteLine } from "../../features/buildings/components/RouteLine";
+import { Icon } from "../ui/Icons";
+import { getCategoryAccent } from "../ui/CategoryBadge";
 
 const MODEL_PATH = "/models/campus.glb";
 
@@ -14,7 +17,7 @@ const CAMPUS_ROTATION_Y = Math.PI / 2;
 const CAMPUS_POSITION_X = 0;
 const CAMPUS_POSITION_Z = 0;
 
-const LABEL_DISTANCE_LIMIT = 190;
+const LABEL_DISTANCE_LIMIT = 220;
 
 type FocusPoint = {
   x: number;
@@ -38,19 +41,50 @@ function campusLocalToWorld(x: number, z: number) {
 
 function UserLocationMarker() {
   const mapPosition = useLocationStore((s) => s.mapPosition);
+  const ringRef = useRef<any>(null);
+
+  useFrame(({ clock }) => {
+    if (!ringRef.current) return;
+    const t = (clock.getElapsedTime() % 1.6) / 1.6;
+    const scale = 1 + t * 1.4;
+    ringRef.current.scale.set(scale, scale, scale);
+    ringRef.current.material.opacity = (1 - t) * 0.55;
+  });
 
   if (!mapPosition) return null;
 
   return (
-    <group position={[mapPosition.x, 8, mapPosition.z]}>
-      <mesh rotation={[0, 0, Math.PI]}>
-        <coneGeometry args={[4, 12, 32]} />
-        <meshStandardMaterial color="#ef1c25" />
+    <group position={[mapPosition.x, 4, mapPosition.z]}>
+      {/* Pulsing ring */}
+      <mesh
+        ref={ringRef}
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0.1, 0]}
+      >
+        <ringGeometry args={[5.5, 7, 48]} />
+        <meshBasicMaterial color="#2563eb" transparent opacity={0.55} />
       </mesh>
 
-      <mesh position={[0, 6, 0]}>
-        <sphereGeometry args={[2.2, 32, 32]} />
-        <meshStandardMaterial color="#ef1c25" />
+      {/* Inner solid disc */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.2, 0]}>
+        <circleGeometry args={[5, 48]} />
+        <meshBasicMaterial color="#2563eb" transparent opacity={0.18} />
+      </mesh>
+
+      {/* Pin head */}
+      <mesh position={[0, 8, 0]}>
+        <sphereGeometry args={[2.6, 32, 32]} />
+        <meshStandardMaterial
+          color="#2563eb"
+          emissive="#1d4ed8"
+          emissiveIntensity={0.35}
+        />
+      </mesh>
+
+      {/* Pin core */}
+      <mesh position={[0, 8, 0]}>
+        <sphereGeometry args={[1.1, 24, 24]} />
+        <meshStandardMaterial color="#ffffff" />
       </mesh>
     </group>
   );
@@ -64,6 +98,9 @@ type BuildingLabelsProps = {
 function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
   const { camera } = useThree();
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
+  const setSelectedBuilding = useBuildingStore(
+    (state) => state.setSelectedBuilding,
+  );
   const [visible, setVisible] = useState(false);
 
   useFrame(() => {
@@ -83,28 +120,71 @@ function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
           return null;
         }
 
-        const y = (building.y ?? 0) + 8;
+        const y = (building.y ?? 0) + 12;
+        const isSelected = selectedBuilding?.id === building.id;
+        const accent = getCategoryAccent(building.category_name);
+        const accentColor = building.category_color || accent.fg;
 
         return (
           <Html
             key={building.id}
             position={[building.x, y, building.z]}
             center
+            distanceFactor={isMobile ? 12 : 14}
+            zIndexRange={[10, 0]}
           >
-            <div
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedBuilding(building);
+              }}
               style={{
-                background: "#111827",
-                color: "#fff",
-                padding: "4px 8px",
-                borderRadius: "999px",
-                fontSize: "11px",
-                maxWidth: isMobile ? "90px" : "none",
-                textAlign: "center",
-                lineHeight: 1.25,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "5px 10px 5px 6px",
+                borderRadius: 999,
+                border: `1px solid ${
+                  isSelected ? accentColor : "rgba(15,23,42,0.12)"
+                }`,
+                background: isSelected ? accentColor : "rgba(255,255,255,0.96)",
+                color: isSelected ? "#ffffff" : "#0f172a",
+                fontSize: 11,
+                fontWeight: 700,
+                lineHeight: 1.2,
+                whiteSpace: "nowrap",
+                cursor: "pointer",
+                boxShadow: isSelected
+                  ? "0 8px 18px rgba(15,23,42,0.25)"
+                  : "0 4px 10px rgba(15,23,42,0.18)",
+                fontFamily: "Inter, sans-serif",
+                letterSpacing: "0.01em",
+                userSelect: "none",
+                transform: "translateZ(0)",
               }}
             >
-              {building.name}
-            </div>
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: 999,
+                  background: isSelected ? "#ffffff" : accentColor,
+                  color: isSelected ? accentColor : "#ffffff",
+                  display: "inline-grid",
+                  placeItems: "center",
+                  fontSize: 8,
+                  fontWeight: 800,
+                  letterSpacing: 0,
+                }}
+              >
+                {(building.code || building.name).charAt(0)}
+              </span>
+              <span style={{ maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis" }}>
+                {building.name}
+              </span>
+            </button>
           </Html>
         );
       })}
@@ -117,33 +197,110 @@ function CampusModel() {
   return <primitive object={scene} />;
 }
 
-type FocusUserButtonProps = {
-  onClick: () => void;
-  isMobile?: boolean;
+type ViewerToolbarProps = {
+  hasLocation: boolean;
+  onFocusUser: () => void;
+  onResetView: () => void;
+  onZoom: (delta: number) => void;
 };
 
-function FocusUserButton({ onClick, isMobile = false }: FocusUserButtonProps) {
+function ViewerToolbar({
+  hasLocation,
+  onFocusUser,
+  onResetView,
+  onZoom,
+}: ViewerToolbarProps) {
   return (
-    <button
-      onClick={onClick}
-      style={{
-        position: "absolute",
-        right: "calc(16px + env(safe-area-inset-right))",
-        bottom: isMobile
-          ? "calc(20px + env(safe-area-inset-bottom))"
-          : "calc(88px + env(safe-area-inset-bottom))",
-        width: 56,
-        height: 56,
-        borderRadius: "50%",
-        border: "none",
-        background: "#fff",
-        fontSize: 24,
-        boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
-        zIndex: 100,
-      }}
-    >
-      📍
-    </button>
+    <div className="ito-toolbar">
+      <button
+        type="button"
+        className="ito-toolbar__btn"
+        onClick={onResetView}
+        aria-label="Vista general del campus"
+        title="Vista general"
+      >
+        <Icon name="home" size={18} />
+      </button>
+      <button
+        type="button"
+        className="ito-toolbar__btn"
+        onClick={() => onZoom(-1)}
+        aria-label="Acercar"
+        title="Acercar"
+      >
+        <Icon name="plus" size={18} />
+      </button>
+      <button
+        type="button"
+        className="ito-toolbar__btn"
+        onClick={() => onZoom(1)}
+        aria-label="Alejar"
+        title="Alejar"
+      >
+        <Icon name="minus" size={18} />
+      </button>
+      <button
+        type="button"
+        className={`ito-toolbar__btn ${hasLocation ? "is-active" : ""}`}
+        onClick={onFocusUser}
+        aria-label="Centrar en mi ubicación"
+        title={
+          hasLocation
+            ? "Centrar en mi ubicación"
+            : "Esperando ubicación…"
+        }
+        disabled={!hasLocation}
+        style={!hasLocation ? { opacity: 0.55, cursor: "not-allowed" } : undefined}
+      >
+        <Icon name="crosshair" size={18} />
+      </button>
+    </div>
+  );
+}
+
+type CategoryLegendProps = {
+  buildings: Building[];
+};
+
+function CategoryLegend({ buildings }: CategoryLegendProps) {
+  const items = useMemo(() => {
+    const seen = new Map<string, { name: string; color: string; count: number }>();
+    for (const b of buildings) {
+      if (!b.is_active) continue;
+      const accent = getCategoryAccent(b.category_name);
+      const color = b.category_color || accent.fg;
+      const key = b.category_name;
+      const existing = seen.get(key);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        seen.set(key, { name: b.category_name, color, count: 1 });
+      }
+    }
+    return Array.from(seen.values()).sort((a, b) => b.count - a.count).slice(0, 6);
+  }, [buildings]);
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="ito-legend anim-fade-in" aria-label="Leyenda de categorías">
+      <div className="ito-legend__title">Categorías</div>
+      <div className="ito-legend__items">
+        {items.map((item) => (
+          <div key={item.name} className="ito-legend__item">
+            <span
+              className="ito-legend__swatch"
+              style={{ background: item.color }}
+              aria-hidden="true"
+            />
+            <span style={{ flex: 1 }}>{item.name}</span>
+            <span style={{ color: "var(--color-text-muted)", fontWeight: 600 }}>
+              {item.count}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -197,7 +354,11 @@ export function CampusViewer({
   }, [focus, isMobile]);
 
   useEffect(() => {
-    if (!selectedBuilding || selectedBuilding.x == null || selectedBuilding.z == null) {
+    if (
+      !selectedBuilding ||
+      selectedBuilding.x == null ||
+      selectedBuilding.z == null
+    ) {
       return;
     }
 
@@ -207,20 +368,55 @@ export function CampusViewer({
     });
   }, [selectedBuilding]);
 
-  const handleFocus = () => {
+  const handleFocusUser = () => {
     if (!mapPosition) return;
-
     setFocus({
       x: mapPosition.x,
       z: mapPosition.z,
     });
   };
 
+  const handleResetView = () => {
+    if (!controlsRef.current) return;
+    const controls = controlsRef.current;
+    setFocus(null);
+    if (isMobile) {
+      controls.target.set(0, 0, 40);
+      controls.object.position.set(0, 115, 185);
+    } else {
+      controls.target.set(0, 0, 0);
+      controls.object.position.set(0, 180, 0);
+    }
+    controls.update();
+  };
+
+  const handleZoom = (delta: number) => {
+    if (!controlsRef.current) return;
+    const controls = controlsRef.current;
+    const offset = controls.object.position.clone().sub(controls.target);
+    const factor = delta > 0 ? 1.18 : 0.82;
+    offset.multiplyScalar(factor);
+    const length = offset.length();
+    if (length < (controls.minDistance ?? 20)) return;
+    if (length > (controls.maxDistance ?? 350)) return;
+    controls.object.position.copy(controls.target).add(offset);
+    controls.update();
+  };
+
+  const hasLocation = mapPosition !== null;
+
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
       {!mobilePanelOpen && (
-        <FocusUserButton onClick={handleFocus} isMobile={isMobile} />
+        <ViewerToolbar
+          hasLocation={hasLocation}
+          onFocusUser={handleFocusUser}
+          onResetView={handleResetView}
+          onZoom={handleZoom}
+        />
       )}
+
+      {!isMobile && !mobilePanelOpen && <CategoryLegend buildings={buildings} />}
 
       <Canvas
         camera={{
@@ -228,15 +424,25 @@ export function CampusViewer({
           fov: isMobile ? 42 : 45,
         }}
       >
-        <ambientLight intensity={1.5} />
-        <directionalLight position={[50, 80, 20]} intensity={2} />
-        <gridHelper args={[500, 100]} />
+        <color attach="background" args={["#eef4fb"]} />
+        <fog attach="fog" args={["#eef4fb", 250, 480]} />
+        <ambientLight intensity={1.2} />
+        <hemisphereLight args={["#dbeafe", "#94a3b8", 0.6]} />
+        <directionalLight
+          position={[60, 90, 30]}
+          intensity={1.6}
+          castShadow={false}
+        />
+
+        <gridHelper args={[500, 50, "#cbd5e1", "#e2e8f0"]} position={[0, -0.4, 0]} />
 
         <OrbitControls
           ref={controlsRef}
           maxPolarAngle={Math.PI / 2.15}
           minDistance={20}
           maxDistance={350}
+          enableDamping
+          dampingFactor={0.08}
         />
 
         <group rotation={[0, CAMPUS_ROTATION_Y, 0]}>

@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import { CampusViewer } from "../../components/viewer/CampusViewer";
 import { BuildingSidebar } from "../buildings/components/BuildingSidebar";
 import { useBuildingStore } from "../../store/building-store";
+import { Icon } from "../../components/ui/Icons";
 
 function useIsMobile(breakpoint = 768) {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < breakpoint);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < breakpoint : false,
+  );
 
   useEffect(() => {
     const handleResize = () => {
@@ -25,180 +28,100 @@ export function CampusPage() {
 
   const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
 
+  // Open the drawer automatically when the user picks a building on the map.
   useEffect(() => {
-    if (!isMobile) {
+    if (isMobile && (selectedBuilding || routeDestination)) {
       setIsMobilePanelOpen(true);
     }
-  }, [isMobile]);
+  }, [isMobile, selectedBuilding, routeDestination]);
 
   if (!isMobile) {
     return (
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "320px 1fr",
-          width: "100vw",
-          height: "100vh",
-          overflow: "hidden",
-          background: "#f3f4f6",
-        }}
-      >
+      <div className="ito-campus">
         <BuildingSidebar isMobile={false} />
 
-        <div
-          style={{
-            position: "relative",
-            minWidth: 0,
-            height: "100%",
-          }}
-        >
+        <div className="ito-campus__viewer">
           <CampusViewer isMobile={false} mobilePanelOpen={false} />
         </div>
       </div>
     );
   }
 
-  return (
-    <div
-      style={{
-        position: "relative",
-        width: "100vw",
-        height: "100vh",
-        overflow: "hidden",
-        background: "#f3f4f6",
-      }}
-    >
-      <CampusViewer
-        isMobile
-        mobilePanelOpen={isMobilePanelOpen}
-      />
+  const fabLabel = routeDestination
+    ? "Ver ruta"
+    : selectedBuilding
+      ? "Ver detalles"
+      : "Buscar edificios";
 
-      <button
-        type="button"
-        onClick={() => setIsMobilePanelOpen(true)}
-        style={{
-          position: "absolute",
-          top: 16,
-          left: 16,
-          zIndex: 30,
-          border: "none",
-          borderRadius: 14,
-          padding: "12px 16px",
-          background: "#ffffff",
-          color: "#111827",
-          fontSize: 14,
-          fontWeight: 700,
-          boxShadow: "0 12px 24px rgba(0,0,0,0.16)",
-          cursor: "pointer",
-        }}
-      >
-        {routeDestination
-          ? "Ruta"
-          : selectedBuilding
-          ? "Detalle"
-          : "Edificios"}
-      </button>
+  const fabIcon: "route" | "building" | "search" = routeDestination
+    ? "route"
+    : selectedBuilding
+      ? "building"
+      : "search";
+
+  return (
+    <div className="ito-campus--mobile">
+      <CampusViewer isMobile mobilePanelOpen={isMobilePanelOpen} />
+
+      {!isMobilePanelOpen && (
+        <button
+          type="button"
+          onClick={() => setIsMobilePanelOpen(true)}
+          className="ito-fab anim-fade-in"
+          style={{ top: 16, left: 16 }}
+        >
+          <span className="ito-fab__icon" aria-hidden="true">
+            <Icon name={fabIcon} size={14} />
+          </span>
+          <span>{fabLabel}</span>
+        </button>
+      )}
 
       {isMobilePanelOpen && (
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: "52vh",
-            zIndex: 25,
-            background: "rgba(255,255,255,0.98)",
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            boxShadow: "0 -8px 30px rgba(0,0,0,0.18)",
-            borderTop: "1px solid #e5e7eb",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-          }}
-        >
+        <>
           <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              paddingTop: 10,
-              paddingBottom: 8,
-            }}
-          >
-            <div
-              style={{
-                width: 52,
-                height: 6,
-                borderRadius: 999,
-                background: "#d1d5db",
-              }}
-            />
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "0 16px 12px",
-              borderBottom: "1px solid #e5e7eb",
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  fontSize: 18,
-                  fontWeight: 700,
-                  color: "#111827",
-                }}
-              >
-                {routeDestination
-                  ? "Ruta"
-                  : selectedBuilding
-                  ? "Edificio"
-                  : "Edificios"}
-              </div>
-
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#6b7280",
-                  marginTop: 2,
-                }}
-              >
-                Busca, selecciona y genera una ruta.
-              </div>
+            className="ito-backdrop anim-fade-in"
+            onClick={() => setIsMobilePanelOpen(false)}
+            role="presentation"
+          />
+          <div className="ito-mobile-drawer anim-slide-up" role="dialog" aria-label="Panel de edificios">
+            <div className="ito-mobile-drawer__handle" aria-hidden="true">
+              <div className="ito-mobile-drawer__handle-bar" />
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsMobilePanelOpen(false)}
-              style={{
-                border: "none",
-                background: "#f3f4f6",
-                borderRadius: 10,
-                padding: "8px 10px",
-                cursor: "pointer",
-                fontSize: 13,
-                fontWeight: 700,
-                color: "#111827",
-              }}
-            >
-              Cerrar
-            </button>
-          </div>
+            <div className="ito-mobile-drawer__header">
+              <div>
+                <div className="ito-mobile-drawer__title">
+                  {routeDestination
+                    ? "Tu ruta"
+                    : selectedBuilding
+                      ? selectedBuilding.name
+                      : "Campus ITO"}
+                </div>
+                <div className="ito-mobile-drawer__subtitle">
+                  {routeDestination
+                    ? "Sigue las indicaciones en el mapa"
+                    : selectedBuilding
+                      ? "Información del edificio"
+                      : "Explora y busca edificios del campus"}
+                </div>
+              </div>
 
-          <div
-            style={{
-              padding: 16,
-              overflowY: "auto",
-              flex: 1,
-            }}
-          >
-            <BuildingSidebar isMobile />
+              <button
+                type="button"
+                onClick={() => setIsMobilePanelOpen(false)}
+                className="ito-mobile-drawer__close"
+                aria-label="Cerrar panel"
+              >
+                <Icon name="close" size={16} />
+              </button>
+            </div>
+
+            <div className="ito-mobile-drawer__body">
+              <BuildingSidebar isMobile />
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

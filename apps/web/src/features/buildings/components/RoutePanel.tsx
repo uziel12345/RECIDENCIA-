@@ -1,5 +1,6 @@
 import { useBuildingStore } from "../../../store/building-store";
 import { useLocationStore } from "../../../store/location-store";
+import { Icon } from "../../../components/ui/Icons";
 
 type RoutePanelProps = {
   compact?: boolean;
@@ -8,9 +9,7 @@ type RoutePanelProps = {
 export function RoutePanel({ compact = false }: RoutePanelProps) {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const routeDestination = useBuildingStore((state) => state.routeDestination);
-  const setRouteDestination = useBuildingStore(
-    (state) => state.setRouteDestination
-  );
+  const setRouteDestination = useBuildingStore((state) => state.setRouteDestination);
   const clearRoute = useBuildingStore((state) => state.clearRoute);
 
   const permission = useLocationStore((state) => state.permission);
@@ -18,189 +17,134 @@ export function RoutePanel({ compact = false }: RoutePanelProps) {
   const mapPosition = useLocationStore((state) => state.mapPosition);
 
   const hasValidLocation = permission === "granted" && mapPosition !== null;
+  const canGenerate = !!selectedBuilding && hasValidLocation;
+
+  const statusInfo = (() => {
+    if (permission === "granted") {
+      return {
+        variant: "success" as const,
+        text: "Ubicación disponible",
+        hint:
+          geoPosition?.accuracy !== null && geoPosition?.accuracy !== undefined
+            ? `Precisión ${geoPosition.accuracy.toFixed(1)} m`
+            : undefined,
+      };
+    }
+    if (permission === "denied") {
+      return {
+        variant: "danger" as const,
+        text: "Permiso de ubicación denegado",
+        hint: "Habilítalo desde el navegador para trazar rutas.",
+      };
+    }
+    if (permission === "unsupported") {
+      return {
+        variant: "warning" as const,
+        text: "Geolocalización no soportada",
+        hint: "Tu dispositivo no admite ubicación en tiempo real.",
+      };
+    }
+    return {
+      variant: "warning" as const,
+      text: "Esperando permiso de ubicación",
+      hint: "Acepta el permiso para usar la ruta.",
+    };
+  })();
+
+  const destinationName = routeDestination?.name ?? selectedBuilding?.name ?? null;
 
   return (
-    <div
-      style={{
-        width: "100%",
-        background: "rgba(255, 255, 255, 0.96)",
-        borderRadius: 16,
-        padding: compact ? 14 : 18,
-        boxShadow: compact ? "none" : "0 12px 30px rgba(0, 0, 0, 0.08)",
-        border: "1px solid rgba(229, 231, 235, 0.9)",
-        boxSizing: "border-box",
-      }}
+    <section
+      className="ito-route-panel"
+      style={compact ? { boxShadow: "none" } : undefined}
+      aria-label="Panel de ruta"
     >
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 700,
-          color: "#6b7280",
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          marginBottom: 12,
-        }}
-      >
-        Ruta desde tu ubicación
+      <div className="ito-route-panel__title">
+        <Icon name="route" size={14} />
+        <span>Ruta desde tu ubicación</span>
       </div>
 
       <div
-        style={{
-          display: "grid",
-          gap: 10,
-        }}
+        className={`ito-route-status ito-route-status--${statusInfo.variant}`}
+        role="status"
       >
-        <div
-          style={{
-            background: "#f9fafb",
-            border: "1px solid #e5e7eb",
-            borderRadius: 12,
-            padding: "12px 14px",
-          }}
-        >
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              textTransform: "uppercase",
-              color: "#6b7280",
-              marginBottom: 6,
-              letterSpacing: "0.05em",
-            }}
-          >
-            Estado
-          </div>
-
-          <div
-            style={{
-              fontSize: 14,
-              fontWeight: 600,
-              color: "#111827",
-              marginBottom: 6,
-            }}
-          >
-            {permission === "granted"
-              ? "Ubicación disponible"
-              : permission === "denied"
-              ? "Permiso denegado"
-              : permission === "unsupported"
-              ? "No soportado"
-              : "Esperando permiso"}
-          </div>
-
-          {geoPosition && (
-            <div style={{ fontSize: 12, color: "#4b5563", lineHeight: 1.5 }}>
-              Precisión actual:{" "}
-              {geoPosition.accuracy !== null
-                ? `${geoPosition.accuracy.toFixed(1)} m`
-                : "sin dato"}
-            </div>
+        <span className="ito-route-status__dot" aria-hidden="true" />
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <span>{statusInfo.text}</span>
+          {statusInfo.hint && (
+            <span style={{ fontWeight: 500, opacity: 0.85 }}>
+              {statusInfo.hint}
+            </span>
           )}
         </div>
+      </div>
 
-        <div
-          style={{
-            background: "#f9fafb",
-            border: "1px solid #e5e7eb",
-            borderRadius: 12,
-            padding: "12px 14px",
-          }}
-        >
+      <div style={{ display: "grid", gap: 8 }}>
+        <div className="ito-route-step">
           <div
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              textTransform: "uppercase",
-              color: "#6b7280",
-              marginBottom: 6,
-              letterSpacing: "0.05em",
-            }}
+            className="ito-route-step__icon ito-route-step__icon--origin"
+            aria-hidden="true"
           >
-            Destino
+            <Icon name="location" size={16} />
           </div>
-
-          <div
-            style={{
-              fontSize: 14,
-              fontWeight: 600,
-              color: "#111827",
-            }}
-          >
-            {routeDestination
-              ? routeDestination.name
-              : selectedBuilding
-              ? selectedBuilding.name
-              : "Selecciona un edificio"}
+          <div className="ito-route-step__main">
+            <div className="ito-route-step__label">Origen</div>
+            <div className="ito-route-step__value">
+              {hasValidLocation ? "Tu ubicación actual" : "Ubicación pendiente"}
+            </div>
+            {hasValidLocation && (
+              <div className="ito-route-step__hint">Detectada en el campus</div>
+            )}
           </div>
         </div>
 
-        {hasValidLocation && routeDestination && (
+        <div className="ito-route-step">
           <div
-            style={{
-              background: "rgba(34, 197, 94, 0.08)",
-              border: "1px solid rgba(34, 197, 94, 0.25)",
-              borderRadius: 12,
-              padding: "12px 14px",
-              fontSize: 13,
-              color: "#166534",
-              lineHeight: 1.6,
-            }}
+            className="ito-route-step__icon ito-route-step__icon--destination"
+            aria-hidden="true"
           >
-            Ruta activa hacia <strong>{routeDestination.name}</strong>.
+            <Icon name="flag" size={16} />
           </div>
-        )}
-
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            flexWrap: "wrap",
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              if (selectedBuilding && hasValidLocation) {
-                setRouteDestination(selectedBuilding);
-              }
-            }}
-            disabled={!selectedBuilding || !hasValidLocation}
-            style={{
-              border: "none",
-              background:
-                selectedBuilding && hasValidLocation ? "#2563eb" : "#cbd5e1",
-              color: "#ffffff",
-              padding: "12px 14px",
-              borderRadius: 12,
-              cursor:
-                selectedBuilding && hasValidLocation
-                  ? "pointer"
-                  : "not-allowed",
-              fontSize: 13,
-              fontWeight: 700,
-            }}
-          >
-            Generar ruta
-          </button>
-
-          <button
-            type="button"
-            onClick={clearRoute}
-            style={{
-              border: "1px solid #e5e7eb",
-              background: "#ffffff",
-              color: "#111827",
-              padding: "12px 14px",
-              borderRadius: 12,
-              cursor: "pointer",
-              fontSize: 13,
-              fontWeight: 700,
-            }}
-          >
-            Limpiar
-          </button>
+          <div className="ito-route-step__main">
+            <div className="ito-route-step__label">Destino</div>
+            <div className="ito-route-step__value">
+              {destinationName ?? "Selecciona un edificio de la lista"}
+            </div>
+            {routeDestination && (
+              <div className="ito-route-step__hint">
+                Ruta activa hacia este edificio
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      <div className="ito-route-actions">
+        <button
+          type="button"
+          className="ito-btn ito-btn--primary"
+          onClick={() => {
+            if (selectedBuilding && hasValidLocation) {
+              setRouteDestination(selectedBuilding);
+            }
+          }}
+          disabled={!canGenerate}
+          style={{ flex: 1 }}
+        >
+          <Icon name="route" size={16} />
+          <span>Generar ruta</span>
+        </button>
+
+        <button
+          type="button"
+          className="ito-btn ito-btn--ghost"
+          onClick={clearRoute}
+          disabled={!routeDestination}
+        >
+          <Icon name="trash" size={16} />
+          <span>Limpiar</span>
+        </button>
+      </div>
+    </section>
   );
-} 
+}

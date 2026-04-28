@@ -3,179 +3,233 @@ import { useBuildingStore } from "../../../store/building-store";
 import { RoutePanel } from "./RoutePanel";
 import { getBuildings } from "../../../services/buildings.service";
 import { BuildingSearch } from "./BuildingSearch";
+import { BuildingInfoCard } from "./BuildingInfoCard";
+import { CategoryBadge, getCategoryAccent } from "../../../components/ui/CategoryBadge";
+import { Icon } from "../../../components/ui/Icons";
 import type { Building } from "../types/building";
 
 type BuildingSidebarProps = {
   isMobile?: boolean;
 };
 
-export function BuildingSidebar({
-  isMobile = false,
-}: BuildingSidebarProps) {
+export function BuildingSidebar({ isMobile = false }: BuildingSidebarProps) {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
-  const setSelectedBuilding = useBuildingStore(
-    (state) => state.setSelectedBuilding
-  );
+  const setSelectedBuilding = useBuildingStore((state) => state.setSelectedBuilding);
   const searchTerm = useBuildingStore((state) => state.searchTerm);
 
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   useEffect(() => {
+    let mounted = true;
     async function loadBuildings() {
       try {
         const data = await getBuildings();
-        setBuildings(data);
+        if (mounted) setBuildings(data);
       } catch (error) {
         console.error("Error cargando edificios:", error);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
 
     loadBuildings();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
- const filteredBuildings = useMemo(() => {
-  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const categories = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const b of buildings) {
+      if (!b.is_active) continue;
+      map.set(b.category_name, (map.get(b.category_name) ?? 0) + 1);
+    }
+    return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
+  }, [buildings]);
 
-  const result = buildings
-    .filter((building) => building.is_active)
-    .filter((building) => {
-      if (!normalizedSearch) return true;
+  const filteredBuildings = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
 
-      return (
-        building.name.toLowerCase().includes(normalizedSearch) ||
-        building.code.toLowerCase().includes(normalizedSearch) ||
-        building.category_name.toLowerCase().includes(normalizedSearch)
-      );
+    const result = buildings
+      .filter((building) => building.is_active)
+      .filter((building) => {
+        if (!activeCategory) return true;
+        return building.category_name === activeCategory;
+      })
+      .filter((building) => {
+        if (!normalizedSearch) return true;
+        return (
+          building.name.toLowerCase().includes(normalizedSearch) ||
+          building.code.toLowerCase().includes(normalizedSearch) ||
+          building.category_name.toLowerCase().includes(normalizedSearch)
+        );
+      });
+
+    if (!selectedBuilding) return result;
+
+    return [...result].sort((a, b) => {
+      if (a.id === selectedBuilding.id) return -1;
+      if (b.id === selectedBuilding.id) return 1;
+      return 0;
     });
-
-  if (!selectedBuilding) {
-    return result;
-  }
-
-  return [...result].sort((a, b) => {
-    if (a.id === selectedBuilding.id) return -1;
-    if (b.id === selectedBuilding.id) return 1;
-    return 0;
-  });
-}, [buildings, searchTerm, selectedBuilding]);
+  }, [buildings, searchTerm, selectedBuilding, activeCategory]);
 
   return (
-    <aside
-      style={{
-        width: "100%",
-        height: isMobile ? "auto" : "100vh",
-        background: "#ffffff",
-        borderRight: isMobile ? "none" : "1px solid #e5e7eb",
-        padding: isMobile ? 0 : "16px",
-        overflowY: "auto",
-        boxSizing: "border-box",
-      }}
-    >
-      <BuildingSearch />
+    <aside className={isMobile ? "ito-sidebar ito-sidebar--mobile" : "ito-sidebar"}>
+      {!isMobile && (
+        <header className="ito-brand">
+          <div className="ito-brand__mark" aria-hidden="true">
+            <Icon name="map" size={22} />
+          </div>
+          <div className="ito-brand__text">
+            <div className="ito-brand__title">Campus ITO</div>
+            <div className="ito-brand__subtitle">Mapa interactivo 3D</div>
+          </div>
+        </header>
+      )}
 
-      <div style={{ marginTop: 16 }}>
-        <h2
-          style={{
-            marginTop: 0,
-            marginBottom: 12,
-            fontSize: isMobile ? "18px" : "20px",
-          }}
-        >
-          Edificios
-        </h2>
+      <div className="ito-sidebar__section">
+        <BuildingSearch />
+      </div>
+
+      {categories.length > 0 && (
+        <div className="ito-sidebar__section">
+          <div className="ito-chip-row" role="tablist" aria-label="Categorías">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeCategory === null}
+              className={`ito-chip ${activeCategory === null ? "is-active" : ""}`}
+              onClick={() => setActiveCategory(null)}
+            >
+              <span>Todos</span>
+              <span className="ito-chip__count">{buildings.filter((b) => b.is_active).length}</span>
+            </button>
+            {categories.map(([name, count]) => {
+              const accent = getCategoryAccent(name);
+              const isActive = activeCategory === name;
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`ito-chip ${isActive ? "is-active" : ""}`}
+                  onClick={() => setActiveCategory(isActive ? null : name)}
+                  style={
+                    isActive
+                      ? {
+                          background: accent.bg,
+                          color: accent.fg,
+                          borderColor: accent.border,
+                        }
+                      : undefined
+                  }
+                >
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 999,
+                      background: accent.fg,
+                      display: "inline-block",
+                    }}
+                  />
+                  <span>{name}</span>
+                  <span className="ito-chip__count">{count}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="ito-sidebar__section ito-sidebar__section--list">
+        <div className="ito-section-header">
+          <h2 className="ito-section-header__title">
+            {activeCategory ? activeCategory : "Edificios"}
+          </h2>
+          <span className="ito-section-header__count">
+            {loading ? "…" : `${filteredBuildings.length}`}
+          </span>
+        </div>
 
         <div
-          style={{
-            display: "grid",
-            gap: 8,
-            maxHeight: isMobile ? 220 : "none",
-            overflowY: isMobile ? "auto" : "visible",
-            paddingRight: isMobile ? 4 : 0,
-          }}
+          className="ito-list"
+          style={isMobile ? { maxHeight: 260 } : undefined}
         >
-          {filteredBuildings.length === 0 ? (
-            <p style={{ color: "#6b7280", fontSize: "14px" }}>
-              No se encontraron edificios.
-            </p>
+          {loading ? (
+            <div className="ito-empty">
+              <div className="ito-empty__spinner" aria-hidden="true" />
+              <p>Cargando edificios…</p>
+            </div>
+          ) : filteredBuildings.length === 0 ? (
+            <div className="ito-empty">
+              <Icon name="search" size={28} />
+              <p>No se encontraron edificios.</p>
+              <span>Intenta con otro término o categoría.</span>
+            </div>
           ) : (
-            filteredBuildings.map((building) => (
-              <button
-                key={building.id}
-                onClick={() => setSelectedBuilding(building)}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  textAlign: "left",
-                  padding: isMobile ? "12px" : "10px 12px",
-                  borderRadius: "12px",
-                  border: "1px solid #e5e7eb",
-                  background:
-                    selectedBuilding?.id === building.id ? "#eef2ff" : "#ffffff",
-                  cursor: "pointer",
-                }}
-              >
-                <strong
-                  style={{
-                    display: "block",
-                    fontSize: isMobile ? "15px" : "16px",
-                  }}
+            filteredBuildings.map((building) => {
+              const isSelected = selectedBuilding?.id === building.id;
+              const accent = getCategoryAccent(building.category_name);
+              return (
+                <button
+                  key={building.id}
+                  type="button"
+                  className={`ito-list-item ${isSelected ? "is-selected" : ""}`}
+                  onClick={() => setSelectedBuilding(building)}
+                  aria-pressed={isSelected}
+                  style={
+                    isSelected
+                      ? {
+                          borderColor: accent.fg,
+                          boxShadow: `0 0 0 3px ${accent.bg}`,
+                        }
+                      : undefined
+                  }
                 >
-                  {building.name}
-                </strong>
-
-                <div
-                  style={{
-                    fontSize: "12px",
-                    color: "#6b7280",
-                    marginTop: 4,
-                  }}
-                >
-                  {building.category_name}
-                </div>
-              </button>
-            ))
+                  <span
+                    className="ito-list-item__rail"
+                    aria-hidden="true"
+                    style={{ background: accent.fg }}
+                  />
+                  <div className="ito-list-item__main">
+                    <div className="ito-list-item__title-row">
+                      <span className="ito-list-item__code">{building.code}</span>
+                      <CategoryBadge name={building.category_name} size="sm" />
+                    </div>
+                    <div className="ito-list-item__name">{building.name}</div>
+                  </div>
+                  <span className="ito-list-item__chevron" aria-hidden="true">
+                    <Icon name="chevron-right" size={16} />
+                  </span>
+                </button>
+              );
+            })
           )}
         </div>
       </div>
 
       {selectedBuilding && (
         <>
-          <hr style={{ margin: "16px 0" }} />
-
-          <div>
-            <h3 style={{ marginBottom: "8px" }}>Información</h3>
-
-            <div
-              style={{
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
-                borderRadius: 12,
-                padding: 12,
-              }}
-            >
-              <p style={{ margin: "0 0 8px" }}>
-                <strong>Nombre:</strong> {selectedBuilding.name}
-              </p>
-              <p style={{ margin: "0 0 8px" }}>
-                <strong>Código:</strong> {selectedBuilding.code}
-              </p>
-              <p style={{ margin: "0 0 8px" }}>
-                <strong>Categoría:</strong> {selectedBuilding.category_name}
-              </p>
-              <p style={{ margin: 0 }}>
-                <strong>Descripción:</strong>{" "}
-                {selectedBuilding.description ?? "Sin descripción"}
-              </p>
-            </div>
+          <div className="ito-sidebar__section">
+            <BuildingInfoCard building={selectedBuilding} />
           </div>
 
-          <div style={{ marginTop: 16 }}>
+          <div className="ito-sidebar__section">
             <RoutePanel compact={isMobile} />
           </div>
         </>
+      )}
+
+      {!isMobile && (
+        <footer className="ito-sidebar__footer">
+          <span>Instituto Tecnológico de Oaxaca</span>
+        </footer>
       )}
     </aside>
   );
