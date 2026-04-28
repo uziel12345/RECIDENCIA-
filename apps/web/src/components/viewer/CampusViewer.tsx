@@ -1,6 +1,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { Html, OrbitControls, useGLTF } from "@react-three/drei";
 import type { Building } from "../../features/buildings/types/building";
 import { useLocationStore } from "../../store/location-store";
@@ -8,7 +8,7 @@ import { useBuildingStore } from "../../store/building-store";
 import { getBuildings } from "../../services/buildings.service";
 import { startUserLocationTracking } from "../../features/location/services/geolocation";
 import { RouteLine } from "../../features/buildings/components/RouteLine";
-import { Icon } from "../ui/Icons";
+import { Icon, type IconName } from "../ui/Icons";
 import { getCategoryAccent } from "../ui/CategoryBadge";
 
 const MODEL_PATH = "/models/campus.glb";
@@ -17,7 +17,6 @@ const CAMPUS_ROTATION_Y = Math.PI / 2;
 const CAMPUS_POSITION_X = 0;
 const CAMPUS_POSITION_Z = 0;
 
-const LABEL_DISTANCE_LIMIT = 220;
 
 type FocusPoint = {
   x: number;
@@ -95,19 +94,35 @@ type BuildingLabelsProps = {
   isMobile?: boolean;
 };
 
+function getBuildingMarkerIcon(building: Building): IconName {
+  const category = building.category_code?.toLowerCase?.() ?? "";
+
+  switch (category) {
+    case "biblioteca":
+      return "map";
+
+    case "aulas":
+      return "graduation";
+
+    case "laboratorio":
+      return "layers";
+
+    case "administrativo":
+      return "building";
+
+    case "servicio":
+      return "flag";
+
+    default:
+      return "map-pin";
+  }
+}
+
 function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
-  const { camera } = useThree();
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const setSelectedBuilding = useBuildingStore(
     (state) => state.setSelectedBuilding,
   );
-  const [visible, setVisible] = useState(false);
-
-  useFrame(() => {
-    setVisible(camera.position.length() < LABEL_DISTANCE_LIMIT);
-  });
-
-  if (!visible) return null;
 
   const buildingsToRender = isMobile
     ? buildings.filter((building) => building.id === selectedBuilding?.id)
@@ -130,8 +145,8 @@ function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
             key={building.id}
             position={[building.x, y, building.z]}
             center
-            distanceFactor={isMobile ? 12 : 14}
-            zIndexRange={[10, 0]}
+            zIndexRange={[100, 0]}
+            occlude={false}
           >
             <button
               type="button"
@@ -142,15 +157,15 @@ function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 6,
-                padding: "5px 10px 5px 6px",
+                gap: 8,
+                padding: "6px 12px 6px 8px",
                 borderRadius: 999,
                 border: `1px solid ${
                   isSelected ? accentColor : "rgba(15,23,42,0.12)"
                 }`,
-                background: isSelected ? accentColor : "rgba(255,255,255,0.96)",
+                background: isSelected ? accentColor : "rgba(255,255,255,0.97)",
                 color: isSelected ? "#ffffff" : "#0f172a",
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: 700,
                 lineHeight: 1.2,
                 whiteSpace: "nowrap",
@@ -162,26 +177,32 @@ function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
                 letterSpacing: "0.01em",
                 userSelect: "none",
                 transform: "translateZ(0)",
+                pointerEvents: "auto",
               }}
             >
               <span
                 aria-hidden="true"
                 style={{
-                  width: 14,
-                  height: 14,
-                  borderRadius: 999,
-                  background: isSelected ? "#ffffff" : accentColor,
-                  color: isSelected ? accentColor : "#ffffff",
-                  display: "inline-grid",
-                  placeItems: "center",
-                  fontSize: 8,
-                  fontWeight: 800,
-                  letterSpacing: 0,
+                 width: 20,
+                 height: 20,
+                 borderRadius: 999,
+                 background: isSelected ? "#ffffff" : accentColor,
+                 color: isSelected ? accentColor : "#ffffff",
+                 display: "inline-grid",
+                 placeItems: "center",
+                 flexShrink: 0,
+                 }}
+>
+                  <Icon name={getBuildingMarkerIcon(building)} size={12} />
+              </span>
+
+              <span
+                style={{
+                  maxWidth: 180,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
               >
-                {(building.code || building.name).charAt(0)}
-              </span>
-              <span style={{ maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis" }}>
                 {building.name}
               </span>
             </button>

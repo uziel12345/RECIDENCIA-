@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ==========================================================================
-   SISTEMA DE DISEÑO — Mapa 3D ITO
+   SISTEMA DE DISEÑO - Mapa 3D ITO
    Paleta: Azul institucional + Ámbar como acento + neutros cálidos
    ========================================================================== */
 
@@ -77,14 +77,17 @@ body {
   width: 10px;
   height: 10px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 999px;
   border: 2px solid var(--color-bg);
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
@@ -115,32 +118,39 @@ input {
 }
 
 /* ============================ ANIMACIONES ============================ */
+
 @keyframes ito-slide-up {
   from {
     transform: translateY(100%);
   }
+
   to {
     transform: translateY(0);
   }
 }
+
 @keyframes ito-fade-in {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
 }
+
 @keyframes ito-pulse-ring {
   0% {
     transform: scale(0.85);
     opacity: 0.7;
   }
+
   100% {
     transform: scale(1.6);
     opacity: 0;
   }
 }
+
 @keyframes ito-spin {
   to {
     transform: rotate(360deg);
@@ -150,11 +160,13 @@ input {
 .anim-slide-up {
   animation: ito-slide-up 0.34s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
 .anim-fade-in {
   animation: ito-fade-in 0.22s ease-out;
 }
 
 /* ============================ SIDEBAR ============================ */
+
 .ito-sidebar {
   position: relative;
   width: 100%;
@@ -184,6 +196,7 @@ input {
 .ito-sidebar__section--list {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .ito-sidebar__footer {
@@ -197,7 +210,8 @@ input {
   text-transform: uppercase;
 }
 
-/* Brand header */
+/* ============================ BRAND HEADER ============================ */
+
 .ito-brand {
   display: flex;
   align-items: center;
@@ -234,7 +248,8 @@ input {
   margin-top: 2px;
 }
 
-/* Section header */
+/* ============================ SECTION HEADER ============================ */
+
 .ito-section-header {
   display: flex;
   align-items: center;
@@ -264,6 +279,7 @@ input {
 }
 
 /* ============================ SEARCH ============================ */
+
 .ito-search {
   position: relative;
   display: flex;
@@ -327,17 +343,18 @@ input {
 }
 
 /* ============================ CHIPS ============================ */
+
 .ito-chip-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .ito-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px 6px 9px;
+  padding: 7px 11px 7px 10px;
   border-radius: 999px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
@@ -373,27 +390,33 @@ input {
 }
 
 /* ============================ LIST ============================ */
+
 .ito-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
   overflow-y: auto;
-  padding-right: 2px;
+  overflow-x: hidden;
+  padding: 2px 8px 12px 2px;
+  scroll-behavior: smooth;
 }
 
 .ito-list-item {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: 5px minmax(0, 1fr) 24px;
   align-items: center;
-  gap: 10px;
+  column-gap: 12px;
   width: 100%;
+  min-height: 82px;
   text-align: left;
-  padding: 12px 12px 12px 14px;
-  border-radius: var(--radius-md);
+  padding: 14px 12px 14px 14px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   cursor: pointer;
-  overflow: hidden;
+  overflow: visible;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .ito-list-item:hover {
@@ -408,21 +431,19 @@ input {
 }
 
 .ito-list-item__rail {
-  position: absolute;
-  top: 8px;
-  bottom: 8px;
-  left: 4px;
-  width: 3px;
+  width: 5px;
+  height: 100%;
+  min-height: 48px;
   border-radius: 999px;
-  opacity: 0.85;
+  opacity: 0.9;
+  position: static;
 }
 
 .ito-list-item__main {
-  flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .ito-list-item__title-row {
@@ -430,26 +451,34 @@ input {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .ito-list-item__code {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--color-text-muted);
   background: var(--color-surface-muted);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 2px 7px;
+  border-radius: 7px;
+  padding: 3px 8px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  line-height: 1.1;
 }
 
 .ito-list-item__name {
-  font-size: 14px;
-  font-weight: 600;
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
   color: var(--color-text);
   line-height: 1.35;
   letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .ito-list-item__chevron {
@@ -457,6 +486,9 @@ input {
   display: grid;
   place-items: center;
   flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
 }
 
 .ito-list-item:hover .ito-list-item__chevron {
@@ -465,6 +497,7 @@ input {
 }
 
 /* ============================ EMPTY STATE ============================ */
+
 .ito-empty {
   display: flex;
   flex-direction: column;
@@ -498,6 +531,7 @@ input {
 }
 
 /* ============================ BADGES ============================ */
+
 .ito-badge {
   display: inline-flex;
   align-items: center;
@@ -509,10 +543,11 @@ input {
   letter-spacing: 0.02em;
   border: 1px solid transparent;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
 .ito-badge--sm {
-  padding: 2px 8px;
+  padding: 3px 8px;
   font-size: 10px;
 }
 
@@ -525,6 +560,7 @@ input {
 }
 
 /* ============================ INFO CARD ============================ */
+
 .ito-info-card {
   display: flex;
   flex-direction: column;
@@ -540,7 +576,7 @@ input {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 16px 16px 16px;
+  padding: 16px;
   color: #ffffff;
 }
 
@@ -642,6 +678,7 @@ input {
 }
 
 /* ============================ BUTTONS ============================ */
+
 .ito-btn {
   display: inline-flex;
   align-items: center;
@@ -662,11 +699,13 @@ input {
   border-color: var(--color-brand-700);
   box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
 }
+
 .ito-btn--primary:hover:not(:disabled) {
   background: var(--color-brand-700);
   transform: translateY(-1px);
   box-shadow: 0 6px 14px rgba(37, 99, 235, 0.3);
 }
+
 .ito-btn--primary:disabled {
   background: var(--color-border-strong);
   border-color: var(--color-border-strong);
@@ -680,6 +719,7 @@ input {
   color: var(--color-text);
   border-color: var(--color-border);
 }
+
 .ito-btn--ghost:hover {
   background: var(--color-surface-muted);
   border-color: var(--color-border-strong);
@@ -690,6 +730,7 @@ input {
   color: #ffffff;
   border-color: var(--color-accent-600);
 }
+
 .ito-btn--accent:hover:not(:disabled) {
   background: var(--color-accent-600);
 }
@@ -699,6 +740,7 @@ input {
 }
 
 /* ============================ ROUTE PANEL ============================ */
+
 .ito-route-panel {
   display: flex;
   flex-direction: column;
@@ -746,6 +788,7 @@ input {
   color: var(--color-brand-700);
   border: 1px solid var(--color-brand-100);
 }
+
 .ito-route-step__icon--destination {
   background: #fef3c7;
   color: var(--color-accent-600);
@@ -796,11 +839,13 @@ input {
   border-color: var(--color-success-border);
   color: var(--color-success-text);
 }
+
 .ito-route-status--warning {
   background: var(--color-warning-bg);
   border-color: var(--color-warning-border);
   color: var(--color-warning-text);
 }
+
 .ito-route-status--danger {
   background: var(--color-danger-bg);
   border-color: var(--color-danger-border);
@@ -821,6 +866,7 @@ input {
 }
 
 /* ============================ MOBILE / FLOATING ============================ */
+
 .ito-fab {
   position: absolute;
   z-index: 30;
@@ -828,7 +874,7 @@ input {
   align-items: center;
   gap: 8px;
   padding: 11px 16px 11px 13px;
-  border: none;
+  border: 1px solid var(--color-border);
   border-radius: 999px;
   background: var(--color-surface);
   color: var(--color-text);
@@ -836,8 +882,8 @@ input {
   font-weight: 700;
   cursor: pointer;
   box-shadow: var(--shadow-lg);
-  border: 1px solid var(--color-border);
 }
+
 .ito-fab:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-xl);
@@ -867,7 +913,7 @@ input {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  max-height: 78vh;
+  max-height: 82vh;
 }
 
 .ito-mobile-drawer__handle {
@@ -914,6 +960,7 @@ input {
   place-items: center;
   color: var(--color-text);
 }
+
 .ito-mobile-drawer__close:hover {
   background: var(--color-border);
 }
@@ -934,9 +981,10 @@ input {
 }
 
 /* ============================ CAMPUS LAYOUT ============================ */
+
 .ito-campus {
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: 385px 1fr;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
@@ -958,7 +1006,8 @@ input {
   background: var(--color-bg);
 }
 
-/* Top bar overlays for the 3D scene */
+/* ============================ TOOLBAR ============================ */
+
 .ito-toolbar {
   position: absolute;
   top: 16px;
@@ -995,7 +1044,8 @@ input {
   border-color: var(--color-brand-700);
 }
 
-/* Map legend */
+/* ============================ MAP LEGEND ============================ */
+
 .ito-legend {
   position: absolute;
   bottom: 16px;
@@ -1042,18 +1092,80 @@ input {
   flex-shrink: 0;
 }
 
-/* ==== Mobile responsive tweaks ==== */
+/* ============================ RESPONSIVE ============================ */
+
 @media (max-width: 768px) {
   .ito-campus {
     grid-template-columns: 1fr;
   }
+
   .ito-toolbar {
     top: 12px;
     right: 12px;
   }
+
   .ito-legend {
     bottom: 12px;
     left: 12px;
     max-width: 200px;
   }
+
+  .ito-list {
+    gap: 10px;
+    padding-right: 4px;
+  }
+
+  .ito-list-item {
+    min-height: 74px;
+    padding: 12px;
+    grid-template-columns: 4px minmax(0, 1fr) 22px;
+  }
+
+  .ito-list-item__name {
+    font-size: 14px;
+  }
+
+  .ito-list-item__main {
+    gap: 6px;
+  }
+}
+/* ============================ FIX ICONOS SVG ============================ */
+
+svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.ito-brand__mark svg,
+.ito-toolbar__btn svg,
+.ito-fab__icon svg,
+.ito-info-card__hero-icon svg,
+.ito-info-card__close svg,
+.ito-btn svg,
+.ito-route-panel svg,
+.ito-route-step__icon svg,
+.ito-list-item__chevron svg,
+.ito-search__icon svg,
+.ito-search__clear svg,
+.ito-mobile-drawer__close svg {
+  width: auto;
+  height: auto;
+  stroke: currentColor;
+  color: inherit;
+  opacity: 1;
+  visibility: visible;
+}
+
+.ito-brand__mark,
+.ito-toolbar__btn,
+.ito-fab__icon,
+.ito-info-card__hero-icon,
+.ito-info-card__close,
+.ito-btn,
+.ito-route-step__icon,
+.ito-list-item__chevron,
+.ito-search__icon,
+.ito-search__clear,
+.ito-mobile-drawer__close {
+  overflow: visible;
 }

@@ -12,8 +12,9 @@ export type CampusPosition = {
 const REF_LAT = 17.07761201319465;
 const REF_LNG = -96.74416660753468;
 
-const REF_MODEL_X = 16.3803;
-const REF_MODEL_Z = 12.3014;
+
+//const REF_MODEL_X = 16.3803;
+//const REF_MODEL_Z = 12.3014;
 
 /*
   🔧 Conversión grados → metros (zona Oaxaca)

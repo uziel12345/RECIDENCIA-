@@ -1,6 +1,14 @@
-import type { Building } from "../types/building";
+export type LocalBuilding = {
+  id: string;
+  code: string;
+  name: string;
+  category: string;
+  description: string | null;
+  modelNodeName: string;
+  isActive: boolean;
+};
 
-export const buildings: Building[] = [
+export const buildings: LocalBuilding[] = [
   {
     id: "ed-direccion",
     code: "DIR",

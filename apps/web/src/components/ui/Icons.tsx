@@ -1,4 +1,4 @@
-import type { SVGProps } from "react";
+import type { ReactElement, SVGProps } from "react";
 
 export type IconName =
   | "search"
@@ -43,7 +43,7 @@ const baseAttrs = (size: number, props: IconProps) => ({
   ...props,
 });
 
-const PATHS: Record<IconName, JSX.Element> = {
+const PATHS: Record<IconName, ReactElement> = {
   search: (
     <>
       <circle cx="11" cy="11" r="7" />
