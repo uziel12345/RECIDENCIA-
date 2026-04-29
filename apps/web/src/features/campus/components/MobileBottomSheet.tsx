@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { Icon } from "../../../components/ui/Icons";
 
 export type SheetState = "closed" | "peek" | "full";
 
-const PEEK_HEIGHT = 92;
+
 
 type MobileBottomSheetProps = {
   state: SheetState;

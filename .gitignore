@@ -3,3 +3,14 @@ node_modules/
 dist/
 .expo/
 .env
+# Ngrok local
+/ngrok/
+/ngrok.exe
+/ngrok.zip
+
+# Ejecutables y comprimidos locales
+*.exe
+*.zip
+
+# Archivos temporales locales
+estructura_limpia.txt
