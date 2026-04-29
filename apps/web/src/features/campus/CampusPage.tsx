@@ -1,8 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { CampusViewer } from "../../components/viewer/CampusViewer";
 import { BuildingSidebar } from "../buildings/components/BuildingSidebar";
+import { BuildingQuickCard } from "../buildings/components/BuildingQuickCard";
 import { useBuildingStore } from "../../store/building-store";
-import { Icon } from "../../components/ui/Icons";
+import { useLocationStore } from "../../store/location-store";
+import { getBuildings } from "../../services/buildings.service";
+import type { Building } from "../buildings/types/building";
+import { MobileBottomSheet, type SheetState } from "./components/MobileBottomSheet";
+import { MobileQuickActions } from "./components/MobileQuickActions";
+import { MobileTopBar } from "./components/MobileTopBar";
 
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(
@@ -25,16 +32,46 @@ export function CampusPage() {
   const isMobile = useIsMobile();
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const routeDestination = useBuildingStore((state) => state.routeDestination);
+  const setSelectedBuilding = useBuildingStore((s) => s.setSelectedBuilding);
+  const mapPosition = useLocationStore((s) => s.mapPosition);
+  const hasLocation = mapPosition !== null;
 
-  const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
+  // Mobile-only state for the bottom sheet (closed | peek | full).
+  const [sheetState, setSheetState] = useState<SheetState>("closed");
 
-  // Open the drawer automatically when the user picks a building on the map.
+  // Cache building total to show in the top bar even before the sheet opens.
+  const [totalBuildings, setTotalBuildings] = useState(0);
+
   useEffect(() => {
-    if (isMobile && (selectedBuilding || routeDestination)) {
-      setIsMobilePanelOpen(true);
-    }
-  }, [isMobile, selectedBuilding, routeDestination]);
+    getBuildings().then((data) => {
+      setTotalBuildings(data.filter((b: Building) => b.is_active).length);
+    });
+  }, []);
 
+  // Reactive UX: when the user picks a building from the 3D map, show the
+  // floating quick card without forcing the full sheet open. When they pick a
+  // building from inside the list, the sheet stays where it is.
+  // When a route is generated we always collapse the sheet so the map is the
+  // hero and the user can see the path.
+  useEffect(() => {
+    if (!isMobile) return;
+    if (routeDestination) {
+      setSheetState("closed");
+    }
+  }, [isMobile, routeDestination]);
+
+  // Build the mobile action bar items. Hook must be called unconditionally
+  // before any early returns to satisfy the Rules of Hooks.
+  const mobileActions = useMobileActions({
+    sheetState,
+    setSheetState,
+    hasSelected: !!selectedBuilding,
+    hasRoute: !!routeDestination,
+  });
+
+  // ----------------------------------------------------------------------
+  // Desktop layout
+  // ----------------------------------------------------------------------
   if (!isMobile) {
     return (
       <div className="ito-campus">
@@ -47,82 +84,121 @@ export function CampusPage() {
     );
   }
 
-  const fabLabel = routeDestination
-    ? "Ver ruta"
+  // ----------------------------------------------------------------------
+  // Mobile layout
+  // ----------------------------------------------------------------------
+  const sheetTitle = routeDestination
+    ? "Tu ruta"
     : selectedBuilding
-      ? "Ver detalles"
-      : "Buscar edificios";
+      ? selectedBuilding.name
+      : "Explorar campus";
 
-  const fabIcon: "route" | "building" | "search" = routeDestination
-    ? "route"
+  const sheetSubtitle = routeDestination
+    ? "Sigue las indicaciones en el mapa"
     : selectedBuilding
-      ? "building"
-      : "search";
+      ? "Detalles del edificio"
+      : `${totalBuildings} edificios en ${
+          hasLocation ? "vivo" : "el campus"
+        }`;
+
+  // Show the floating quick card when a building is selected and the sheet is
+  // closed — gives one-tap access to "Detalles" / "Trazar ruta" without
+  // overlapping with the sheet header.
+  const showQuickCard =
+    !!selectedBuilding && !routeDestination && sheetState === "closed";
 
   return (
     <div className="ito-campus--mobile">
-      <CampusViewer isMobile mobilePanelOpen={isMobilePanelOpen} />
+      <CampusViewer isMobile mobilePanelOpen={sheetState === "full"} />
 
-      {!isMobilePanelOpen && (
-        <button
-          type="button"
-          onClick={() => setIsMobilePanelOpen(true)}
-          className="ito-fab anim-fade-in"
-          style={{ top: 16, left: 16 }}
-        >
-          <span className="ito-fab__icon" aria-hidden="true">
-            <Icon name={fabIcon} size={14} />
-          </span>
-          <span>{fabLabel}</span>
-        </button>
-      )}
+      <MobileTopBar
+        totalBuildings={totalBuildings}
+        hasLocation={hasLocation}
+        onSearchClick={() => setSheetState("full")}
+      />
 
-      {isMobilePanelOpen && (
-        <>
-          <div
-            className="ito-backdrop anim-fade-in"
-            onClick={() => setIsMobilePanelOpen(false)}
-            role="presentation"
+      <AnimatePresence>
+        {showQuickCard && (
+          <BuildingQuickCard
+            building={selectedBuilding}
+            onOpenDetails={() => setSheetState("full")}
           />
-          <div className="ito-mobile-drawer anim-slide-up" role="dialog" aria-label="Panel de edificios">
-            <div className="ito-mobile-drawer__handle" aria-hidden="true">
-              <div className="ito-mobile-drawer__handle-bar" />
-            </div>
+        )}
+      </AnimatePresence>
 
-            <div className="ito-mobile-drawer__header">
-              <div>
-                <div className="ito-mobile-drawer__title">
-                  {routeDestination
-                    ? "Tu ruta"
-                    : selectedBuilding
-                      ? selectedBuilding.name
-                      : "Campus ITO"}
-                </div>
-                <div className="ito-mobile-drawer__subtitle">
-                  {routeDestination
-                    ? "Sigue las indicaciones en el mapa"
-                    : selectedBuilding
-                      ? "Información del edificio"
-                      : "Explora y busca edificios del campus"}
-                </div>
-              </div>
+      <MobileQuickActions actions={mobileActions} />
 
-              <button
-                type="button"
-                onClick={() => setIsMobilePanelOpen(false)}
-                className="ito-mobile-drawer__close"
-                aria-label="Cerrar panel"
-              >
-                <Icon name="close" size={16} />
-              </button>
-            </div>
-
-            <div className="ito-mobile-drawer__body">
-              <BuildingSidebar isMobile />
-            </div>
-          </div>
-        </>
-      )}
+      <MobileBottomSheet
+        state={sheetState}
+        onChangeState={(next) => {
+          // Closing the sheet should not erase the active selection — the
+          // floating quick card keeps it accessible.
+          if (next === "closed" && selectedBuilding && !routeDestination) {
+            setSheetState("closed");
+            return;
+          }
+          setSheetState(next);
+        }}
+        title={sheetTitle}
+        subtitle={sheetSubtitle}
+      >
+        <BuildingSidebar
+          isMobile
+          onItemSelected={() => {
+            // When user selects from list, collapse to peek so they see the
+            // map but the sheet remains accessible.
+            setSheetState("peek");
+          }}
+          onClearSelection={() => {
+            setSelectedBuilding(null);
+          }}
+        />
+      </MobileBottomSheet>
     </div>
   );
+}
+
+// ----------------------------------------------------------------------
+// Builds the action bar buttons. Memoizes nothing intentionally to keep the
+// component simple — the array is small.
+// ----------------------------------------------------------------------
+function useMobileActions(args: {
+  sheetState: SheetState;
+  setSheetState: (state: SheetState) => void;
+  hasSelected: boolean;
+  hasRoute: boolean;
+}) {
+  const { sheetState, setSheetState, hasSelected, hasRoute } = args;
+
+  return useMemo(() => {
+    return [
+      {
+        id: "search",
+        label: "Buscar",
+        icon: "search" as const,
+        onClick: () => setSheetState("full"),
+        active: sheetState === "full",
+      },
+      {
+        id: "list",
+        label: "Lista",
+        icon: "list" as const,
+        onClick: () =>
+          setSheetState(sheetState === "peek" ? "full" : "peek"),
+        active: sheetState === "peek",
+        primary: true,
+      },
+      {
+        id: "info",
+        label: hasRoute ? "Ruta" : hasSelected ? "Info" : "Sobre",
+        icon: hasRoute
+          ? ("route" as const)
+          : hasSelected
+            ? ("info" as const)
+            : ("sparkles" as const),
+        onClick: () => setSheetState("full"),
+        badge: hasSelected ? "•" : undefined,
+      },
+    ];
+  }, [sheetState, hasSelected, hasRoute, setSheetState]);
 }

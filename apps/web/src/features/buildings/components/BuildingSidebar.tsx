@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useBuildingStore } from "../../../store/building-store";
+import { useLocationStore } from "../../../store/location-store";
 import { RoutePanel } from "./RoutePanel";
 import { getBuildings } from "../../../services/buildings.service";
 import { BuildingSearch } from "./BuildingSearch";
@@ -10,12 +11,22 @@ import type { Building } from "../types/building";
 
 type BuildingSidebarProps = {
   isMobile?: boolean;
+  /** Called after the user picks a building from the list. Allows the parent
+   * (e.g. mobile sheet) to react, like collapsing to peek mode. */
+  onItemSelected?: (building: Building) => void;
+  /** Called when the user explicitly clears the current selection. */
+  onClearSelection?: () => void;
 };
 
-export function BuildingSidebar({ isMobile = false }: BuildingSidebarProps) {
+export function BuildingSidebar({
+  isMobile = false,
+  onItemSelected,
+}: BuildingSidebarProps) {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const setSelectedBuilding = useBuildingStore((state) => state.setSelectedBuilding);
   const searchTerm = useBuildingStore((state) => state.searchTerm);
+  const permission = useLocationStore((state) => state.permission);
+  const mapPosition = useLocationStore((state) => state.mapPosition);
 
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,6 +87,18 @@ export function BuildingSidebar({ isMobile = false }: BuildingSidebarProps) {
     });
   }, [buildings, searchTerm, selectedBuilding, activeCategory]);
 
+  const totalActive = useMemo(
+    () => buildings.filter((b) => b.is_active).length,
+    [buildings],
+  );
+
+  const hasLocation = permission === "granted" && mapPosition !== null;
+
+  function handleSelectBuilding(building: Building) {
+    setSelectedBuilding(building);
+    onItemSelected?.(building);
+  }
+
   return (
     <aside className={isMobile ? "ito-sidebar ito-sidebar--mobile" : "ito-sidebar"}>
       {!isMobile && (
@@ -87,7 +110,49 @@ export function BuildingSidebar({ isMobile = false }: BuildingSidebarProps) {
             <div className="ito-brand__title">Campus ITO</div>
             <div className="ito-brand__subtitle">Mapa interactivo 3D</div>
           </div>
+
+          <div className="ito-brand__stats" aria-label="Estadísticas">
+            <div
+              className={`ito-brand__stat${hasLocation ? " is-live" : ""}`}
+              title={
+                hasLocation
+                  ? "Tu ubicación está activa"
+                  : "Esperando ubicación"
+              }
+            >
+              <span
+                className="ito-brand__stat-dot"
+                aria-hidden="true"
+              />
+              {hasLocation ? "En vivo" : "Sin GPS"}
+            </div>
+          </div>
         </header>
+      )}
+
+      {!isMobile && (
+        <div className="ito-quick-stats" role="list">
+          <div className="ito-quick-stat" role="listitem">
+            <span className="ito-quick-stat__value">{totalActive}</span>
+            <span className="ito-quick-stat__label">Edificios</span>
+          </div>
+          <div className="ito-quick-stat" role="listitem">
+            <span className="ito-quick-stat__value">{categories.length}</span>
+            <span className="ito-quick-stat__label">Categorías</span>
+          </div>
+          <div className="ito-quick-stat" role="listitem">
+            <span
+              className={`ito-quick-stat__value${
+                hasLocation ? " ito-quick-stat__value--ok" : ""
+              }`}
+            >
+              <Icon name={hasLocation ? "check" : "alert"} size={14} />
+            </span>
+            <span className="ito-quick-stat__label">
+              {hasLocation ? "GPS" : "GPS off"}
+            </span>
+          </div>
+        </div>
       )}
 
       <div className="ito-sidebar__section">
@@ -105,7 +170,7 @@ export function BuildingSidebar({ isMobile = false }: BuildingSidebarProps) {
               onClick={() => setActiveCategory(null)}
             >
               <span>Todos</span>
-              <span className="ito-chip__count">{buildings.filter((b) => b.is_active).length}</span>
+              <span className="ito-chip__count">{totalActive}</span>
             </button>
             {categories.map(([name, count]) => {
               const accent = getCategoryAccent(name);
@@ -147,6 +212,19 @@ export function BuildingSidebar({ isMobile = false }: BuildingSidebarProps) {
         </div>
       )}
 
+      {/* Selected building card pinned at the top of the list */}
+      {selectedBuilding && (
+        <div className="ito-sidebar__section ito-sidebar__section--card">
+          <BuildingInfoCard building={selectedBuilding} />
+        </div>
+      )}
+
+      {selectedBuilding && (
+        <div className="ito-sidebar__section">
+          <RoutePanel compact={isMobile} />
+        </div>
+      )}
+
       <div className="ito-sidebar__section ito-sidebar__section--list">
         <div className="ito-section-header">
           <h2 className="ito-section-header__title">
@@ -159,7 +237,7 @@ export function BuildingSidebar({ isMobile = false }: BuildingSidebarProps) {
 
         <div
           className="ito-list"
-          style={isMobile ? { maxHeight: 260 } : undefined}
+          style={isMobile ? { maxHeight: "none" } : undefined}
         >
           {loading ? (
             <div className="ito-empty">
@@ -181,7 +259,7 @@ export function BuildingSidebar({ isMobile = false }: BuildingSidebarProps) {
                   key={building.id}
                   type="button"
                   className={`ito-list-item ${isSelected ? "is-selected" : ""}`}
-                  onClick={() => setSelectedBuilding(building)}
+                  onClick={() => handleSelectBuilding(building)}
                   aria-pressed={isSelected}
                   style={
                     isSelected
@@ -213,18 +291,6 @@ export function BuildingSidebar({ isMobile = false }: BuildingSidebarProps) {
           )}
         </div>
       </div>
-
-      {selectedBuilding && (
-        <>
-          <div className="ito-sidebar__section">
-            <BuildingInfoCard building={selectedBuilding} />
-          </div>
-
-          <div className="ito-sidebar__section">
-            <RoutePanel compact={isMobile} />
-          </div>
-        </>
-      )}
 
       {!isMobile && (
         <footer className="ito-sidebar__footer">

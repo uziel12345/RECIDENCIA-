@@ -1,5 +1,4 @@
-
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Html, OrbitControls, useGLTF } from "@react-three/drei";
 import type { Building } from "../../features/buildings/types/building";
@@ -16,7 +15,6 @@ const MODEL_PATH = "/models/campus.glb";
 const CAMPUS_ROTATION_Y = Math.PI / 2;
 const CAMPUS_POSITION_X = 0;
 const CAMPUS_POSITION_Z = 0;
-
 
 type FocusPoint = {
   x: number;
@@ -124,21 +122,19 @@ function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
     (state) => state.setSelectedBuilding,
   );
 
-  const buildingsToRender = isMobile
-    ? buildings.filter((building) => building.id === selectedBuilding?.id)
-    : buildings;
-
-  // Tamaños responsivos: en móvil las etiquetas se escalan más pequeñas
-  // para no tapar el modelo 3D ni colisionar entre sí.
-  const labelFontSize = isMobile ? 11 : 12;
-  const labelPadding = isMobile ? "5px 10px 5px 6px" : "6px 12px 6px 8px";
-  const labelGap = isMobile ? 6 : 8;
-  const iconSize = isMobile ? 18 : 20;
-  const labelMaxWidth = isMobile ? 140 : 180;
+  // En móvil mostramos TODAS las etiquetas pero las hacemos compactas (solo el
+  // código del edificio) para no saturar la pantalla. Cuando hay un edificio
+  // seleccionado, su etiqueta se expande y muestra el nombre completo.
+  const labelMaxWidth = isMobile ? 120 : 180;
+  const compactFontSize = isMobile ? 10 : 12;
+  const compactPadding = isMobile ? "3px 7px" : "6px 12px 6px 8px";
+  const expandedPadding = isMobile ? "5px 10px 5px 5px" : "6px 12px 6px 8px";
+  const labelGap = isMobile ? 5 : 8;
+  const iconSize = isMobile ? 14 : 20;
 
   return (
     <>
-      {buildingsToRender.map((building) => {
+      {buildings.map((building) => {
         if (building.x == null || building.z == null) {
           return null;
         }
@@ -148,12 +144,17 @@ function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
         const accent = getCategoryAccent(building.category_name);
         const accentColor = building.category_color || accent.fg;
 
+        // Compact form on mobile when not selected: shows only the code in a
+        // small chip. Expanded form shows the full name.
+        const showFullName = !isMobile || isSelected;
+        const padding = showFullName ? expandedPadding : compactPadding;
+
         return (
           <Html
             key={building.id}
             position={[building.x, y, building.z]}
             center
-            zIndexRange={[100, 0]}
+            zIndexRange={[isSelected ? 110 : 100, 0]}
             occlude={false}
           >
             <button
@@ -165,15 +166,15 @@ function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: labelGap,
-                padding: labelPadding,
+                gap: showFullName ? labelGap : 4,
+                padding,
                 borderRadius: 999,
                 border: `1px solid ${
                   isSelected ? accentColor : "rgba(15,23,42,0.12)"
                 }`,
                 background: isSelected ? accentColor : "rgba(255,255,255,0.97)",
                 color: isSelected ? "#ffffff" : "#0f172a",
-                fontSize: labelFontSize,
+                fontSize: showFullName ? (isMobile ? 11 : 12) : compactFontSize,
                 fontWeight: 700,
                 lineHeight: 1.2,
                 whiteSpace: "nowrap",
@@ -187,36 +188,54 @@ function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
                 transform: "translateZ(0)",
                 pointerEvents: "auto",
                 touchAction: "manipulation",
+                transition: "all 200ms cubic-bezier(0.22, 1, 0.36, 1)",
               }}
             >
-              <span
-                aria-hidden="true"
-                style={{
-                  width: iconSize,
-                  height: iconSize,
-                  borderRadius: 999,
-                  background: isSelected ? "#ffffff" : accentColor,
-                  color: isSelected ? accentColor : "#ffffff",
-                  display: "inline-grid",
-                  placeItems: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <Icon
-                  name={getBuildingMarkerIcon(building)}
-                  size={isMobile ? 11 : 12}
-                />
-              </span>
-
-              <span
-                style={{
-                  maxWidth: labelMaxWidth,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {building.name}
-              </span>
+              {showFullName ? (
+                <>
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      width: iconSize,
+                      height: iconSize,
+                      borderRadius: 999,
+                      background: isSelected ? "#ffffff" : accentColor,
+                      color: isSelected ? accentColor : "#ffffff",
+                      display: "inline-grid",
+                      placeItems: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Icon
+                      name={getBuildingMarkerIcon(building)}
+                      size={isMobile ? 11 : 12}
+                    />
+                  </span>
+                  <span
+                    style={{
+                      maxWidth: labelMaxWidth,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {building.name}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 999,
+                      background: accentColor,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span>{building.code}</span>
+                </>
+              )}
             </button>
           </Html>
         );
@@ -235,6 +254,7 @@ type ViewerToolbarProps = {
   onFocusUser: () => void;
   onResetView: () => void;
   onZoom: (delta: number) => void;
+  isMobile?: boolean;
 };
 
 function ViewerToolbar({
@@ -242,9 +262,51 @@ function ViewerToolbar({
   onFocusUser,
   onResetView,
   onZoom,
+  isMobile = false,
 }: ViewerToolbarProps) {
+  // En móvil agrupamos los botones de zoom en una pill vertical para ocupar
+  // menos espacio en la pantalla y dejar más mapa visible.
   return (
-    <div className="ito-toolbar">
+    <div
+      className={`ito-toolbar ${isMobile ? "ito-toolbar--mobile" : ""}`}
+      role="toolbar"
+      aria-label="Controles del mapa"
+    >
+      <button
+        type="button"
+        className={`ito-toolbar__btn ${
+          hasLocation ? "ito-toolbar__btn--accent" : ""
+        }`}
+        onClick={onFocusUser}
+        aria-label="Centrar en mi ubicación"
+        title={hasLocation ? "Centrar en mi ubicación" : "Esperando ubicación…"}
+        disabled={!hasLocation}
+      >
+        <Icon name="crosshair" size={18} />
+      </button>
+
+      <div className="ito-toolbar__group" role="group" aria-label="Zoom">
+        <button
+          type="button"
+          className="ito-toolbar__btn"
+          onClick={() => onZoom(-1)}
+          aria-label="Acercar"
+          title="Acercar"
+        >
+          <Icon name="plus" size={18} />
+        </button>
+        <span className="ito-toolbar__divider" aria-hidden="true" />
+        <button
+          type="button"
+          className="ito-toolbar__btn"
+          onClick={() => onZoom(1)}
+          aria-label="Alejar"
+          title="Alejar"
+        >
+          <Icon name="minus" size={18} />
+        </button>
+      </div>
+
       <button
         type="button"
         className="ito-toolbar__btn"
@@ -253,39 +315,6 @@ function ViewerToolbar({
         title="Vista general"
       >
         <Icon name="home" size={18} />
-      </button>
-      <button
-        type="button"
-        className="ito-toolbar__btn"
-        onClick={() => onZoom(-1)}
-        aria-label="Acercar"
-        title="Acercar"
-      >
-        <Icon name="plus" size={18} />
-      </button>
-      <button
-        type="button"
-        className="ito-toolbar__btn"
-        onClick={() => onZoom(1)}
-        aria-label="Alejar"
-        title="Alejar"
-      >
-        <Icon name="minus" size={18} />
-      </button>
-      <button
-        type="button"
-        className={`ito-toolbar__btn ${hasLocation ? "is-active" : ""}`}
-        onClick={onFocusUser}
-        aria-label="Centrar en mi ubicación"
-        title={
-          hasLocation
-            ? "Centrar en mi ubicación"
-            : "Esperando ubicación…"
-        }
-        disabled={!hasLocation}
-        style={!hasLocation ? { opacity: 0.55, cursor: "not-allowed" } : undefined}
-      >
-        <Icon name="crosshair" size={18} />
       </button>
     </div>
   );
@@ -337,6 +366,20 @@ function CategoryLegend({ buildings }: CategoryLegendProps) {
   );
 }
 
+function ViewerLoading() {
+  return (
+    <div className="ito-viewer-loading" aria-live="polite" aria-busy="true">
+      <div className="ito-viewer-loading__inner">
+        <div className="ito-viewer-loading__spinner" aria-hidden="true" />
+        <div className="ito-viewer-loading__title">Cargando campus 3D…</div>
+        <div className="ito-viewer-loading__subtitle">
+          Preparando tu mapa interactivo
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function CampusViewer({
   isMobile = false,
   mobilePanelOpen = false,
@@ -347,6 +390,7 @@ export function CampusViewer({
 
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [focus, setFocus] = useState<FocusPoint | null>(null);
+  const [isModelLoading, setIsModelLoading] = useState(true);
 
   useEffect(() => {
     getBuildings().then(setBuildings);
@@ -359,8 +403,6 @@ export function CampusViewer({
     const controls = controlsRef.current;
 
     if (isMobile) {
-      // En móvil queremos ver el campus completo desde un ángulo cómodo
-      // sin que quede demasiado pequeño. Acercamos un poco la cámara.
       controls.target.set(0, 0, 30);
       controls.object.position.set(0, 130, 200);
     } else {
@@ -402,6 +444,15 @@ export function CampusViewer({
       z: selectedBuilding.z,
     });
   }, [selectedBuilding]);
+
+  // Hide the loader once buildings are available — at that point the GLB
+  // suspense fallback has resolved as well.
+  useEffect(() => {
+    if (buildings.length > 0) {
+      const t = setTimeout(() => setIsModelLoading(false), 300);
+      return () => clearTimeout(t);
+    }
+  }, [buildings.length]);
 
   const handleFocusUser = () => {
     if (!mapPosition) return;
@@ -448,10 +499,13 @@ export function CampusViewer({
           onFocusUser={handleFocusUser}
           onResetView={handleResetView}
           onZoom={handleZoom}
+          isMobile={isMobile}
         />
       )}
 
       {!isMobile && !mobilePanelOpen && <CategoryLegend buildings={buildings} />}
+
+      {isModelLoading && <ViewerLoading />}
 
       <Canvas
         dpr={[1, 2]}
@@ -481,12 +535,14 @@ export function CampusViewer({
           dampingFactor={0.08}
         />
 
-        <group rotation={[0, CAMPUS_ROTATION_Y, 0]}>
-          <CampusModel />
-          <RouteLine />
-          <UserLocationMarker />
-          <BuildingLabels buildings={buildings} isMobile={isMobile} />
-        </group>
+        <Suspense fallback={null}>
+          <group rotation={[0, CAMPUS_ROTATION_Y, 0]}>
+            <CampusModel />
+            <RouteLine />
+            <UserLocationMarker />
+            <BuildingLabels buildings={buildings} isMobile={isMobile} />
+          </group>
+        </Suspense>
       </Canvas>
     </div>
   );

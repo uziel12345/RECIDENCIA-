@@ -13,6 +13,7 @@ export type IconName =
   | "alert"
   | "chevron-right"
   | "chevron-down"
+  | "chevron-up"
   | "menu"
   | "info"
   | "crosshair"
@@ -23,7 +24,11 @@ export type IconName =
   | "layers"
   | "plus"
   | "minus"
-  | "home";
+  | "home"
+  | "list"
+  | "filter"
+  | "sparkles"
+  | "arrow-right";
 
 type IconProps = SVGProps<SVGSVGElement> & {
   size?: number;
@@ -179,6 +184,33 @@ const PATHS: Record<IconName, ReactElement> = {
   home: (
     <>
       <path d="M3 9.5 12 3l9 6.5V21a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z" />
+    </>
+  ),
+  "chevron-up": <path d="m18 15-6-6-6 6" />,
+  list: (
+    <>
+      <line x1="8" x2="21" y1="6" y2="6" />
+      <line x1="8" x2="21" y1="12" y2="12" />
+      <line x1="8" x2="21" y1="18" y2="18" />
+      <line x1="3" x2="3.01" y1="6" y2="6" />
+      <line x1="3" x2="3.01" y1="12" y2="12" />
+      <line x1="3" x2="3.01" y1="18" y2="18" />
+    </>
+  ),
+  filter: (
+    <>
+      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+    </>
+  ),
+  sparkles: (
+    <>
+      <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
+    </>
+  ),
+  "arrow-right": (
+    <>
+      <line x1="5" x2="19" y1="12" y2="12" />
+      <polyline points="12 5 19 12 12 19" />
     </>
   ),
 };
