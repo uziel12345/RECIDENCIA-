@@ -13,6 +13,20 @@ function getSingleParam(param: string | string[] | undefined): string {
   return param ?? "";
 }
 
+function parseBoolean(value: unknown): boolean {
+  if (typeof value === "boolean") return value;
+
+  if (typeof value === "string") {
+    return value.toLowerCase() === "true" || value === "1";
+  }
+
+  if (typeof value === "number") {
+    return value === 1;
+  }
+
+  return false;
+}
+
 export const getBuildings = asyncHandler(async (_req: Request, res: Response) => {
   const data = await buildingsService.getAll();
   return sendSuccess(res, data);
@@ -38,5 +52,41 @@ export const createBuilding = asyncHandler(
   async (req: Request, res: Response) => {
     const data = await buildingsService.create(req.body);
     return sendSuccess(res, data, 201, "Edificio creado correctamente");
+  }
+);
+
+export const updateBuilding = asyncHandler(
+  async (req: Request, res: Response) => {
+    const id = getSingleParam(req.params.id);
+    const data = await buildingsService.update(id, req.body);
+
+    return sendSuccess(res, data, 200, "Edificio actualizado correctamente");
+  }
+);
+
+export const updateBuildingStatus = asyncHandler(
+  async (req: Request, res: Response) => {
+    const id = getSingleParam(req.params.id);
+    const isActive = parseBoolean(req.body?.is_active);
+
+    const data = await buildingsService.updateStatus(id, isActive);
+
+    return sendSuccess(
+      res,
+      data,
+      200,
+      isActive
+        ? "Edificio activado correctamente"
+        : "Edificio desactivado correctamente"
+    );
+  }
+);
+
+export const deleteBuilding = asyncHandler(
+  async (req: Request, res: Response) => {
+    const id = getSingleParam(req.params.id);
+    const data = await buildingsService.remove(id);
+
+    return sendSuccess(res, data, 200, "Edificio eliminado correctamente");
   }
 );

@@ -58,3 +58,12 @@ export type CreateBuildingInput = {
 };
 
 export type UpdateBuildingInput = Partial<CreateBuildingInput>;
+
+export type UpdateBuildingStatusInput = {
+  is_active: boolean;
+};
+
+export type DeleteBuildingResult = {
+  id: string;
+  deleted: boolean;
+};

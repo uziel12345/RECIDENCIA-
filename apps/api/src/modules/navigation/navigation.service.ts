@@ -39,6 +39,16 @@ export type NavigationRouteResult = {
   estimated_seconds: number;
 };
 
+type NavigationGraphCache = {
+  nodes: NavigationNodeRow[];
+  edges: NavigationEdgeRow[];
+  expiresAt: number;
+};
+
+const NAVIGATION_CACHE_TTL_MS = 5 * 60 * 1000;
+
+let navigationGraphCache: NavigationGraphCache | null = null;
+
 function getEdgeWeight(edge: NavigationEdgeRow): number {
   let weight = Number(edge.distance);
 
@@ -55,33 +65,48 @@ function estimateWalkingSeconds(distanceMeters: number): number {
   return Math.round(distanceMeters / walkingSpeedMetersPerSecond);
 }
 
+function buildEdgeLookupKey(fromNodeId: string, toNodeId: string): string {
+  return `${fromNodeId}::${toNodeId}`;
+}
+
+function buildEdgeDistanceMap(
+  edges: NavigationEdgeRow[]
+): Map<string, number> {
+  const edgeDistanceMap = new Map<string, number>();
+
+  for (const edge of edges) {
+    const distance = Number(edge.distance);
+
+    edgeDistanceMap.set(
+      buildEdgeLookupKey(edge.from_node_id, edge.to_node_id),
+      distance
+    );
+
+    if (Boolean(edge.is_bidirectional)) {
+      edgeDistanceMap.set(
+        buildEdgeLookupKey(edge.to_node_id, edge.from_node_id),
+        distance
+      );
+    }
+  }
+
+  return edgeDistanceMap;
+}
+
 function calculateRouteDistance(
   pathNodeIds: string[],
   edges: NavigationEdgeRow[]
 ): number {
   if (pathNodeIds.length < 2) return 0;
 
+  const edgeDistanceMap = buildEdgeDistanceMap(edges);
   let total = 0;
 
   for (let i = 0; i < pathNodeIds.length - 1; i += 1) {
     const from = pathNodeIds[i];
     const to = pathNodeIds[i + 1];
 
-    const edge = edges.find((candidate) => {
-      const direct =
-        candidate.from_node_id === from && candidate.to_node_id === to;
-
-      const reverse =
-        Boolean(candidate.is_bidirectional) &&
-        candidate.from_node_id === to &&
-        candidate.to_node_id === from;
-
-      return direct || reverse;
-    });
-
-    if (edge) {
-      total += Number(edge.distance);
-    }
+    total += edgeDistanceMap.get(buildEdgeLookupKey(from, to)) ?? 0;
   }
 
   return total;
@@ -131,12 +156,45 @@ async function getActiveNavigationEdges(): Promise<NavigationEdgeRow[]> {
   return rows as NavigationEdgeRow[];
 }
 
+async function getNavigationGraph(): Promise<{
+  nodes: NavigationNodeRow[];
+  edges: NavigationEdgeRow[];
+}> {
+  const now = Date.now();
+
+  if (navigationGraphCache && navigationGraphCache.expiresAt > now) {
+    return {
+      nodes: navigationGraphCache.nodes,
+      edges: navigationGraphCache.edges,
+    };
+  }
+
+  const [nodes, edges] = await Promise.all([
+    getActiveNavigationNodes(),
+    getActiveNavigationEdges(),
+  ]);
+
+  navigationGraphCache = {
+    nodes,
+    edges,
+    expiresAt: now + NAVIGATION_CACHE_TTL_MS,
+  };
+
+  return {
+    nodes,
+    edges,
+  };
+}
+
+export function invalidateNavigationCache(): void {
+  navigationGraphCache = null;
+}
+
 export async function calculateNavigationRoute(
   fromNodeId: string,
   toNodeId: string
 ): Promise<NavigationRouteResult | null> {
-  const nodes = await getActiveNavigationNodes();
-  const edges = await getActiveNavigationEdges();
+  const { nodes, edges } = await getNavigationGraph();
 
   const graphEdges: WeightedPathEdge[] = edges.map((edge) => ({
     from: edge.from_node_id,
@@ -151,8 +209,10 @@ export async function calculateNavigationRoute(
     return null;
   }
 
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+
   const routeNodes = result.nodeIds
-    .map((nodeId) => nodes.find((node) => node.id === nodeId) ?? null)
+    .map((nodeId) => nodeById.get(nodeId) ?? null)
     .filter((node): node is NavigationNodeRow => node !== null);
 
   const totalDistance = calculateRouteDistance(result.nodeIds, edges);

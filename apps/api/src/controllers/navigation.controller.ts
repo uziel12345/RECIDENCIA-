@@ -1,6 +1,9 @@
 import type { Request, Response } from "express";
 import { pool } from "../db/connection.js";
-import { calculateNavigationRoute } from "../modules/navigation/navigation.service.js";
+import {
+  calculateNavigationRoute,
+  invalidateNavigationCache,
+} from "../modules/navigation/navigation.service.js";
 
 export async function getNavigationNodes(_req: Request, res: Response) {
   try {
@@ -169,4 +172,15 @@ export async function getNavigationRoute(req: Request, res: Response) {
       message: "No se pudo calcular la ruta de navegación",
     });
   }
+}
+export async function invalidateNavigationCacheController(
+  _req: Request,
+  res: Response
+) {
+  invalidateNavigationCache();
+
+  return res.status(200).json({
+    success: true,
+    message: "Cache de navegación invalidado correctamente",
+  });
 }

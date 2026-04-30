@@ -161,4 +161,82 @@ export class BuildingsRepository {
 
     return id;
   }
+
+  async updateBuilding(
+    id: string,
+    input: {
+      code: string;
+      name: string;
+      slug: string;
+      description: string | null;
+      model_node_name: string;
+      x: number | null;
+      y: number | null;
+      z: number | null;
+      latitude: number | null;
+      longitude: number | null;
+      is_active: boolean;
+      is_priority: boolean;
+      category_id: string;
+    }
+  ): Promise<void> {
+    await this.db.query(
+      `
+      UPDATE buildings
+      SET
+        category_id = ?,
+        code = ?,
+        name = ?,
+        slug = ?,
+        description = ?,
+        model_node_name = ?,
+        x = ?,
+        y = ?,
+        z = ?,
+        latitude = ?,
+        longitude = ?,
+        is_active = ?,
+        is_priority = ?
+      WHERE id = ?
+      `,
+      [
+        input.category_id,
+        input.code,
+        input.name,
+        input.slug,
+        input.description,
+        input.model_node_name,
+        input.x,
+        input.y,
+        input.z,
+        input.latitude,
+        input.longitude,
+        input.is_active,
+        input.is_priority,
+        id,
+      ]
+    );
+  }
+
+  async updateBuildingStatus(id: string, isActive: boolean): Promise<void> {
+    await this.db.query(
+      `
+      UPDATE buildings
+      SET is_active = ?
+      WHERE id = ?
+      `,
+      [isActive, id]
+    );
+  }
+
+  async softDeleteBuilding(id: string): Promise<void> {
+    await this.db.query(
+      `
+      UPDATE buildings
+      SET is_active = FALSE
+      WHERE id = ?
+      `,
+      [id]
+    );
+  }
 }

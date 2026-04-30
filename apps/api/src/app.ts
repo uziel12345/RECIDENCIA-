@@ -9,6 +9,11 @@ import { errorHandler } from "./shared/middlewares/error-handler.js";
 
 const app = express();
 
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(
   helmet({
     crossOriginResourcePolicy: {
@@ -19,7 +24,20 @@ app.use(
 
 app.use(
   cors({
-    origin: "*",
+    origin(origin, callback) {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(null, false);
+    },
+    credentials: true,
   })
 );
 
