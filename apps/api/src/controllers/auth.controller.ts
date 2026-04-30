@@ -38,3 +38,12 @@ export async function loginController(req: Request, res: Response) {
     });
   }
 }
+
+export async function meController(req: Request, res: Response) {
+  return res.status(200).json({
+    success: true,
+    data: {
+      user: req.authUser,
+    },
+  });
+}
