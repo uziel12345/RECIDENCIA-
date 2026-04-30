@@ -24,6 +24,8 @@ export async function getNavigationNodes(_req: Request, res: Response) {
       ORDER BY code ASC
     `);
 
+    res.setHeader("Cache-Control", "public, max-age=3600");
+
     return res.status(200).json({
       success: true,
       data: rows,
@@ -82,6 +84,8 @@ export async function getNavigationEdges(_req: Request, res: Response) {
         dz,
       };
     });
+
+    res.setHeader("Cache-Control", "public, max-age=3600");
 
     return res.status(200).json({
       success: true,
