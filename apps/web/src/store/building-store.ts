@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Building } from "../features/buildings/types/building";
+import type { Building } from "@ito-map/shared";
 
 type BuildingStore = {
   selectedBuilding: Building | null;
