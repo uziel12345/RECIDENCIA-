@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { pool } from "../db/connection.js";
+import { calculateNavigationRoute } from "../modules/navigation/navigation.service.js";
 
 export async function getNavigationNodes(_req: Request, res: Response) {
   try {
@@ -23,14 +24,14 @@ export async function getNavigationNodes(_req: Request, res: Response) {
       ORDER BY code ASC
     `);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: rows,
     });
   } catch (error) {
     console.error("Error al obtener nodos:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "No se pudieron obtener los nodos de navegación",
     });
@@ -82,14 +83,14 @@ export async function getNavigationEdges(_req: Request, res: Response) {
       };
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data,
     });
   } catch (error) {
     console.error("Error al obtener conexiones:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "No se pudieron obtener las conexiones de navegación",
     });
@@ -117,16 +118,51 @@ export async function getBuildingEntrances(_req: Request, res: Response) {
       ORDER BY b.name ASC
     `);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: rows,
     });
   } catch (error) {
     console.error("Error al obtener entradas:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "No se pudieron obtener las entradas de edificios",
+    });
+  }
+}
+
+export async function getNavigationRoute(req: Request, res: Response) {
+  try {
+    const fromNodeId = String(req.query.fromNodeId ?? "").trim();
+    const toNodeId = String(req.query.toNodeId ?? "").trim();
+
+    if (!fromNodeId || !toNodeId) {
+      return res.status(400).json({
+        success: false,
+        message: "Los parámetros fromNodeId y toNodeId son obligatorios",
+      });
+    }
+
+    const route = await calculateNavigationRoute(fromNodeId, toNodeId);
+
+    if (!route) {
+      return res.status(404).json({
+        success: false,
+        message: "No se encontró una ruta entre los nodos indicados",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: route,
+    });
+  } catch (error) {
+    console.error("Error al calcular ruta:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "No se pudo calcular la ruta de navegación",
     });
   }
 }
