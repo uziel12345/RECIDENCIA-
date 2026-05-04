@@ -1,15 +1,17 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { configureApiClient } from "@ito-map/shared";
+
 import App from "./app/App";
 import "./styles/index.css";
-import { configureApiClient } from "@ito-map/shared";
 
 configureApiClient({
   baseUrl: import.meta.env.VITE_API_URL || "/api",
+  getToken: () => localStorage.getItem("admin_token"),
 });
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
     <App />
-  </React.StrictMode>
+  </StrictMode>
 );

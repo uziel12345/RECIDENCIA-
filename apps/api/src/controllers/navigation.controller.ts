@@ -173,6 +173,7 @@ export async function getNavigationRoute(req: Request, res: Response) {
     });
   }
 }
+
 export async function invalidateNavigationCacheController(
   _req: Request,
   res: Response

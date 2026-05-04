@@ -69,9 +69,7 @@ function buildEdgeLookupKey(fromNodeId: string, toNodeId: string): string {
   return `${fromNodeId}::${toNodeId}`;
 }
 
-function buildEdgeDistanceMap(
-  edges: NavigationEdgeRow[]
-): Map<string, number> {
+function buildEdgeDistanceMap(edges: NavigationEdgeRow[]): Map<string, number> {
   const edgeDistanceMap = new Map<string, number>();
 
   for (const edge of edges) {

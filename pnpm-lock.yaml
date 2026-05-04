@@ -10,6 +10,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@ito-map/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3

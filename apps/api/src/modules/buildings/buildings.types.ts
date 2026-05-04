@@ -12,8 +12,8 @@ export interface BuildingRow extends RowDataPacket {
   z: number | null;
   latitude: number | null;
   longitude: number | null;
-  is_active: boolean;
-  is_priority: boolean;
+  is_active: boolean | number;
+  is_priority: boolean | number;
   category_code: string;
   category_name: string;
   category_color: string | null;
@@ -25,7 +25,7 @@ export interface BuildingImageRow extends RowDataPacket {
   image_type: string;
   title: string | null;
   description: string | null;
-  is_cover: boolean;
+  is_cover: boolean | number;
   sort_order: number;
-  is_active: boolean;
+  is_active: boolean | number;
 }
