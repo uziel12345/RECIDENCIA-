@@ -38,6 +38,33 @@ export class BuildingsRepository {
     return rows;
   }
 
+  async findAllForAdmin(): Promise<BuildingRow[]> {
+    const [rows] = await this.db.query<BuildingRow[]>(`
+      SELECT
+        b.id,
+        b.code,
+        b.name,
+        b.slug,
+        b.description,
+        b.model_node_name,
+        b.x,
+        b.y,
+        b.z,
+        b.latitude,
+        b.longitude,
+        b.is_active,
+        b.is_priority,
+        bc.code AS category_code,
+        bc.name AS category_name,
+        bc.color_hex AS category_color
+      FROM buildings b
+      INNER JOIN building_categories bc ON b.category_id = bc.id
+      ORDER BY b.is_active DESC, b.name ASC
+    `);
+
+    return rows;
+  }
+
   async findById(id: string): Promise<BuildingRow | null> {
     const [rows] = await this.db.query<BuildingRow[]>(
       `

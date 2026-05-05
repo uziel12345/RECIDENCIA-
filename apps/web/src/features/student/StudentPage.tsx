@@ -5,21 +5,20 @@ import { CampusViewer } from "../../components/viewer/CampusViewer";
 import { BuildingSidebar } from "../buildings/components/BuildingSidebar";
 import { BuildingQuickCard } from "../buildings/components/BuildingQuickCard";
 import { useBuildingStore } from "../../store/building-store";
-import { useLocationStore } from "../../store/location-store";
 import { useAuthStore } from "../../store/auth-store";
 import { getBuildings } from "../../services/buildings.service";
 import type { Building } from "../buildings/types/building";
-import { MobileBottomSheet, type SheetState } from "../campus/components/MobileBottomSheet";
+import {
+  MobileBottomSheet,
+  type SheetState,
+} from "../campus/components/MobileBottomSheet";
 import { MobileQuickActions } from "../campus/components/MobileQuickActions";
 import { ROUTES } from "../../types/routes";
-import { 
-  GraduationCapIcon, 
-  ClockIcon, 
-  BookOpenIcon, 
-  CalendarIcon, 
-  LogOutIcon, 
-  SearchIcon,
-  MapIcon 
+import {
+  GraduationCapIcon,
+  CalendarIcon,
+  LogOutIcon,
+  MapIcon,
 } from "../shared/Icons";
 import { StudentTopBar } from "./components/StudentTopBar";
 import { SchedulePanel } from "./components/SchedulePanel";
@@ -32,6 +31,7 @@ function useIsMobile(breakpoint = 768) {
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < breakpoint);
     window.addEventListener("resize", handleResize);
+
     return () => window.removeEventListener("resize", handleResize);
   }, [breakpoint]);
 
@@ -44,11 +44,12 @@ export function StudentPage() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { logout, user } = useAuthStore();
+
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const routeDestination = useBuildingStore((state) => state.routeDestination);
-  const setSelectedBuilding = useBuildingStore((s) => s.setSelectedBuilding);
-  const mapPosition = useLocationStore((s) => s.mapPosition);
-  const hasLocation = mapPosition !== null;
+  const setSelectedBuilding = useBuildingStore(
+    (state) => state.setSelectedBuilding
+  );
 
   const [sheetState, setSheetState] = useState<SheetState>("closed");
   const [totalBuildings, setTotalBuildings] = useState(0);
@@ -57,12 +58,13 @@ export function StudentPage() {
 
   useEffect(() => {
     getBuildings().then((data) => {
-      setTotalBuildings(data.filter((b: Building) => b.is_active).length);
+      setTotalBuildings(data.filter((building: Building) => building.is_active).length);
     });
   }, []);
 
   useEffect(() => {
     if (!isMobile) return;
+
     if (routeDestination) {
       setSheetState("closed");
     }
@@ -73,12 +75,18 @@ export function StudentPage() {
     navigate(ROUTES.WELCOME);
   };
 
+  const handleNavigateFromSchedule = () => {
+    setViewMode("map");
+    setShowSchedule(false);
+    setSheetState("closed");
+  };
+
   const mobileActions = useMemo(() => {
     return [
       {
         id: "schedule",
         label: "Horario",
-        icon: "calendar" as const,
+        icon: "map" as const,
         onClick: () => setShowSchedule(true),
       },
       {
@@ -99,7 +107,6 @@ export function StudentPage() {
     ];
   }, [sheetState]);
 
-  // Desktop Layout
   if (!isMobile) {
     return (
       <div className="student-page">
@@ -109,26 +116,42 @@ export function StudentPage() {
               <div className="student-page__user-avatar">
                 <GraduationCapIcon size={20} />
               </div>
+
               <div className="student-page__user-info">
-                <span className="student-page__user-name">{user?.name || "Estudiante"}</span>
+                <span className="student-page__user-name">
+                  {user?.name || "Estudiante"}
+                </span>
                 <span className="student-page__user-role">Alumno</span>
               </div>
             </div>
-            <button className="student-page__logout" onClick={handleLogout} title="Cerrar sesion">
+
+            <button
+              type="button"
+              className="student-page__logout"
+              onClick={handleLogout}
+              title="Cerrar sesion"
+            >
               <LogOutIcon size={18} />
             </button>
           </div>
 
           <nav className="student-page__nav">
             <button
-              className={`student-page__nav-item ${viewMode === "map" ? "is-active" : ""}`}
+              type="button"
+              className={`student-page__nav-item ${
+                viewMode === "map" ? "is-active" : ""
+              }`}
               onClick={() => setViewMode("map")}
             >
               <MapIcon size={18} />
               <span>Mapa del Campus</span>
             </button>
+
             <button
-              className={`student-page__nav-item ${viewMode === "schedule" ? "is-active" : ""}`}
+              type="button"
+              className={`student-page__nav-item ${
+                viewMode === "schedule" ? "is-active" : ""
+              }`}
               onClick={() => setViewMode("schedule")}
             >
               <CalendarIcon size={18} />
@@ -144,10 +167,7 @@ export function StudentPage() {
 
           {viewMode === "schedule" && (
             <div className="student-page__sidebar-content">
-              <SchedulePanel onNavigateToClass={(buildingId) => {
-                setViewMode("map");
-                // Find and select the building
-              }} />
+              <SchedulePanel onNavigateToClass={handleNavigateFromSchedule} />
             </div>
           )}
         </aside>
@@ -158,6 +178,7 @@ export function StudentPage() {
               <CampusViewer isMobile={false} mobilePanelOpen={false} />
             </div>
           )}
+
           {viewMode === "schedule" && (
             <div className="student-page__schedule-full">
               <SchedulePanel expanded />
@@ -168,7 +189,6 @@ export function StudentPage() {
     );
   }
 
-  // Mobile Layout
   const sheetTitle = routeDestination
     ? "Tu ruta"
     : selectedBuilding
@@ -181,7 +201,8 @@ export function StudentPage() {
       ? "Detalles del edificio"
       : `${totalBuildings} edificios`;
 
-  const showQuickCard = !!selectedBuilding && !routeDestination && sheetState === "closed";
+  const showQuickCard =
+    !!selectedBuilding && !routeDestination && sheetState === "closed";
 
   return (
     <div className="ito-campus--mobile student-mobile">
@@ -219,18 +240,24 @@ export function StudentPage() {
             >
               <div className="student-mobile__schedule-header">
                 <h2>Mi Horario</h2>
-                <button onClick={() => setShowSchedule(false)}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+
+                <button type="button" onClick={() => setShowSchedule(false)}>
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
                 </button>
               </div>
+
               <div className="student-mobile__schedule-body">
-                <SchedulePanel onNavigateToClass={(buildingId) => {
-                  setShowSchedule(false);
-                  setSheetState("closed");
-                }} />
+                <SchedulePanel onNavigateToClass={handleNavigateFromSchedule} />
               </div>
             </motion.div>
           </motion.div>
@@ -246,6 +273,7 @@ export function StudentPage() {
             setSheetState("closed");
             return;
           }
+
           setSheetState(next);
         }}
         title={sheetTitle}

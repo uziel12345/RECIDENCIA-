@@ -5,6 +5,7 @@ import {
   getBuildingById,
   getBuildingImages,
   getBuildings,
+  getBuildingsForAdmin,
   updateBuilding,
   updateBuildingStatus,
 } from "./buildings.controller.js";
@@ -13,37 +14,52 @@ import { authorize } from "../auth/middlewares/authorize.middleware.js";
 
 const router = Router();
 
+const adminRoles = [
+  "superadmin",
+  "admin",
+  "servicios_escolares",
+  "recursos_humanos",
+] as const;
+
 router.get("/", getBuildings);
+
+router.get(
+  "/admin/all",
+  authenticate,
+  authorize(...adminRoles),
+  getBuildingsForAdmin
+);
+
+router.get("/:id/images", getBuildingImages);
+
+router.get("/:id", getBuildingById);
 
 router.post(
   "/",
   authenticate,
-  authorize("superadmin", "admin"),
+  authorize(...adminRoles),
   createBuilding
 );
 
 router.put(
   "/:id",
   authenticate,
-  authorize("superadmin", "admin"),
+  authorize(...adminRoles),
   updateBuilding
 );
 
 router.patch(
   "/:id/status",
   authenticate,
-  authorize("superadmin", "admin"),
+  authorize(...adminRoles),
   updateBuildingStatus
 );
 
 router.delete(
   "/:id",
   authenticate,
-  authorize("superadmin", "admin"),
+  authorize(...adminRoles),
   deleteBuilding
 );
-
-router.get("/:id/images", getBuildingImages);
-router.get("/:id", getBuildingById);
 
 export default router;

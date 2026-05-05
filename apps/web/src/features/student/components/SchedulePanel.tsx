@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ClockIcon, MapIcon, NavigationIcon } from "../../shared/Icons";
+import { ClockIcon, NavigationIcon } from "../../shared/Icons";
 
 interface ScheduleClass {
   id: string;
@@ -12,7 +12,7 @@ interface ScheduleClass {
   day: string;
 }
 
-// Mock schedule data - in production this would come from an API
+// Datos mock. Más adelante esto puede venir desde la API.
 const mockSchedule: ScheduleClass[] = [
   {
     id: "1",
@@ -73,13 +73,22 @@ interface SchedulePanelProps {
   onNavigateToClass?: (buildingId: string) => void;
 }
 
-export function SchedulePanel({ expanded = false, onNavigateToClass }: SchedulePanelProps) {
+export function SchedulePanel({
+  expanded = false,
+  onNavigateToClass,
+}: SchedulePanelProps) {
   const [selectedDay, setSelectedDay] = useState("Lunes");
-  
-  const todayClasses = mockSchedule.filter((c) => c.day === selectedDay);
+
+  const todayClasses = mockSchedule.filter(
+    (classItem) => classItem.day === selectedDay
+  );
 
   return (
-    <div className={`schedule-panel ${expanded ? "schedule-panel--expanded" : ""}`}>
+    <div
+      className={`schedule-panel ${
+        expanded ? "schedule-panel--expanded" : ""
+      }`}
+    >
       <div className="schedule-panel__header">
         <h3 className="schedule-panel__title">
           <ClockIcon size={18} />
@@ -91,7 +100,10 @@ export function SchedulePanel({ expanded = false, onNavigateToClass }: ScheduleP
         {days.map((day) => (
           <button
             key={day}
-            className={`schedule-panel__day ${selectedDay === day ? "is-active" : ""}`}
+            type="button"
+            className={`schedule-panel__day ${
+              selectedDay === day ? "is-active" : ""
+            }`}
             onClick={() => setSelectedDay(day)}
           >
             {day.slice(0, 3)}
@@ -109,17 +121,29 @@ export function SchedulePanel({ expanded = false, onNavigateToClass }: ScheduleP
             <div key={classItem.id} className="schedule-class">
               <div className="schedule-class__time">
                 <span>{classItem.time.split(" - ")[0]}</span>
-                <span className="schedule-class__time-end">{classItem.time.split(" - ")[1]}</span>
+                <span className="schedule-class__time-end">
+                  {classItem.time.split(" - ")[1]}
+                </span>
               </div>
+
               <div className="schedule-class__content">
                 <h4 className="schedule-class__name">{classItem.name}</h4>
-                <p className="schedule-class__professor">{classItem.professor}</p>
+                <p className="schedule-class__professor">
+                  {classItem.professor}
+                </p>
+
                 <div className="schedule-class__location">
-                  <span className="schedule-class__building-code">{classItem.buildingCode}</span>
-                  <span className="schedule-class__room">{classItem.room}</span>
+                  <span className="schedule-class__building-code">
+                    {classItem.buildingCode}
+                  </span>
+                  <span className="schedule-class__room">
+                    {classItem.room}
+                  </span>
                 </div>
               </div>
+
               <button
+                type="button"
                 className="schedule-class__navigate"
                 onClick={() => onNavigateToClass?.(classItem.buildingCode)}
                 title={`Ir a ${classItem.building}`}

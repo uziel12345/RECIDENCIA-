@@ -32,6 +32,13 @@ export const getBuildings = asyncHandler(async (_req: Request, res: Response) =>
   return sendSuccess(res, data);
 });
 
+export const getBuildingsForAdmin = asyncHandler(
+  async (_req: Request, res: Response) => {
+    const data = await buildingsService.getAllForAdmin();
+    return sendSuccess(res, data);
+  }
+);
+
 export const getBuildingById = asyncHandler(
   async (req: Request, res: Response) => {
     const id = getSingleParam(req.params.id);

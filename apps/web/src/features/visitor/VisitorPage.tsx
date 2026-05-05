@@ -5,23 +5,16 @@ import { CampusViewer } from "../../components/viewer/CampusViewer";
 import { BuildingSidebar } from "../buildings/components/BuildingSidebar";
 import { BuildingQuickCard } from "../buildings/components/BuildingQuickCard";
 import { useBuildingStore } from "../../store/building-store";
-import { useLocationStore } from "../../store/location-store";
 import { useAuthStore } from "../../store/auth-store";
 import { getBuildings } from "../../services/buildings.service";
 import type { Building } from "../buildings/types/building";
-import { MobileBottomSheet, type SheetState } from "../campus/components/MobileBottomSheet";
+import {
+  MobileBottomSheet,
+  type SheetState,
+} from "../campus/components/MobileBottomSheet";
 import { MobileQuickActions } from "../campus/components/MobileQuickActions";
 import { ROUTES } from "../../types/routes";
-import { 
-  UsersIcon, 
-  LogOutIcon, 
-  SearchIcon,
-  MapIcon,
-  CompassIcon,
-  CoffeeIcon,
-  BookOpenIcon,
-  InfoIcon
-} from "../shared/Icons";
+import { UsersIcon, LogOutIcon, CompassIcon } from "../shared/Icons";
 import { VisitorTopBar } from "./components/VisitorTopBar";
 import { QuickDestinations } from "./components/QuickDestinations";
 
@@ -33,6 +26,7 @@ function useIsMobile(breakpoint = 768) {
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < breakpoint);
     window.addEventListener("resize", handleResize);
+
     return () => window.removeEventListener("resize", handleResize);
   }, [breakpoint]);
 
@@ -42,12 +36,11 @@ function useIsMobile(breakpoint = 768) {
 export function VisitorPage() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const { logout, user } = useAuthStore();
+  const { logout } = useAuthStore();
+
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const routeDestination = useBuildingStore((state) => state.routeDestination);
-  const setSelectedBuilding = useBuildingStore((s) => s.setSelectedBuilding);
-  const mapPosition = useLocationStore((s) => s.mapPosition);
-  const hasLocation = mapPosition !== null;
+  const setSelectedBuilding = useBuildingStore((state) => state.setSelectedBuilding);
 
   const [sheetState, setSheetState] = useState<SheetState>("closed");
   const [totalBuildings, setTotalBuildings] = useState(0);
@@ -55,12 +48,15 @@ export function VisitorPage() {
 
   useEffect(() => {
     getBuildings().then((data) => {
-      setTotalBuildings(data.filter((b: Building) => b.is_active).length);
+      setTotalBuildings(
+        data.filter((building: Building) => building.is_active).length
+      );
     });
   }, []);
 
   useEffect(() => {
     if (!isMobile) return;
+
     if (routeDestination) {
       setSheetState("closed");
     }
@@ -97,7 +93,6 @@ export function VisitorPage() {
     ];
   }, [sheetState]);
 
-  // Desktop Layout
   if (!isMobile) {
     return (
       <div className="visitor-page">
@@ -107,12 +102,21 @@ export function VisitorPage() {
               <div className="visitor-page__user-avatar">
                 <UsersIcon size={20} />
               </div>
+
               <div className="visitor-page__user-info">
                 <span className="visitor-page__user-name">Visitante</span>
-                <span className="visitor-page__user-role">Explorando el campus</span>
+                <span className="visitor-page__user-role">
+                  Explorando el campus
+                </span>
               </div>
             </div>
-            <button className="visitor-page__logout" onClick={handleLogout} title="Salir">
+
+            <button
+              type="button"
+              className="visitor-page__logout"
+              onClick={handleLogout}
+              title="Salir"
+            >
               <LogOutIcon size={18} />
             </button>
           </div>
@@ -122,6 +126,7 @@ export function VisitorPage() {
               <CompassIcon size={16} />
               <span>Destinos Populares</span>
             </h3>
+
             <QuickDestinations compact />
           </div>
 
@@ -139,7 +144,6 @@ export function VisitorPage() {
     );
   }
 
-  // Mobile Layout
   const sheetTitle = routeDestination
     ? "Tu ruta"
     : selectedBuilding
@@ -152,7 +156,8 @@ export function VisitorPage() {
       ? "Detalles del edificio"
       : `${totalBuildings} edificios`;
 
-  const showQuickCard = !!selectedBuilding && !routeDestination && sheetState === "closed";
+  const showQuickCard =
+    !!selectedBuilding && !routeDestination && sheetState === "closed";
 
   return (
     <div className="ito-campus--mobile visitor-mobile">
@@ -189,13 +194,22 @@ export function VisitorPage() {
             >
               <div className="visitor-mobile__dest-header">
                 <h2>Destinos Populares</h2>
-                <button onClick={() => setShowQuickDest(false)}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+
+                <button type="button" onClick={() => setShowQuickDest(false)}>
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
                 </button>
               </div>
+
               <div className="visitor-mobile__dest-body">
                 <QuickDestinations onSelect={() => setShowQuickDest(false)} />
               </div>
@@ -213,6 +227,7 @@ export function VisitorPage() {
             setSheetState("closed");
             return;
           }
+
           setSheetState(next);
         }}
         title={sheetTitle}

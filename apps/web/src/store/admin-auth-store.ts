@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import {
+  adminCheckApi,
   getMeApi,
   loginAdminApi,
   type AuthUser,
@@ -12,38 +13,35 @@ type AdminAuthState = {
   error: string | null;
   isAuthenticated: boolean;
 
-  login: (usernameOrEmail: string, password: string) => Promise<boolean>;
-  loadSession: () => Promise<void>;
+  login: (username: string, password: string) => Promise<boolean>;
+  loadSession: () => Promise<boolean>;
   logout: () => void;
   clearError: () => void;
 };
 
-const ADMIN_TOKEN_KEY = "admin_token";
+const TOKEN_KEY = "admin_token";
 
 export const useAdminAuthStore = create<AdminAuthState>((set) => ({
   user: null,
-  token: localStorage.getItem(ADMIN_TOKEN_KEY),
+  token: localStorage.getItem(TOKEN_KEY),
   loading: false,
   error: null,
-  isAuthenticated: Boolean(localStorage.getItem(ADMIN_TOKEN_KEY)),
+  isAuthenticated: Boolean(localStorage.getItem(TOKEN_KEY)),
 
-  async login(usernameOrEmail: string, password: string) {
-    set({
-      loading: true,
-      error: null,
-    });
+  login: async (username, password) => {
+    set({ loading: true, error: null });
 
     try {
-      const result = await loginAdminApi({
-        usernameOrEmail,
+      const response = await loginAdminApi({
+        username,
         password,
       });
 
-      localStorage.setItem(ADMIN_TOKEN_KEY, result.token);
+      localStorage.setItem(TOKEN_KEY, response.token);
 
       set({
-        user: result.user,
-        token: result.token,
+        user: response.user,
+        token: response.token,
         isAuthenticated: true,
         loading: false,
         error: null,
@@ -52,11 +50,9 @@ export const useAdminAuthStore = create<AdminAuthState>((set) => ({
       return true;
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "No se pudo iniciar sesión";
+        error instanceof Error ? error.message : "No se pudo iniciar sesión";
 
-      localStorage.removeItem(ADMIN_TOKEN_KEY);
+      localStorage.removeItem(TOKEN_KEY);
 
       set({
         user: null,
@@ -70,8 +66,8 @@ export const useAdminAuthStore = create<AdminAuthState>((set) => ({
     }
   },
 
-  async loadSession() {
-    const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+  loadSession: async () => {
+    const token = localStorage.getItem(TOKEN_KEY);
 
     if (!token) {
       set({
@@ -80,31 +76,30 @@ export const useAdminAuthStore = create<AdminAuthState>((set) => ({
         isAuthenticated: false,
         loading: false,
       });
-      return;
+
+      return false;
     }
 
-    set({
-      loading: true,
-      error: null,
-    });
+    set({ loading: true, error: null });
 
     try {
-      const result = await getMeApi();
+      await adminCheckApi();
+      const user = await getMeApi();
 
       set({
-        user: result.user,
+        user,
         token,
         isAuthenticated: true,
         loading: false,
         error: null,
       });
+
+      return true;
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "La sesión expiró o no es válida";
+        error instanceof Error ? error.message : "Sesión administrativa inválida";
 
-      localStorage.removeItem(ADMIN_TOKEN_KEY);
+      localStorage.removeItem(TOKEN_KEY);
 
       set({
         user: null,
@@ -113,11 +108,13 @@ export const useAdminAuthStore = create<AdminAuthState>((set) => ({
         loading: false,
         error: message,
       });
+
+      return false;
     }
   },
 
-  logout() {
-    localStorage.removeItem(ADMIN_TOKEN_KEY);
+  logout: () => {
+    localStorage.removeItem(TOKEN_KEY);
 
     set({
       user: null,
@@ -128,9 +125,7 @@ export const useAdminAuthStore = create<AdminAuthState>((set) => ({
     });
   },
 
-  clearError() {
-    set({
-      error: null,
-    });
+  clearError: () => {
+    set({ error: null });
   },
 }));

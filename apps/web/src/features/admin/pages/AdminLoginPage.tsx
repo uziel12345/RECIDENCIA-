@@ -1,32 +1,38 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
 
 export function AdminLoginPage() {
-  const login = useAdminAuthStore((state) => state.login);
-  const loadSession = useAdminAuthStore((state) => state.loadSession);
-  const clearError = useAdminAuthStore((state) => state.clearError);
-  const loading = useAdminAuthStore((state) => state.loading);
-  const error = useAdminAuthStore((state) => state.error);
-  const isAuthenticated = useAdminAuthStore((state) => state.isAuthenticated);
-  const user = useAdminAuthStore((state) => state.user);
+  const { login, loadSession, loading, error, isAuthenticated, clearError } =
+    useAdminAuthStore();
 
-  const [usernameOrEmail, setUsernameOrEmail] = useState("admin");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   useEffect(() => {
-    loadSession();
-  }, [loadSession]);
+    clearError();
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    if (isAuthenticated) {
+      window.location.href = "/admin/buildings";
+      return;
+    }
+
+    void loadSession().then((validSession) => {
+      if (validSession) {
+        window.location.href = "/admin/buildings";
+      }
+    });
+  }, [clearError, isAuthenticated, loadSession]);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const success = await login(usernameOrEmail, password);
+    const success = await login(username.trim(), password);
 
     if (success) {
-      window.history.pushState({}, "", "/admin/buildings");
-      window.dispatchEvent(new PopStateEvent("popstate"));
+      window.location.href = "/admin/buildings";
     }
-  }
+  };
 
   return (
     <main
@@ -34,9 +40,9 @@ export function AdminLoginPage() {
         minHeight: "100vh",
         display: "grid",
         placeItems: "center",
-        background:
-          "linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #0f766e 100%)",
         padding: "24px",
+        background:
+          "linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #2563eb 100%)",
       }}
     >
       <section
@@ -46,211 +52,144 @@ export function AdminLoginPage() {
           background: "#ffffff",
           borderRadius: "24px",
           padding: "28px",
-          boxShadow: "0 24px 70px rgba(0,0,0,0.28)",
+          boxShadow: "0 24px 70px rgba(15, 23, 42, 0.35)",
+          border: "1px solid #e2e8f0",
         }}
       >
-        <div style={{ marginBottom: "22px" }}>
-          <div
+        <header style={{ marginBottom: "24px" }}>
+          <p
             style={{
-              width: "52px",
-              height: "52px",
-              borderRadius: "18px",
-              display: "grid",
-              placeItems: "center",
-              background: "#0f766e",
-              color: "#ffffff",
-              fontWeight: 800,
-              fontSize: "20px",
-              marginBottom: "14px",
+              margin: "0 0 8px",
+              color: "#2563eb",
+              fontWeight: 700,
+              fontSize: "14px",
             }}
           >
-            ITO
-          </div>
+            Panel administrativo
+          </p>
 
           <h1
             style={{
               margin: 0,
               color: "#0f172a",
-              fontSize: "26px",
-              lineHeight: 1.15,
+              fontSize: "28px",
+              lineHeight: 1.2,
             }}
           >
-            Panel administrador
+            Iniciar sesión
           </h1>
 
           <p
             style={{
-              margin: "8px 0 0",
+              margin: "10px 0 0",
               color: "#64748b",
-              fontSize: "14px",
               lineHeight: 1.5,
             }}
           >
-            Inicia sesión para administrar edificios, rutas y contenido del mapa
-            interactivo.
+            Accede para administrar edificios del mapa interactivo del ITO.
           </p>
-        </div>
-
-        {isAuthenticated && user ? (
-          <div
-            style={{
-              marginBottom: "16px",
-              padding: "12px",
-              borderRadius: "14px",
-              background: "#ecfdf5",
-              border: "1px solid #bbf7d0",
-              color: "#166534",
-              fontSize: "14px",
-              lineHeight: 1.45,
-            }}
-          >
-            Sesión activa como <strong>{user.username}</strong>. Redirigiendo al
-            panel...
-          </div>
-        ) : null}
-
-        {error ? (
-          <div
-            style={{
-              marginBottom: "16px",
-              padding: "12px",
-              borderRadius: "14px",
-              background: "#fef2f2",
-              border: "1px solid #fecaca",
-              color: "#991b1b",
-              fontSize: "14px",
-              lineHeight: 1.45,
-            }}
-          >
-            {error}
-          </div>
-        ) : null}
+        </header>
 
         <form onSubmit={handleSubmit}>
           <label
+            htmlFor="username"
             style={{
               display: "block",
-              marginBottom: "14px",
+              marginBottom: "8px",
+              color: "#334155",
+              fontWeight: 700,
             }}
           >
-            <span
-              style={{
-                display: "block",
-                marginBottom: "6px",
-                color: "#334155",
-                fontSize: "13px",
-                fontWeight: 700,
-              }}
-            >
-              Usuario o correo
-            </span>
-
-            <input
-              value={usernameOrEmail}
-              onChange={(event) => {
-                clearError();
-                setUsernameOrEmail(event.target.value);
-              }}
-              placeholder="admin"
-              autoComplete="username"
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                border: "1px solid #cbd5e1",
-                borderRadius: "14px",
-                padding: "12px 14px",
-                fontSize: "15px",
-                outline: "none",
-              }}
-            />
+            Usuario
           </label>
 
-          <label
+          <input
+            id="username"
+            type="text"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            autoComplete="username"
+            required
             style={{
-              display: "block",
+              width: "100%",
+              boxSizing: "border-box",
+              border: "1px solid #cbd5e1",
+              borderRadius: "14px",
+              padding: "12px 14px",
+              fontSize: "15px",
+              outline: "none",
               marginBottom: "18px",
             }}
+            placeholder="admin"
+          />
+
+          <label
+            htmlFor="password"
+            style={{
+              display: "block",
+              marginBottom: "8px",
+              color: "#334155",
+              fontWeight: 700,
+            }}
           >
-            <span
+            Contraseña
+          </label>
+
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="current-password"
+            required
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              border: "1px solid #cbd5e1",
+              borderRadius: "14px",
+              padding: "12px 14px",
+              fontSize: "15px",
+              outline: "none",
+              marginBottom: "18px",
+            }}
+            placeholder="Ingresa tu contraseña"
+          />
+
+          {error ? (
+            <div
+              role="alert"
               style={{
-                display: "block",
-                marginBottom: "6px",
-                color: "#334155",
-                fontSize: "13px",
-                fontWeight: 700,
+                marginBottom: "18px",
+                padding: "12px 14px",
+                borderRadius: "14px",
+                background: "#fee2e2",
+                border: "1px solid #fecaca",
+                color: "#991b1b",
+                fontWeight: 600,
               }}
             >
-              Contraseña
-            </span>
-
-            <input
-              value={password}
-              onChange={(event) => {
-                clearError();
-                setPassword(event.target.value);
-              }}
-              type="password"
-              placeholder="Contraseña"
-              autoComplete="current-password"
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                border: "1px solid #cbd5e1",
-                borderRadius: "14px",
-                padding: "12px 14px",
-                fontSize: "15px",
-                outline: "none",
-              }}
-            />
-          </label>
+              {error}
+            </div>
+          ) : null}
 
           <button
             type="submit"
-            disabled={loading || !usernameOrEmail.trim() || !password}
+            disabled={loading}
             style={{
               width: "100%",
               border: "none",
               borderRadius: "14px",
               padding: "13px 16px",
-              cursor:
-                loading || !usernameOrEmail.trim() || !password
-                  ? "not-allowed"
-                  : "pointer",
-              background:
-                loading || !usernameOrEmail.trim() || !password
-                  ? "#94a3b8"
-                  : "#0f766e",
+              background: loading ? "#94a3b8" : "#2563eb",
               color: "#ffffff",
               fontWeight: 800,
               fontSize: "15px",
-              boxShadow: "0 12px 26px rgba(15, 118, 110, 0.28)",
+              cursor: loading ? "not-allowed" : "pointer",
             }}
           >
-            {loading ? "Iniciando sesión..." : "Entrar al panel"}
+            {loading ? "Validando..." : "Entrar"}
           </button>
         </form>
-
-        <button
-          type="button"
-          onClick={() => {
-            window.history.pushState({}, "", "/");
-            window.dispatchEvent(new PopStateEvent("popstate"));
-          }}
-          style={{
-            width: "100%",
-            marginTop: "12px",
-            border: "1px solid #cbd5e1",
-            borderRadius: "14px",
-            padding: "12px 16px",
-            cursor: "pointer",
-            background: "#ffffff",
-            color: "#334155",
-            fontWeight: 700,
-            fontSize: "14px",
-          }}
-        >
-          Volver al mapa
-        </button>
       </section>
     </main>
   );

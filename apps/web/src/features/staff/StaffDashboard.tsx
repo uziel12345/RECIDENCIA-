@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CampusViewer } from "../../components/viewer/CampusViewer";
-import { useBuildingStore } from "../../store/building-store";
 import { useAuthStore } from "../../store/auth-store";
 import { getBuildings } from "../../services/buildings.service";
 import type { Building } from "../buildings/types/building";
@@ -9,11 +8,7 @@ import { ROUTES } from "../../types/routes";
 import {
   BuildingIcon,
   MapIcon,
-  SettingsIcon,
   LogOutIcon,
-  PlusIcon,
-  EditIcon,
-  SearchIcon,
   LayersIcon,
 } from "../shared/Icons";
 import { BuildingManager } from "./components/BuildingManager";
@@ -24,38 +19,45 @@ type TabId = "buildings" | "navigation" | "map";
 export function StaffDashboard() {
   const navigate = useNavigate();
   const { logout, user } = useAuthStore();
-  const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
+
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [activeTab, setActiveTab] = useState<TabId>("buildings");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    loadBuildings();
+  }, []);
+
+  function loadBuildings() {
     setIsLoading(true);
+
     getBuildings()
       .then(setBuildings)
       .finally(() => setIsLoading(false));
-  }, []);
+  }
 
   const handleLogout = () => {
     logout();
     navigate(ROUTES.WELCOME);
   };
 
-  const activeCount = buildings.filter((b) => b.is_active).length;
-  const inactiveCount = buildings.filter((b) => !b.is_active).length;
+  const activeCount = buildings.filter((building) => building.is_active).length;
+  const inactiveCount = buildings.filter((building) => !building.is_active).length;
 
   return (
     <div className="staff-dashboard">
-      {/* Sidebar */}
       <aside className="staff-dashboard__sidebar">
         <div className="staff-dashboard__header">
           <div className="staff-dashboard__brand">
             <div className="staff-dashboard__brand-icon">
               <MapIcon size={22} />
             </div>
+
             <div className="staff-dashboard__brand-text">
               <span className="staff-dashboard__brand-title">Mapa ITO</span>
-              <span className="staff-dashboard__brand-role">Panel de Personal</span>
+              <span className="staff-dashboard__brand-role">
+                Panel de Personal
+              </span>
             </div>
           </div>
         </div>
@@ -64,30 +66,46 @@ export function StaffDashboard() {
           <div className="staff-dashboard__user-avatar">
             <BuildingIcon size={18} />
           </div>
+
           <div className="staff-dashboard__user-info">
-            <span className="staff-dashboard__user-name">{user?.name || "Personal"}</span>
+            <span className="staff-dashboard__user-name">
+              {user?.name || "Personal"}
+            </span>
             <span className="staff-dashboard__user-email">{user?.email}</span>
           </div>
         </div>
 
         <nav className="staff-dashboard__nav">
           <button
-            className={`staff-dashboard__nav-item ${activeTab === "buildings" ? "is-active" : ""}`}
+            type="button"
+            className={`staff-dashboard__nav-item ${
+              activeTab === "buildings" ? "is-active" : ""
+            }`}
             onClick={() => setActiveTab("buildings")}
           >
             <BuildingIcon size={18} />
             <span>Edificios</span>
-            <span className="staff-dashboard__nav-badge">{buildings.length}</span>
+            <span className="staff-dashboard__nav-badge">
+              {buildings.length}
+            </span>
           </button>
+
           <button
-            className={`staff-dashboard__nav-item ${activeTab === "navigation" ? "is-active" : ""}`}
+            type="button"
+            className={`staff-dashboard__nav-item ${
+              activeTab === "navigation" ? "is-active" : ""
+            }`}
             onClick={() => setActiveTab("navigation")}
           >
             <LayersIcon size={18} />
             <span>Navegacion</span>
           </button>
+
           <button
-            className={`staff-dashboard__nav-item ${activeTab === "map" ? "is-active" : ""}`}
+            type="button"
+            className={`staff-dashboard__nav-item ${
+              activeTab === "map" ? "is-active" : ""
+            }`}
             onClick={() => setActiveTab("map")}
           >
             <MapIcon size={18} />
@@ -100,6 +118,7 @@ export function StaffDashboard() {
             <span className="staff-dashboard__stat-value">{activeCount}</span>
             <span className="staff-dashboard__stat-label">Activos</span>
           </div>
+
           <div className="staff-dashboard__stat">
             <span className="staff-dashboard__stat-value">{inactiveCount}</span>
             <span className="staff-dashboard__stat-label">Inactivos</span>
@@ -107,20 +126,23 @@ export function StaffDashboard() {
         </div>
 
         <div className="staff-dashboard__footer">
-          <button className="staff-dashboard__logout" onClick={handleLogout}>
+          <button
+            type="button"
+            className="staff-dashboard__logout"
+            onClick={handleLogout}
+          >
             <LogOutIcon size={18} />
             <span>Cerrar Sesion</span>
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="staff-dashboard__main">
         {activeTab === "buildings" && (
           <BuildingManager
             buildings={buildings}
             isLoading={isLoading}
-            onRefresh={() => getBuildings().then(setBuildings)}
+            onRefresh={loadBuildings}
           />
         )}
 

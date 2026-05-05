@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CampusViewer } from "../../components/viewer/CampusViewer";
-import { useBuildingStore } from "../../store/building-store";
 import { useAuthStore } from "../../store/auth-store";
 import { getBuildings } from "../../services/buildings.service";
 import type { Building } from "../buildings/types/building";

@@ -8,6 +8,10 @@ export class BuildingsService {
     return this.repository.findAllActive();
   }
 
+  async getAllForAdmin() {
+    return this.repository.findAllForAdmin();
+  }
+
   async getById(id: string) {
     if (!id || id.trim() === "") {
       throw new ApiError(400, "El id del edificio es obligatorio");

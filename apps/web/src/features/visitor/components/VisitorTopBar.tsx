@@ -1,4 +1,4 @@
-import { UsersIcon, SearchIcon, LogOutIcon, MapIcon } from "../../shared/Icons";
+import { SearchIcon, LogOutIcon, MapIcon } from "../../shared/Icons";
 
 interface VisitorTopBarProps {
   onSearchClick: () => void;
@@ -8,30 +8,36 @@ interface VisitorTopBarProps {
 export function VisitorTopBar({ onSearchClick, onLogout }: VisitorTopBarProps) {
   return (
     <header className="visitor-top-bar">
-      <div className="visitor-top-bar__left">
-        <div className="visitor-top-bar__logo">
+      <div className="visitor-top-bar__brand">
+        <div className="visitor-top-bar__brand-icon">
           <MapIcon size={20} />
         </div>
-        <div className="visitor-top-bar__info">
+
+        <div className="visitor-top-bar__brand-text">
           <span className="visitor-top-bar__title">Mapa ITO</span>
-          <span className="visitor-top-bar__subtitle">Modo Visitante</span>
+          <span className="visitor-top-bar__subtitle">Modo visitante</span>
         </div>
       </div>
 
       <div className="visitor-top-bar__actions">
         <button
-          className="visitor-top-bar__btn"
+          type="button"
+          className="visitor-top-bar__button"
           onClick={onSearchClick}
           aria-label="Buscar edificio"
+          title="Buscar edificio"
         >
-          <SearchIcon size={20} />
+          <SearchIcon size={18} />
         </button>
+
         <button
-          className="visitor-top-bar__btn visitor-top-bar__btn--logout"
+          type="button"
+          className="visitor-top-bar__button"
           onClick={onLogout}
           aria-label="Salir"
+          title="Salir"
         >
-          <LogOutIcon size={20} />
+          <LogOutIcon size={18} />
         </button>
       </div>
     </header>

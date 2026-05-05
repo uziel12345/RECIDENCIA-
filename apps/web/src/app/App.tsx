@@ -6,6 +6,8 @@ import { StudentPage } from "../features/student/StudentPage";
 import { VisitorPage } from "../features/visitor/VisitorPage";
 import { StaffDashboard } from "../features/staff/StaffDashboard";
 import { AdminDashboard } from "../features/admin/AdminDashboard";
+import { AdminLoginPage } from "../features/admin/pages/AdminLoginPage";
+import { AdminBuildingsPage } from "../features/admin/pages/AdminBuildingsPage";
 import { useAuthStore } from "../store/auth-store";
 import { ROUTES } from "../types/routes";
 
@@ -54,6 +56,10 @@ export default function App() {
         <Route path={ROUTES.LOGIN} element={<LoginPage />} />
         <Route path={ROUTES.ONBOARDING} element={<OnboardingPage />} />
 
+        {/* Real Admin Auth */}
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path="/admin/buildings" element={<AdminBuildingsPage />} />
+
         {/* Student View */}
         <Route
           path={ROUTES.STUDENT}
@@ -84,7 +90,7 @@ export default function App() {
           }
         />
 
-        {/* Admin Dashboard */}
+        {/* Mock Admin Dashboard. Se conserva separado del admin real con JWT */}
         <Route
           path={ROUTES.ADMIN}
           element={
@@ -94,7 +100,7 @@ export default function App() {
           }
         />
 
-        {/* Legacy map route - redirect based on role */}
+        {/* Legacy map route, redirect based on role */}
         <Route path={ROUTES.MAP} element={<MapRedirect />} />
 
         {/* Fallback */}
