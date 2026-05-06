@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import {
   createBuildingApi,
@@ -159,7 +159,34 @@ export function AdminBuildingsPage() {
 
   const limit = 10;
 
-  const filteredBuildings = buildings;
+  // 1) Filters for admin table: local search + status filter on current page
+  // Note: This is a local (per-page) filter. Global search should be implemented backend-side to affect pagination.
+  const filteredBuildings = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+
+    return buildings.filter((building) => {
+      const name = safeText(building.name).toLowerCase();
+      const code = safeText(building.code).toLowerCase();
+      const categoryName = safeText(building.category_name).toLowerCase();
+      const categoryCode = safeText(building.category_code).toLowerCase();
+
+      const matchesSearch =
+        !term ||
+        name.includes(term) ||
+        code.includes(term) ||
+        categoryName.includes(term) ||
+        categoryCode.includes(term);
+
+      const isActive = Boolean(building.is_active);
+
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "active" && isActive) ||
+        (statusFilter === "inactive" && !isActive);
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [buildings, searchTerm, statusFilter]);
 
   useEffect(() => {
     void loadBuildings();

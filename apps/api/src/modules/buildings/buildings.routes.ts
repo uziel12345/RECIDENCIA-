@@ -18,12 +18,14 @@ import { createBuildingSchema, updateBuildingSchema, buildingIdSchema } from "./
 
 const router = Router();
 
-const adminRoles = [
+const adminReadRoles = [
   "superadmin",
   "admin",
   "servicios_escolares",
   "recursos_humanos",
 ] as const;
+
+const buildingEditorRoles = ["superadmin", "admin"] as const;
 
 router.get("/", getBuildings);
 router.get("/categories", getCategories);
@@ -31,14 +33,14 @@ router.get("/categories", getCategories);
 router.get(
   "/admin/all",
   authenticate,
-  authorize(...adminRoles),
+  authorize(...adminReadRoles),
   getBuildingsForAdmin
 );
 
 router.get(
   "/admin/paginated",
   authenticate,
-  authorize(...adminRoles),
+  authorize(...adminReadRoles),
   getBuildingsForAdminPaginated
 );
 
@@ -49,7 +51,7 @@ router.get("/:id", validateParams(buildingIdSchema), getBuildingById);
 router.post(
   "/",
   authenticate,
-  authorize(...adminRoles),
+  authorize(...buildingEditorRoles),
   validateBody(createBuildingSchema),
   createBuilding
 );
@@ -57,7 +59,7 @@ router.post(
 router.put(
   "/:id",
   authenticate,
-  authorize(...adminRoles),
+  authorize(...buildingEditorRoles),
   validateParams(buildingIdSchema),
   validateBody(updateBuildingSchema),
   updateBuilding
@@ -66,7 +68,7 @@ router.put(
 router.patch(
   "/:id/status",
   authenticate,
-  authorize(...adminRoles),
+  authorize(...buildingEditorRoles),
   validateParams(buildingIdSchema),
   updateBuildingStatus
 );
@@ -74,7 +76,7 @@ router.patch(
 router.delete(
   "/:id",
   authenticate,
-  authorize(...adminRoles),
+  authorize(...buildingEditorRoles),
   validateParams(buildingIdSchema),
   deleteBuilding
 );

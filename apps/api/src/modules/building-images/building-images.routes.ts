@@ -1,8 +1,10 @@
 import path from "node:path";
 import crypto from "node:crypto";
+import fs from "node:fs/promises";
 import { Router } from "express";
 import type { Request } from "express";
 import multer = require("multer");
+import { z } from "zod";
 import {
   deleteBuildingImage,
   getBuildingImagesForAdmin,
@@ -11,6 +13,8 @@ import {
 } from "./building-images.controller.js";
 import { authenticate } from "../auth/middlewares/authenticate.middleware.js";
 import { authorize } from "../auth/middlewares/authorize.middleware.js";
+import { validateParams } from "../../shared/middlewares/validator.js";
+import { ApiError } from "../../shared/errors/api-error.js";
 
 type UploadedFileInfo = {
   originalname: string;
@@ -23,14 +27,29 @@ type FileFilterCallback = (error: Error | null, acceptFile?: boolean) => void;
 
 const router = Router();
 
-const adminRoles = [
+const adminReadRoles = [
   "superadmin",
   "admin",
   "servicios_escolares",
   "recursos_humanos",
 ] as const;
 
+const buildingEditorRoles = ["superadmin", "admin"] as const;
+
 const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
+const uploadDirectory = path.resolve(process.cwd(), "uploads", "buildings");
+
+const buildingImagesParamsSchema = z.object({
+  buildingId: z
+    .string({ required_error: "El ID del edificio es obligatorio" })
+    .uuid("El ID del edificio debe ser un UUID válido"),
+});
+
+const imageParamsSchema = z.object({
+  imageId: z
+    .string({ required_error: "El ID de la imagen es obligatorio" })
+    .uuid("El ID de la imagen debe ser un UUID válido"),
+});
 
 const storage = multer.diskStorage({
   destination: (
@@ -38,7 +57,16 @@ const storage = multer.diskStorage({
     _file: UploadedFileInfo,
     callback: DestinationCallback
   ) => {
-    callback(null, "uploads/buildings");
+    fs.mkdir(uploadDirectory, { recursive: true })
+      .then(() => callback(null, uploadDirectory))
+      .catch((error) => {
+        callback(
+          error instanceof Error
+            ? error
+            : new Error("No se pudo preparar el directorio de imágenes"),
+          uploadDirectory
+        );
+      });
   },
 
   filename: (
@@ -64,7 +92,9 @@ const upload = multer({
     callback: FileFilterCallback
   ) => {
     if (!allowedMimeTypes.includes(file.mimetype)) {
-      callback(new Error("Formato de imagen no permitido. Usa JPG, PNG o WEBP."));
+      callback(
+        new ApiError(400, "Formato de imagen no permitido. Usa JPG, PNG o WEBP.")
+      );
       return;
     }
 
@@ -75,14 +105,16 @@ const upload = multer({
 router.get(
   "/buildings/:buildingId/images",
   authenticate,
-  authorize(...adminRoles),
+  authorize(...adminReadRoles),
+  validateParams(buildingImagesParamsSchema),
   getBuildingImagesForAdmin
 );
 
 router.post(
   "/buildings/:buildingId/images",
   authenticate,
-  authorize(...adminRoles),
+  authorize(...buildingEditorRoles),
+  validateParams(buildingImagesParamsSchema),
   upload.single("image"),
   uploadBuildingImage
 );
@@ -90,14 +122,16 @@ router.post(
 router.patch(
   "/images/:imageId/status",
   authenticate,
-  authorize(...adminRoles),
+  authorize(...buildingEditorRoles),
+  validateParams(imageParamsSchema),
   updateBuildingImageStatus
 );
 
 router.delete(
   "/images/:imageId",
   authenticate,
-  authorize(...adminRoles),
+  authorize(...buildingEditorRoles),
+  validateParams(imageParamsSchema),
   deleteBuildingImage
 );
 

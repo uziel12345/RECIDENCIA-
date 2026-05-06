@@ -32,7 +32,7 @@ export const useAdminAuthStore = create<AdminAuthState>((set) => ({
 
     try {
       const response = await loginAdminApi({
-        username,
+        usernameOrEmail: username,
         password,
       });
 

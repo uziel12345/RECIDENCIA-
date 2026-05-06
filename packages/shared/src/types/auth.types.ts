@@ -15,7 +15,7 @@ export type AuthUser = {
 };
 
 export type LoginRequest = {
-  username: string;
+  usernameOrEmail: string;
   password: string;
 };
 
