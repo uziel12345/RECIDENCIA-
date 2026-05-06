@@ -1,270 +1,45 @@
-import { useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
-import {
-  createBuildingApi,
-  deleteBuildingApi,
-  getAdminBuildingsPaginatedApi,
-  getCategoriesApi,
-  updateBuildingApi,
-  updateBuildingStatusApi,
-  type Building,
-  type BuildingCategory,
-} from "@ito-map/shared";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { BuildingImagesModal } from "../components/BuildingImagesModal";
 import {
-  buildCreateInput,
-  buildUpdateInput,
-  createSlug,
-  initialFormState,
-  mapBuildingToForm,
-  safeText,
-  type BuildingFormState,
-} from "../hooks/useBuildingForm";
-
+  useAdminBuildings,
+  type AdminBuildingStatusFilter,
+} from "../hooks/useAdminBuildings";
+import { safeText } from "../hooks/useBuildingForm";
 
 export function AdminBuildingsPage() {
   const { logout, user } = useAdminAuthStore();
 
-  const [buildings, setBuildings] = useState<Building[]>([]);
-  const [categories, setCategories] = useState<BuildingCategory[]>([]);
-  const [form, setForm] = useState<BuildingFormState>(initialFormState);
-  const [editingBuilding, setEditingBuilding] = useState<Building | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<
-    "all" | "active" | "inactive"
-  >("all");
-  const [loadingBuildings, setLoadingBuildings] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalRecords, setTotalRecords] = useState(0);
-
-  const [imageModalBuilding, setImageModalBuilding] =
-    useState<Building | null>(null);
-
-  const isEditing = editingBuilding !== null;
-
-  const limit = 10;
-
-  // 1) Filters for admin table: local search + status filter on current page
-  // Note: This is a local (per-page) filter. Global search should be implemented backend-side to affect pagination.
-  const filteredBuildings = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-
-    return buildings.filter((building) => {
-      const name = safeText(building.name).toLowerCase();
-      const code = safeText(building.code).toLowerCase();
-      const categoryName = safeText(building.category_name).toLowerCase();
-      const categoryCode = safeText(building.category_code).toLowerCase();
-
-      const matchesSearch =
-        !term ||
-        name.includes(term) ||
-        code.includes(term) ||
-        categoryName.includes(term) ||
-        categoryCode.includes(term);
-
-      const isActive = Boolean(building.is_active);
-
-      const matchesStatus =
-        statusFilter === "all" ||
-        (statusFilter === "active" && isActive) ||
-        (statusFilter === "inactive" && !isActive);
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [buildings, searchTerm, statusFilter]);
-
-  useEffect(() => {
-    void loadBuildings();
-    void loadCategories();
-  }, [page]);
-
-  async function loadCategories() {
-    try {
-      const data = await getCategoriesApi();
-      setCategories(Array.isArray(data) ? data : []);
-    } catch {
-      setCategories([]);
-    }
-  }
-
-  async function loadBuildings() {
-    setLoadingBuildings(true);
-    setError(null);
-
-    try {
-      const response = await getAdminBuildingsPaginatedApi(page, limit);
-      const payload = response as any;
-
-      const data: Building[] = Array.isArray(payload?.data)
-        ? payload.data
-        : Array.isArray(payload)
-          ? payload
-          : [];
-
-      setBuildings(data);
-      setTotalPages(payload?.pagination?.totalPages ?? 1);
-      setTotalRecords(payload?.pagination?.total ?? data.length);
-    } catch (err) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : "No se pudieron cargar los edificios";
-
-      setError(msg);
-      setBuildings([]);
-      setTotalPages(1);
-      setTotalRecords(0);
-    } finally {
-      setLoadingBuildings(false);
-    }
-  }
-
-  function updateFormField<K extends keyof BuildingFormState>(
-    key: K,
-    value: BuildingFormState[K]
-  ) {
-    setForm((currentForm) => ({
-      ...currentForm,
-      [key]: value,
-    }));
-  }
-
-  function handleNameChange(value: string) {
-    setForm((currentForm) => ({
-      ...currentForm,
-      name: value,
-      slug: currentForm.slug ? currentForm.slug : createSlug(value),
-    }));
-  }
-
-  function handleStartEdit(building: Building) {
-    setEditingBuilding(building);
-    setForm(mapBuildingToForm(building));
-    setError(null);
-    setMessage(null);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  }
-
-  function handleCancelEdit() {
-    setEditingBuilding(null);
-    setForm(initialFormState);
-    setError(null);
-    setMessage(null);
-  }
-
-  async function handleSubmitBuilding(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    setSaving(true);
-    setError(null);
-    setMessage(null);
-
-    try {
-      if (editingBuilding) {
-        const input = buildUpdateInput(form, editingBuilding);
-        await updateBuildingApi(editingBuilding.id, input);
-
-        setMessage("Edificio actualizado correctamente.");
-        setEditingBuilding(null);
-      } else {
-        const input = buildCreateInput(form);
-        await createBuildingApi(input);
-
-        setMessage("Edificio creado correctamente.");
-      }
-
-      setForm(initialFormState);
-      await loadBuildings();
-    } catch (err) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : isEditing
-            ? "No se pudo actualizar el edificio"
-            : "No se pudo crear el edificio";
-
-      setError(msg);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleToggleStatus(building: Building) {
-    setActionLoadingId(building.id);
-    setError(null);
-    setMessage(null);
-
-    const nextStatus = !Boolean(building.is_active);
-
-    try {
-      await updateBuildingStatusApi(building.id, {
-        is_active: nextStatus,
-      });
-
-      setMessage(
-        nextStatus
-          ? "Edificio activado correctamente."
-          : "Edificio desactivado correctamente."
-      );
-
-      if (editingBuilding?.id === building.id) {
-        setEditingBuilding(null);
-        setForm(initialFormState);
-      }
-
-      await loadBuildings();
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "No se pudo cambiar el estado";
-
-      setError(msg);
-    } finally {
-      setActionLoadingId(null);
-    }
-  }
-
-  async function handleDelete(building: Building) {
-    const confirmed = window.confirm(
-      `¿Seguro que deseas eliminar "${safeText(
-        building.name
-      )}"? Se hará soft delete.`
-    );
-
-    if (!confirmed) return;
-
-    setActionLoadingId(building.id);
-    setError(null);
-    setMessage(null);
-
-    try {
-      await deleteBuildingApi(building.id);
-      setMessage("Edificio eliminado correctamente.");
-
-      if (editingBuilding?.id === building.id) {
-        setEditingBuilding(null);
-        setForm(initialFormState);
-      }
-
-      await loadBuildings();
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "No se pudo eliminar el edificio";
-
-      setError(msg);
-    } finally {
-      setActionLoadingId(null);
-    }
-  }
+  const {
+    buildings,
+    categories,
+    form,
+    editingBuilding,
+    searchTerm,
+    statusFilter,
+    loadingBuildings,
+    saving,
+    actionLoadingId,
+    error,
+    message,
+    page,
+    totalPages,
+    totalRecords,
+    imageModalBuilding,
+    isEditing,
+    filteredBuildings,
+    setSearchTerm,
+    setStatusFilter,
+    setPage,
+    setImageModalBuilding,
+    loadBuildings,
+    updateFormField,
+    handleNameChange,
+    handleStartEdit,
+    handleCancelEdit,
+    handleSubmitBuilding,
+    handleToggleStatus,
+    handleDelete,
+  } = useAdminBuildings();
 
   function handleLogout() {
     logout();
@@ -385,10 +160,10 @@ export function AdminBuildingsPage() {
               >
                 <option value="">Seleccionar...</option>
                 {categories
-                  .filter((c) => Boolean(c.is_active))
-                  .map((cat) => (
-                    <option key={cat.id} value={cat.code}>
-                      {cat.name} ({cat.code})
+                  .filter((category) => Boolean(category.is_active))
+                  .map((category) => (
+                    <option key={category.id} value={category.code}>
+                      {category.name} ({category.code})
                     </option>
                   ))}
               </select>
@@ -528,9 +303,7 @@ export function AdminBuildingsPage() {
             <select
               value={statusFilter}
               onChange={(event) =>
-                setStatusFilter(
-                  event.target.value as "all" | "active" | "inactive"
-                )
+                setStatusFilter(event.target.value as AdminBuildingStatusFilter)
               }
               style={styles.select}
             >
@@ -643,7 +416,7 @@ export function AdminBuildingsPage() {
           <div style={styles.pagination}>
             <button
               type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
               disabled={page <= 1}
               style={styles.pageButton}
             >
@@ -656,7 +429,9 @@ export function AdminBuildingsPage() {
 
             <button
               type="button"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() =>
+                setPage((currentPage) => Math.min(totalPages, currentPage + 1))
+              }
               disabled={page >= totalPages}
               style={styles.pageButton}
             >
