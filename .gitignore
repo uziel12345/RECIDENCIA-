@@ -14,3 +14,19 @@ dist/
 
 # Archivos temporales locales
 estructura_limpia.txt
+
+# Environment files
+.env
+.env.*
+apps/api/.env
+apps/api/.env.*
+apps/web/.env
+apps/web/.env.*
+
+# Local uploads
+apps/api/uploads/
+uploads/
+
+# Local tools
+ngrok.exe
+ngrok.zip
