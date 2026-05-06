@@ -1,4 +1,6 @@
+import type { CSSProperties } from "react";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
+import { BuildingForm } from "../components/BuildingForm";
 import { BuildingImagesModal } from "../components/BuildingImagesModal";
 import {
   useAdminBuildings,
@@ -85,193 +87,17 @@ export function AdminBuildingsPage() {
       {message ? <div style={styles.successBox}>{message}</div> : null}
 
       <section style={styles.layout}>
-        <form onSubmit={handleSubmitBuilding} style={styles.formCard}>
-          <div style={styles.formHeader}>
-            <div>
-              <h2 style={styles.sectionTitle}>
-                {isEditing ? "Editar edificio" : "Crear edificio"}
-              </h2>
-
-              {isEditing ? (
-                <p style={styles.text}>
-                  Editando: <strong>{safeText(editingBuilding?.name)}</strong>
-                </p>
-              ) : (
-                <p style={styles.text}>
-                  Registra un nuevo edificio para el mapa interactivo.
-                </p>
-              )}
-            </div>
-
-            {isEditing ? (
-              <button
-                type="button"
-                onClick={handleCancelEdit}
-                style={styles.cancelButton}
-              >
-                Cancelar
-              </button>
-            ) : null}
-          </div>
-
-          <div style={styles.grid}>
-            <label style={styles.label}>
-              Código
-              <input
-                value={form.code}
-                onChange={(event) => updateFormField("code", event.target.value)}
-                required
-                style={styles.input}
-                placeholder="EDIF-A"
-              />
-            </label>
-
-            <label style={styles.label}>
-              Nombre
-              <input
-                value={form.name}
-                onChange={(event) => handleNameChange(event.target.value)}
-                required
-                style={styles.input}
-                placeholder="Edificio A"
-              />
-            </label>
-
-            <label style={styles.label}>
-              Slug
-              <input
-                value={form.slug}
-                onChange={(event) => updateFormField("slug", event.target.value)}
-                required
-                style={styles.input}
-                placeholder="edificio-a"
-              />
-            </label>
-
-            <label style={styles.label}>
-              Categoría
-              <select
-                value={form.category_code}
-                onChange={(event) =>
-                  updateFormField("category_code", event.target.value)
-                }
-                required
-                style={styles.input}
-              >
-                <option value="">Seleccionar...</option>
-                {categories
-                  .filter((category) => Boolean(category.is_active))
-                  .map((category) => (
-                    <option key={category.id} value={category.code}>
-                      {category.name} ({category.code})
-                    </option>
-                  ))}
-              </select>
-            </label>
-
-            <label style={styles.label}>
-              Nodo del modelo 3D
-              <input
-                value={form.model_node_name}
-                onChange={(event) =>
-                  updateFormField("model_node_name", event.target.value)
-                }
-                required
-                style={styles.input}
-                placeholder="Building_A"
-              />
-            </label>
-
-            <label style={styles.label}>
-              X
-              <input
-                value={form.x}
-                onChange={(event) => updateFormField("x", event.target.value)}
-                style={styles.input}
-                placeholder="0"
-              />
-            </label>
-
-            <label style={styles.label}>
-              Y
-              <input
-                value={form.y}
-                onChange={(event) => updateFormField("y", event.target.value)}
-                style={styles.input}
-                placeholder="0"
-              />
-            </label>
-
-            <label style={styles.label}>
-              Z
-              <input
-                value={form.z}
-                onChange={(event) => updateFormField("z", event.target.value)}
-                style={styles.input}
-                placeholder="0"
-              />
-            </label>
-
-            <label style={styles.label}>
-              Latitud
-              <input
-                value={form.latitude}
-                onChange={(event) =>
-                  updateFormField("latitude", event.target.value)
-                }
-                style={styles.input}
-                placeholder="17.073"
-              />
-            </label>
-
-            <label style={styles.label}>
-              Longitud
-              <input
-                value={form.longitude}
-                onChange={(event) =>
-                  updateFormField("longitude", event.target.value)
-                }
-                style={styles.input}
-                placeholder="-96.726"
-              />
-            </label>
-          </div>
-
-          <label style={styles.label}>
-            Descripción
-            <textarea
-              value={form.description}
-              onChange={(event) =>
-                updateFormField("description", event.target.value)
-              }
-              style={{
-                ...styles.input,
-                minHeight: "90px",
-                resize: "vertical",
-              }}
-              placeholder="Descripción breve del edificio"
-            />
-          </label>
-
-          <label style={styles.checkboxLabel}>
-            <input
-              type="checkbox"
-              checked={form.is_priority}
-              onChange={(event) =>
-                updateFormField("is_priority", event.target.checked)
-              }
-            />
-            Marcar como edificio prioritario
-          </label>
-
-          <button type="submit" disabled={saving} style={styles.primaryButton}>
-            {saving
-              ? "Guardando..."
-              : isEditing
-                ? "Guardar cambios"
-                : "Crear edificio"}
-          </button>
-        </form>
+        <BuildingForm
+          form={form}
+          categories={categories}
+          isEditing={isEditing}
+          editingBuildingName={safeText(editingBuilding?.name)}
+          saving={saving}
+          onSubmit={handleSubmitBuilding}
+          onCancelEdit={handleCancelEdit}
+          onNameChange={handleNameChange}
+          onUpdateFormField={updateFormField}
+        />
 
         <section style={styles.tableCard}>
           <div style={styles.tableHeader}>
@@ -416,7 +242,9 @@ export function AdminBuildingsPage() {
           <div style={styles.pagination}>
             <button
               type="button"
-              onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
+              onClick={() =>
+                setPage((currentPage) => Math.max(1, currentPage - 1))
+              }
               disabled={page <= 1}
               style={styles.pageButton}
             >
@@ -451,7 +279,7 @@ export function AdminBuildingsPage() {
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
+const styles: Record<string, CSSProperties> = {
   page: {
     minHeight: "100vh",
     background: "#f8fafc",
@@ -471,13 +299,6 @@ const styles: Record<string, React.CSSProperties> = {
     gap: "22px",
     alignItems: "start",
   },
-  formCard: {
-    background: "#ffffff",
-    border: "1px solid #e2e8f0",
-    borderRadius: "22px",
-    padding: "22px",
-    boxShadow: "0 14px 35px rgba(15, 23, 42, 0.08)",
-  },
   tableCard: {
     background: "#ffffff",
     border: "1px solid #e2e8f0",
@@ -485,13 +306,6 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "22px",
     boxShadow: "0 14px 35px rgba(15, 23, 42, 0.08)",
     overflow: "hidden",
-  },
-  formHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: "14px",
-    alignItems: "flex-start",
-    marginBottom: "14px",
   },
   pageTitle: {
     margin: 0,
@@ -516,39 +330,6 @@ const styles: Record<string, React.CSSProperties> = {
   userText: {
     margin: "8px 0 0",
     color: "#334155",
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "14px",
-  },
-  label: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "7px",
-    marginBottom: "14px",
-    color: "#334155",
-    fontWeight: 700,
-    fontSize: "14px",
-  },
-  checkboxLabel: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    marginBottom: "18px",
-    color: "#334155",
-    fontWeight: 700,
-    fontSize: "14px",
-  },
-  input: {
-    width: "100%",
-    boxSizing: "border-box",
-    border: "1px solid #cbd5e1",
-    borderRadius: "14px",
-    padding: "11px 13px",
-    fontSize: "14px",
-    outline: "none",
-    background: "#ffffff",
   },
   filters: {
     display: "grid",
@@ -578,16 +359,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#0f172a",
     fontWeight: 700,
   },
-  primaryButton: {
-    width: "100%",
-    border: "none",
-    borderRadius: "14px",
-    padding: "12px 16px",
-    background: "#2563eb",
-    color: "#ffffff",
-    fontWeight: 800,
-    cursor: "pointer",
-  },
   secondaryButton: {
     border: "1px solid #cbd5e1",
     borderRadius: "14px",
@@ -596,16 +367,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#0f172a",
     fontWeight: 800,
     cursor: "pointer",
-  },
-  cancelButton: {
-    border: "1px solid #cbd5e1",
-    borderRadius: "14px",
-    padding: "9px 12px",
-    background: "#f8fafc",
-    color: "#334155",
-    fontWeight: 800,
-    cursor: "pointer",
-    whiteSpace: "nowrap",
   },
   editButton: {
     border: "1px solid #bfdbfe",
