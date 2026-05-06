@@ -17,6 +17,7 @@ export type ApiBuilding = {
   category_code?: string;
   category_name?: string;
   category_color?: string | null;
+  cover_image_url?: string | null;
 };
 
 export function mapApiBuildingToBuilding(api: ApiBuilding): Building {
@@ -37,6 +38,7 @@ export function mapApiBuildingToBuilding(api: ApiBuilding): Building {
     category_code: api.category_code ?? "",
     category_name: api.category_name ?? "",
     category_color: api.category_color ?? null,
+    cover_image_url: api.cover_image_url ?? null,
   };
 }
 

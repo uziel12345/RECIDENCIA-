@@ -6,6 +6,8 @@ import {
   getBuildingImages,
   getBuildings,
   getBuildingsForAdmin,
+  getBuildingsForAdminPaginated,
+  getCategories,
   updateBuilding,
   updateBuildingStatus,
 } from "./buildings.controller.js";
@@ -24,12 +26,20 @@ const adminRoles = [
 ] as const;
 
 router.get("/", getBuildings);
+router.get("/categories", getCategories);
 
 router.get(
   "/admin/all",
   authenticate,
   authorize(...adminRoles),
   getBuildingsForAdmin
+);
+
+router.get(
+  "/admin/paginated",
+  authenticate,
+  authorize(...adminRoles),
+  getBuildingsForAdminPaginated
 );
 
 router.get("/:id/images", validateParams(buildingIdSchema), getBuildingImages);

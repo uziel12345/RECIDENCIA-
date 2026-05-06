@@ -85,6 +85,26 @@ export async function apiDelete<TResponse>(
   return parseApiResponse<TResponse>(response);
 }
 
+export async function apiUpload<TResponse>(
+  endpoint: string,
+  formData: FormData
+): Promise<TResponse> {
+  const headers: HeadersInit = {};
+
+  const token = config.getToken?.();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${config.baseUrl}${endpoint}`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  return parseApiResponse<TResponse>(response);
+}
+
 function buildHeaders(): HeadersInit {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

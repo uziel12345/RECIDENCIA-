@@ -28,14 +28,63 @@ export class BuildingsRepository {
         b.is_priority,
         bc.code AS category_code,
         bc.name AS category_name,
-        bc.color_hex AS category_color
+        bc.color_hex AS category_color,
+        ci.image_url AS cover_image_url
       FROM buildings b
       INNER JOIN building_categories bc ON b.category_id = bc.id
+      LEFT JOIN building_images ci ON ci.building_id = b.id AND ci.is_cover = TRUE AND ci.is_active = TRUE
       WHERE b.is_active = TRUE
       ORDER BY b.name ASC
     `);
 
     return rows;
+  }
+
+  async countForAdmin(): Promise<number> {
+    const [rows] = await this.db.query<RowDataPacket[]>(
+      `SELECT COUNT(*) AS total FROM buildings`
+    );
+    return Number(rows[0]?.total ?? 0);
+  }
+
+  async findAllForAdminPaginated(
+    page: number,
+    limit: number
+  ): Promise<{ rows: BuildingRow[]; total: number }> {
+    const offset = Math.max(0, (page - 1)) * limit;
+
+    const [rows] = await this.db.query<BuildingRow[]>(
+      `
+      SELECT
+        b.id,
+        b.code,
+        b.name,
+        b.slug,
+        b.description,
+        b.model_node_name,
+        b.x,
+        b.y,
+        b.z,
+        b.latitude,
+        b.longitude,
+        b.is_active,
+        b.is_priority,
+        bc.code AS category_code,
+        bc.name AS category_name,
+        bc.color_hex AS category_color,
+        ci.image_url AS cover_image_url
+      FROM buildings b
+      INNER JOIN building_categories bc ON b.category_id = bc.id
+      LEFT JOIN building_images ci ON ci.building_id = b.id AND ci.is_cover = TRUE AND ci.is_active = TRUE
+      ORDER BY b.is_active DESC, b.name ASC
+      LIMIT ? OFFSET ?
+      `,
+      [limit, offset]
+    );
+
+    const total = await this.countForAdmin();
+
+    return { rows, total };
   }
 
   async findAllForAdmin(): Promise<BuildingRow[]> {
@@ -56,9 +105,11 @@ export class BuildingsRepository {
         b.is_priority,
         bc.code AS category_code,
         bc.name AS category_name,
-        bc.color_hex AS category_color
+        bc.color_hex AS category_color,
+        ci.image_url AS cover_image_url
       FROM buildings b
       INNER JOIN building_categories bc ON b.category_id = bc.id
+      LEFT JOIN building_images ci ON ci.building_id = b.id AND ci.is_cover = TRUE AND ci.is_active = TRUE
       ORDER BY b.is_active DESC, b.name ASC
     `);
 
@@ -84,9 +135,11 @@ export class BuildingsRepository {
         b.is_priority,
         bc.code AS category_code,
         bc.name AS category_name,
-        bc.color_hex AS category_color
+        bc.color_hex AS category_color,
+        ci.image_url AS cover_image_url
       FROM buildings b
       INNER JOIN building_categories bc ON b.category_id = bc.id
+      LEFT JOIN building_images ci ON ci.building_id = b.id AND ci.is_cover = TRUE AND ci.is_active = TRUE
       WHERE b.id = ?
       LIMIT 1
       `,
@@ -265,5 +318,15 @@ export class BuildingsRepository {
       `,
       [id]
     );
+  }
+
+  async findAllCategories() {
+    const [rows] = await this.db.query<RowDataPacket[]>(`
+      SELECT id, code, name, description, color_hex, is_active
+      FROM building_categories
+      ORDER BY name ASC
+    `);
+
+    return rows;
   }
 }

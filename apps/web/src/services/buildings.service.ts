@@ -47,6 +47,7 @@ function localToApi(): ApiBuilding[] {
       category_code: building.category,
       category_name: meta.name,
       category_color: meta.color,
+      cover_image_url: null,
     };
   });
 }

@@ -1,21 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import {
   createBuildingApi,
   deleteBuildingApi,
-  deleteBuildingImageApi,
-  getAdminBuildingImagesApi,
-  getAdminBuildingsApi,
+  getAdminBuildingsPaginatedApi,
+  getCategoriesApi,
   updateBuildingApi,
-  updateBuildingImageStatusApi,
   updateBuildingStatusApi,
-  uploadBuildingImageApi,
   type Building,
-  type BuildingImage,
+  type BuildingCategory,
   type CreateBuildingInput,
   type UpdateBuildingInput,
 } from "@ito-map/shared";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
+import { BuildingImagesModal } from "../components/BuildingImagesModal";
 
 type BuildingFormState = {
   code: string;
@@ -32,15 +30,6 @@ type BuildingFormState = {
   is_priority: boolean;
 };
 
-type ImageFormState = {
-  file: File | null;
-  title: string;
-  description: string;
-  image_type: string;
-  is_cover: boolean;
-  sort_order: string;
-};
-
 const initialFormState: BuildingFormState = {
   code: "",
   name: "",
@@ -54,15 +43,6 @@ const initialFormState: BuildingFormState = {
   longitude: "",
   category_code: "",
   is_priority: false,
-};
-
-const initialImageFormState: ImageFormState = {
-  file: null,
-  title: "",
-  description: "",
-  image_type: "photo",
-  is_cover: false,
-  sort_order: "0",
 };
 
 function toNullableNumber(value: string): number | null {
@@ -152,119 +132,47 @@ function buildUpdateInput(
   };
 }
 
-function getImageSrc(imageUrl: string): string {
-  if (!imageUrl) return "";
-
-  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    return imageUrl;
-  }
-
-  const apiBaseUrl =
-    import.meta.env.VITE_API_URL || "http://localhost:3001/api";
-
-  const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, "");
-
-  if (imageUrl.startsWith("/")) {
-    return `${apiOrigin}${imageUrl}`;
-  }
-
-  return `${apiOrigin}/${imageUrl}`;
-}
-
-function parseNumber(value: string): number {
-  const parsed = Number(value);
-
-  if (Number.isFinite(parsed)) {
-    return parsed;
-  }
-
-  return 0;
-}
-
 export function AdminBuildingsPage() {
-  const { loadSession, logout, user } = useAdminAuthStore();
+  const { logout, user } = useAdminAuthStore();
 
   const [buildings, setBuildings] = useState<Building[]>([]);
+  const [categories, setCategories] = useState<BuildingCategory[]>([]);
   const [form, setForm] = useState<BuildingFormState>(initialFormState);
   const [editingBuilding, setEditingBuilding] = useState<Building | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive"
   >("all");
-  const [loadingSession, setLoadingSession] = useState(true);
   const [loadingBuildings, setLoadingBuildings] = useState(false);
   const [saving, setSaving] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
 
   const [imageModalBuilding, setImageModalBuilding] =
     useState<Building | null>(null);
-  const [buildingImages, setBuildingImages] = useState<BuildingImage[]>([]);
-  const [imageForm, setImageForm] =
-    useState<ImageFormState>(initialImageFormState);
-  const [imageLoading, setImageLoading] = useState(false);
-  const [imageUploading, setImageUploading] = useState(false);
-  const [imageActionLoadingId, setImageActionLoadingId] = useState<
-    string | null
-  >(null);
-  const [imageError, setImageError] = useState<string | null>(null);
-  const [imageMessage, setImageMessage] = useState<string | null>(null);
 
   const isEditing = editingBuilding !== null;
 
-  const activeCount = useMemo(() => {
-    return buildings.filter((building) => Boolean(building.is_active)).length;
-  }, [buildings]);
+  const limit = 10;
 
-  const inactiveCount = useMemo(() => {
-    return buildings.filter((building) => !Boolean(building.is_active)).length;
-  }, [buildings]);
-
-  const filteredBuildings = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-
-    return buildings.filter((building) => {
-      const buildingName = safeText(building.name).toLowerCase();
-      const buildingCode = safeText(building.code).toLowerCase();
-      const categoryName = safeText(building.category_name).toLowerCase();
-      const categoryCode = safeText(building.category_code).toLowerCase();
-
-      const matchesSearch =
-        !term ||
-        buildingName.includes(term) ||
-        buildingCode.includes(term) ||
-        categoryName.includes(term) ||
-        categoryCode.includes(term);
-
-      const isActive = Boolean(building.is_active);
-
-      const matchesStatus =
-        statusFilter === "all" ||
-        (statusFilter === "active" && isActive) ||
-        (statusFilter === "inactive" && !isActive);
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [buildings, searchTerm, statusFilter]);
+  const filteredBuildings = buildings;
 
   useEffect(() => {
-    void initializePage();
-  }, []);
+    void loadBuildings();
+    void loadCategories();
+  }, [page]);
 
-  async function initializePage() {
-    setLoadingSession(true);
-    setError(null);
-
-    const validSession = await loadSession();
-
-    if (!validSession) {
-      window.location.href = "/admin/login";
-      return;
+  async function loadCategories() {
+    try {
+      const data = await getCategoriesApi();
+      setCategories(Array.isArray(data) ? data : []);
+    } catch {
+      setCategories([]);
     }
-
-    setLoadingSession(false);
-    await loadBuildings();
   }
 
   async function loadBuildings() {
@@ -272,38 +180,30 @@ export function AdminBuildingsPage() {
     setError(null);
 
     try {
-      const data = await getAdminBuildingsApi();
-      setBuildings(Array.isArray(data) ? data : []);
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
+      const response = await getAdminBuildingsPaginatedApi(page, limit);
+      const payload = response as any;
+
+      const data: Building[] = Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload)
+          ? payload
+          : [];
+
+      setBuildings(data);
+      setTotalPages(payload?.pagination?.totalPages ?? 1);
+      setTotalRecords(payload?.pagination?.total ?? data.length);
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
           : "No se pudieron cargar los edificios";
 
-      setError(message);
+      setError(msg);
       setBuildings([]);
+      setTotalPages(1);
+      setTotalRecords(0);
     } finally {
       setLoadingBuildings(false);
-    }
-  }
-
-  async function loadImages(buildingId: string) {
-    setImageLoading(true);
-    setImageError(null);
-
-    try {
-      const data = await getAdminBuildingImagesApi(buildingId);
-      setBuildingImages(Array.isArray(data) ? data : []);
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "No se pudieron cargar las imágenes";
-
-      setImageError(message);
-      setBuildingImages([]);
-    } finally {
-      setImageLoading(false);
     }
   }
 
@@ -312,16 +212,6 @@ export function AdminBuildingsPage() {
     value: BuildingFormState[K]
   ) {
     setForm((currentForm) => ({
-      ...currentForm,
-      [key]: value,
-    }));
-  }
-
-  function updateImageFormField<K extends keyof ImageFormState>(
-    key: K,
-    value: ImageFormState[K]
-  ) {
-    setImageForm((currentForm) => ({
       ...currentForm,
       [key]: value,
     }));
@@ -354,23 +244,6 @@ export function AdminBuildingsPage() {
     setMessage(null);
   }
 
-  async function handleOpenImages(building: Building) {
-    setImageModalBuilding(building);
-    setImageForm(initialImageFormState);
-    setImageError(null);
-    setImageMessage(null);
-    await loadImages(building.id);
-  }
-
-  function handleCloseImages() {
-    setImageModalBuilding(null);
-    setBuildingImages([]);
-    setImageForm(initialImageFormState);
-    setImageError(null);
-    setImageMessage(null);
-    setImageActionLoadingId(null);
-  }
-
   async function handleSubmitBuilding(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -394,55 +267,17 @@ export function AdminBuildingsPage() {
 
       setForm(initialFormState);
       await loadBuildings();
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
           : isEditing
             ? "No se pudo actualizar el edificio"
             : "No se pudo crear el edificio";
 
-      setError(message);
+      setError(msg);
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleUploadImage(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!imageModalBuilding) return;
-
-    if (!imageForm.file) {
-      setImageError("Selecciona una imagen.");
-      return;
-    }
-
-    setImageUploading(true);
-    setImageError(null);
-    setImageMessage(null);
-
-    try {
-      await uploadBuildingImageApi({
-        buildingId: imageModalBuilding.id,
-        image: imageForm.file,
-        title: imageForm.title,
-        description: imageForm.description,
-        image_type: imageForm.image_type,
-        is_cover: imageForm.is_cover,
-        sort_order: parseNumber(imageForm.sort_order),
-      });
-
-      setImageForm(initialImageFormState);
-      setImageMessage("Imagen subida correctamente.");
-      await loadImages(imageModalBuilding.id);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "No se pudo subir la imagen";
-
-      setImageError(message);
-    } finally {
-      setImageUploading(false);
     }
   }
 
@@ -470,46 +305,13 @@ export function AdminBuildingsPage() {
       }
 
       await loadBuildings();
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "No se pudo cambiar el estado";
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "No se pudo cambiar el estado";
 
-      setError(message);
+      setError(msg);
     } finally {
       setActionLoadingId(null);
-    }
-  }
-
-  async function handleToggleImageStatus(image: BuildingImage) {
-    if (!imageModalBuilding) return;
-
-    setImageActionLoadingId(image.id);
-    setImageError(null);
-    setImageMessage(null);
-
-    const nextStatus = !Boolean(image.is_active);
-
-    try {
-      await updateBuildingImageStatusApi(image.id, {
-        is_active: nextStatus,
-      });
-
-      setImageMessage(
-        nextStatus
-          ? "Imagen activada correctamente."
-          : "Imagen desactivada correctamente."
-      );
-
-      await loadImages(imageModalBuilding.id);
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "No se pudo cambiar el estado de la imagen";
-
-      setImageError(message);
-    } finally {
-      setImageActionLoadingId(null);
     }
   }
 
@@ -536,61 +338,19 @@ export function AdminBuildingsPage() {
       }
 
       await loadBuildings();
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "No se pudo eliminar el edificio";
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "No se pudo eliminar el edificio";
 
-      setError(message);
+      setError(msg);
     } finally {
       setActionLoadingId(null);
-    }
-  }
-
-  async function handleDeleteImage(image: BuildingImage) {
-    if (!imageModalBuilding) return;
-
-    const confirmed = window.confirm(
-      `¿Seguro que deseas eliminar la imagen "${safeText(
-        image.title || image.image_url
-      )}"?`
-    );
-
-    if (!confirmed) return;
-
-    setImageActionLoadingId(image.id);
-    setImageError(null);
-    setImageMessage(null);
-
-    try {
-      await deleteBuildingImageApi(image.id);
-      setImageMessage("Imagen eliminada correctamente.");
-      await loadImages(imageModalBuilding.id);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "No se pudo eliminar la imagen";
-
-      setImageError(message);
-    } finally {
-      setImageActionLoadingId(null);
     }
   }
 
   function handleLogout() {
     logout();
     window.location.href = "/admin/login";
-  }
-
-  if (loadingSession) {
-    return (
-      <main style={styles.centerPage}>
-        <section style={styles.card}>
-          <h1 style={styles.title}>Validando sesión...</h1>
-          <p style={styles.text}>
-            Estamos verificando tu acceso administrativo.
-          </p>
-        </section>
-      </main>
-    );
   }
 
   return (
@@ -697,15 +457,23 @@ export function AdminBuildingsPage() {
 
             <label style={styles.label}>
               Categoría
-              <input
+              <select
                 value={form.category_code}
                 onChange={(event) =>
                   updateFormField("category_code", event.target.value)
                 }
                 required
                 style={styles.input}
-                placeholder="aulas"
-              />
+              >
+                <option value="">Seleccionar...</option>
+                {categories
+                  .filter((c) => Boolean(c.is_active))
+                  .map((cat) => (
+                    <option key={cat.id} value={cat.code}>
+                      {cat.name} ({cat.code})
+                    </option>
+                  ))}
+              </select>
             </label>
 
             <label style={styles.label}>
@@ -817,8 +585,7 @@ export function AdminBuildingsPage() {
             <div>
               <h2 style={styles.sectionTitle}>Listado</h2>
               <p style={styles.text}>
-                Total: {buildings.length} edificios. Activos: {activeCount}.
-                Inactivos: {inactiveCount}.
+                Mostrando {buildings.length} de {totalRecords} edificios.
               </p>
             </div>
 
@@ -914,7 +681,7 @@ export function AdminBuildingsPage() {
 
                           <button
                             type="button"
-                            onClick={() => handleOpenImages(building)}
+                            onClick={() => setImageModalBuilding(building)}
                             disabled={actionLoadingId === building.id}
                             style={styles.photoButton}
                           >
@@ -954,229 +721,38 @@ export function AdminBuildingsPage() {
               </tbody>
             </table>
           </div>
+
+          <div style={styles.pagination}>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              style={styles.pageButton}
+            >
+              Anterior
+            </button>
+
+            <span style={styles.pageInfo}>
+              Página {page} de {totalPages}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              style={styles.pageButton}
+            >
+              Siguiente
+            </button>
+          </div>
         </section>
       </section>
 
       {imageModalBuilding ? (
-        <div style={styles.modalOverlay}>
-          <section style={styles.modalCard}>
-            <header style={styles.modalHeader}>
-              <div>
-                <p style={styles.overline}>Galería de edificio</p>
-                <h2 style={styles.modalTitle}>
-                  Fotos de {safeText(imageModalBuilding.name)}
-                </h2>
-                <p style={styles.text}>
-                  Sube, desactiva o elimina imágenes asociadas al edificio.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleCloseImages}
-                style={styles.cancelButton}
-              >
-                Cerrar
-              </button>
-            </header>
-
-            {imageError ? (
-              <div role="alert" style={styles.errorBox}>
-                {imageError}
-              </div>
-            ) : null}
-
-            {imageMessage ? (
-              <div style={styles.successBox}>{imageMessage}</div>
-            ) : null}
-
-            <form onSubmit={handleUploadImage} style={styles.imageForm}>
-              <label style={styles.label}>
-                Imagen
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={(event) =>
-                    updateImageFormField(
-                      "file",
-                      event.target.files?.[0] ?? null
-                    )
-                  }
-                  required
-                  style={styles.input}
-                />
-              </label>
-
-              <div style={styles.grid}>
-                <label style={styles.label}>
-                  Título
-                  <input
-                    value={imageForm.title}
-                    onChange={(event) =>
-                      updateImageFormField("title", event.target.value)
-                    }
-                    style={styles.input}
-                    placeholder="Fachada principal"
-                  />
-                </label>
-
-                <label style={styles.label}>
-                  Tipo
-                  <input
-                    value={imageForm.image_type}
-                    onChange={(event) =>
-                      updateImageFormField("image_type", event.target.value)
-                    }
-                    style={styles.input}
-                    placeholder="photo"
-                  />
-                </label>
-
-                <label style={styles.label}>
-                  Orden
-                  <input
-                    value={imageForm.sort_order}
-                    onChange={(event) =>
-                      updateImageFormField("sort_order", event.target.value)
-                    }
-                    style={styles.input}
-                    placeholder="0"
-                  />
-                </label>
-
-                <label style={styles.checkboxLabel}>
-                  <input
-                    type="checkbox"
-                    checked={imageForm.is_cover}
-                    onChange={(event) =>
-                      updateImageFormField("is_cover", event.target.checked)
-                    }
-                  />
-                  Marcar como portada
-                </label>
-              </div>
-
-              <label style={styles.label}>
-                Descripción
-                <textarea
-                  value={imageForm.description}
-                  onChange={(event) =>
-                    updateImageFormField("description", event.target.value)
-                  }
-                  style={{
-                    ...styles.input,
-                    minHeight: "70px",
-                    resize: "vertical",
-                  }}
-                  placeholder="Descripción breve de la imagen"
-                />
-              </label>
-
-              <button
-                type="submit"
-                disabled={imageUploading}
-                style={styles.primaryButton}
-              >
-                {imageUploading ? "Subiendo..." : "Subir imagen"}
-              </button>
-            </form>
-
-            <div style={styles.imageListHeader}>
-              <h3 style={styles.sectionTitle}>Imágenes registradas</h3>
-              <button
-                type="button"
-                onClick={() => loadImages(imageModalBuilding.id)}
-                disabled={imageLoading}
-                style={styles.secondaryButton}
-              >
-                {imageLoading ? "Cargando..." : "Recargar fotos"}
-              </button>
-            </div>
-
-            {imageLoading ? (
-              <p style={styles.text}>Cargando imágenes...</p>
-            ) : buildingImages.length === 0 ? (
-              <div style={styles.emptyImages}>
-                No hay imágenes registradas para este edificio.
-              </div>
-            ) : (
-              <div style={styles.imageGrid}>
-                {buildingImages.map((image) => {
-                  const isImageActive = Boolean(image.is_active);
-                  const imageSrc = getImageSrc(safeText(image.image_url));
-
-                  return (
-                    <article
-                      key={image.id}
-                      style={
-                        isImageActive
-                          ? styles.imageCard
-                          : {
-                              ...styles.imageCard,
-                              ...styles.inactiveImageCard,
-                            }
-                      }
-                    >
-                      <div style={styles.imagePreviewWrapper}>
-                        <img
-                          src={imageSrc}
-                          alt={safeText(image.title) || "Imagen del edificio"}
-                          style={styles.imagePreview}
-                        />
-                      </div>
-
-                      <div style={styles.imageInfo}>
-                        <h4 style={styles.imageTitle}>
-                          {safeText(image.title) || "Sin título"}
-                        </h4>
-
-                        <p style={styles.imageDescription}>
-                          {safeText(image.description) || "Sin descripción"}
-                        </p>
-
-                        <div style={styles.imageBadges}>
-                          <span
-                            style={
-                              isImageActive
-                                ? styles.activeBadge
-                                : styles.inactiveBadge
-                            }
-                          >
-                            {isImageActive ? "Activa" : "Inactiva"}
-                          </span>
-
-                          {Boolean(image.is_cover) ? (
-                            <span style={styles.coverBadge}>Portada</span>
-                          ) : null}
-                        </div>
-
-                        <div style={styles.actions}>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleImageStatus(image)}
-                            disabled={imageActionLoadingId === image.id}
-                            style={styles.smallButton}
-                          >
-                            {isImageActive ? "Desactivar" : "Activar"}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteImage(image)}
-                            disabled={imageActionLoadingId === image.id}
-                            style={styles.dangerButton}
-                          >
-                            Eliminar
-                          </button>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        </div>
+        <BuildingImagesModal
+          building={imageModalBuilding}
+          onClose={() => setImageModalBuilding(null)}
+        />
       ) : null}
     </main>
   );
@@ -1189,28 +765,12 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "28px",
     color: "#0f172a",
   },
-  centerPage: {
-    minHeight: "100vh",
-    display: "grid",
-    placeItems: "center",
-    background: "#f8fafc",
-    padding: "24px",
-  },
   header: {
     display: "flex",
     justifyContent: "space-between",
     gap: "20px",
     alignItems: "flex-start",
     marginBottom: "22px",
-  },
-  card: {
-    width: "100%",
-    maxWidth: "460px",
-    background: "#ffffff",
-    border: "1px solid #e2e8f0",
-    borderRadius: "22px",
-    padding: "28px",
-    boxShadow: "0 18px 45px rgba(15, 23, 42, 0.12)",
   },
   layout: {
     display: "grid",
@@ -1244,10 +804,6 @@ const styles: Record<string, React.CSSProperties> = {
     margin: 0,
     fontSize: "32px",
     lineHeight: 1.15,
-  },
-  title: {
-    margin: 0,
-    fontSize: "24px",
   },
   sectionTitle: {
     margin: "0 0 10px",
@@ -1478,114 +1034,27 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 800,
     fontSize: "12px",
   },
-  coverBadge: {
-    display: "inline-flex",
-    padding: "5px 9px",
-    borderRadius: "999px",
-    background: "#dbeafe",
-    color: "#1d4ed8",
-    fontWeight: 800,
-    fontSize: "12px",
-  },
-  modalOverlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(15, 23, 42, 0.55)",
-    display: "grid",
-    placeItems: "center",
-    padding: "24px",
-    zIndex: 1000,
-  },
-  modalCard: {
-    width: "min(1080px, 100%)",
-    maxHeight: "90vh",
-    overflowY: "auto",
-    background: "#ffffff",
-    borderRadius: "24px",
-    border: "1px solid #e2e8f0",
-    padding: "24px",
-    boxShadow: "0 24px 80px rgba(15, 23, 42, 0.35)",
-  },
-  modalHeader: {
+  pagination: {
     display: "flex",
-    justifyContent: "space-between",
-    gap: "18px",
-    alignItems: "flex-start",
-    marginBottom: "18px",
-  },
-  modalTitle: {
-    margin: 0,
-    fontSize: "26px",
-    lineHeight: 1.2,
-  },
-  imageForm: {
-    border: "1px solid #e2e8f0",
-    borderRadius: "18px",
-    padding: "18px",
-    marginBottom: "22px",
-    background: "#f8fafc",
-  },
-  imageListHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: "14px",
+    justifyContent: "center",
     alignItems: "center",
-    marginBottom: "14px",
+    gap: "12px",
+    marginTop: "18px",
+    paddingTop: "14px",
+    borderTop: "1px solid #e2e8f0",
   },
-  emptyImages: {
-    border: "1px dashed #cbd5e1",
-    borderRadius: "18px",
-    padding: "24px",
-    textAlign: "center",
-    color: "#64748b",
-    background: "#f8fafc",
-  },
-  imageGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))",
-    gap: "16px",
-  },
-  imageCard: {
-    border: "1px solid #e2e8f0",
-    borderRadius: "18px",
-    overflow: "hidden",
+  pageButton: {
+    border: "1px solid #cbd5e1",
+    borderRadius: "12px",
+    padding: "8px 14px",
     background: "#ffffff",
-    boxShadow: "0 12px 28px rgba(15, 23, 42, 0.08)",
-  },
-  inactiveImageCard: {
-    opacity: 0.75,
-    background: "#f8fafc",
-  },
-  imagePreviewWrapper: {
-    width: "100%",
-    height: "150px",
-    background: "#e2e8f0",
-    overflow: "hidden",
-  },
-  imagePreview: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    display: "block",
-  },
-  imageInfo: {
-    padding: "14px",
-  },
-  imageTitle: {
-    margin: "0 0 6px",
-    fontSize: "15px",
     color: "#0f172a",
+    fontWeight: 700,
+    cursor: "pointer",
   },
-  imageDescription: {
-    margin: "0 0 10px",
-    fontSize: "13px",
-    color: "#64748b",
-    lineHeight: 1.45,
-  },
-  imageBadges: {
-    display: "flex",
-    gap: "8px",
-    flexWrap: "wrap",
-    marginBottom: "12px",
+  pageInfo: {
+    color: "#475569",
+    fontWeight: 700,
+    fontSize: "14px",
   },
 };

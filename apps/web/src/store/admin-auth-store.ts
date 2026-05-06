@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import {
-  adminCheckApi,
   getMeApi,
   loginAdminApi,
   type AuthUser,
@@ -83,7 +82,6 @@ export const useAdminAuthStore = create<AdminAuthState>((set) => ({
     set({ loading: true, error: null });
 
     try {
-      await adminCheckApi();
       const user = await getMeApi();
 
       set({

@@ -17,6 +17,7 @@ export interface BuildingRow extends RowDataPacket {
   category_code: string;
   category_name: string;
   category_color: string | null;
+  cover_image_url: string | null;
 }
 
 export interface BuildingImageRow extends RowDataPacket {

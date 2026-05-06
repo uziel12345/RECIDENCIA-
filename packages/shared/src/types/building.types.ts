@@ -15,6 +15,7 @@ export type Building = {
   category_code: string;
   category_name: string;
   category_color: string | null;
+  cover_image_url: string | null;
 };
 
 export type BuildingCategory = {

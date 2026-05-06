@@ -8,6 +8,10 @@ export class BuildingsService {
     return this.repository.findAllActive();
   }
 
+  async getAllForAdminPaginated(page: number, limit: number) {
+    return this.repository.findAllForAdminPaginated(page, limit);
+  }
+
   async getAllForAdmin() {
     return this.repository.findAllForAdmin();
   }
@@ -211,5 +215,9 @@ export class BuildingsService {
       id,
       deleted: true,
     };
+  }
+
+  async getCategories() {
+    return this.repository.findAllCategories();
   }
 }

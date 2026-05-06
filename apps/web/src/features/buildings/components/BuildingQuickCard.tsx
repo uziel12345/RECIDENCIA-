@@ -10,6 +10,15 @@ type BuildingQuickCardProps = {
   onOpenDetails: () => void;
 };
 
+function resolveImageUrl(url: string | null): string | null {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  const apiBaseUrl =
+    import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+  const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, "");
+  return `${apiOrigin}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
 export function BuildingQuickCard({
   building,
   onOpenDetails,
@@ -23,6 +32,7 @@ export function BuildingQuickCard({
   const accentColor = building.category_color || accent.fg;
 
   const canRoute = permission === "granted" && mapPosition !== null;
+  const coverUrl = resolveImageUrl(building.cover_image_url);
 
   return (
     <motion.div
@@ -38,6 +48,22 @@ export function BuildingQuickCard({
       <div className="ito-quick-card__rail" style={{ background: accentColor }} />
 
       <div className="ito-quick-card__main">
+        {coverUrl && (
+          <div style={{
+            width: "100%",
+            height: 64,
+            borderRadius: 10,
+            overflow: "hidden",
+            marginBottom: 8,
+          }}>
+            <img
+              src={coverUrl}
+              alt=""
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            />
+          </div>
+        )}
+
         <div className="ito-quick-card__head">
           <div className="ito-quick-card__head-text">
             <span

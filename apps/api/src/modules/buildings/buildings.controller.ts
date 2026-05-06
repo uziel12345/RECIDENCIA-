@@ -39,6 +39,32 @@ export const getBuildingsForAdmin = asyncHandler(
   }
 );
 
+export const getBuildingsForAdminPaginated = asyncHandler(
+  async (req: Request, res: Response) => {
+    const page = parseInt(String(req.query.page), 10);
+    const limit = parseInt(String(req.query.limit), 10);
+
+    const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+    const safeLimit =
+      Number.isFinite(limit) && limit > 0 && limit <= 100 ? limit : 20;
+
+    const { rows, total } = await buildingsService.getAllForAdminPaginated(
+      safePage,
+      safeLimit
+    );
+
+    return sendSuccess(res, {
+      data: rows,
+      pagination: {
+        page: safePage,
+        limit: safeLimit,
+        total,
+        totalPages: Math.ceil(total / safeLimit),
+      },
+    });
+  }
+);
+
 export const getBuildingById = asyncHandler(
   async (req: Request, res: Response) => {
     const id = getSingleParam(req.params.id);
@@ -97,3 +123,8 @@ export const deleteBuilding = asyncHandler(
     return sendSuccess(res, data, 200, "Edificio eliminado correctamente");
   }
 );
+
+export const getCategories = asyncHandler(async (_req: Request, res: Response) => {
+  const data = await buildingsService.getCategories();
+  return sendSuccess(res, data);
+});

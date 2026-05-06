@@ -7,35 +7,55 @@ type BuildingInfoCardProps = {
   building: Building;
 };
 
+function resolveImageUrl(url: string | null): string | null {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  const apiBaseUrl =
+    import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+  const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, "");
+  return `${apiOrigin}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
 export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
   const setSelectedBuilding = useBuildingStore((s) => s.setSelectedBuilding);
   const setRouteDestination = useBuildingStore((s) => s.setRouteDestination);
   const accent = getCategoryAccent(building.category_name);
+  const coverUrl = resolveImageUrl(building.cover_image_url);
 
   return (
     <article className="ito-info-card" aria-label={`Información de ${building.name}`}>
-      <div
-        className="ito-info-card__hero"
-        style={{
-          background: `linear-gradient(135deg, ${accent.fg} 0%, ${accent.fgDark} 100%)`,
-        }}
-      >
-        <div className="ito-info-card__hero-icon" aria-hidden="true">
-          <Icon name="building" size={26} />
+      {coverUrl ? (
+        <div style={{ width: "100%", height: 120, overflow: "hidden" }}>
+          <img
+            src={coverUrl}
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          />
         </div>
-        <div className="ito-info-card__hero-text">
-          <div className="ito-info-card__code">Edificio {building.code}</div>
-          <h3 className="ito-info-card__name">{building.name}</h3>
-        </div>
-        <button
-          type="button"
-          className="ito-info-card__close"
-          onClick={() => setSelectedBuilding(null)}
-          aria-label="Cerrar información"
+      ) : (
+        <div
+          className="ito-info-card__hero"
+          style={{
+            background: `linear-gradient(135deg, ${accent.fg} 0%, ${accent.fgDark} 100%)`,
+          }}
         >
-          <Icon name="close" size={16} />
-        </button>
-      </div>
+          <div className="ito-info-card__hero-icon" aria-hidden="true">
+            <Icon name="building" size={26} />
+          </div>
+          <div className="ito-info-card__hero-text">
+            <div className="ito-info-card__code">Edificio {building.code}</div>
+            <h3 className="ito-info-card__name">{building.name}</h3>
+          </div>
+          <button
+            type="button"
+            className="ito-info-card__close"
+            onClick={() => setSelectedBuilding(null)}
+            aria-label="Cerrar información"
+          >
+            <Icon name="close" size={16} />
+          </button>
+        </div>
+      )}
 
       <div className="ito-info-card__body">
         <div className="ito-info-card__row">

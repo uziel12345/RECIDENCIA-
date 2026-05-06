@@ -1,18 +1,42 @@
-import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from "./client.ts";
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut, apiUpload } from "./client.ts";
 import type {
   Building,
+  BuildingCategory,
   BuildingImage,
   CreateBuildingInput,
   UpdateBuildingInput,
   UpdateBuildingStatusInput,
 } from "../types/building.types.ts";
 
+export type PaginatedBuildingsResponse = {
+  data: Building[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};
+
 export function getBuildingsApi(): Promise<Building[]> {
   return apiGet<Building[]>("/buildings");
 }
 
+export function getCategoriesApi(): Promise<BuildingCategory[]> {
+  return apiGet<BuildingCategory[]>("/buildings/categories");
+}
+
 export function getAdminBuildingsApi(): Promise<Building[]> {
   return apiGet<Building[]>("/buildings/admin/all");
+}
+
+export function getAdminBuildingsPaginatedApi(
+  page: number,
+  limit: number
+): Promise<PaginatedBuildingsResponse> {
+  return apiGet<PaginatedBuildingsResponse>(
+    `/buildings/admin/paginated?page=${page}&limit=${limit}`
+  );
 }
 
 export function getBuildingByIdApi(id: string): Promise<Building> {
@@ -40,9 +64,6 @@ export async function uploadBuildingImageApi(input: {
   is_cover?: boolean;
   sort_order?: number;
 }): Promise<BuildingImage> {
-  const baseUrl = import.meta.env.VITE_API_URL || "/api";
-  const token = localStorage.getItem("admin_token");
-
   const formData = new FormData();
   formData.append("image", input.image);
   formData.append("title", input.title ?? "");
@@ -51,26 +72,10 @@ export async function uploadBuildingImageApi(input: {
   formData.append("is_cover", String(input.is_cover ?? false));
   formData.append("sort_order", String(input.sort_order ?? 0));
 
-  const response = await fetch(
-    `${baseUrl}/building-images/buildings/${input.buildingId}/images`,
-    {
-      method: "POST",
-      headers: token
-        ? {
-            Authorization: `Bearer ${token}`,
-          }
-        : undefined,
-      body: formData,
-    }
+  return apiUpload<BuildingImage>(
+    `/building-images/buildings/${input.buildingId}/images`,
+    formData
   );
-
-  const json = await response.json();
-
-  if (!response.ok || !json.success) {
-    throw new Error(json.message || "No se pudo subir la imagen");
-  }
-
-  return json.data;
 }
 
 export function updateBuildingImageStatusApi(
