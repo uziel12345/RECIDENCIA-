@@ -11,6 +11,8 @@ import {
 } from "./buildings.controller.js";
 import { authenticate } from "../auth/middlewares/authenticate.middleware.js";
 import { authorize } from "../auth/middlewares/authorize.middleware.js";
+import { validateBody, validateParams } from "../../shared/middlewares/validator.js";
+import { createBuildingSchema, updateBuildingSchema, buildingIdSchema } from "./buildings.schema.js";
 
 const router = Router();
 
@@ -30,14 +32,15 @@ router.get(
   getBuildingsForAdmin
 );
 
-router.get("/:id/images", getBuildingImages);
+router.get("/:id/images", validateParams(buildingIdSchema), getBuildingImages);
 
-router.get("/:id", getBuildingById);
+router.get("/:id", validateParams(buildingIdSchema), getBuildingById);
 
 router.post(
   "/",
   authenticate,
   authorize(...adminRoles),
+  validateBody(createBuildingSchema),
   createBuilding
 );
 
@@ -45,6 +48,8 @@ router.put(
   "/:id",
   authenticate,
   authorize(...adminRoles),
+  validateParams(buildingIdSchema),
+  validateBody(updateBuildingSchema),
   updateBuilding
 );
 
@@ -52,6 +57,7 @@ router.patch(
   "/:id/status",
   authenticate,
   authorize(...adminRoles),
+  validateParams(buildingIdSchema),
   updateBuildingStatus
 );
 
@@ -59,6 +65,7 @@ router.delete(
   "/:id",
   authenticate,
   authorize(...adminRoles),
+  validateParams(buildingIdSchema),
   deleteBuilding
 );
 

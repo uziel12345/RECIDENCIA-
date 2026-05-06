@@ -2,31 +2,15 @@ node_modules/
 .pnpm-store/
 dist/
 .expo/
-.env
-# Ngrok local
-/ngrok/
-/ngrok.exe
-/ngrok.zip
-
-# Ejecutables y comprimidos locales
-*.exe
-*.zip
-
-# Archivos temporales locales
-estructura_limpia.txt
 
 # Environment files
 .env
 .env.*
-apps/api/.env
-apps/api/.env.*
-apps/web/.env
-apps/web/.env.*
+!.env.example
 
 # Local uploads
 apps/api/uploads/
 uploads/
 
-# Local tools
-ngrok.exe
-ngrok.zip
+# Build artifacts
+*.tsbuildinfo

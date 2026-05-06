@@ -1,23 +1,10 @@
 import type { Request, Response } from "express";
 import { loginAdmin } from "../modules/auth/auth.service.js";
+import type { LoginInput } from "../modules/auth/auth.schema.js";
 
-type LoginRequestBody = {
-  usernameOrEmail?: string;
-  username?: string;
-  email?: string;
-  password?: string;
-};
-
-function getUsernameOrEmail(body: LoginRequestBody): string {
-  return String(body.usernameOrEmail ?? body.username ?? body.email ?? "").trim();
-}
-
-export async function loginController(req: Request, res: Response) {
+export async function loginController(req: Request<{}, {}, LoginInput>, res: Response) {
   try {
-    const body = req.body as LoginRequestBody;
-
-    const usernameOrEmail = getUsernameOrEmail(body);
-    const password = String(body.password ?? "");
+    const { usernameOrEmail, password } = req.body;
 
     const result = await loginAdmin({
       usernameOrEmail,

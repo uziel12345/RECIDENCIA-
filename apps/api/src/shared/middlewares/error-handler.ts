@@ -17,8 +17,11 @@ export function errorHandler(
 
   console.error("Error no controlado:", error);
 
+  const isDev = process.env.NODE_ENV !== "production";
+
   return res.status(500).json({
     success: false,
     message: "Error interno del servidor",
+    ...(isDev && error instanceof Error ? { stack: error.stack } : {}),
   });
 }

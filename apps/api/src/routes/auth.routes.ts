@@ -5,10 +5,12 @@ import {
 } from "../controllers/auth.controller.js";
 import { authenticate } from "../modules/auth/middlewares/authenticate.middleware.js";
 import { authorize } from "../modules/auth/middlewares/authorize.middleware.js";
+import { validateBody } from "../shared/middlewares/validator.js";
+import { loginSchema } from "../modules/auth/auth.schema.js";
 
 const router = Router();
 
-router.post("/login", loginController);
+router.post("/login", validateBody(loginSchema), loginController);
 router.get("/me", authenticate, meController);
 
 router.get(

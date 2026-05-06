@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { WelcomePage } from "../features/welcome/WelcomePage";
 import { LoginPage } from "../features/auth/LoginPage";
@@ -9,6 +10,7 @@ import { AdminDashboard } from "../features/admin/AdminDashboard";
 import { AdminLoginPage } from "../features/admin/pages/AdminLoginPage";
 import { AdminBuildingsPage } from "../features/admin/pages/AdminBuildingsPage";
 import { useAuthStore } from "../store/auth-store";
+import { useAdminAuthStore } from "../store/admin-auth-store";
 import { ROUTES } from "../types/routes";
 
 function ProtectedRoute({
@@ -47,6 +49,83 @@ function PublicRoute({
   return <>{children}</>;
 }
 
+function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { loadSession, isAuthenticated } = useAdminAuthStore();
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [validSession, setValidSession] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function verifySession() {
+      const isValid = await loadSession();
+
+      if (!mounted) return;
+
+      setValidSession(isValid);
+      setCheckingSession(false);
+    }
+
+    void verifySession();
+
+    return () => {
+      mounted = false;
+    };
+  }, [loadSession]);
+
+  if (checkingSession) {
+    return (
+      <main
+        style={{
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+          background: "#f8fafc",
+          padding: "24px",
+        }}
+      >
+        <section
+          style={{
+            width: "100%",
+            maxWidth: "460px",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "22px",
+            padding: "28px",
+            boxShadow: "0 18px 45px rgba(15, 23, 42, 0.12)",
+          }}
+        >
+          <h1
+            style={{
+              margin: 0,
+              fontSize: "24px",
+              color: "#0f172a",
+            }}
+          >
+            Validando sesión...
+          </h1>
+
+          <p
+            style={{
+              margin: "10px 0 0",
+              color: "#64748b",
+              lineHeight: 1.5,
+            }}
+          >
+            Estamos verificando tu acceso administrativo.
+          </p>
+        </section>
+      </main>
+    );
+  }
+
+  if (!validSession || !isAuthenticated) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -58,7 +137,14 @@ export default function App() {
 
         {/* Real Admin Auth */}
         <Route path="/admin/login" element={<AdminLoginPage />} />
-        <Route path="/admin/buildings" element={<AdminBuildingsPage />} />
+        <Route
+          path="/admin/buildings"
+          element={
+            <AdminProtectedRoute>
+              <AdminBuildingsPage />
+            </AdminProtectedRoute>
+          }
+        />
 
         {/* Student View */}
         <Route

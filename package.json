@@ -6,8 +6,11 @@
   "scripts": {
     "dev:web": "pnpm --filter web dev",
     "dev:api": "pnpm --filter api dev",
+    "dev": "pnpm --parallel --filter web --filter api dev",
     "build:web": "pnpm --filter web build",
+    "build:api": "pnpm --filter api build",
     "preview:web": "pnpm --filter web preview",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint"
   }
 }
