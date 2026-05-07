@@ -4071,3 +4071,473 @@ svg {
   font-weight: 600;
   color: var(--color-text);
 }
+
+
+/* ============================ MOBILE QUICK ACTIONS IMPROVED ============================ */
+
+.ito-mobile-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(10px + var(--safe-bottom));
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+  padding: 0 12px;
+  pointer-events: none;
+}
+
+.ito-mobile-bar__inner {
+  width: min(100%, 430px);
+  min-height: 70px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.22);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  pointer-events: auto;
+}
+
+.ito-mobile-bar__btn {
+  position: relative;
+  min-width: 0;
+  min-height: 56px;
+  display: grid;
+  place-items: center;
+  gap: 3px;
+  padding: 7px 5px 6px;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ito-mobile-bar__btn:hover:not(:disabled) {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.ito-mobile-bar__btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.ito-mobile-bar__btn.is-active {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.ito-mobile-bar__btn--primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%);
+  color: #ffffff;
+  border-color: rgba(29, 78, 216, 0.6);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.34);
+}
+
+.ito-mobile-bar__btn--primary:hover:not(:disabled),
+.ito-mobile-bar__btn--primary.is-active {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  color: #ffffff;
+  border-color: rgba(191, 219, 254, 0.45);
+}
+
+.ito-mobile-bar__btn.is-disabled,
+.ito-mobile-bar__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.ito-mobile-bar__btn-icon {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+}
+
+.ito-mobile-bar__btn-label {
+  max-width: 100%;
+  overflow: hidden;
+  color: inherit;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ito-mobile-bar__badge {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  min-width: 17px;
+  height: 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+@media (max-width: 380px) {
+  .ito-mobile-bar {
+    padding: 0 8px;
+  }
+
+  .ito-mobile-bar__inner {
+    gap: 4px;
+    padding: 7px;
+    border-radius: 22px;
+  }
+
+  .ito-mobile-bar__btn {
+    min-height: 54px;
+    padding-inline: 3px;
+    border-radius: 16px;
+  }
+
+  .ito-mobile-bar__btn-label {
+    font-size: 9.5px;
+  }
+}
+
+/* ============================ BUILDING SEARCH RESULTS IMPROVED ============================ */
+
+.ito-search-summary {
+  margin-top: -4px;
+  padding: 9px 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.ito-search-summary strong {
+  font-weight: 900;
+}
+
+.ito-list-item--enhanced {
+  grid-template-columns: 5px minmax(0, 1fr) 30px;
+  min-height: 118px;
+  align-items: stretch;
+  padding: 14px 12px 14px 14px;
+}
+
+.ito-list-item--enhanced .ito-list-item__main {
+  gap: 7px;
+}
+
+.ito-list-item__description {
+  display: -webkit-box;
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  color: #475569;
+  font-size: 12.5px;
+  line-height: 1.38;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.ito-list-item__meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.ito-list-item__meta {
+  min-width: 0;
+  overflow: hidden;
+  color: #64748b;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ito-list-item__action {
+  flex-shrink: 0;
+  color: #2563eb;
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ito-list-item--enhanced .ito-list-item__chevron {
+  align-self: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.ito-list-item--enhanced:hover .ito-list-item__chevron,
+.ito-list-item--enhanced.is-selected .ito-list-item__chevron {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+@media (max-width: 768px) {
+  .ito-list {
+    gap: 10px;
+    padding-right: 2px;
+    padding-bottom: 110px;
+  }
+
+  .ito-list-item--enhanced {
+    min-height: 112px;
+    border-radius: 20px;
+  }
+
+  .ito-list-item__description {
+    font-size: 12px;
+  }
+
+  .ito-list-item__action {
+    font-size: 10px;
+  }
+}
+
+
+/* ============================ BUILDING DETAIL CARD IMPROVED ============================ */
+
+.ito-info-card--enhanced {
+  overflow: hidden;
+  border-radius: 24px;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.12);
+}
+
+.ito-info-card__media {
+  position: relative;
+  min-height: 150px;
+  overflow: hidden;
+  background: #1e3a8a;
+}
+
+.ito-info-card__image {
+  width: 100%;
+  height: 170px;
+  display: block;
+  object-fit: cover;
+}
+
+.ito-info-card__hero--enhanced {
+  min-height: 170px;
+  align-items: center;
+  justify-content: center;
+}
+
+.ito-info-card__hero--enhanced .ito-info-card__hero-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 20px;
+}
+
+.ito-info-card__media-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.05) 0%,
+    rgba(15, 23, 42, 0.18) 45%,
+    rgba(15, 23, 42, 0.72) 100%
+  );
+  pointer-events: none;
+}
+
+.ito-info-card__media-content {
+  position: absolute;
+  left: 16px;
+  right: 52px;
+  bottom: 14px;
+  color: #ffffff;
+  z-index: 2;
+}
+
+.ito-info-card__close--floating {
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.ito-info-card__close--floating:hover {
+  background: rgba(15, 23, 42, 0.65);
+}
+
+.ito-info-card__body--enhanced {
+  gap: 16px;
+}
+
+.ito-info-card__category-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ito-info-card__priority {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.ito-info-card__mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ito-info-card__mini-item {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 15px;
+  background: #f8fafc;
+}
+
+.ito-info-card__mini-label {
+  display: block;
+  margin-bottom: 4px;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ito-info-card__mini-item strong {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ito-info-card__actions--enhanced {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .ito-info-card--enhanced {
+    border-radius: 22px;
+  }
+
+  .ito-info-card__media {
+    min-height: 138px;
+  }
+
+  .ito-info-card__image,
+  .ito-info-card__hero--enhanced {
+    height: 150px;
+    min-height: 150px;
+  }
+
+  .ito-info-card__media-content {
+    left: 14px;
+    right: 48px;
+    bottom: 12px;
+  }
+
+  .ito-info-card__name {
+    font-size: 16px;
+  }
+
+  .ito-info-card__mini-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+
+/* ============================ BUILDING INFO CARD SAFE IMPROVEMENTS ============================ */
+
+.ito-info-card__cover {
+  position: relative;
+  width: 100%;
+  height: 132px;
+  overflow: hidden;
+  background: #1e3a8a;
+}
+
+.ito-info-card__cover-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.ito-info-card__cover .ito-info-card__close {
+  top: 10px;
+  right: 10px;
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  z-index: 2;
+}
+
+.ito-info-card__cover-title {
+  padding: 13px 16px 0;
+}
+
+.ito-info-card__cover-title .ito-info-card__code {
+  color: #64748b;
+}
+
+.ito-info-card__cover-title .ito-info-card__name {
+  color: #0f172a;
+}
+
+.ito-info-card__priority {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.ito-info-card__actions--stack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}

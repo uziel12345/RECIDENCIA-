@@ -5,7 +5,6 @@ import {
   CompassIcon,
   InfoIcon,
   MapIcon,
-  NavigationIcon,
   SearchIcon,
   ShieldIcon,
   UsersIcon,
@@ -24,7 +23,6 @@ export type CampusService = {
     | "compass"
     | "info"
     | "map"
-    | "navigation"
     | "search"
     | "shield"
     | "users";
@@ -40,9 +38,9 @@ const SERVICES: CampusService[] = [
     id: "control-escolar",
     title: "Control Escolar",
     description:
-      "Trámites académicos, constancias, kardex y seguimiento escolar.",
+      "Constancias, kardex, seguimiento académico y trámites escolares.",
     category: "student",
-    locationHint: "Servicios escolares o área administrativa",
+    locationHint: "Servicios escolares",
     searchTerm: "servicios escolares",
     icon: "calendar",
   },
@@ -50,7 +48,7 @@ const SERVICES: CampusService[] = [
     id: "servicios-escolares",
     title: "Servicios Escolares",
     description:
-      "Atención a estudiantes, inscripciones, reinscripciones y documentación.",
+      "Inscripciones, reinscripciones, documentos y atención a estudiantes.",
     category: "student",
     locationHint: "Área de servicios escolares",
     searchTerm: "servicios escolares",
@@ -71,31 +69,32 @@ const SERVICES: CampusService[] = [
     description: "Atención institucional, gestión directiva y asuntos generales.",
     category: "administrative",
     locationHint: "Edificio de dirección",
-    searchTerm: "dirección",
+    searchTerm: "direccion",
     icon: "building",
   },
   {
     id: "coordinacion",
     title: "Coordinación",
-    description: "Apoyo académico, seguimiento de carrera y orientación estudiantil.",
+    description:
+      "Apoyo académico, seguimiento de carrera y orientación estudiantil.",
     category: "academic",
     locationHint: "Coordinaciones académicas",
-    searchTerm: "coordinación",
+    searchTerm: "coordinacion",
     icon: "compass",
   },
   {
     id: "becas",
     title: "Becas",
-    description: "Información sobre apoyos, convocatorias y seguimiento de becas.",
+    description: "Información sobre apoyos, convocatorias y seguimiento.",
     category: "student",
-    locationHint: "Servicios escolares o área de becas",
+    locationHint: "Área de becas o servicios escolares",
     searchTerm: "becas",
     icon: "info",
   },
   {
     id: "biblioteca",
     title: "Biblioteca",
-    description: "Consulta de libros, espacios de estudio y recursos académicos.",
+    description: "Libros, recursos académicos y espacios de estudio.",
     category: "academic",
     locationHint: "Biblioteca",
     searchTerm: "biblioteca",
@@ -104,8 +103,7 @@ const SERVICES: CampusService[] = [
   {
     id: "laboratorios",
     title: "Laboratorios",
-    description:
-      "Espacios de práctica, cómputo, investigación y clases especializadas.",
+    description: "Espacios de práctica, cómputo e investigación.",
     category: "campus",
     locationHint: "Edificios de laboratorio",
     searchTerm: "laboratorio",
@@ -115,9 +113,28 @@ const SERVICES: CampusService[] = [
 
 const CATEGORY_LABELS: Record<CampusService["category"], string> = {
   administrative: "Administrativo",
-  student: "Servicios estudiantiles",
+  student: "Estudiantil",
   academic: "Académico",
   campus: "Campus",
+};
+
+const CATEGORY_STYLES: Record<CampusService["category"], CSSProperties> = {
+  administrative: {
+    background: "#eff6ff",
+    color: "#1d4ed8",
+  },
+  student: {
+    background: "#ecfdf5",
+    color: "#047857",
+  },
+  academic: {
+    background: "#fef3c7",
+    color: "#92400e",
+  },
+  campus: {
+    background: "#f5f3ff",
+    color: "#6d28d9",
+  },
 };
 
 function ServiceIcon({ name }: { name: CampusService["icon"] }) {
@@ -128,7 +145,6 @@ function ServiceIcon({ name }: { name: CampusService["icon"] }) {
   if (name === "compass") return <CompassIcon {...props} />;
   if (name === "info") return <InfoIcon {...props} />;
   if (name === "map") return <MapIcon {...props} />;
-  if (name === "navigation") return <NavigationIcon {...props} />;
   if (name === "search") return <SearchIcon {...props} />;
   if (name === "shield") return <ShieldIcon {...props} />;
 
@@ -146,7 +162,14 @@ export function CampusServicesPanel({
       <div style={styles.header}>
         <div>
           <p style={styles.overline}>Servicios del campus</p>
-          <h2 style={styles.title}>¿Qué necesitas encontrar?</h2>
+          <h2 style={styles.title}>
+            {compact ? "Accesos rápidos" : "¿Qué necesitas encontrar?"}
+          </h2>
+          {!compact && (
+            <p style={styles.subtitle}>
+              Busca por servicio aunque no conozcas el nombre del edificio.
+            </p>
+          )}
         </div>
 
         <span style={styles.counter}>{visibleServices.length}</span>
@@ -157,7 +180,7 @@ export function CampusServicesPanel({
           <button
             key={service.id}
             type="button"
-            style={styles.card}
+            style={compact ? styles.compactCard : styles.card}
             onClick={() => onSelectService?.(service)}
           >
             <span style={styles.iconBox}>
@@ -165,13 +188,23 @@ export function CampusServicesPanel({
             </span>
 
             <span style={styles.cardContent}>
-              <span style={styles.cardTitle}>{service.title}</span>
-              <span style={styles.cardDescription}>{service.description}</span>
-              <span style={styles.metaRow}>
-                <span style={styles.badge}>
+              <span style={styles.topRow}>
+                <span style={styles.cardTitle}>{service.title}</span>
+                <span
+                  style={{
+                    ...styles.badge,
+                    ...CATEGORY_STYLES[service.category],
+                  }}
+                >
                   {CATEGORY_LABELS[service.category]}
                 </span>
+              </span>
+
+              <span style={styles.cardDescription}>{service.description}</span>
+
+              <span style={styles.footerRow}>
                 <span style={styles.location}>{service.locationHint}</span>
+                <span style={styles.actionText}>Buscar</span>
               </span>
             </span>
           </button>
@@ -184,14 +217,14 @@ export function CampusServicesPanel({
 const styles: Record<string, CSSProperties> = {
   panel: {
     background: "#ffffff",
-    borderRadius: "24px",
+    borderRadius: "26px",
     border: "1px solid #e2e8f0",
     padding: "18px",
     boxShadow: "0 18px 45px rgba(15, 23, 42, 0.10)",
   },
   compactPanel: {
     background: "#ffffff",
-    borderRadius: "20px",
+    borderRadius: "22px",
     border: "1px solid #e2e8f0",
     padding: "14px",
   },
@@ -205,16 +238,23 @@ const styles: Record<string, CSSProperties> = {
   overline: {
     margin: "0 0 4px",
     color: "#2563eb",
-    fontSize: "12px",
-    fontWeight: 800,
+    fontSize: "11px",
+    fontWeight: 900,
     textTransform: "uppercase",
-    letterSpacing: "0.06em",
+    letterSpacing: "0.08em",
   },
   title: {
     margin: 0,
     color: "#0f172a",
     fontSize: "18px",
     lineHeight: 1.2,
+    letterSpacing: "-0.02em",
+  },
+  subtitle: {
+    margin: "6px 0 0",
+    color: "#64748b",
+    fontSize: "13px",
+    lineHeight: 1.35,
   },
   counter: {
     minWidth: "34px",
@@ -226,6 +266,7 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     fontWeight: 900,
+    flexShrink: 0,
   },
   grid: {
     display: "grid",
@@ -238,12 +279,28 @@ const styles: Record<string, CSSProperties> = {
   },
   card: {
     width: "100%",
+    minHeight: "118px",
     display: "flex",
     alignItems: "flex-start",
     gap: "12px",
     border: "1px solid #e2e8f0",
+    borderRadius: "20px",
+    padding: "14px",
+    background:
+      "linear-gradient(135deg, rgba(248,250,252,1) 0%, rgba(255,255,255,1) 100%)",
+    color: "#0f172a",
+    textAlign: "left",
+    cursor: "pointer",
+    boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
+  },
+  compactCard: {
+    width: "100%",
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "11px",
+    border: "1px solid #e2e8f0",
     borderRadius: "18px",
-    padding: "13px",
+    padding: "12px",
     background: "#f8fafc",
     color: "#0f172a",
     textAlign: "left",
@@ -252,44 +309,68 @@ const styles: Record<string, CSSProperties> = {
   iconBox: {
     width: "42px",
     height: "42px",
-    borderRadius: "14px",
+    borderRadius: "15px",
     background: "#dbeafe",
     color: "#1d4ed8",
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
+    boxShadow: "inset 0 0 0 1px rgba(37, 99, 235, 0.08)",
   },
   cardContent: {
+    minWidth: 0,
     display: "grid",
-    gap: "5px",
+    gap: "7px",
+    flex: 1,
+  },
+  topRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "8px",
   },
   cardTitle: {
+    minWidth: 0,
+    color: "#0f172a",
     fontWeight: 900,
     fontSize: "15px",
+    lineHeight: 1.2,
   },
   cardDescription: {
     color: "#475569",
     fontSize: "13px",
     lineHeight: 1.35,
   },
-  metaRow: {
+  footerRow: {
     display: "flex",
-    flexWrap: "wrap",
-    gap: "6px",
     alignItems: "center",
+    justifyContent: "space-between",
+    gap: "8px",
+    marginTop: "2px",
   },
   badge: {
     borderRadius: "999px",
-    background: "#e0f2fe",
-    color: "#0369a1",
     padding: "4px 8px",
-    fontSize: "11px",
-    fontWeight: 800,
+    fontSize: "10px",
+    fontWeight: 900,
+    whiteSpace: "nowrap",
   },
   location: {
+    minWidth: 0,
     color: "#64748b",
     fontSize: "11px",
     fontWeight: 700,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  actionText: {
+    flexShrink: 0,
+    color: "#2563eb",
+    fontSize: "11px",
+    fontWeight: 900,
+    textTransform: "uppercase",
+    letterSpacing: "0.04em",
   },
 };
