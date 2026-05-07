@@ -9,6 +9,15 @@ import { CategoryBadge, getCategoryAccent } from "../../../components/ui/Categor
 import { Icon } from "../../../components/ui/Icons";
 import type { Building } from "../types/building";
 
+function normalizeSearchText(value: string | null | undefined): string {
+  return value
+    ? value
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+    : "";
+}
+
 type BuildingSidebarProps = {
   isMobile?: boolean;
   /** Called after the user picks a building from the list. Allows the parent
@@ -61,31 +70,42 @@ export function BuildingSidebar({
   }, [buildings]);
 
   const filteredBuildings = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
+  const normalizedSearch = normalizeSearchText(searchTerm.trim());
 
-    const result = buildings
-      .filter((building) => building.is_active)
-      .filter((building) => {
-        if (!activeCategory) return true;
-        return building.category_name === activeCategory;
-      })
-      .filter((building) => {
-        if (!normalizedSearch) return true;
-        return (
-          building.name.toLowerCase().includes(normalizedSearch) ||
-          building.code.toLowerCase().includes(normalizedSearch) ||
-          building.category_name.toLowerCase().includes(normalizedSearch)
-        );
-      });
+  const result = buildings
+    .filter((building) => building.is_active)
+    .filter((building) => {
+      if (!activeCategory) return true;
+      return building.category_name === activeCategory;
+    })
+    .filter((building) => {
+      if (!normalizedSearch) return true;
 
-    if (!selectedBuilding) return result;
+      const searchableText = [
+        building.name,
+        building.code,
+        building.slug,
+        building.description,
+        building.model_node_name,
+        building.category_code,
+        building.category_name,
+      ]
+        .map(normalizeSearchText)
+        .join(" ");
 
-    return [...result].sort((a, b) => {
-      if (a.id === selectedBuilding.id) return -1;
-      if (b.id === selectedBuilding.id) return 1;
-      return 0;
+      return searchableText.includes(normalizedSearch);
     });
-  }, [buildings, searchTerm, selectedBuilding, activeCategory]);
+
+  if (!selectedBuilding) return result;
+
+  return [...result].sort((a, b) => {
+    if (a.id === selectedBuilding.id) return -1;
+    if (b.id === selectedBuilding.id) return 1;
+    return 0;
+  });
+}, [buildings, searchTerm, selectedBuilding, activeCategory]);
+
+ 
 
   const totalActive = useMemo(
     () => buildings.filter((b) => b.is_active).length,

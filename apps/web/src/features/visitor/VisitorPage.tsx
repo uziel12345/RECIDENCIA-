@@ -14,9 +14,13 @@ import {
 } from "../campus/components/MobileBottomSheet";
 import { MobileQuickActions } from "../campus/components/MobileQuickActions";
 import { ROUTES } from "../../types/routes";
-import { UsersIcon, LogOutIcon, CompassIcon } from "../shared/Icons";
+import { UsersIcon, LogOutIcon, CompassIcon, InfoIcon } from "../shared/Icons";
 import { VisitorTopBar } from "./components/VisitorTopBar";
 import { QuickDestinations } from "./components/QuickDestinations";
+import {
+  CampusServicesPanel,
+  type CampusService,
+} from "../shared/components/CampusServicesPanel";
 
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(
@@ -40,11 +44,15 @@ export function VisitorPage() {
 
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const routeDestination = useBuildingStore((state) => state.routeDestination);
-  const setSelectedBuilding = useBuildingStore((state) => state.setSelectedBuilding);
+  const setSelectedBuilding = useBuildingStore(
+    (state) => state.setSelectedBuilding
+  );
+  const setSearchTerm = useBuildingStore((state) => state.setSearchTerm);
 
   const [sheetState, setSheetState] = useState<SheetState>("closed");
   const [totalBuildings, setTotalBuildings] = useState(0);
   const [showQuickDest, setShowQuickDest] = useState(false);
+  const [showServices, setShowServices] = useState(false);
 
   useEffect(() => {
     getBuildings().then((data) => {
@@ -67,6 +75,12 @@ export function VisitorPage() {
     navigate(ROUTES.WELCOME);
   };
 
+  const handleSelectService = (service: CampusService) => {
+    setSearchTerm(service.searchTerm);
+    setShowServices(false);
+    setSheetState("full");
+  };
+
   const mobileActions = useMemo(() => {
     return [
       {
@@ -74,6 +88,12 @@ export function VisitorPage() {
         label: "Destinos",
         icon: "compass" as const,
         onClick: () => setShowQuickDest(true),
+      },
+      {
+        id: "services",
+        label: "Servicios",
+        icon: "info" as const,
+        onClick: () => setShowServices(true),
       },
       {
         id: "search",
@@ -124,10 +144,22 @@ export function VisitorPage() {
           <div className="visitor-page__quick-section">
             <h3 className="visitor-page__section-title">
               <CompassIcon size={16} />
-              <span>Destinos Populares</span>
+              <span>Destinos populares</span>
             </h3>
 
             <QuickDestinations compact />
+          </div>
+
+          <div className="visitor-page__quick-section">
+            <h3 className="visitor-page__section-title">
+              <InfoIcon size={16} />
+              <span>Servicios frecuentes</span>
+            </h3>
+
+            <CampusServicesPanel
+              compact
+              onSelectService={handleSelectService}
+            />
           </div>
 
           <div className="visitor-page__sidebar-content">
@@ -193,7 +225,7 @@ export function VisitorPage() {
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
             >
               <div className="visitor-mobile__dest-header">
-                <h2>Destinos Populares</h2>
+                <h2>Destinos populares</h2>
 
                 <button type="button" onClick={() => setShowQuickDest(false)}>
                   <svg
@@ -212,6 +244,47 @@ export function VisitorPage() {
 
               <div className="visitor-mobile__dest-body">
                 <QuickDestinations onSelect={() => setShowQuickDest(false)} />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showServices && (
+          <motion.div
+            className="visitor-mobile__dest-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="visitor-mobile__dest-modal"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            >
+              <div className="visitor-mobile__dest-header">
+                <h2>Servicios del campus</h2>
+
+                <button type="button" onClick={() => setShowServices(false)}>
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="visitor-mobile__dest-body">
+                <CampusServicesPanel onSelectService={handleSelectService} />
               </div>
             </motion.div>
           </motion.div>

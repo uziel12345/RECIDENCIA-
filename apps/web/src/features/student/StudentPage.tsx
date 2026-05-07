@@ -19,9 +19,14 @@ import {
   CalendarIcon,
   LogOutIcon,
   MapIcon,
+  InfoIcon,
 } from "../shared/Icons";
 import { StudentTopBar } from "./components/StudentTopBar";
 import { SchedulePanel } from "./components/SchedulePanel";
+import {
+  CampusServicesPanel,
+  type CampusService,
+} from "../shared/components/CampusServicesPanel";
 
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(
@@ -38,7 +43,7 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
-type ViewMode = "map" | "schedule";
+type ViewMode = "map" | "schedule" | "services";
 
 export function StudentPage() {
   const isMobile = useIsMobile();
@@ -50,15 +55,19 @@ export function StudentPage() {
   const setSelectedBuilding = useBuildingStore(
     (state) => state.setSelectedBuilding
   );
+  const setSearchTerm = useBuildingStore((state) => state.setSearchTerm);
 
   const [sheetState, setSheetState] = useState<SheetState>("closed");
   const [totalBuildings, setTotalBuildings] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("map");
   const [showSchedule, setShowSchedule] = useState(false);
+  const [showServices, setShowServices] = useState(false);
 
   useEffect(() => {
     getBuildings().then((data) => {
-      setTotalBuildings(data.filter((building: Building) => building.is_active).length);
+      setTotalBuildings(
+        data.filter((building: Building) => building.is_active).length
+      );
     });
   }, []);
 
@@ -81,13 +90,26 @@ export function StudentPage() {
     setSheetState("closed");
   };
 
+  const handleSelectService = (service: CampusService) => {
+    setSearchTerm(service.searchTerm);
+    setShowServices(false);
+    setViewMode("map");
+    setSheetState("full");
+  };
+
   const mobileActions = useMemo(() => {
     return [
       {
         id: "schedule",
         label: "Horario",
-        icon: "map" as const,
+        icon: "calendar" as const,
         onClick: () => setShowSchedule(true),
+      },
+      {
+        id: "services",
+        label: "Servicios",
+        icon: "info" as const,
+        onClick: () => setShowServices(true),
       },
       {
         id: "search",
@@ -129,7 +151,7 @@ export function StudentPage() {
               type="button"
               className="student-page__logout"
               onClick={handleLogout}
-              title="Cerrar sesion"
+              title="Cerrar sesión"
             >
               <LogOutIcon size={18} />
             </button>
@@ -157,6 +179,17 @@ export function StudentPage() {
               <CalendarIcon size={18} />
               <span>Mi Horario</span>
             </button>
+
+            <button
+              type="button"
+              className={`student-page__nav-item ${
+                viewMode === "services" ? "is-active" : ""
+              }`}
+              onClick={() => setViewMode("services")}
+            >
+              <InfoIcon size={18} />
+              <span>Servicios</span>
+            </button>
           </nav>
 
           {viewMode === "map" && (
@@ -168,6 +201,15 @@ export function StudentPage() {
           {viewMode === "schedule" && (
             <div className="student-page__sidebar-content">
               <SchedulePanel onNavigateToClass={handleNavigateFromSchedule} />
+            </div>
+          )}
+
+          {viewMode === "services" && (
+            <div className="student-page__sidebar-content">
+              <CampusServicesPanel
+                compact
+                onSelectService={handleSelectService}
+              />
             </div>
           )}
         </aside>
@@ -182,6 +224,12 @@ export function StudentPage() {
           {viewMode === "schedule" && (
             <div className="student-page__schedule-full">
               <SchedulePanel expanded />
+            </div>
+          )}
+
+          {viewMode === "services" && (
+            <div className="student-page__schedule-full">
+              <CampusServicesPanel onSelectService={handleSelectService} />
             </div>
           )}
         </main>
@@ -258,6 +306,47 @@ export function StudentPage() {
 
               <div className="student-mobile__schedule-body">
                 <SchedulePanel onNavigateToClass={handleNavigateFromSchedule} />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showServices && (
+          <motion.div
+            className="student-mobile__schedule-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="student-mobile__schedule-modal"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            >
+              <div className="student-mobile__schedule-header">
+                <h2>Servicios del campus</h2>
+
+                <button type="button" onClick={() => setShowServices(false)}>
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="student-mobile__schedule-body">
+                <CampusServicesPanel onSelectService={handleSelectService} />
               </div>
             </motion.div>
           </motion.div>
