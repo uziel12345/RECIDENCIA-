@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Html, OrbitControls, useGLTF } from "@react-three/drei";
+import type { Mesh, MeshBasicMaterial, RingGeometry } from "three";
 import type { Building } from "../../features/buildings/types/building";
 import { useLocationStore } from "../../store/location-store";
 import { useBuildingStore } from "../../store/building-store";
@@ -8,7 +9,7 @@ import { getBuildings } from "../../services/buildings.service";
 import { startUserLocationTracking } from "../../features/location/services/geolocation";
 import { RouteLine } from "../../features/buildings/components/RouteLine";
 import { Icon, type IconName } from "../ui/Icons";
-import { getCategoryAccent } from "../ui/CategoryBadge";
+import { getCategoryAccent } from "../ui/categoryAccent";
 
 const MODEL_PATH = "/models/campus.glb";
 
@@ -37,52 +38,85 @@ function campusLocalToWorld(x: number, z: number) {
 }
 
 function UserLocationMarker() {
-  const mapPosition = useLocationStore((s) => s.mapPosition);
-  const ringRef = useRef<any>(null);
+  const mapPosition = useLocationStore((state) => state.mapPosition);
+  const isLowAccuracy = useLocationStore((state) => state.isLowAccuracy);
+  const ringRef = useRef<Mesh<RingGeometry, MeshBasicMaterial>>(null);
 
   useFrame(({ clock }) => {
     if (!ringRef.current) return;
+
     const t = (clock.getElapsedTime() % 1.6) / 1.6;
     const scale = 1 + t * 1.4;
+
     ringRef.current.scale.set(scale, scale, scale);
-    ringRef.current.material.opacity = (1 - t) * 0.55;
+    ringRef.current.material.opacity = (1 - t) * (isLowAccuracy ? 0.22 : 0.55);
   });
 
   if (!mapPosition) return null;
 
+  const markerColor = isLowAccuracy ? "#94a3b8" : "#2563eb";
+  const markerEmissive = isLowAccuracy ? "#64748b" : "#1d4ed8";
+
   return (
     <group position={[mapPosition.x, 4, mapPosition.z]}>
-      {/* Pulsing ring */}
+      {isLowAccuracy && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
+          <circleGeometry args={[18, 64]} />
+          <meshBasicMaterial color="#94a3b8" transparent opacity={0.12} />
+        </mesh>
+      )}
+
       <mesh
         ref={ringRef}
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, 0.1, 0]}
       >
         <ringGeometry args={[5.5, 7, 48]} />
-        <meshBasicMaterial color="#2563eb" transparent opacity={0.55} />
+        <meshBasicMaterial color={markerColor} transparent opacity={0.55} />
       </mesh>
 
-      {/* Inner solid disc */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.2, 0]}>
         <circleGeometry args={[5, 48]} />
-        <meshBasicMaterial color="#2563eb" transparent opacity={0.18} />
-      </mesh>
-
-      {/* Pin head */}
-      <mesh position={[0, 8, 0]}>
-        <sphereGeometry args={[2.6, 32, 32]} />
-        <meshStandardMaterial
-          color="#2563eb"
-          emissive="#1d4ed8"
-          emissiveIntensity={0.35}
+        <meshBasicMaterial
+          color={markerColor}
+          transparent
+          opacity={isLowAccuracy ? 0.1 : 0.18}
         />
       </mesh>
 
-      {/* Pin core */}
+      <mesh position={[0, 8, 0]}>
+        <sphereGeometry args={[2.6, 32, 32]} />
+        <meshStandardMaterial
+          color={markerColor}
+          emissive={markerEmissive}
+          emissiveIntensity={isLowAccuracy ? 0.18 : 0.35}
+        />
+      </mesh>
+
       <mesh position={[0, 8, 0]}>
         <sphereGeometry args={[1.1, 24, 24]} />
         <meshStandardMaterial color="#ffffff" />
       </mesh>
+
+      {isLowAccuracy && (
+        <Html position={[0, 13, 0]} center>
+          <div
+            style={{
+              padding: "5px 9px",
+              borderRadius: 999,
+              background: "rgba(255, 255, 255, 0.95)",
+              border: "1px solid #cbd5e1",
+              color: "#475569",
+              fontSize: 11,
+              fontWeight: 800,
+              whiteSpace: "nowrap",
+              boxShadow: "0 4px 10px rgba(15, 23, 42, 0.16)",
+            }}
+          >
+            Ubicación aproximada
+          </div>
+        </Html>
+      )}
     </group>
   );
 }
@@ -119,12 +153,9 @@ function getBuildingMarkerIcon(building: Building): IconName {
 function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const setSelectedBuilding = useBuildingStore(
-    (state) => state.setSelectedBuilding,
+    (state) => state.setSelectedBuilding
   );
 
-  // En móvil mostramos TODAS las etiquetas pero las hacemos compactas (solo el
-  // código del edificio) para no saturar la pantalla. Cuando hay un edificio
-  // seleccionado, su etiqueta se expande y muestra el nombre completo.
   const labelMaxWidth = isMobile ? 120 : 180;
   const compactFontSize = isMobile ? 10 : 12;
   const compactPadding = isMobile ? "3px 7px" : "6px 12px 6px 8px";
@@ -143,9 +174,6 @@ function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
         const isSelected = selectedBuilding?.id === building.id;
         const accent = getCategoryAccent(building.category_name);
         const accentColor = building.category_color || accent.fg;
-
-        // Compact form on mobile when not selected: shows only the code in a
-        // small chip. Expanded form shows the full name.
         const showFullName = !isMobile || isSelected;
         const padding = showFullName ? expandedPadding : compactPadding;
 
@@ -159,8 +187,8 @@ function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
           >
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={(event) => {
+                event.stopPropagation();
                 setSelectedBuilding(building);
               }}
               style={{
@@ -172,9 +200,15 @@ function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
                 border: `1px solid ${
                   isSelected ? accentColor : "rgba(15,23,42,0.12)"
                 }`,
-                background: isSelected ? accentColor : "rgba(255,255,255,0.97)",
+                background: isSelected
+                  ? accentColor
+                  : "rgba(255,255,255,0.97)",
                 color: isSelected ? "#ffffff" : "#0f172a",
-                fontSize: showFullName ? (isMobile ? 11 : 12) : compactFontSize,
+                fontSize: showFullName
+                  ? isMobile
+                    ? 11
+                    : 12
+                  : compactFontSize,
                 fontWeight: 700,
                 lineHeight: 1.2,
                 whiteSpace: "nowrap",
@@ -211,6 +245,7 @@ function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
                       size={isMobile ? 11 : 12}
                     />
                   </span>
+
                   <span
                     style={{
                       maxWidth: labelMaxWidth,
@@ -246,6 +281,7 @@ function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
 
 function CampusModel() {
   const { scene } = useGLTF(MODEL_PATH);
+
   return <primitive object={scene} />;
 }
 
@@ -264,8 +300,6 @@ function ViewerToolbar({
   onZoom,
   isMobile = false,
 }: ViewerToolbarProps) {
-  // En móvil agrupamos los botones de zoom en una pill vertical para ocupar
-  // menos espacio en la pantalla y dejar más mapa visible.
   return (
     <div
       className={`ito-toolbar ${isMobile ? "ito-toolbar--mobile" : ""}`}
@@ -295,7 +329,9 @@ function ViewerToolbar({
         >
           <Icon name="plus" size={18} />
         </button>
+
         <span className="ito-toolbar__divider" aria-hidden="true" />
+
         <button
           type="button"
           className="ito-toolbar__btn"
@@ -326,20 +362,33 @@ type CategoryLegendProps = {
 
 function CategoryLegend({ buildings }: CategoryLegendProps) {
   const items = useMemo(() => {
-    const seen = new Map<string, { name: string; color: string; count: number }>();
-    for (const b of buildings) {
-      if (!b.is_active) continue;
-      const accent = getCategoryAccent(b.category_name);
-      const color = b.category_color || accent.fg;
-      const key = b.category_name;
+    const seen = new Map<
+      string,
+      { name: string; color: string; count: number }
+    >();
+
+    for (const building of buildings) {
+      if (!building.is_active) continue;
+
+      const accent = getCategoryAccent(building.category_name);
+      const color = building.category_color || accent.fg;
+      const key = building.category_name;
       const existing = seen.get(key);
+
       if (existing) {
         existing.count += 1;
       } else {
-        seen.set(key, { name: b.category_name, color, count: 1 });
+        seen.set(key, {
+          name: building.category_name,
+          color,
+          count: 1,
+        });
       }
     }
-    return Array.from(seen.values()).sort((a, b) => b.count - a.count).slice(0, 6);
+
+    return Array.from(seen.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
   }, [buildings]);
 
   if (items.length === 0) return null;
@@ -347,6 +396,7 @@ function CategoryLegend({ buildings }: CategoryLegendProps) {
   return (
     <div className="ito-legend anim-fade-in" aria-label="Leyenda de categorías">
       <div className="ito-legend__title">Categorías</div>
+
       <div className="ito-legend__items">
         {items.map((item) => (
           <div key={item.name} className="ito-legend__item">
@@ -356,7 +406,12 @@ function CategoryLegend({ buildings }: CategoryLegendProps) {
               aria-hidden="true"
             />
             <span style={{ flex: 1 }}>{item.name}</span>
-            <span style={{ color: "var(--color-text-muted)", fontWeight: 600 }}>
+            <span
+              style={{
+                color: "var(--color-text-muted)",
+                fontWeight: 600,
+              }}
+            >
               {item.count}
             </span>
           </div>
@@ -384,9 +439,11 @@ export function CampusViewer({
   isMobile = false,
   mobilePanelOpen = false,
 }: CampusViewerProps) {
+  // OrbitControls ref type from @react-three/drei uses three-stdlib internals
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const controlsRef = useRef<any>(null);
-  const mapPosition = useLocationStore((s) => s.mapPosition);
-  const selectedBuilding = useBuildingStore((s) => s.selectedBuilding);
+  const mapPosition = useLocationStore((state) => state.mapPosition);
+  const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
 
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [focus, setFocus] = useState<FocusPoint | null>(null);
@@ -439,23 +496,24 @@ export function CampusViewer({
       return;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFocus({
       x: selectedBuilding.x,
       z: selectedBuilding.z,
     });
   }, [selectedBuilding]);
 
-  // Hide the loader once buildings are available — at that point the GLB
-  // suspense fallback has resolved as well.
   useEffect(() => {
     if (buildings.length > 0) {
-      const t = setTimeout(() => setIsModelLoading(false), 300);
-      return () => clearTimeout(t);
+      const timeoutId = setTimeout(() => setIsModelLoading(false), 300);
+
+      return () => clearTimeout(timeoutId);
     }
   }, [buildings.length]);
 
   const handleFocusUser = () => {
     if (!mapPosition) return;
+
     setFocus({
       x: mapPosition.x,
       z: mapPosition.z,
@@ -464,8 +522,11 @@ export function CampusViewer({
 
   const handleResetView = () => {
     if (!controlsRef.current) return;
+
     const controls = controlsRef.current;
+
     setFocus(null);
+
     if (isMobile) {
       controls.target.set(0, 0, 30);
       controls.object.position.set(0, 130, 200);
@@ -473,18 +534,24 @@ export function CampusViewer({
       controls.target.set(0, 0, 0);
       controls.object.position.set(0, 180, 0);
     }
+
     controls.update();
   };
 
   const handleZoom = (delta: number) => {
     if (!controlsRef.current) return;
+
     const controls = controlsRef.current;
     const offset = controls.object.position.clone().sub(controls.target);
     const factor = delta > 0 ? 1.18 : 0.82;
+
     offset.multiplyScalar(factor);
+
     const length = offset.length();
+
     if (length < (controls.minDistance ?? 20)) return;
     if (length > (controls.maxDistance ?? 350)) return;
+
     controls.object.position.copy(controls.target).add(offset);
     controls.update();
   };
@@ -524,7 +591,10 @@ export function CampusViewer({
           castShadow={false}
         />
 
-        <gridHelper args={[500, 50, "#cbd5e1", "#e2e8f0"]} position={[0, -0.4, 0]} />
+        <gridHelper
+          args={[500, 50, "#cbd5e1", "#e2e8f0"]}
+          position={[0, -0.4, 0]}
+        />
 
         <OrbitControls
           ref={controlsRef}

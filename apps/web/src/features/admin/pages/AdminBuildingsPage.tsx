@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
+import { ROUTES } from "../../../types/routes";
 import { BuildingForm } from "../components/BuildingForm";
 import { BuildingImagesModal } from "../components/BuildingImagesModal";
 import { BuildingTable } from "../components/BuildingTable";
@@ -8,6 +10,7 @@ import { safeText } from "../hooks/useBuildingForm";
 
 export function AdminBuildingsPage() {
   const { logout, user } = useAdminAuthStore();
+  const navigate = useNavigate();
 
   const {
     buildings,
@@ -43,7 +46,7 @@ export function AdminBuildingsPage() {
 
   function handleLogout() {
     logout();
-    window.location.href = "/admin/login";
+    void navigate(ROUTES.ADMIN_LOGIN, { replace: true });
   }
 
   return (

@@ -88,17 +88,10 @@ export function useAdminBuildings() {
 
     try {
       const response = await getAdminBuildingsPaginatedApi(page, limit);
-      const payload = response as any;
 
-      const data: Building[] = Array.isArray(payload?.data)
-        ? payload.data
-        : Array.isArray(payload)
-          ? payload
-          : [];
-
-      setBuildings(data);
-      setTotalPages(payload?.pagination?.totalPages ?? 1);
-      setTotalRecords(payload?.pagination?.total ?? data.length);
+      setBuildings(Array.isArray(response.data) ? response.data : []);
+      setTotalPages(response.pagination?.totalPages ?? 1);
+      setTotalRecords(response.pagination?.total ?? response.data?.length ?? 0);
     } catch (err) {
       const msg =
         err instanceof Error
@@ -198,7 +191,7 @@ export function useAdminBuildings() {
     setError(null);
     setMessage(null);
 
-    const nextStatus = !Boolean(building.is_active);
+    const nextStatus = !building.is_active;
 
     try {
       await updateBuildingStatusApi(building.id, {

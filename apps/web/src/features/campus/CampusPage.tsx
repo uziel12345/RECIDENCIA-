@@ -10,23 +10,7 @@ import type { Building } from "../buildings/types/building";
 import { MobileBottomSheet, type SheetState } from "./components/MobileBottomSheet";
 import { MobileQuickActions } from "./components/MobileQuickActions";
 import { MobileTopBar } from "./components/MobileTopBar";
-
-function useIsMobile(breakpoint = 768) {
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== "undefined" ? window.innerWidth < breakpoint : false,
-  );
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < breakpoint);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [breakpoint]);
-
-  return isMobile;
-}
+import { useIsMobile } from "../../hooks/useIsMobile";
 
 export function CampusPage() {
   const isMobile = useIsMobile();
@@ -36,8 +20,11 @@ export function CampusPage() {
   const mapPosition = useLocationStore((s) => s.mapPosition);
   const hasLocation = mapPosition !== null;
 
-  // Mobile-only state for the bottom sheet (closed | peek | full).
-  const [sheetState, setSheetState] = useState<SheetState>("closed");
+  // User-controlled bottom sheet state. When a route is active on mobile the
+  // sheet is always forced closed so the map stays as the hero view.
+  const [requestedSheetState, setSheetState] = useState<SheetState>("closed");
+  const sheetState: SheetState =
+    isMobile && !!routeDestination ? "closed" : requestedSheetState;
 
   // Cache building total to show in the top bar even before the sheet opens.
   const [totalBuildings, setTotalBuildings] = useState(0);
@@ -47,18 +34,6 @@ export function CampusPage() {
       setTotalBuildings(data.filter((b: Building) => b.is_active).length);
     });
   }, []);
-
-  // Reactive UX: when the user picks a building from the 3D map, show the
-  // floating quick card without forcing the full sheet open. When they pick a
-  // building from inside the list, the sheet stays where it is.
-  // When a route is generated we always collapse the sheet so the map is the
-  // hero and the user can see the path.
-  useEffect(() => {
-    if (!isMobile) return;
-    if (routeDestination) {
-      setSheetState("closed");
-    }
-  }, [isMobile, routeDestination]);
 
   // Build the mobile action bar items. Hook must be called unconditionally
   // before any early returns to satisfy the Rules of Hooks.

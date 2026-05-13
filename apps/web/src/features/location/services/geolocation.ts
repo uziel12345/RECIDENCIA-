@@ -1,9 +1,8 @@
 import { useLocationStore } from "../../../store/location-store";
 import { mapGeoToCampusCoordinates } from "../utils/coordinate-mapper";
 
-const TARGET_ACCURACY_METERS = 25;
-const MAX_ACCEPTABLE_ACCURACY_METERS = 45;
-const MIN_MOVEMENT_METERS = 1.5;
+const MAX_ACCEPTABLE_ACCURACY_METERS = 60;
+const MIN_MOVEMENT_METERS = 3;
 
 type GeoLikePosition = {
   latitude: number;
@@ -12,7 +11,6 @@ type GeoLikePosition = {
 };
 
 let lastAcceptedPosition: GeoLikePosition | null = null;
-let bestPendingPosition: GeoLikePosition | null = null;
 
 function toRadians(value: number): number {
   return (value * Math.PI) / 180;
@@ -41,114 +39,73 @@ function distanceInMeters(
   return earthRadius * c;
 }
 
-function isBetterAccuracy(
-  current: GeoLikePosition,
-  previous: GeoLikePosition | null
-): boolean {
-  if (!previous) return true;
+export function applyManualCalibration(input: {
+  buildingId: string;
+  buildingName: string;
+  targetX: number;
+  targetZ: number;
+}): void {
+  const {
+    setManualCalibration,
+    setMapPosition,
+    setIsLowAccuracy,
+    setErrorMessage,
+  } = useLocationStore.getState();
 
-  if (current.accuracy === null) return false;
-  if (previous.accuracy === null) return true;
+  setManualCalibration({
+    buildingId: input.buildingId,
+    buildingName: input.buildingName,
+    targetX: input.targetX,
+    targetZ: input.targetZ,
+  });
 
-  return current.accuracy < previous.accuracy;
+  setMapPosition({
+    x: input.targetX,
+    y: 2,
+    z: input.targetZ,
+  });
+
+  setIsLowAccuracy(false);
+  setErrorMessage(`Ubicación calibrada manualmente en ${input.buildingName}.`);
 }
 
-function isAccurateEnough(position: GeoLikePosition): boolean {
-  if (position.accuracy === null) {
-    return false;
-  }
+export function clearManualCalibration(): void {
+  const {
+    geoPosition,
+    setManualCalibration,
+    setMapPosition,
+    setIsLowAccuracy,
+    setErrorMessage,
+  } = useLocationStore.getState();
 
-  return position.accuracy <= MAX_ACCEPTABLE_ACCURACY_METERS;
-}
+  setManualCalibration(null);
+  setIsLowAccuracy(false);
 
-function shouldUpdateAcceptedPosition(next: GeoLikePosition): boolean {
-  if (!lastAcceptedPosition) {
-    return true;
-  }
-
-  const distance = distanceInMeters(
-    lastAcceptedPosition.latitude,
-    lastAcceptedPosition.longitude,
-    next.latitude,
-    next.longitude
-  );
-
-  if (distance >= MIN_MOVEMENT_METERS) {
-    return true;
-  }
-
-  return isBetterAccuracy(next, lastAcceptedPosition);
-}
-
-function acceptPosition(position: GeoLikePosition): void {
-  const { setGeoPosition, setMapPosition, setErrorMessage } =
-    useLocationStore.getState();
-
-  lastAcceptedPosition = position;
-  bestPendingPosition = null;
-
-  setErrorMessage(null);
-  setGeoPosition(position);
-
-  const mapPosition = mapGeoToCampusCoordinates(
-    position.latitude,
-    position.longitude
-  );
-
-  console.log("====== GPS ACEPTADO ======");
-  console.log("GPS:", position.latitude, position.longitude);
-  console.log("ACCURACY:", position.accuracy);
-  console.log("MAP:", mapPosition);
-
-  setMapPosition(mapPosition);
-}
-
-function handleLowAccuracyPosition(position: GeoLikePosition): void {
-  const { setGeoPosition, setMapPosition, setErrorMessage } =
-    useLocationStore.getState();
-
-  if (isBetterAccuracy(position, bestPendingPosition)) {
-    bestPendingPosition = position;
-  }
-
-  setGeoPosition(position);
-
-  const accuracyText =
-    position.accuracy !== null
-      ? `${position.accuracy.toFixed(1)} m`
-      : "desconocida";
-
-  setErrorMessage(
-    `Ubicación aproximada (${accuracyText}). En laptop puede variar porque el navegador no siempre usa GPS real.`
-  );
-
-  console.warn("====== GPS DE BAJA PRECISIÓN ======");
-  console.warn("GPS:", position.latitude, position.longitude);
-  console.warn("ACCURACY:", position.accuracy);
-
-  if (lastAcceptedPosition) {
-    const mapPosition = mapGeoToCampusCoordinates(
-      lastAcceptedPosition.latitude,
-      lastAcceptedPosition.longitude
-    );
-
-    setMapPosition(mapPosition);
+  if (!geoPosition) {
+    setMapPosition(null);
+    setErrorMessage(null);
     return;
   }
 
-  const approximateMapPosition = mapGeoToCampusCoordinates(
-    position.latitude,
-    position.longitude
+  const mapPosition = mapGeoToCampusCoordinates(
+    geoPosition.latitude,
+    geoPosition.longitude
   );
 
-  console.warn("====== MOSTRANDO UBICACIÓN APROXIMADA ======");
-  console.warn("MAP:", approximateMapPosition);
-
-  setMapPosition(approximateMapPosition);
+  setMapPosition(mapPosition);
+  setErrorMessage(null);
 }
+
 export function startUserLocationTracking(): void {
-  const { setPermission, setErrorMessage, setWatchId, watchId } =
-    useLocationStore.getState();
+  const {
+    setPermission,
+    setGeoPosition,
+    setMapPosition,
+    setIsLowAccuracy,
+    setErrorMessage,
+    setWatchId,
+    watchId,
+  } = useLocationStore.getState();
 
   if (!("geolocation" in navigator)) {
     setPermission("unsupported");
@@ -162,39 +119,86 @@ export function startUserLocationTracking(): void {
 
   const newWatchId = navigator.geolocation.watchPosition(
     (position) => {
-      const nextPosition: GeoLikePosition = {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        accuracy: position.coords.accuracy ?? null,
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      const accuracy = position.coords.accuracy ?? null;
+      const manualCalibration = useLocationStore.getState().manualCalibration;
+
+      const receivedPosition: GeoLikePosition = {
+        latitude,
+        longitude,
+        accuracy,
       };
 
       setPermission("granted");
 
-      console.log("====== GPS RECIBIDO ======");
-      console.log("GPS:", nextPosition.latitude, nextPosition.longitude);
-      console.log("ACCURACY:", nextPosition.accuracy);
-
-      if (!isAccurateEnough(nextPosition)) {
-        handleLowAccuracyPosition(nextPosition);
+      if (manualCalibration) {
+        setGeoPosition(receivedPosition);
+        setIsLowAccuracy(false);
         return;
       }
-
-      if (!shouldUpdateAcceptedPosition(nextPosition)) {
-        return;
-      }
-
-      acceptPosition(nextPosition);
 
       if (
-        nextPosition.accuracy !== null &&
-        nextPosition.accuracy > TARGET_ACCURACY_METERS
+        accuracy !== null &&
+        accuracy > MAX_ACCEPTABLE_ACCURACY_METERS &&
+        lastAcceptedPosition
       ) {
+        setGeoPosition(lastAcceptedPosition);
+        setIsLowAccuracy(true);
         setErrorMessage(
-          `Ubicación aproximada (${nextPosition.accuracy.toFixed(
+          `Precisión baja (${accuracy.toFixed(
             1
-          )} m). Esperando una lectura más precisa.`
+          )} m). Mostrando la última ubicación válida.`
         );
+
+        const mapPosition = mapGeoToCampusCoordinates(
+          lastAcceptedPosition.latitude,
+          lastAcceptedPosition.longitude
+        );
+
+        setMapPosition(mapPosition);
+        return;
       }
+
+      if (accuracy !== null && accuracy > MAX_ACCEPTABLE_ACCURACY_METERS) {
+        setGeoPosition(receivedPosition);
+        setIsLowAccuracy(true);
+        setErrorMessage(
+          `Ubicación aproximada (${accuracy.toFixed(
+            1
+          )} m). En laptop puede variar porque el navegador no siempre usa GPS real.`
+        );
+
+        const approximateMapPosition = mapGeoToCampusCoordinates(
+          latitude,
+          longitude
+        );
+
+        setMapPosition(approximateMapPosition);
+        return;
+      }
+
+      if (lastAcceptedPosition) {
+        const distance = distanceInMeters(
+          lastAcceptedPosition.latitude,
+          lastAcceptedPosition.longitude,
+          latitude,
+          longitude
+        );
+
+        if (distance < MIN_MOVEMENT_METERS) {
+          return;
+        }
+      }
+
+      lastAcceptedPosition = receivedPosition;
+
+      setIsLowAccuracy(false);
+      setErrorMessage(null);
+      setGeoPosition(receivedPosition);
+
+      const mapPosition = mapGeoToCampusCoordinates(latitude, longitude);
+      setMapPosition(mapPosition);
     },
     (error) => {
       if (error.code === error.PERMISSION_DENIED) {
@@ -207,8 +211,8 @@ export function startUserLocationTracking(): void {
     },
     {
       enableHighAccuracy: true,
-      maximumAge: 0,
-      timeout: 15000,
+      maximumAge: 2000,
+      timeout: 10000,
     }
   );
 
@@ -216,7 +220,8 @@ export function startUserLocationTracking(): void {
 }
 
 export function stopUserLocationTracking(): void {
-  const { watchId, setWatchId } = useLocationStore.getState();
+  const { watchId, setWatchId, setIsLowAccuracy } =
+    useLocationStore.getState();
 
   if (watchId !== null && "geolocation" in navigator) {
     navigator.geolocation.clearWatch(watchId);
@@ -224,5 +229,5 @@ export function stopUserLocationTracking(): void {
   }
 
   lastAcceptedPosition = null;
-  bestPendingPosition = null;
+  setIsLowAccuracy(false);
 }

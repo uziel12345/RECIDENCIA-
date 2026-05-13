@@ -1,35 +1,64 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { WelcomePage } from "../features/welcome/WelcomePage";
-import { LoginPage } from "../features/auth/LoginPage";
 import { OnboardingPage } from "../features/onboarding/OnboardingPage";
-import { StudentPage } from "../features/student/StudentPage";
-import { VisitorPage } from "../features/visitor/VisitorPage";
-import { StaffDashboard } from "../features/staff/StaffDashboard";
-import { AdminDashboard } from "../features/admin/AdminDashboard";
 import { AdminLoginPage } from "../features/admin/pages/AdminLoginPage";
-import { AdminBuildingsPage } from "../features/admin/pages/AdminBuildingsPage";
 import { useAuthStore } from "../store/auth-store";
 import { useAdminAuthStore } from "../store/admin-auth-store";
 import { ROUTES } from "../types/routes";
 
-function ProtectedRoute({
-  children,
-  allowedRoles,
-}: {
-  children: React.ReactNode;
-  allowedRoles: string[];
-}) {
-  const { user, isAuthenticated } = useAuthStore();
+const StudentPage = lazy(async () => {
+  const { StudentPage } = await import("../features/student/StudentPage");
+  return { default: StudentPage };
+});
 
-  if (!isAuthenticated || !user) {
-    return <Navigate to={ROUTES.WELCOME} replace />;
-  }
+const VisitorPage = lazy(async () => {
+  const { VisitorPage } = await import("../features/visitor/VisitorPage");
+  return { default: VisitorPage };
+});
 
-  if (!allowedRoles.includes(user.role)) {
-    return <Navigate to={ROUTES.WELCOME} replace />;
-  }
+const AdminBuildingsPage = lazy(async () => {
+  const { AdminBuildingsPage } = await import("../features/admin/pages/AdminBuildingsPage");
+  return { default: AdminBuildingsPage };
+});
 
-  return <>{children}</>;
+function MapLoadingFallback() {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        display: "grid",
+        placeItems: "center",
+        background: "linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #1e3a8a 100%)",
+      }}
+    >
+      <div style={{ textAlign: "center" }}>
+        <div
+          className="animate-spin"
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: "50%",
+            border: "3px solid rgba(255,255,255,0.12)",
+            borderTopColor: "#3b82f6",
+            margin: "0 auto 20px",
+          }}
+        />
+        <p
+          style={{
+            margin: 0,
+            fontSize: 14,
+            fontWeight: 600,
+            color: "#94a3b8",
+            letterSpacing: "0.02em",
+          }}
+        >
+          Cargando mapa 3D…
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function AdminProtectedRoute({
@@ -37,10 +66,19 @@ function AdminProtectedRoute({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated } = useAdminAuthStore();
+  const { isAuthenticated, loadSession, user } = useAdminAuthStore();
+  // Token in storage but user not yet hydrated from backend (direct nav / page reload)
+  const [verifying, setVerifying] = useState(isAuthenticated && !user);
+
+  useEffect(() => {
+    if (!verifying) return;
+    void loadSession().finally(() => setVerifying(false));
+  }, [verifying, loadSession]);
+
+  if (verifying) return null;
 
   if (!isAuthenticated) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to={ROUTES.ADMIN_LOGIN} replace />;
   }
 
   return <>{children}</>;
@@ -68,16 +106,18 @@ export default function App() {
       <Routes>
         {/* Public Routes */}
         <Route path={ROUTES.WELCOME} element={<WelcomePage />} />
-        <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+        <Route path="/welcome" element={<WelcomePage />} />
         <Route path={ROUTES.ONBOARDING} element={<OnboardingPage />} />
 
         {/* Real Admin Auth */}
-        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path={ROUTES.ADMIN_LOGIN} element={<AdminLoginPage />} />
         <Route
-          path="/admin/buildings"
+          path={ROUTES.ADMIN_BUILDINGS}
           element={
             <AdminProtectedRoute>
-              <AdminBuildingsPage />
+              <Suspense fallback={null}>
+                <AdminBuildingsPage />
+              </Suspense>
             </AdminProtectedRoute>
           }
         />
@@ -87,7 +127,9 @@ export default function App() {
           path={ROUTES.STUDENT}
           element={
             <PublicRoute requiresRole="student">
-              <StudentPage />
+              <Suspense fallback={<MapLoadingFallback />}>
+                <StudentPage />
+              </Suspense>
             </PublicRoute>
           }
         />
@@ -97,28 +139,10 @@ export default function App() {
           path={ROUTES.VISITOR}
           element={
             <PublicRoute requiresRole="visitor">
-              <VisitorPage />
+              <Suspense fallback={<MapLoadingFallback />}>
+                <VisitorPage />
+              </Suspense>
             </PublicRoute>
-          }
-        />
-
-        {/* Staff Dashboard */}
-        <Route
-          path={ROUTES.STAFF}
-          element={
-            <ProtectedRoute allowedRoles={["staff", "admin"]}>
-              <StaffDashboard />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Mock Admin Dashboard. Se conserva separado del admin real con JWT */}
-        <Route
-          path={ROUTES.ADMIN}
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminDashboard />
-            </ProtectedRoute>
           }
         />
 
@@ -144,10 +168,6 @@ function MapRedirect() {
       return <Navigate to={ROUTES.STUDENT} replace />;
     case "visitor":
       return <Navigate to={ROUTES.VISITOR} replace />;
-    case "staff":
-      return <Navigate to={ROUTES.STAFF} replace />;
-    case "admin":
-      return <Navigate to={ROUTES.ADMIN} replace />;
     default:
       return <Navigate to={ROUTES.WELCOME} replace />;
   }

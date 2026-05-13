@@ -5,10 +5,8 @@ import { RoutePanel } from "./RoutePanel";
 import { getBuildings } from "../../../services/buildings.service";
 import { BuildingSearch } from "./BuildingSearch";
 import { BuildingInfoCard } from "./BuildingInfoCard";
-import {
-  CategoryBadge,
-  getCategoryAccent,
-} from "../../../components/ui/CategoryBadge";
+import { CategoryBadge } from "../../../components/ui/CategoryBadge";
+import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
 import type { Building } from "../types/building";
 

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useBuildingStore } from "../../../store/building-store";
 import { useLocationStore } from "../../../store/location-store";
-import { getCategoryAccent } from "../../../components/ui/CategoryBadge";
+import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
 import type { Building } from "../types/building";
 
@@ -13,9 +13,11 @@ type BuildingQuickCardProps = {
 function resolveImageUrl(url: string | null): string | null {
   if (!url) return null;
   if (url.startsWith("http://") || url.startsWith("https://")) return url;
+
   const apiBaseUrl =
     import.meta.env.VITE_API_URL || "http://localhost:3001/api";
   const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, "");
+
   return `${apiOrigin}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
@@ -45,21 +47,31 @@ export function BuildingQuickCard({
       role="dialog"
       aria-label={`Acciones rápidas para ${building.name}`}
     >
-      <div className="ito-quick-card__rail" style={{ background: accentColor }} />
+      <div
+        className="ito-quick-card__rail"
+        style={{ background: accentColor }}
+      />
 
       <div className="ito-quick-card__main">
         {coverUrl && (
-          <div style={{
-            width: "100%",
-            height: 64,
-            borderRadius: 10,
-            overflow: "hidden",
-            marginBottom: 8,
-          }}>
+          <div
+            style={{
+              width: "100%",
+              height: 64,
+              borderRadius: 10,
+              overflow: "hidden",
+              marginBottom: 8,
+            }}
+          >
             <img
               src={coverUrl}
               alt=""
-              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
             />
           </div>
         )}
@@ -113,6 +125,7 @@ export function BuildingQuickCard({
                 onOpenDetails();
                 return;
               }
+
               setRouteDestination(building);
             }}
             className="ito-quick-action ito-quick-action--primary"

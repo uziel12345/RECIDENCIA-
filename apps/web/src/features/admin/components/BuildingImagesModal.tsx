@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import {
   deleteBuildingImageApi,
@@ -79,11 +79,7 @@ export function BuildingImagesModal({
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    void loadImages();
-  }, [building.id]);
-
-  async function loadImages() {
+  const loadImages = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -100,7 +96,11 @@ export function BuildingImagesModal({
     } finally {
       setLoading(false);
     }
-  }
+  }, [building.id]);
+
+  useEffect(() => {
+    void loadImages();
+  }, [loadImages]);
 
   function updateFormField<K extends keyof ImageFormState>(
     key: K,
@@ -149,7 +149,7 @@ export function BuildingImagesModal({
     setError(null);
     setMessage(null);
 
-    const nextStatus = !Boolean(image.is_active);
+    const nextStatus = !image.is_active;
 
     try {
       await updateBuildingImageStatusApi(image.id, {
@@ -390,7 +390,7 @@ export function BuildingImagesModal({
                         {isImageActive ? "Activa" : "Inactiva"}
                       </span>
 
-                      {Boolean(image.is_cover) ? (
+                      {image.is_cover ? (
                         <span style={styles.coverBadge}>Portada</span>
                       ) : null}
                     </div>

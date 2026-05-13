@@ -6,10 +6,11 @@ import rateLimit from "express-rate-limit";
 import routes from "./routes/index.js";
 import { notFoundHandler } from "./shared/middlewares/not-found.js";
 import { errorHandler } from "./shared/middlewares/error-handler.js";
+import { env } from "./config/env.js";
 
 const app = express();
 
-const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173")
+const allowedOrigins = env.corsOrigin
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);

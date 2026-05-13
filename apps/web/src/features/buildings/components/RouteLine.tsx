@@ -46,7 +46,8 @@ type RouteRenderData = {
   destinationName: string;
 };
 
-const ROUTE_HEIGHT_OFFSET = 5;
+// Altura suficiente para que la línea quede visible sobre los techos de los edificios
+const ROUTE_HEIGHT_OFFSET = 22;
 
 function distance3D(a: Position3D, b: Position3D): number {
   const dx = a.x - b.x;
@@ -330,9 +331,19 @@ export function RouteLine() {
 
   if (!routeData) return null;
 
+  // Nodos intermedios (excluye inicio y fin que ya tienen su propia esfera)
+  const waypointPoints = routeData.routePoints.slice(1, -1);
+
   return (
     <>
       <Line points={routeData.routePoints} color="#22c55e" lineWidth={4} />
+
+      {waypointPoints.map((point, i) => (
+        <mesh key={i} position={point}>
+          <sphereGeometry args={[0.7, 12, 12]} />
+          <meshStandardMaterial color="#16a34a" />
+        </mesh>
+      ))}
 
       <mesh position={routeData.userStartPoint}>
         <sphereGeometry args={[1.2, 20, 20]} />

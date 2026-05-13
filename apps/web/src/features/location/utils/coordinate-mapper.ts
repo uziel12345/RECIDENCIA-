@@ -4,22 +4,12 @@ export type CampusPosition = {
   z: number;
 };
 
-/**
- * Punto de referencia GPS base.
- * Se usa para convertir latitud/longitud a metros locales.
- */
 const REF_LAT = 17.07761201319465;
 const REF_LNG = -96.74416660753468;
 
-/**
- * Conversión aproximada grados → metros para Oaxaca.
- */
 const METERS_PER_LAT = 111320;
 const METERS_PER_LNG = 106411.66838807071;
 
-/**
- * Matriz calibrada para transformar metros locales a coordenadas del modelo 3D.
- */
 const A_X = 0.943977879;
 const B_X = 0.007413161;
 const C_X = 9.63565497;
@@ -28,11 +18,6 @@ const A_Z = 0.0204740651;
 const B_Z = -0.942769452;
 const C_Z = 27.2371311;
 
-/**
- * Offset calibrado del modelo.
- * Esta calibración era la que posicionaba correctamente el punto azul
- * cerca del Centro de Cómputo en web.
- */
 const OFFSET_X = 105.9078;
 const OFFSET_Z = 33.069;
 
@@ -45,14 +30,6 @@ export function mapGeoToCampusCoordinates(
 
   const x = A_X * eastMeters + B_X * northMeters + C_X + OFFSET_X;
   const z = A_Z * eastMeters + B_Z * northMeters + C_Z + OFFSET_Z;
-
-  console.log("====== GPS → MAPA 3D ======");
-  console.log("GPS:", latitude, longitude);
-  console.log("METERS:", {
-    eastMeters,
-    northMeters,
-  });
-  console.log("MAP:", x, z);
 
   return {
     x,

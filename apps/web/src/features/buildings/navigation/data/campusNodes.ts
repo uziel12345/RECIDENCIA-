@@ -463,7 +463,7 @@ export const campusNodes: CampusNode[] = [
     x: 20,
     y: 0,
     z: -122,
-    neighbors: ["n-acceso-centro-computo", "n-acceso-cubiculos-doctorado", "n-pasillo-electronica-1", "n-pasillo-quimica-bio-1"],
+    neighbors: ["n-acceso-centro-computo", "n-acceso-cubiculos-doctorado", "n-pasillo-electronica-1", "n-pasillo-quimica-bio-1", "n-acceso-lab-civil"],
   },
   {
     id: "n-acceso-cubiculos-doctorado",

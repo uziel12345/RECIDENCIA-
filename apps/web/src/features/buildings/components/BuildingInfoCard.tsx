@@ -1,8 +1,6 @@
 import { useBuildingStore } from "../../../store/building-store";
-import {
-  CategoryBadge,
-  getCategoryAccent,
-} from "../../../components/ui/CategoryBadge";
+import { CategoryBadge } from "../../../components/ui/CategoryBadge";
+import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
 import type { Building } from "../types/building";
 

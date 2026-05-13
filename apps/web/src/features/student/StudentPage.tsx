@@ -27,21 +27,7 @@ import {
   CampusServicesPanel,
   type CampusService,
 } from "../shared/components/CampusServicesPanel";
-
-function useIsMobile(breakpoint = 768) {
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== "undefined" ? window.innerWidth < breakpoint : false
-  );
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < breakpoint);
-    window.addEventListener("resize", handleResize);
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, [breakpoint]);
-
-  return isMobile;
-}
+import { useIsMobile } from "../../hooks/useIsMobile";
 
 type ViewMode = "map" | "schedule" | "services";
 
@@ -57,7 +43,9 @@ export function StudentPage() {
   );
   const setSearchTerm = useBuildingStore((state) => state.setSearchTerm);
 
-  const [sheetState, setSheetState] = useState<SheetState>("closed");
+  const [requestedSheetState, setSheetState] = useState<SheetState>("closed");
+  const sheetState: SheetState =
+    isMobile && !!routeDestination ? "closed" : requestedSheetState;
   const [totalBuildings, setTotalBuildings] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("map");
   const [showSchedule, setShowSchedule] = useState(false);
@@ -70,14 +58,6 @@ export function StudentPage() {
       );
     });
   }, []);
-
-  useEffect(() => {
-    if (!isMobile) return;
-
-    if (routeDestination) {
-      setSheetState("closed");
-    }
-  }, [isMobile, routeDestination]);
 
   const handleLogout = () => {
     logout();

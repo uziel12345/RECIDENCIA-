@@ -32,14 +32,6 @@ export function errorHandler(
     });
   }
 
-  if (error && typeof error === "object" && "code" in error && (error as { code?: string }).code === "LIMIT_FILE_SIZE") {
-    return res.status(413).json({
-      success: false,
-      message: "El archivo excede el tamaño máximo permitido (2 MB)",
-      code: "FILE_TOO_LARGE",
-    });
-  }
-
   console.error("Error no controlado:", error);
 
   const isDev = process.env.NODE_ENV !== "production";
