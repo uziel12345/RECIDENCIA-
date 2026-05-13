@@ -1,8 +1,8 @@
 import { useLocationStore } from "../../../store/location-store";
 import { mapGeoToCampusCoordinates } from "../utils/coordinate-mapper";
 
-const MAX_ACCEPTABLE_ACCURACY_METERS = 60;
-const MIN_MOVEMENT_METERS = 3;
+const MAX_ACCEPTABLE_ACCURACY_METERS = 35;
+const MIN_MOVEMENT_METERS = 2;
 
 type GeoLikePosition = {
   latitude: number;
@@ -28,26 +28,109 @@ function distanceInMeters(
   const dLon = toRadians(lon2 - lon1);
 
   const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.sin(dLat / 2) ** 2 +
     Math.cos(toRadians(lat1)) *
       Math.cos(toRadians(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+      Math.sin(dLon / 2) ** 2;
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return earthRadius * c;
 }
 
+function handleAcceptedPosition(position: GeolocationPosition): void {
+  const { setPermission, setGeoPosition, setMapPosition, setErrorMessage } =
+    useLocationStore.getState();
+
+  const latitude = position.coords.latitude;
+  const longitude = position.coords.longitude;
+  const accuracy = position.coords.accuracy ?? null;
+
+  console.log("Precisión GPS:", accuracy, "metros");
+
+  setPermission("granted");
+
+  if (accuracy !== null && accuracy > MAX_ACCEPTABLE_ACCURACY_METERS) {
+    if (lastAcceptedPosition) {
+      setGeoPosition(lastAcceptedPosition);
+      setMapPosition(
+        mapGeoToCampusCoordinates(
+          lastAcceptedPosition.latitude,
+          lastAcceptedPosition.longitude
+        )
+      );
+
+      setErrorMessage(
+        `Precisión baja (${accuracy.toFixed(
+          1
+        )} m). Mostrando la última ubicación válida.`
+      );
+      return;
+    }
+
+    setErrorMessage(
+      `Precisión baja (${accuracy.toFixed(
+        1
+      )} m). No se moverá el marcador hasta obtener una ubicación más precisa.`
+    );
+    return;
+  }
+
+  if (lastAcceptedPosition) {
+    const distance = distanceInMeters(
+      lastAcceptedPosition.latitude,
+      lastAcceptedPosition.longitude,
+      latitude,
+      longitude
+    );
+
+    if (distance < MIN_MOVEMENT_METERS) {
+      return;
+    }
+  }
+
+  const acceptedPosition: GeoLikePosition = {
+    latitude,
+    longitude,
+    accuracy,
+  };
+
+  lastAcceptedPosition = acceptedPosition;
+
+  setErrorMessage(null);
+  setGeoPosition(acceptedPosition);
+  setMapPosition(mapGeoToCampusCoordinates(latitude, longitude));
+}
+
+function handleLocationError(error: GeolocationPositionError): void {
+  const { setPermission, setErrorMessage } = useLocationStore.getState();
+
+  if (error.code === error.PERMISSION_DENIED) {
+    setPermission("denied");
+    setErrorMessage("Permiso de ubicación denegado.");
+    return;
+  }
+
+  if (error.code === error.POSITION_UNAVAILABLE) {
+    setErrorMessage(
+      "No se pudo obtener la ubicación. Activa el GPS y revisa los permisos del navegador."
+    );
+    return;
+  }
+
+  if (error.code === error.TIMEOUT) {
+    setErrorMessage(
+      "La ubicación tardó demasiado. Intenta de nuevo en un lugar abierto."
+    );
+    return;
+  }
+
+  setErrorMessage("No se pudo obtener la ubicación.");
+}
+
 export function startUserLocationTracking(): void {
-  const {
-    setPermission,
-    setGeoPosition,
-    setMapPosition,
-    setErrorMessage,
-    setWatchId,
-    watchId,
-  } = useLocationStore.getState();
+  const { setPermission, setErrorMessage, setWatchId, watchId } =
+    useLocationStore.getState();
 
   if (!("geolocation" in navigator)) {
     setPermission("unsupported");
@@ -55,79 +138,36 @@ export function startUserLocationTracking(): void {
     return;
   }
 
+  if (!window.isSecureContext) {
+    setErrorMessage(
+      "La ubicación en celular requiere HTTPS. Abre la app desde el enlace HTTPS de ngrok."
+    );
+    return;
+  }
+
   if (watchId !== null) {
     return;
   }
 
-  const newWatchId = navigator.geolocation.watchPosition(
-    (position) => {
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-      const accuracy = position.coords.accuracy ?? null;
+  setErrorMessage("Solicitando ubicación...");
 
-      setPermission("granted");
-
-      if (
-        accuracy !== null &&
-        accuracy > MAX_ACCEPTABLE_ACCURACY_METERS &&
-        lastAcceptedPosition
-      ) {
-        setGeoPosition(lastAcceptedPosition);
-        setErrorMessage(
-          `Precisión baja (${accuracy.toFixed(
-            1
-          )} m). Mostrando la última ubicación válida.`
-        );
-
-        const mapPosition = mapGeoToCampusCoordinates(
-          lastAcceptedPosition.latitude,
-          lastAcceptedPosition.longitude
-        );
-
-        setMapPosition(mapPosition);
-        return;
-      }
-
-      if (lastAcceptedPosition) {
-        const distance = distanceInMeters(
-          lastAcceptedPosition.latitude,
-          lastAcceptedPosition.longitude,
-          latitude,
-          longitude
-        );
-
-        if (distance < MIN_MOVEMENT_METERS) {
-          return;
-        }
-      }
-
-      const acceptedPosition: GeoLikePosition = {
-        latitude,
-        longitude,
-        accuracy,
-      };
-
-      lastAcceptedPosition = acceptedPosition;
-
-      setErrorMessage(null);
-      setGeoPosition(acceptedPosition);
-
-      const mapPosition = mapGeoToCampusCoordinates(latitude, longitude);
-      setMapPosition(mapPosition);
-    },
-    (error) => {
-      if (error.code === error.PERMISSION_DENIED) {
-        setPermission("denied");
-        setErrorMessage("El usuario negó el permiso de ubicación.");
-        return;
-      }
-
-      setErrorMessage(error.message || "No se pudo obtener la ubicación.");
-    },
+  navigator.geolocation.getCurrentPosition(
+    handleAcceptedPosition,
+    handleLocationError,
     {
       enableHighAccuracy: true,
-      maximumAge: 2000,
-      timeout: 10000,
+      maximumAge: 0,
+      timeout: 20000,
+    }
+  );
+
+  const newWatchId = navigator.geolocation.watchPosition(
+    handleAcceptedPosition,
+    handleLocationError,
+    {
+      enableHighAccuracy: true,
+      maximumAge: 1000,
+      timeout: 20000,
     }
   );
 
@@ -135,10 +175,11 @@ export function startUserLocationTracking(): void {
 }
 
 export function stopUserLocationTracking(): void {
-  const { watchId, setWatchId } = useLocationStore.getState();
+  const { watchId, setWatchId, setErrorMessage } = useLocationStore.getState();
 
   if (watchId !== null && "geolocation" in navigator) {
     navigator.geolocation.clearWatch(watchId);
     setWatchId(null);
+    setErrorMessage(null);
   }
 }
