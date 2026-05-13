@@ -15,9 +15,27 @@ type MobileQuickActionsProps = {
   actions: Action[];
 };
 
+function getButtonClassName(action: Action) {
+  const classes = ["ito-mobile-bar__btn"];
+
+  if (action.primary) {
+    classes.push("ito-mobile-bar__btn--primary");
+  }
+
+  if (action.active) {
+    classes.push("is-active");
+  }
+
+  if (action.disabled) {
+    classes.push("is-disabled");
+  }
+
+  return classes.join(" ");
+}
+
 export function MobileQuickActions({ actions }: MobileQuickActionsProps) {
   return (
-    <nav className="ito-mobile-bar" aria-label="Acciones rápidas">
+    <nav className="ito-mobile-bar" aria-label="Navegación rápida móvil">
       <div className="ito-mobile-bar__inner">
         {actions.map((action) => (
           <button
@@ -25,18 +43,18 @@ export function MobileQuickActions({ actions }: MobileQuickActionsProps) {
             type="button"
             onClick={action.onClick}
             disabled={action.disabled}
-            className={`ito-mobile-bar__btn${
-              action.primary ? " ito-mobile-bar__btn--primary" : ""
-            }${action.active ? " is-active" : ""}`}
+            className={getButtonClassName(action)}
             aria-pressed={action.active}
             aria-label={action.label}
           >
             <span className="ito-mobile-bar__btn-icon" aria-hidden="true">
-              <Icon name={action.icon} size={action.primary ? 20 : 18} />
+              <Icon name={action.icon} size={action.primary ? 22 : 19} />
+
               {action.badge !== undefined && action.badge !== null && (
                 <span className="ito-mobile-bar__badge">{action.badge}</span>
               )}
             </span>
+
             <span className="ito-mobile-bar__btn-label">{action.label}</span>
           </button>
         ))}

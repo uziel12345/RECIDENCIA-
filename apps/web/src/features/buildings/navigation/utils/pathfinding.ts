@@ -24,6 +24,54 @@ export type WeightedPathEdge = {
 
 type Graph = Map<string, Array<{ to: string; weight: number }>>;
 
+// Binary min-heap para priority queue O(log n)
+class BinaryMinHeap {
+  private heap: { f: number; id: string }[] = [];
+
+  push(f: number, id: string): void {
+    this.heap.push({ f, id });
+    this.bubbleUp(this.heap.length - 1);
+  }
+
+  pop(): { f: number; id: string } | null {
+    if (this.heap.length === 0) return null;
+    const top = this.heap[0];
+    const last = this.heap.pop()!;
+    if (this.heap.length > 0) {
+      this.heap[0] = last;
+      this.sinkDown(0);
+    }
+    return top;
+  }
+
+  get size(): number {
+    return this.heap.length;
+  }
+
+  private bubbleUp(i: number): void {
+    while (i > 0) {
+      const parent = (i - 1) >> 1;
+      if (this.heap[parent].f <= this.heap[i].f) break;
+      [this.heap[parent], this.heap[i]] = [this.heap[i], this.heap[parent]];
+      i = parent;
+    }
+  }
+
+  private sinkDown(i: number): void {
+    const n = this.heap.length;
+    while (true) {
+      let min = i;
+      const l = 2 * i + 1;
+      const r = 2 * i + 2;
+      if (l < n && this.heap[l].f < this.heap[min].f) min = l;
+      if (r < n && this.heap[r].f < this.heap[min].f) min = r;
+      if (min === i) break;
+      [this.heap[min], this.heap[i]] = [this.heap[i], this.heap[min]];
+      i = min;
+    }
+  }
+}
+
 function getNodePosition(node: PathNode): NodePosition | null {
   if (typeof node.x === "number" && typeof node.z === "number") {
     return {
@@ -52,9 +100,7 @@ function distanceBetweenNodes(a: PathNode, b: PathNode): number {
   const posA = getNodePosition(a);
   const posB = getNodePosition(b);
 
-  if (!posA || !posB) {
-    return Infinity;
-  }
+  if (!posA || !posB) return Infinity;
 
   const dx = posA.x - posB.x;
   const dy = (posA.y ?? 0) - (posB.y ?? 0);
@@ -90,73 +136,118 @@ function reconstructPath(
   return path;
 }
 
-function runDijkstra(
+// A* con heurística euclidiana — O((V+E) log V), encuentra la ruta más corta dirigiéndose al destino
+function runAStar(
   startNodeId: string,
   endNodeId: string,
   graph: Graph,
-  nodeIds: Iterable<string>
+  nodeMap: Map<string, PathNode>
 ): string[] {
-  if (!startNodeId || !endNodeId) {
-    return [];
-  }
+  if (!startNodeId || !endNodeId) return [];
+  if (startNodeId === endNodeId) return [startNodeId];
 
-  if (startNodeId === endNodeId) {
-    return [startNodeId];
-  }
-
-  const distances = new Map<string, number>();
-  const previous = new Map<string, string | null>();
-  const unvisited = new Set<string>();
-
-  for (const nodeId of nodeIds) {
-    distances.set(nodeId, Infinity);
-    previous.set(nodeId, null);
-    unvisited.add(nodeId);
-  }
-
-  if (!unvisited.has(startNodeId) || !unvisited.has(endNodeId)) {
+  if (!nodeMap.has(startNodeId) || !nodeMap.has(endNodeId)) {
     console.warn("Nodo inicial o final no existe en el grafo.");
     return [];
   }
 
-  distances.set(startNodeId, 0);
+  const endNode = nodeMap.get(endNodeId)!;
+  const endPos = getNodePosition(endNode);
 
-  while (unvisited.size > 0) {
-    let currentNodeId: string | null = null;
-    let currentMinDistance = Infinity;
+  function heuristic(nodeId: string): number {
+    if (!endPos) return 0;
+    const node = nodeMap.get(nodeId);
+    if (!node) return 0;
+    const pos = getNodePosition(node);
+    if (!pos) return 0;
+    const dx = pos.x - endPos.x;
+    const dz = pos.z - endPos.z;
+    return Math.sqrt(dx * dx + dz * dz);
+  }
 
-    for (const nodeId of unvisited) {
-      const distance = distances.get(nodeId) ?? Infinity;
+  const gScore = new Map<string, number>();
+  const previous = new Map<string, string | null>();
+  const closed = new Set<string>();
+  const open = new BinaryMinHeap();
 
-      if (distance < currentMinDistance) {
-        currentMinDistance = distance;
-        currentNodeId = nodeId;
-      }
-    }
+  gScore.set(startNodeId, 0);
+  previous.set(startNodeId, null);
+  open.push(heuristic(startNodeId), startNodeId);
 
-    if (currentNodeId === null || currentMinDistance === Infinity) {
-      break;
-    }
+  while (open.size > 0) {
+    const current = open.pop()!;
+    const currentId = current.id;
 
-    if (currentNodeId === endNodeId) {
+    if (currentId === endNodeId) {
       return reconstructPath(previous, endNodeId);
     }
 
-    unvisited.delete(currentNodeId);
+    if (closed.has(currentId)) continue;
+    closed.add(currentId);
 
-    const neighbors = graph.get(currentNodeId) ?? [];
+    const currentG = gScore.get(currentId) ?? Infinity;
+    const neighbors = graph.get(currentId) ?? [];
 
-    for (const neighbor of neighbors) {
-      if (!unvisited.has(neighbor.to)) {
-        continue;
+    for (const { to, weight } of neighbors) {
+      if (closed.has(to)) continue;
+      const tentativeG = currentG + weight;
+      if (tentativeG < (gScore.get(to) ?? Infinity)) {
+        gScore.set(to, tentativeG);
+        previous.set(to, currentId);
+        open.push(tentativeG + heuristic(to), to);
       }
+    }
+  }
 
-      const tentativeDistance =
-        (distances.get(currentNodeId) ?? Infinity) + neighbor.weight;
+  console.warn("No se encontró una ruta entre los nodos indicados.");
+  return [];
+}
 
-      if (tentativeDistance < (distances.get(neighbor.to) ?? Infinity)) {
-        distances.set(neighbor.to, tentativeDistance);
-        previous.set(neighbor.to, currentNodeId);
+// Dijkstra con MinHeap para grafos que no tienen coordenadas (solo aristas con pesos)
+function runDijkstraWithHeap(
+  startNodeId: string,
+  endNodeId: string,
+  graph: Graph,
+  nodeIds: Set<string>
+): string[] {
+  if (!startNodeId || !endNodeId) return [];
+  if (startNodeId === endNodeId) return [startNodeId];
+
+  if (!nodeIds.has(startNodeId) || !nodeIds.has(endNodeId)) {
+    console.warn("Nodo inicial o final no existe en el grafo.");
+    return [];
+  }
+
+  const distances = new Map<string, number>();
+  const previous = new Map<string, string | null>();
+  const closed = new Set<string>();
+  const open = new BinaryMinHeap();
+
+  distances.set(startNodeId, 0);
+  previous.set(startNodeId, null);
+  open.push(0, startNodeId);
+
+  while (open.size > 0) {
+    const current = open.pop()!;
+    const currentId = current.id;
+
+    if (currentId === endNodeId) {
+      return reconstructPath(previous, endNodeId);
+    }
+
+    if (closed.has(currentId)) continue;
+    closed.add(currentId);
+
+    const currentDist = distances.get(currentId) ?? Infinity;
+    const neighbors = graph.get(currentId) ?? [];
+
+    for (const { to, weight } of neighbors) {
+      if (closed.has(to)) continue;
+      const tentative = currentDist + weight;
+      if (tentative < (distances.get(to) ?? Infinity)) {
+        distances.set(to, tentative);
+        previous.set(to, currentId);
+        open.push(tentative, to);
       }
     }
   }
@@ -167,44 +258,30 @@ function runDijkstra(
 
 function buildGraphFromNodes(nodes: PathNode[]): {
   graph: Graph;
-  nodeIds: Set<string>;
+  nodeMap: Map<string, PathNode>;
 } {
   const nodeMap = buildNodeMap(nodes);
   const graph: Graph = new Map();
-  const nodeIds = new Set<string>();
 
   for (const node of nodes) {
-    nodeIds.add(node.id);
-
-    if (!Array.isArray(node.neighbors)) {
-      continue;
-    }
+    if (!Array.isArray(node.neighbors)) continue;
 
     const adjacencyList = graph.get(node.id) ?? [];
 
     for (const neighborId of node.neighbors) {
       const neighborNode = nodeMap.get(neighborId);
-
-      if (!neighborNode) {
-        continue;
-      }
+      if (!neighborNode) continue;
 
       const weight = distanceBetweenNodes(node, neighborNode);
+      if (!Number.isFinite(weight)) continue;
 
-      if (!Number.isFinite(weight)) {
-        continue;
-      }
-
-      adjacencyList.push({
-        to: neighborId,
-        weight,
-      });
+      adjacencyList.push({ to: neighborId, weight });
     }
 
     graph.set(node.id, adjacencyList);
   }
 
-  return { graph, nodeIds };
+  return { graph, nodeMap };
 }
 
 function buildGraphFromEdges(edges: WeightedPathEdge[]): {
@@ -228,18 +305,12 @@ function buildGraphFromEdges(edges: WeightedPathEdge[]): {
     nodeIds.add(edge.to);
 
     const fromList = graph.get(edge.from) ?? [];
-    fromList.push({
-      to: edge.to,
-      weight: edge.weight,
-    });
+    fromList.push({ to: edge.to, weight: edge.weight });
     graph.set(edge.from, fromList);
 
     if (edge.bidirectional) {
       const toList = graph.get(edge.to) ?? [];
-      toList.push({
-        to: edge.from,
-        weight: edge.weight,
-      });
+      toList.push({ to: edge.from, weight: edge.weight });
       graph.set(edge.to, toList);
     }
   }
@@ -252,8 +323,8 @@ export function findPathFromNodes(
   endNodeId: string,
   nodes: PathNode[]
 ): string[] {
-  const { graph, nodeIds } = buildGraphFromNodes(nodes);
-  return runDijkstra(startNodeId, endNodeId, graph, nodeIds);
+  const { graph, nodeMap } = buildGraphFromNodes(nodes);
+  return runAStar(startNodeId, endNodeId, graph, nodeMap);
 }
 
 export function findPathFromEdges(
@@ -262,7 +333,7 @@ export function findPathFromEdges(
   edges: WeightedPathEdge[]
 ): string[] {
   const { graph, nodeIds } = buildGraphFromEdges(edges);
-  return runDijkstra(startNodeId, endNodeId, graph, nodeIds);
+  return runDijkstraWithHeap(startNodeId, endNodeId, graph, nodeIds);
 }
 
 export default function findPath(

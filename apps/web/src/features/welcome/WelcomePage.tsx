@@ -1,17 +1,17 @@
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/auth-store";
 import { ROUTES } from "../../types/routes";
-import { MapIcon, GraduationCapIcon, UsersIcon, BuildingIcon, ShieldIcon } from "../shared/Icons";
+import { MapIcon, GraduationCapIcon, UsersIcon, BuildingIcon } from "../shared/Icons";
 
 interface RoleCard {
-  id: "student" | "visitor" | "staff" | "admin";
+  id: "student" | "visitor" | "admin-access";
   title: string;
   description: string;
   icon: React.ReactNode;
   color: string;
   bgColor: string;
   borderColor: string;
-  requiresLogin: boolean;
+  action: "select-role" | "admin-login";
 }
 
 const roleCards: RoleCard[] = [
@@ -23,7 +23,7 @@ const roleCards: RoleCard[] = [
     color: "var(--color-brand-700)",
     bgColor: "var(--color-brand-50)",
     borderColor: "var(--color-brand-100)",
-    requiresLogin: false,
+    action: "select-role",
   },
   {
     id: "visitor",
@@ -33,27 +33,17 @@ const roleCards: RoleCard[] = [
     color: "#059669",
     bgColor: "#ecfdf5",
     borderColor: "#a7f3d0",
-    requiresLogin: false,
+    action: "select-role",
   },
   {
-    id: "staff",
-    title: "Personal",
-    description: "Gestiona edificios y puntos de navegacion del campus",
+    id: "admin-access",
+    title: "Personal del ITO",
+    description: "Acceso institucional para administrar edificios del campus",
     icon: <BuildingIcon size={28} />,
     color: "#d97706",
     bgColor: "#fffbeb",
     borderColor: "#fde68a",
-    requiresLogin: true,
-  },
-  {
-    id: "admin",
-    title: "Administrador",
-    description: "Control total: usuarios, edificios y configuracion",
-    icon: <ShieldIcon size={28} />,
-    color: "#dc2626",
-    bgColor: "#fef2f2",
-    borderColor: "#fecaca",
-    requiresLogin: true,
+    action: "admin-login",
   },
 ];
 
@@ -62,15 +52,20 @@ export function WelcomePage() {
   const { selectRole, hasCompletedOnboarding } = useAuthStore();
 
   const handleRoleSelect = (card: RoleCard) => {
-    if (card.requiresLogin) {
-      navigate(`${ROUTES.LOGIN}?role=${card.id}`);
+    if (card.action === "admin-login") {
+      navigate(ROUTES.ADMIN_LOGIN);
+      return;
+    }
+
+    if (card.id !== "student" && card.id !== "visitor") {
+      return;
+    }
+
+    selectRole(card.id);
+    if (!hasCompletedOnboarding) {
+      navigate(ROUTES.ONBOARDING);
     } else {
-      selectRole(card.id);
-      if (!hasCompletedOnboarding) {
-        navigate(ROUTES.ONBOARDING);
-      } else {
-        navigate(card.id === "student" ? ROUTES.STUDENT : ROUTES.VISITOR);
-      }
+      navigate(card.id === "student" ? ROUTES.STUDENT : ROUTES.VISITOR);
     }
   };
 
@@ -114,7 +109,7 @@ export function WelcomePage() {
                   <h3 className="role-card__title">{card.title}</h3>
                   <p className="role-card__description">{card.description}</p>
                 </div>
-                {card.requiresLogin && (
+                {card.action === "admin-login" && (
                   <span className="role-card__badge">Requiere acceso</span>
                 )}
                 <div className="role-card__arrow">

@@ -9,15 +9,14 @@ export interface RouteConfig {
 export const ROUTES = {
   WELCOME: "/",
   ONBOARDING: "/onboarding",
-  LOGIN: "/login",
   
   // Public map views
   STUDENT: "/student",
   VISITOR: "/visitor",
   
-  // Admin views
-  STAFF: "/staff",
-  ADMIN: "/admin",
+  // Real admin views
+  ADMIN_LOGIN: "/admin/login",
+  ADMIN_BUILDINGS: "/admin/buildings",
   
   // Map is the main campus view
   MAP: "/map",

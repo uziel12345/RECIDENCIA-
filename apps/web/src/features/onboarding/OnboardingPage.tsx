@@ -19,16 +19,6 @@ export function OnboardingPage() {
       return;
     }
 
-    if (user?.role === "staff") {
-      navigate(ROUTES.STAFF);
-      return;
-    }
-
-    if (user?.role === "admin") {
-      navigate(ROUTES.ADMIN);
-      return;
-    }
-
     navigate(ROUTES.WELCOME);
   };
 

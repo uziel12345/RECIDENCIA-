@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
+import { ROUTES } from "../../../types/routes";
 
 export function AdminLoginPage() {
   const { login, loadSession, loading, error, isAuthenticated, clearError } =
     useAdminAuthStore();
+  const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -13,16 +16,16 @@ export function AdminLoginPage() {
     clearError();
 
     if (isAuthenticated) {
-      window.location.href = "/admin/buildings";
+      void navigate(ROUTES.ADMIN_BUILDINGS, { replace: true });
       return;
     }
 
     void loadSession().then((validSession) => {
       if (validSession) {
-        window.location.href = "/admin/buildings";
+        void navigate(ROUTES.ADMIN_BUILDINGS, { replace: true });
       }
     });
-  }, [clearError, isAuthenticated, loadSession]);
+  }, [clearError, isAuthenticated, loadSession, navigate]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -30,7 +33,7 @@ export function AdminLoginPage() {
     const success = await login(username.trim(), password);
 
     if (success) {
-      window.location.href = "/admin/buildings";
+      void navigate(ROUTES.ADMIN_BUILDINGS, { replace: true });
     }
   };
 

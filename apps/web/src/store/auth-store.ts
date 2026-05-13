@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type UserRole = "student" | "visitor" | "staff" | "admin";
+export type UserRole = "student" | "visitor";
 
 export interface User {
   id: string;
@@ -19,7 +19,6 @@ interface AuthState {
   
   // Actions
   setUser: (user: User | null) => void;
-  login: (email: string, password: string, role: UserRole) => Promise<boolean>;
   logout: () => void;
   selectRole: (role: UserRole, userData?: Partial<User>) => void;
   completeOnboarding: () => void;
@@ -38,34 +37,6 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: !!user,
         }),
 
-      login: async (email: string, password: string, role: UserRole) => {
-        // Simulated login - in production this would call the API
-        // For staff/admin roles, we require authentication
-        if (role === "staff" || role === "admin") {
-          // Mock authentication check
-          if (password.length < 4) {
-            return false;
-          }
-          
-          const user: User = {
-            id: crypto.randomUUID(),
-            name: email.split("@")[0],
-            email,
-            role,
-            department: role === "admin" ? "Administracion" : "Personal",
-          };
-          
-          set({
-            user,
-            isAuthenticated: true,
-          });
-          
-          return true;
-        }
-        
-        return false;
-      },
-
       logout: () =>
         set({
           user: null,
@@ -73,7 +44,6 @@ export const useAuthStore = create<AuthState>()(
         }),
 
       selectRole: (role: UserRole, userData?: Partial<User>) => {
-        // For public roles (student/visitor), create a session without full auth
         const user: User = {
           id: crypto.randomUUID(),
           name: userData?.name || (role === "student" ? "Estudiante" : "Visitante"),
@@ -84,7 +54,7 @@ export const useAuthStore = create<AuthState>()(
 
         set({
           user,
-          isAuthenticated: role === "student" || role === "visitor",
+          isAuthenticated: true,
         });
       },
 
@@ -95,6 +65,17 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "ito-auth-storage",
+      version: 1,
+      migrate: (persisted, version) => {
+        if (version === 0) {
+          const old = persisted as { user?: { role?: string }; hasCompletedOnboarding?: boolean };
+          const role = old.user?.role;
+          if (role !== "student" && role !== "visitor") {
+            return { user: null, isAuthenticated: false, hasCompletedOnboarding: false };
+          }
+        }
+        return persisted as Pick<AuthState, "user" | "isAuthenticated" | "hasCompletedOnboarding">;
+      },
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,

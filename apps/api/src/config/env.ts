@@ -21,4 +21,5 @@ export const env = {
   dbName: requireEnv("DB_NAME"),
   jwtSecret: requireEnv("JWT_SECRET"),
   jwtExpiresIn: requireEnv("JWT_EXPIRES_IN"),
+  corsOrigin: process.env.CORS_ORIGIN ?? "http://localhost:5173",
 };

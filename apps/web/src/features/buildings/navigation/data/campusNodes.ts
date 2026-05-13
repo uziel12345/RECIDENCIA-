@@ -33,6 +33,7 @@ export const campusNodes: CampusNode[] = [
       "n-pasillo-centro-1",
       "n-pasillo-e-1",
       "n-pasillo-fisico-1",
+      "n-pasillo-audiovisual-lic",
     ],
   },
   {
@@ -54,27 +55,38 @@ export const campusNodes: CampusNode[] = [
     x: 2,
     y: 0,
     z: -112,
-    neighbors: ["n-pasillo-centro-2", "n-pasillo-h-1", "n-pasillo-postgrado-2", "n-pasillo-doctorado-1"],
+    neighbors: ["n-pasillo-centro-2", "n-pasillo-h-1", "n-cruce-sur-cc", "n-pasillo-doctorado-1"],
   },
   {
+    // Movido al borde oeste del campus (antes x=-10, muy al centro, cruzaba E/F)
     id: "n-pasillo-h-1",
-    x: -10,
+    x: -30,
     y: 0,
     z: -60,
-    neighbors: ["n-acceso-centro-computo", "n-pasillo-h-2"],
+    neighbors: ["n-acceso-centro-computo", "n-pasillo-h-1b"],
   },
   {
+    // Nodo intermedio nuevo: cubre el tramo largo h-1 → h-2 por el borde oeste
+    id: "n-pasillo-h-1b",
+    x: -30,
+    y: 0,
+    z: -25,
+    neighbors: ["n-pasillo-h-1", "n-pasillo-h-2"],
+  },
+  {
+    // Ajuste menor x: empuja el nodo más al borde oeste
     id: "n-pasillo-h-2",
-    x: -22,
+    x: -32,
     y: 0,
     z: 10,
-    neighbors: ["n-pasillo-h-1", "n-pasillo-h-3"],
+    neighbors: ["n-pasillo-h-1b", "n-pasillo-h-3"],
   },
   {
+    // Movido más al oeste (antes x=-34, posiblemente dentro del Edificio H)
     id: "n-pasillo-h-3",
-    x: -34,
+    x: -42,
     y: 0,
-    z: 72,
+    z: 74,
     neighbors: ["n-pasillo-h-2", "n-acceso-h", "n-pasillo-i-1", "n-pasillo-f-1"],
   },
   {
@@ -89,7 +101,7 @@ export const campusNodes: CampusNode[] = [
     x: -48,
     y: 0,
     z: 138,
-    neighbors: ["n-pasillo-h-3", "n-pasillo-i-2", "n-pasillo-audiovisual"],
+    neighbors: ["n-pasillo-h-3", "n-pasillo-i-2", "n-pasillo-zona-gik"],
   },
   {
     id: "n-pasillo-i-2",
@@ -153,7 +165,7 @@ export const campusNodes: CampusNode[] = [
     x: 2,
     y: 0,
     z: 136,
-    neighbors: ["n-pasillo-f-1", "n-acceso-g", "n-pasillo-audiovisual", "n-pasillo-k-1"],
+    neighbors: ["n-pasillo-f-1", "n-acceso-g", "n-pasillo-zona-gik", "n-pasillo-k-1"],
   },
   {
     id: "n-acceso-g",
@@ -163,13 +175,14 @@ export const campusNodes: CampusNode[] = [
     neighbors: ["n-pasillo-g-1"],
   },
   {
-    id: "n-pasillo-audiovisual",
-    x: -24,
+    // Renombrado: este nodo está en zona G/I/K, NO junto al Audiovisual de Licenciatura.
+    // El edificio Audiovisual Lic. está en campus_z≈+3 (norte), este nodo en z=144 (sur).
+    id: "n-pasillo-zona-gik",
+    x: -18,
     y: 0,
     z: 144,
     neighbors: [
       "n-pasillo-g-1",
-      "n-acceso-audiovisual",
       "n-pasillo-i-1",
       "n-acceso-edificio-nuevo",
     ],
@@ -178,15 +191,23 @@ export const campusNodes: CampusNode[] = [
     id: "n-acceso-audiovisual",
     x: -40,
     y: 0,
-    z: 142,
-    neighbors: ["n-pasillo-audiovisual"],
+    z: 5,
+    neighbors: ["n-pasillo-audiovisual-lic"],
+  },
+  {
+    // Nodo nuevo: pasillo real frente al Audiovisual de Licenciatura (campus_z≈+3 según GLB)
+    id: "n-pasillo-audiovisual-lic",
+    x: -22,
+    y: 0,
+    z: 5,
+    neighbors: ["n-acceso-audiovisual", "n-cruce-biblioteca-centro"],
   },
   {
     id: "n-acceso-edificio-nuevo",
     x: -58,
     y: 0,
     z: 150,
-    neighbors: ["n-pasillo-audiovisual", "n-pasillo-i-2"],
+    neighbors: ["n-pasillo-zona-gik", "n-pasillo-i-2"],
   },
 
   {
@@ -448,7 +469,7 @@ export const campusNodes: CampusNode[] = [
     x: -24,
     y: 0,
     z: -96,
-    neighbors: ["n-acceso-lab-quimica", "n-acceso-centro-computo"],
+    neighbors: ["n-acceso-lab-quimica", "n-cruce-sur-cc"],
   },
   {
     id: "n-acceso-lab-electrica",
@@ -457,13 +478,22 @@ export const campusNodes: CampusNode[] = [
     z: -116,
     neighbors: ["n-pasillo-postgrado-1"],
   },
+  {
+    // Nodo nuevo: rompe la diagonal directa postgrado-2 → CC
+    // Se ubica al sur del CC sobre el eje x≈2 para que el tramo sea en ángulo recto
+    id: "n-cruce-sur-cc",
+    x: 2,
+    y: 0,
+    z: -96,
+    neighbors: ["n-pasillo-postgrado-2", "n-acceso-centro-computo"],
+  },
 
   {
     id: "n-pasillo-doctorado-1",
     x: 20,
     y: 0,
     z: -122,
-    neighbors: ["n-acceso-centro-computo", "n-acceso-cubiculos-doctorado", "n-pasillo-electronica-1", "n-pasillo-quimica-bio-1"],
+    neighbors: ["n-acceso-centro-computo", "n-acceso-cubiculos-doctorado", "n-pasillo-electronica-1", "n-pasillo-quimica-bio-1", "n-acceso-lab-civil"],
   },
   {
     id: "n-acceso-cubiculos-doctorado",
@@ -529,10 +559,11 @@ export const campusNodes: CampusNode[] = [
     neighbors: ["n-pasillo-quimica-bio-1"],
   },
   {
+    // Reubicar sobre el eje del pasillo del doctorado (antes x=14,z=-86 — en medio del vacío)
     id: "n-acceso-lab-civil",
-    x: 14,
+    x: 20,
     y: 0,
-    z: -86,
+    z: -95,
     neighbors: ["n-pasillo-electronica-1", "n-pasillo-doctorado-1"],
   },
 ];

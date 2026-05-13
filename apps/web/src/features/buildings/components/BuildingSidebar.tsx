@@ -5,16 +5,31 @@ import { RoutePanel } from "./RoutePanel";
 import { getBuildings } from "../../../services/buildings.service";
 import { BuildingSearch } from "./BuildingSearch";
 import { BuildingInfoCard } from "./BuildingInfoCard";
-import { CategoryBadge, getCategoryAccent } from "../../../components/ui/CategoryBadge";
+import { CategoryBadge } from "../../../components/ui/CategoryBadge";
+import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
 import type { Building } from "../types/building";
 
+function normalizeSearchText(value: string | null | undefined): string {
+  return value
+    ? value
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+    : "";
+}
+
+function getBuildingDescription(building: Building): string {
+  if (building.description && building.description.trim() !== "") {
+    return building.description.trim();
+  }
+
+  return `Ubicación del campus relacionada con ${building.category_name}.`;
+}
+
 type BuildingSidebarProps = {
   isMobile?: boolean;
-  /** Called after the user picks a building from the list. Allows the parent
-   * (e.g. mobile sheet) to react, like collapsing to peek mode. */
   onItemSelected?: (building: Building) => void;
-  /** Called when the user explicitly clears the current selection. */
   onClearSelection?: () => void;
 };
 
@@ -23,7 +38,9 @@ export function BuildingSidebar({
   onItemSelected,
 }: BuildingSidebarProps) {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
-  const setSelectedBuilding = useBuildingStore((state) => state.setSelectedBuilding);
+  const setSelectedBuilding = useBuildingStore(
+    (state) => state.setSelectedBuilding
+  );
   const searchTerm = useBuildingStore((state) => state.searchTerm);
   const permission = useLocationStore((state) => state.permission);
   const mapPosition = useLocationStore((state) => state.mapPosition);
@@ -34,18 +51,25 @@ export function BuildingSidebar({
 
   useEffect(() => {
     let mounted = true;
+
     async function loadBuildings() {
       try {
         const data = await getBuildings();
-        if (mounted) setBuildings(data);
+
+        if (mounted) {
+          setBuildings(data);
+        }
       } catch (error) {
         console.error("Error cargando edificios:", error);
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     }
 
     loadBuildings();
+
     return () => {
       mounted = false;
     };
@@ -53,29 +77,45 @@ export function BuildingSidebar({
 
   const categories = useMemo(() => {
     const map = new Map<string, number>();
-    for (const b of buildings) {
-      if (!b.is_active) continue;
-      map.set(b.category_name, (map.get(b.category_name) ?? 0) + 1);
+
+    for (const building of buildings) {
+      if (!building.is_active) continue;
+
+      map.set(
+        building.category_name,
+        (map.get(building.category_name) ?? 0) + 1
+      );
     }
+
     return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
   }, [buildings]);
 
   const filteredBuildings = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const normalizedSearch = normalizeSearchText(searchTerm.trim());
 
     const result = buildings
       .filter((building) => building.is_active)
       .filter((building) => {
         if (!activeCategory) return true;
+
         return building.category_name === activeCategory;
       })
       .filter((building) => {
         if (!normalizedSearch) return true;
-        return (
-          building.name.toLowerCase().includes(normalizedSearch) ||
-          building.code.toLowerCase().includes(normalizedSearch) ||
-          building.category_name.toLowerCase().includes(normalizedSearch)
-        );
+
+        const searchableText = [
+          building.name,
+          building.code,
+          building.slug,
+          building.description,
+          building.model_node_name,
+          building.category_code,
+          building.category_name,
+        ]
+          .map(normalizeSearchText)
+          .join(" ");
+
+        return searchableText.includes(normalizedSearch);
       });
 
     if (!selectedBuilding) return result;
@@ -83,16 +123,18 @@ export function BuildingSidebar({
     return [...result].sort((a, b) => {
       if (a.id === selectedBuilding.id) return -1;
       if (b.id === selectedBuilding.id) return 1;
+
       return 0;
     });
   }, [buildings, searchTerm, selectedBuilding, activeCategory]);
 
   const totalActive = useMemo(
-    () => buildings.filter((b) => b.is_active).length,
-    [buildings],
+    () => buildings.filter((building) => building.is_active).length,
+    [buildings]
   );
 
   const hasLocation = permission === "granted" && mapPosition !== null;
+  const hasSearchTerm = searchTerm.trim().length > 0;
 
   function handleSelectBuilding(building: Building) {
     setSelectedBuilding(building);
@@ -100,12 +142,15 @@ export function BuildingSidebar({
   }
 
   return (
-    <aside className={isMobile ? "ito-sidebar ito-sidebar--mobile" : "ito-sidebar"}>
+    <aside
+      className={isMobile ? "ito-sidebar ito-sidebar--mobile" : "ito-sidebar"}
+    >
       {!isMobile && (
         <header className="ito-brand">
           <div className="ito-brand__mark" aria-hidden="true">
             <Icon name="map" size={22} />
           </div>
+
           <div className="ito-brand__text">
             <div className="ito-brand__title">Campus ITO</div>
             <div className="ito-brand__subtitle">Mapa interactivo 3D</div>
@@ -120,10 +165,7 @@ export function BuildingSidebar({
                   : "Esperando ubicación"
               }
             >
-              <span
-                className="ito-brand__stat-dot"
-                aria-hidden="true"
-              />
+              <span className="ito-brand__stat-dot" aria-hidden="true" />
               {hasLocation ? "En vivo" : "Sin GPS"}
             </div>
           </div>
@@ -136,10 +178,12 @@ export function BuildingSidebar({
             <span className="ito-quick-stat__value">{totalActive}</span>
             <span className="ito-quick-stat__label">Edificios</span>
           </div>
+
           <div className="ito-quick-stat" role="listitem">
             <span className="ito-quick-stat__value">{categories.length}</span>
             <span className="ito-quick-stat__label">Categorías</span>
           </div>
+
           <div className="ito-quick-stat" role="listitem">
             <span
               className={`ito-quick-stat__value${
@@ -161,20 +205,28 @@ export function BuildingSidebar({
 
       {categories.length > 0 && (
         <div className="ito-sidebar__section">
-          <div className="ito-chip-row" role="tablist" aria-label="Categorías">
+          <div
+            className="ito-chip-row"
+            role="tablist"
+            aria-label="Categorías"
+          >
             <button
               type="button"
               role="tab"
               aria-selected={activeCategory === null}
-              className={`ito-chip ${activeCategory === null ? "is-active" : ""}`}
+              className={`ito-chip ${
+                activeCategory === null ? "is-active" : ""
+              }`}
               onClick={() => setActiveCategory(null)}
             >
               <span>Todos</span>
               <span className="ito-chip__count">{totalActive}</span>
             </button>
+
             {categories.map(([name, count]) => {
               const accent = getCategoryAccent(name);
               const isActive = activeCategory === name;
+
               return (
                 <button
                   key={name}
@@ -212,7 +264,6 @@ export function BuildingSidebar({
         </div>
       )}
 
-      {/* Selected building card pinned at the top of the list */}
       {selectedBuilding && (
         <div className="ito-sidebar__section ito-sidebar__section--card">
           <BuildingInfoCard building={selectedBuilding} />
@@ -228,12 +279,23 @@ export function BuildingSidebar({
       <div className="ito-sidebar__section ito-sidebar__section--list">
         <div className="ito-section-header">
           <h2 className="ito-section-header__title">
-            {activeCategory ? activeCategory : "Edificios"}
+            {hasSearchTerm
+              ? "Resultados"
+              : activeCategory
+                ? activeCategory
+                : "Edificios"}
           </h2>
+
           <span className="ito-section-header__count">
             {loading ? "…" : `${filteredBuildings.length}`}
           </span>
         </div>
+
+        {hasSearchTerm && (
+          <div className="ito-search-summary">
+            Buscando: <strong>{searchTerm}</strong>
+          </div>
+        )}
 
         <div
           className="ito-list"
@@ -254,11 +316,14 @@ export function BuildingSidebar({
             filteredBuildings.map((building) => {
               const isSelected = selectedBuilding?.id === building.id;
               const accent = getCategoryAccent(building.category_name);
+
               return (
                 <button
                   key={building.id}
                   type="button"
-                  className={`ito-list-item ${isSelected ? "is-selected" : ""}`}
+                  className={`ito-list-item ito-list-item--enhanced ${
+                    isSelected ? "is-selected" : ""
+                  }`}
                   onClick={() => handleSelectBuilding(building)}
                   aria-pressed={isSelected}
                   style={
@@ -275,13 +340,31 @@ export function BuildingSidebar({
                     aria-hidden="true"
                     style={{ background: accent.fg }}
                   />
+
                   <div className="ito-list-item__main">
                     <div className="ito-list-item__title-row">
-                      <span className="ito-list-item__code">{building.code}</span>
+                      <span className="ito-list-item__code">
+                        {building.code}
+                      </span>
                       <CategoryBadge name={building.category_name} size="sm" />
                     </div>
+
                     <div className="ito-list-item__name">{building.name}</div>
+
+                    <p className="ito-list-item__description">
+                      {getBuildingDescription(building)}
+                    </p>
+
+                    <div className="ito-list-item__meta-row">
+                      <span className="ito-list-item__meta">
+                        {building.category_code}
+                      </span>
+                      <span className="ito-list-item__action">
+                        Ver detalles
+                      </span>
+                    </div>
                   </div>
+
                   <span className="ito-list-item__chevron" aria-hidden="true">
                     <Icon name="chevron-right" size={16} />
                   </span>

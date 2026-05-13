@@ -27,6 +27,10 @@ type FileFilterCallback = (error: Error | null, acceptFile?: boolean) => void;
 
 const router = Router();
 
+// Todas las operaciones de gestión de imágenes requieren sesión administrativa.
+// Aplicado a nivel de router para que futuras rutas queden cubiertas por defecto.
+router.use(authenticate);
+
 const adminReadRoles = [
   "superadmin",
   "admin",
@@ -104,7 +108,6 @@ const upload = multer({
 
 router.get(
   "/buildings/:buildingId/images",
-  authenticate,
   authorize(...adminReadRoles),
   validateParams(buildingImagesParamsSchema),
   getBuildingImagesForAdmin
@@ -112,7 +115,6 @@ router.get(
 
 router.post(
   "/buildings/:buildingId/images",
-  authenticate,
   authorize(...buildingEditorRoles),
   validateParams(buildingImagesParamsSchema),
   upload.single("image"),
@@ -121,7 +123,6 @@ router.post(
 
 router.patch(
   "/images/:imageId/status",
-  authenticate,
   authorize(...buildingEditorRoles),
   validateParams(imageParamsSchema),
   updateBuildingImageStatus
@@ -129,7 +130,6 @@ router.patch(
 
 router.delete(
   "/images/:imageId",
-  authenticate,
   authorize(...buildingEditorRoles),
   validateParams(imageParamsSchema),
   deleteBuildingImage
