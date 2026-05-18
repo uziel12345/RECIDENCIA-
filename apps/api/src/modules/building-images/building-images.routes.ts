@@ -12,7 +12,7 @@ import {
   uploadBuildingImage,
 } from "./building-images.controller.js";
 import { authenticate } from "../auth/middlewares/authenticate.middleware.js";
-import { authorize } from "../auth/middlewares/authorize.middleware.js";
+import { authorizePermission } from "../auth/middlewares/authorize.middleware.js";
 import { validateParams } from "../../shared/middlewares/validator.js";
 import { ApiError } from "../../shared/errors/api-error.js";
 
@@ -30,15 +30,6 @@ const router = Router();
 // Todas las operaciones de gestión de imágenes requieren sesión administrativa.
 // Aplicado a nivel de router para que futuras rutas queden cubiertas por defecto.
 router.use(authenticate);
-
-const adminReadRoles = [
-  "superadmin",
-  "admin",
-  "servicios_escolares",
-  "recursos_humanos",
-] as const;
-
-const buildingEditorRoles = ["superadmin", "admin"] as const;
 
 const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
 const uploadDirectory = path.resolve(process.cwd(), "uploads", "buildings");
@@ -108,14 +99,14 @@ const upload = multer({
 
 router.get(
   "/buildings/:buildingId/images",
-  authorize(...adminReadRoles),
+  authorizePermission("can_view_building_images"),
   validateParams(buildingImagesParamsSchema),
   getBuildingImagesForAdmin
 );
 
 router.post(
   "/buildings/:buildingId/images",
-  authorize(...buildingEditorRoles),
+  authorizePermission("can_edit_building_images"),
   validateParams(buildingImagesParamsSchema),
   upload.single("image"),
   uploadBuildingImage
@@ -123,14 +114,14 @@ router.post(
 
 router.patch(
   "/images/:imageId/status",
-  authorize(...buildingEditorRoles),
+  authorizePermission("can_edit_building_images"),
   validateParams(imageParamsSchema),
   updateBuildingImageStatus
 );
 
 router.delete(
   "/images/:imageId",
-  authorize(...buildingEditorRoles),
+  authorizePermission("can_edit_building_images"),
   validateParams(imageParamsSchema),
   deleteBuildingImage
 );

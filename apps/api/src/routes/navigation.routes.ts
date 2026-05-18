@@ -7,7 +7,7 @@ import {
   invalidateNavigationCacheController,
 } from "../controllers/navigation.controller.js";
 import { authenticate } from "../modules/auth/middlewares/authenticate.middleware.js";
-import { authorize } from "../modules/auth/middlewares/authorize.middleware.js";
+import { authorizePermission } from "../modules/auth/middlewares/authorize.middleware.js";
 
 const router = Router();
 
@@ -19,7 +19,7 @@ router.get("/route", getNavigationRoute);
 router.post(
   "/cache/invalidate",
   authenticate,
-  authorize("superadmin", "admin"),
+  authorizePermission("can_edit_navigation"),
   invalidateNavigationCacheController
 );
 
