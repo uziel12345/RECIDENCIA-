@@ -8,6 +8,7 @@ type RolePermissions = {
   can_edit_building_images: boolean;
   can_edit_navigation: boolean;
   can_manage_users: boolean;
+  can_manage_admin_users: boolean;
   can_view_audit_logs: boolean;
 };
 
@@ -21,6 +22,7 @@ const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     can_edit_building_images: true,
     can_edit_navigation: true,
     can_manage_users: true,
+    can_manage_admin_users: true,
     can_view_audit_logs: true,
   },
   admin: {
@@ -30,6 +32,7 @@ const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     can_edit_building_images: true,
     can_edit_navigation: true,
     can_manage_users: false,
+    can_manage_admin_users: false,
     can_view_audit_logs: true,
   },
   servicios_escolares: {
@@ -39,6 +42,7 @@ const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     can_edit_building_images: false,
     can_edit_navigation: false,
     can_manage_users: false,
+    can_manage_admin_users: false,
     can_view_audit_logs: false,
   },
   recursos_humanos: {
@@ -48,6 +52,7 @@ const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     can_edit_building_images: false,
     can_edit_navigation: false,
     can_manage_users: false,
+    can_manage_admin_users: false,
     can_view_audit_logs: false,
   },
   viewer: {
@@ -57,6 +62,7 @@ const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     can_edit_building_images: false,
     can_edit_navigation: false,
     can_manage_users: false,
+    can_manage_admin_users: false,
     can_view_audit_logs: false,
   },
 };
