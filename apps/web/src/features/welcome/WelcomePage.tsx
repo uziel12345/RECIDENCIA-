@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/auth-store";
+import { useAdminAuthStore } from "../../store/admin-auth-store";
 import { ROUTES } from "../../types/routes";
 import { MapIcon, GraduationCapIcon, UsersIcon, BuildingIcon } from "../shared/Icons";
+import { useState } from "react";
 
 interface RoleCard {
   id: "student" | "visitor" | "admin-access";
@@ -50,9 +52,28 @@ const roleCards: RoleCard[] = [
 export function WelcomePage() {
   const navigate = useNavigate();
   const { selectRole, hasCompletedOnboarding } = useAuthStore();
+  const { user, isAuthenticated, loadSession, logout } = useAdminAuthStore();
+  const [showAdminSessionChoice, setShowAdminSessionChoice] = useState(false);
+  const [checkingAdminSession, setCheckingAdminSession] = useState(false);
 
-  const handleRoleSelect = (card: RoleCard) => {
+  const handleRoleSelect = async (card: RoleCard) => {
     if (card.action === "admin-login") {
+      if (isAuthenticated) {
+        if (!user) {
+          setCheckingAdminSession(true);
+          const validSession = await loadSession();
+          setCheckingAdminSession(false);
+
+          if (!validSession) {
+            navigate(ROUTES.ADMIN_LOGIN);
+            return;
+          }
+        }
+
+        setShowAdminSessionChoice(true);
+        return;
+      }
+
       navigate(ROUTES.ADMIN_LOGIN);
       return;
     }
@@ -68,6 +89,12 @@ export function WelcomePage() {
       navigate(card.id === "student" ? ROUTES.STUDENT : ROUTES.VISITOR);
     }
   };
+
+  function handleChangeAdminUser() {
+    logout();
+    setShowAdminSessionChoice(false);
+    navigate(ROUTES.ADMIN_LOGIN);
+  }
 
   return (
     <div className="welcome-page">
@@ -110,7 +137,9 @@ export function WelcomePage() {
                   <p className="role-card__description">{card.description}</p>
                 </div>
                 {card.action === "admin-login" && (
-                  <span className="role-card__badge">Requiere acceso</span>
+                  <span className="role-card__badge">
+                    {checkingAdminSession ? "Verificando..." : "Requiere acceso"}
+                  </span>
                 )}
                 <div className="role-card__arrow">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -127,6 +156,97 @@ export function WelcomePage() {
           <p>Mapa 3D Interactivo del Campus</p>
         </footer>
       </div>
+
+      {showAdminSessionChoice ? (
+        <div style={styles.overlay}>
+          <section style={styles.modal}>
+            <p style={styles.overline}>Sesion administrativa activa</p>
+            <h2 style={styles.title}>Continuar como usuario actual</h2>
+            <p style={styles.text}>
+              Hay una sesion abierta para{" "}
+              <strong>{user?.full_name || user?.username || "Personal del ITO"}</strong>
+              {user?.role ? ` (${user.role})` : ""}.
+            </p>
+
+            <div style={styles.actions}>
+              <button
+                type="button"
+                onClick={() => navigate("/admin")}
+                style={styles.primaryButton}
+              >
+                Continuar
+              </button>
+              <button
+                type="button"
+                onClick={handleChangeAdminUser}
+                style={styles.secondaryButton}
+              >
+                Cambiar usuario
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }
+
+const styles: Record<string, React.CSSProperties> = {
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    display: "grid",
+    placeItems: "center",
+    padding: "24px",
+    background: "rgba(15, 23, 42, 0.55)",
+    zIndex: 50,
+  },
+  modal: {
+    width: "100%",
+    maxWidth: "440px",
+    background: "#ffffff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "22px",
+    padding: "24px",
+    boxShadow: "0 24px 70px rgba(15, 23, 42, 0.28)",
+  },
+  overline: {
+    margin: "0 0 8px",
+    color: "#2563eb",
+    fontWeight: 800,
+    fontSize: "14px",
+  },
+  title: {
+    margin: 0,
+    color: "#0f172a",
+    fontSize: "24px",
+  },
+  text: {
+    margin: "12px 0 20px",
+    color: "#64748b",
+    lineHeight: 1.5,
+  },
+  actions: {
+    display: "flex",
+    gap: "12px",
+    flexWrap: "wrap",
+  },
+  primaryButton: {
+    border: "none",
+    borderRadius: "14px",
+    padding: "12px 16px",
+    background: "#2563eb",
+    color: "#ffffff",
+    fontWeight: 800,
+    cursor: "pointer",
+  },
+  secondaryButton: {
+    border: "1px solid #cbd5e1",
+    borderRadius: "14px",
+    padding: "12px 16px",
+    background: "#ffffff",
+    color: "#0f172a",
+    fontWeight: 800,
+    cursor: "pointer",
+  },
+};
