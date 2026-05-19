@@ -83,3 +83,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     can_view_audit_logs: false,
   },
 };
+
+export function hasPermission(
+  role: UserRole | null | undefined,
+  permission: AuthPermission
+): boolean {
+  return role ? ROLE_PERMISSIONS[role]?.[permission] ?? false : false;
+}
