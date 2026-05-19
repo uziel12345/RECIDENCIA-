@@ -1,8 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense, useState, useEffect } from "react";
+import { hasPermission, type AuthPermission } from "@ito-map/shared";
 import { WelcomePage } from "../features/welcome/WelcomePage";
 import { OnboardingPage } from "../features/onboarding/OnboardingPage";
 import { AdminLoginPage } from "../features/admin/pages/AdminLoginPage";
+import { AdminDashboard } from "../features/admin/AdminDashboard";
+import { AdminLayout } from "../features/admin/AdminLayout";
 import { useAuthStore } from "../store/auth-store";
 import { useAdminAuthStore } from "../store/admin-auth-store";
 import { ROUTES } from "../types/routes";
@@ -20,6 +23,11 @@ const VisitorPage = lazy(async () => {
 const AdminBuildingsPage = lazy(async () => {
   const { AdminBuildingsPage } = await import("../features/admin/pages/AdminBuildingsPage");
   return { default: AdminBuildingsPage };
+});
+
+const AdminUsersPage = lazy(async () => {
+  const { AdminUsersPage } = await import("../features/admin/pages/AdminUsersPage");
+  return { default: AdminUsersPage };
 });
 
 function MapLoadingFallback() {
@@ -84,6 +92,22 @@ function AdminProtectedRoute({
   return <>{children}</>;
 }
 
+function AdminPermissionRoute({
+  children,
+  permission,
+}: {
+  children: React.ReactNode;
+  permission: AuthPermission;
+}) {
+  const { user } = useAdminAuthStore();
+
+  if (!hasPermission(user?.role, permission)) {
+    return <Navigate to={ROUTES.ADMIN_BUILDINGS} replace />;
+  }
+
+  return <>{children}</>;
+}
+
 function PublicRoute({
   children,
   requiresRole,
@@ -112,12 +136,66 @@ export default function App() {
         {/* Real Admin Auth */}
         <Route path={ROUTES.ADMIN_LOGIN} element={<AdminLoginPage />} />
         <Route
+          path="/admin"
+          element={
+            <AdminProtectedRoute>
+              <AdminLayout>
+                <AdminDashboard />
+              </AdminLayout>
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
           path={ROUTES.ADMIN_BUILDINGS}
           element={
             <AdminProtectedRoute>
-              <Suspense fallback={null}>
-                <AdminBuildingsPage />
-              </Suspense>
+              <AdminLayout>
+                <Suspense fallback={null}>
+                  <AdminBuildingsPage />
+                </Suspense>
+              </AdminLayout>
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <AdminProtectedRoute>
+              <AdminLayout>
+                <AdminPermissionRoute permission="can_manage_admin_users">
+                  <Suspense fallback={null}>
+                    <AdminUsersPage />
+                  </Suspense>
+                </AdminPermissionRoute>
+              </AdminLayout>
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/navigation"
+          element={
+            <AdminProtectedRoute>
+              <AdminLayout>
+                <AdminPermissionRoute permission="can_edit_navigation">
+                  <section
+                    style={{
+                      background: "#ffffff",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "22px",
+                      padding: "22px",
+                      boxShadow: "0 14px 35px rgba(15, 23, 42, 0.08)",
+                    }}
+                  >
+                    <p style={{ margin: "0 0 8px", color: "#2563eb", fontWeight: 800 }}>
+                      Panel administrativo
+                    </p>
+                    <h1 style={{ margin: 0, fontSize: "32px" }}>Navegacion</h1>
+                    <p style={{ color: "#64748b" }}>
+                      Modulo de navegacion listo para conectar.
+                    </p>
+                  </section>
+                </AdminPermissionRoute>
+              </AdminLayout>
             </AdminProtectedRoute>
           }
         />

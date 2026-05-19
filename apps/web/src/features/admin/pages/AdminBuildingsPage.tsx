@@ -1,8 +1,6 @@
 import type { CSSProperties, Dispatch, SetStateAction } from "react";
 import { hasPermission, type Building } from "@ito-map/shared";
-import { useNavigate } from "react-router-dom";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
-import { ROUTES } from "../../../types/routes";
 import { BuildingForm } from "../components/BuildingForm";
 import { BuildingImagesModal } from "../components/BuildingImagesModal";
 import {
@@ -12,8 +10,7 @@ import {
 import { safeText } from "../hooks/useBuildingForm";
 
 export function AdminBuildingsPage() {
-  const { logout, user } = useAdminAuthStore();
-  const navigate = useNavigate();
+  const { user } = useAdminAuthStore();
   const canEditBuildings = hasPermission(user?.role, "can_edit_buildings");
   const canEditBuildingImages = hasPermission(
     user?.role,
@@ -52,13 +49,8 @@ export function AdminBuildingsPage() {
     handleDelete,
   } = useAdminBuildings();
 
-  function handleLogout() {
-    logout();
-    void navigate(ROUTES.ADMIN_LOGIN, { replace: true });
-  }
-
   return (
-    <main style={styles.page}>
+    <section>
       <header style={styles.header}>
         <div>
           <p style={styles.overline}>Panel administrativo</p>
@@ -78,13 +70,6 @@ export function AdminBuildingsPage() {
           ) : null}
         </div>
 
-        <button
-          type="button"
-          onClick={handleLogout}
-          style={styles.secondaryButton}
-        >
-          Cerrar sesión
-        </button>
       </header>
 
       {error ? (
@@ -147,7 +132,7 @@ export function AdminBuildingsPage() {
           onClose={() => setImageModalBuilding(null)}
         />
       ) : null}
-    </main>
+    </section>
   );
 }
 

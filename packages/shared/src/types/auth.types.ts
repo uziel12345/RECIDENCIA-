@@ -14,6 +14,23 @@ export type AuthUser = {
   is_active: boolean;
 };
 
+export type AdminUser = AuthUser;
+
+export type CreateAdminUserRequest = {
+  username: string;
+  full_name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  is_active: boolean;
+};
+
+export type UpdateAdminUserRequest = Partial<CreateAdminUserRequest>;
+
+export type UpdateAdminUserStatusRequest = {
+  is_active: boolean;
+};
+
 export type LoginRequest = {
   usernameOrEmail: string;
   password: string;
