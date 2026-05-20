@@ -10,6 +10,12 @@ import { startUserLocationTracking } from "../../features/location/services/geol
 import { RouteLine } from "../../features/buildings/components/RouteLine";
 import { Icon, type IconName } from "../ui/Icons";
 import { getCategoryAccent } from "../ui/categoryAccent";
+import {
+  NavigationDraftEditorLayer,
+  NavigationDraftEditorPanel,
+  useDraftEditor,
+} from "./NavigationDraftEditorLayer";
+import { NavigationDebugLayer } from "./NavigationDebugLayer";
 
 const MODEL_PATH = "/models/campus.glb";
 
@@ -27,6 +33,8 @@ type CampusViewerProps = {
   mobilePanelOpen?: boolean;
 };
 
+type NavigationDebugMode = "hidden" | "all" | "issues";
+
 function campusLocalToWorld(x: number, z: number) {
   const cos = Math.cos(CAMPUS_ROTATION_Y);
   const sin = Math.sin(CAMPUS_ROTATION_Y);
@@ -41,11 +49,13 @@ function UserLocationMarker() {
   const mapPosition = useLocationStore((state) => state.mapPosition);
   const isLowAccuracy = useLocationStore((state) => state.isLowAccuracy);
   const ringRef = useRef<Mesh<RingGeometry, MeshBasicMaterial>>(null);
+  const elapsedRef = useRef(0);
 
-  useFrame(({ clock }) => {
+  useFrame((_, delta) => {
     if (!ringRef.current) return;
+    elapsedRef.current += delta;
 
-    const t = (clock.getElapsedTime() % 1.6) / 1.6;
+    const t = (elapsedRef.current % 1.6) / 1.6;
     const scale = 1 + t * 1.4;
 
     ringRef.current.scale.set(scale, scale, scale);
@@ -287,19 +297,35 @@ function CampusModel() {
 
 type ViewerToolbarProps = {
   hasLocation: boolean;
+  navigationDebugMode: NavigationDebugMode;
+  draftEditorActive: boolean;
   onFocusUser: () => void;
   onResetView: () => void;
   onZoom: (delta: number) => void;
+  onToggleNavigationDebug: () => void;
+  onToggleDraftEditor: () => void;
   isMobile?: boolean;
 };
 
 function ViewerToolbar({
   hasLocation,
+  navigationDebugMode,
+  draftEditorActive,
   onFocusUser,
   onResetView,
   onZoom,
+  onToggleNavigationDebug,
+  onToggleDraftEditor,
   isMobile = false,
 }: ViewerToolbarProps) {
+  const showNavigationDebug = navigationDebugMode !== "hidden";
+  const debugTitle =
+    navigationDebugMode === "hidden"
+      ? "Depurar rutas"
+      : navigationDebugMode === "all"
+        ? "Ver solo problemas"
+        : "Ocultar depuración";
+
   return (
     <div
       className={`ito-toolbar ${isMobile ? "ito-toolbar--mobile" : ""}`}
@@ -351,6 +377,28 @@ function ViewerToolbar({
         title="Vista general"
       >
         <Icon name="home" size={18} />
+      </button>
+
+      <button
+        type="button"
+        className={`ito-toolbar__btn ${showNavigationDebug ? "is-active" : ""}`}
+        onClick={onToggleNavigationDebug}
+        aria-label="Mostrar nodos y rutas de depuración"
+        aria-pressed={showNavigationDebug}
+        title={debugTitle}
+      >
+        <Icon name="layers" size={18} />
+      </button>
+
+      <button
+        type="button"
+        className={`ito-toolbar__btn ${draftEditorActive ? "is-active" : ""}`}
+        onClick={onToggleDraftEditor}
+        aria-label="Dibujar ruta temporal"
+        aria-pressed={draftEditorActive}
+        title={draftEditorActive ? "Salir del editor temporal" : "Dibujar ruta"}
+      >
+        <Icon name="edit" size={17} />
       </button>
     </div>
   );
@@ -448,11 +496,15 @@ export function CampusViewer({
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [focus, setFocus] = useState<FocusPoint | null>(null);
   const [isModelLoading, setIsModelLoading] = useState(true);
+  const [navigationDebugMode, setNavigationDebugMode] =
+    useState<NavigationDebugMode>("hidden");
+  const [draftEditorActive, setDraftEditorActive] = useState(false);
+  const draftEditor = useDraftEditor();
 
   useEffect(() => {
     getBuildings().then(setBuildings);
-    startUserLocationTracking();
-  }, []);
+    startUserLocationTracking({ isMobile });
+  }, [isMobile]);
 
   useEffect(() => {
     if (!controlsRef.current) return;
@@ -557,15 +609,29 @@ export function CampusViewer({
   };
 
   const hasLocation = mapPosition !== null;
+  const showNavigationDebug = navigationDebugMode !== "hidden";
+  const hideBuildingLabels = showNavigationDebug || draftEditorActive;
 
   return (
-    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+    <div style={{ width: "100%", height: "100%", position: "relative", cursor: draftEditorActive ? "crosshair" : undefined }}>
       {!mobilePanelOpen && (
         <ViewerToolbar
           hasLocation={hasLocation}
+          navigationDebugMode={navigationDebugMode}
+          draftEditorActive={draftEditorActive}
           onFocusUser={handleFocusUser}
           onResetView={handleResetView}
           onZoom={handleZoom}
+          onToggleNavigationDebug={() =>
+            setNavigationDebugMode((current) => {
+              if (current === "hidden") return "all";
+              if (current === "all") return "issues";
+              return "hidden";
+            })
+          }
+          onToggleDraftEditor={() =>
+            setDraftEditorActive((current) => !current)
+          }
           isMobile={isMobile}
         />
       )}
@@ -573,6 +639,15 @@ export function CampusViewer({
       {!isMobile && !mobilePanelOpen && <CategoryLegend buildings={buildings} />}
 
       {isModelLoading && <ViewerLoading />}
+
+      {draftEditorActive && (
+        <div className="ito-draft-panel-anchor">
+          <NavigationDraftEditorPanel
+            controls={draftEditor}
+            buildings={buildings}
+          />
+        </div>
+      )}
 
       <Canvas
         dpr={[1, 2]}
@@ -608,9 +683,20 @@ export function CampusViewer({
         <Suspense fallback={null}>
           <group rotation={[0, CAMPUS_ROTATION_Y, 0]}>
             <CampusModel />
+            {showNavigationDebug && (
+              <NavigationDebugLayer
+                showOnlyIssues={navigationDebugMode === "issues"}
+              />
+            )}
+            <NavigationDraftEditorLayer
+              active={draftEditorActive}
+              controls={draftEditor}
+            />
             <RouteLine />
             <UserLocationMarker />
-            <BuildingLabels buildings={buildings} isMobile={isMobile} />
+            {!hideBuildingLabels && (
+              <BuildingLabels buildings={buildings} isMobile={isMobile} />
+            )}
           </group>
         </Suspense>
       </Canvas>

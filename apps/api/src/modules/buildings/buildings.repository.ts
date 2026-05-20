@@ -302,10 +302,10 @@ export class BuildingsRepository {
     await this.db.query(
       `
       UPDATE buildings
-      SET is_active = ?
+      SET is_active = ?, deleted_at = IF(? = TRUE, NULL, deleted_at)
       WHERE id = ?
       `,
-      [isActive, id]
+      [isActive, isActive, id]
     );
   }
 
@@ -313,7 +313,7 @@ export class BuildingsRepository {
     await this.db.query(
       `
       UPDATE buildings
-      SET is_active = FALSE
+      SET is_active = FALSE, deleted_at = NOW()
       WHERE id = ?
       `,
       [id]

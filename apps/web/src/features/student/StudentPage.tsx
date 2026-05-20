@@ -20,6 +20,8 @@ import {
   LogOutIcon,
   MapIcon,
   InfoIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from "../shared/Icons";
 import { StudentTopBar } from "./components/StudentTopBar";
 import { SchedulePanel } from "./components/SchedulePanel";
@@ -109,10 +111,15 @@ export function StudentPage() {
     ];
   }, [sheetState]);
 
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
   if (!isMobile) {
     return (
-      <div className="student-page">
-        <aside className="student-page__sidebar">
+      <div
+        className="student-page"
+        style={{ gridTemplateColumns: sidebarCollapsed ? "0px 1fr" : "380px 1fr" }}
+      >
+        <aside className="student-page__sidebar" style={{ overflow: "hidden", minWidth: 0 }}>
           <div className="student-page__sidebar-header">
             <div className="student-page__user">
               <div className="student-page__user-avatar">
@@ -196,7 +203,15 @@ export function StudentPage() {
 
         <main className="student-page__main">
           {viewMode === "map" && (
-            <div className="student-page__viewer">
+            <div className="student-page__viewer" style={{ position: "relative" }}>
+              <button
+                type="button"
+                className="ito-sidebar-toggle"
+                onClick={() => setSidebarCollapsed((c) => !c)}
+                title={sidebarCollapsed ? "Mostrar panel" : "Ocultar panel"}
+              >
+                {sidebarCollapsed ? <ChevronRightIcon size={14} /> : <ChevronLeftIcon size={14} />}
+              </button>
               <CampusViewer isMobile={false} mobilePanelOpen={false} />
             </div>
           )}

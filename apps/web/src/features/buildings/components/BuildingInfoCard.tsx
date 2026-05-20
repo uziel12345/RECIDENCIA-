@@ -2,25 +2,12 @@ import { useBuildingStore } from "../../../store/building-store";
 import { CategoryBadge } from "../../../components/ui/CategoryBadge";
 import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
+import { resolveApiAssetUrl } from "../../../utils/resolve-api-asset-url";
 import type { Building } from "../types/building";
 
 type BuildingInfoCardProps = {
   building: Building;
 };
-
-function resolveImageUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    return url;
-  }
-
-  const apiBaseUrl =
-    import.meta.env.VITE_API_URL || "http://localhost:3001/api";
-  const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, "");
-
-  return `${apiOrigin}${url.startsWith("/") ? "" : "/"}${url}`;
-}
 
 function getBuildingDescription(building: Building): string {
   if (building.description && building.description.trim() !== "") {
@@ -37,9 +24,11 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
   const setRouteDestination = useBuildingStore(
     (state) => state.setRouteDestination
   );
+  const routeError = useBuildingStore((state) => state.routeError);
+  const routeDestination = useBuildingStore((state) => state.routeDestination);
 
   const accent = getCategoryAccent(building.category_name);
-  const coverUrl = resolveImageUrl(building.cover_image_url);
+  const coverUrl = resolveApiAssetUrl(building.cover_image_url);
 
   return (
     <article
@@ -130,6 +119,28 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
               : "Sin referencia de modelo 3D disponible."}
           </p>
         </div>
+
+        {routeError && routeDestination?.id === building.id && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 8,
+              padding: "8px 10px",
+              borderRadius: 8,
+              background: "#fef2f2",
+              border: "1px solid #fecaca",
+              color: "#dc2626",
+              fontSize: 12,
+              fontWeight: 500,
+              lineHeight: 1.4,
+            }}
+            role="alert"
+          >
+            <Icon name="alert" size={13} />
+            <span>{routeError}</span>
+          </div>
+        )}
 
         <div className="ito-info-card__actions ito-info-card__actions--stack">
           <button

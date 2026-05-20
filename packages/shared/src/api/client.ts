@@ -1,4 +1,4 @@
-import type { ApiResponse } from "../types/api.types.ts";
+import type { ApiResponse } from "../types/api.types.js";
 
 type ApiClientConfig = {
   baseUrl: string;

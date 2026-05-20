@@ -10,7 +10,40 @@ type GeoLikePosition = {
   accuracy: number | null;
 };
 
+type LocationTrackingOptions = {
+  isMobile?: boolean;
+};
+
+type MobileSnapZone = {
+  buildingName: string;
+  centerX: number;
+  centerZ: number;
+  radius: number;
+  bounds?: {
+    minX: number;
+    maxX: number;
+    minZ: number;
+    maxZ: number;
+  };
+};
+
+const MOBILE_SNAP_ZONES: MobileSnapZone[] = [
+  {
+    buildingName: "Centro de Cómputo",
+    centerX: 0.7661,
+    centerZ: -126.9385,
+    radius: 140,
+    bounds: {
+      minX: -20,
+      maxX: 95,
+      minZ: -185,
+      maxZ: -75,
+    },
+  },
+];
+
 let lastAcceptedPosition: GeoLikePosition | null = null;
+let activeTrackingIsMobile = false;
 
 function toRadians(value: number): number {
   return (value * Math.PI) / 180;
@@ -37,6 +70,47 @@ function distanceInMeters(
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return earthRadius * c;
+}
+
+function applyMobileSnapToCampusPosition(
+  mapPosition: ReturnType<typeof mapGeoToCampusCoordinates>
+): ReturnType<typeof mapGeoToCampusCoordinates> {
+  for (const zone of MOBILE_SNAP_ZONES) {
+    const isInsideBounds = zone.bounds
+      ? mapPosition.x >= zone.bounds.minX &&
+        mapPosition.x <= zone.bounds.maxX &&
+        mapPosition.z >= zone.bounds.minZ &&
+        mapPosition.z <= zone.bounds.maxZ
+      : false;
+    const distance = Math.hypot(
+      mapPosition.x - zone.centerX,
+      mapPosition.z - zone.centerZ
+    );
+
+    if (isInsideBounds || distance <= zone.radius) {
+      return {
+        x: zone.centerX,
+        y: mapPosition.y,
+        z: zone.centerZ,
+      };
+    }
+  }
+
+  return mapPosition;
+}
+
+function mapGeoToCampusCoordinatesForDevice(
+  latitude: number,
+  longitude: number,
+  options: LocationTrackingOptions
+): ReturnType<typeof mapGeoToCampusCoordinates> {
+  const mapPosition = mapGeoToCampusCoordinates(latitude, longitude);
+
+  if (!options.isMobile) {
+    return mapPosition;
+  }
+
+  return applyMobileSnapToCampusPosition(mapPosition);
 }
 
 export function applyManualCalibration(input: {
@@ -96,7 +170,9 @@ export function clearManualCalibration(): void {
   setErrorMessage(null);
 }
 
-export function startUserLocationTracking(): void {
+export function startUserLocationTracking(
+  options: LocationTrackingOptions = {}
+): void {
   const {
     setPermission,
     setGeoPosition,
@@ -106,6 +182,7 @@ export function startUserLocationTracking(): void {
     setWatchId,
     watchId,
   } = useLocationStore.getState();
+  const isMobile = options.isMobile ?? false;
 
   if (!("geolocation" in navigator)) {
     setPermission("unsupported");
@@ -113,9 +190,17 @@ export function startUserLocationTracking(): void {
     return;
   }
 
-  if (watchId !== null) {
+  if (watchId !== null && activeTrackingIsMobile === isMobile) {
     return;
   }
+
+  if (watchId !== null) {
+    navigator.geolocation.clearWatch(watchId);
+    setWatchId(null);
+    lastAcceptedPosition = null;
+  }
+
+  activeTrackingIsMobile = isMobile;
 
   const newWatchId = navigator.geolocation.watchPosition(
     (position) => {
@@ -151,9 +236,10 @@ export function startUserLocationTracking(): void {
           )} m). Mostrando la última ubicación válida.`
         );
 
-        const mapPosition = mapGeoToCampusCoordinates(
+        const mapPosition = mapGeoToCampusCoordinatesForDevice(
           lastAcceptedPosition.latitude,
-          lastAcceptedPosition.longitude
+          lastAcceptedPosition.longitude,
+          { isMobile }
         );
 
         setMapPosition(mapPosition);
@@ -169,9 +255,10 @@ export function startUserLocationTracking(): void {
           )} m). En laptop puede variar porque el navegador no siempre usa GPS real.`
         );
 
-        const approximateMapPosition = mapGeoToCampusCoordinates(
+        const approximateMapPosition = mapGeoToCampusCoordinatesForDevice(
           latitude,
-          longitude
+          longitude,
+          { isMobile }
         );
 
         setMapPosition(approximateMapPosition);
@@ -197,7 +284,11 @@ export function startUserLocationTracking(): void {
       setErrorMessage(null);
       setGeoPosition(receivedPosition);
 
-      const mapPosition = mapGeoToCampusCoordinates(latitude, longitude);
+      const mapPosition = mapGeoToCampusCoordinatesForDevice(
+        latitude,
+        longitude,
+        { isMobile }
+      );
       setMapPosition(mapPosition);
     },
     (error) => {

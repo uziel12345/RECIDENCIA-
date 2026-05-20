@@ -1,5 +1,5 @@
-import { apiGet, apiPost } from "./client.ts";
-import type { AuthUser, LoginRequest, LoginResponse } from "../types/auth.types.ts";
+import { apiGet, apiPost } from "./client.js";
+import type { AuthUser, LoginRequest, LoginResponse } from "../types/auth.types.js";
 
 type MeApiResponse = {
   user: AuthUser;

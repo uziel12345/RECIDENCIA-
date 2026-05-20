@@ -8,6 +8,7 @@ import {
   type Building,
   type BuildingImage,
 } from "@ito-map/shared";
+import { resolveApiAssetUrl } from "../../../utils/resolve-api-asset-url";
 
 type ImageFormState = {
   file: File | null;
@@ -26,25 +27,6 @@ const initialImageFormState: ImageFormState = {
   is_cover: false,
   sort_order: "0",
 };
-
-function getImageSrc(imageUrl: string): string {
-  if (!imageUrl) return "";
-
-  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    return imageUrl;
-  }
-
-  const apiBaseUrl =
-    import.meta.env.VITE_API_URL || "http://localhost:3001/api";
-
-  const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, "");
-
-  if (imageUrl.startsWith("/")) {
-    return `${apiOrigin}${imageUrl}`;
-  }
-
-  return `${apiOrigin}/${imageUrl}`;
-}
 
 function parseNumber(value: string): number {
   const parsed = Number(value);
@@ -348,7 +330,7 @@ export function BuildingImagesModal({
           <div style={styles.imageGrid}>
             {images.map((image) => {
               const isImageActive = Boolean(image.is_active);
-              const imageSrc = getImageSrc(safeText(image.image_url));
+              const imageSrc = resolveApiAssetUrl(safeText(image.image_url)) ?? "";
 
               return (
                 <article

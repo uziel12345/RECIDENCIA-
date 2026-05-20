@@ -996,6 +996,7 @@ input {
   height: 100vh;
   overflow: hidden;
   background: var(--color-bg);
+  transition: grid-template-columns 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .ito-campus__viewer {
@@ -1003,6 +1004,42 @@ input {
   min-width: 0;
   height: 100%;
   background: linear-gradient(180deg, #e0f2fe 0%, #f1f5f9 60%, #f8fafc 100%);
+}
+
+/* Wrapper del sidebar con overflow oculto para animar el colapso */
+.ito-sidebar-wrapper {
+  overflow: hidden;
+  height: 100%;
+  min-width: 0;
+}
+
+/* Botón de toggle del panel lateral */
+.ito-sidebar-toggle {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s, left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.ito-sidebar-toggle:hover {
+  background: var(--color-surface-hover, #f1f5f9);
+  color: var(--color-primary);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
 }
 
 .ito-campus--mobile {
@@ -1120,6 +1157,252 @@ input {
   width: 1px;
   height: auto;
   margin: 8px 0;
+}
+
+.ito-nav-debug-label {
+  min-width: 120px;
+  max-width: 190px;
+  display: grid;
+  gap: 2px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--color-text);
+  font-family: Inter, sans-serif;
+  font-size: 11px;
+  line-height: 1.25;
+  text-align: left;
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+}
+
+.ito-nav-debug-label strong {
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: 11px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ito-nav-debug-label span {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ito-nav-debug-label--issue {
+  border-color: rgba(239, 68, 68, 0.32);
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.ito-nav-debug-label--issue strong {
+  color: #b91c1c;
+}
+
+.ito-nav-debug-label--draft {
+  border-color: rgba(249, 115, 22, 0.34);
+}
+
+.ito-nav-debug-label--draft strong {
+  color: #c2410c;
+}
+
+.ito-nav-debug-label--snap {
+  border-color: rgba(20, 184, 166, 0.34);
+}
+
+.ito-nav-debug-label--snap strong {
+  color: #0f766e;
+}
+
+.ito-draft-editor-panel {
+  width: 320px;
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid rgba(249, 115, 22, 0.28);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--color-text);
+  font-family: Inter, sans-serif;
+  font-size: 12px;
+  box-shadow: var(--shadow-md);
+}
+
+.ito-draft-editor-panel strong {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ito-draft-editor-panel span {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ito-draft-editor-panel__error {
+  color: var(--color-danger-text) !important;
+}
+
+.ito-draft-editor-panel__snap {
+  display: grid;
+  gap: 3px;
+  padding: 7px 8px;
+  border: 1px solid rgba(20, 184, 166, 0.22);
+  border-radius: 7px;
+  background: rgba(240, 253, 250, 0.88);
+}
+
+.ito-draft-editor-panel__snap span {
+  overflow: hidden;
+  color: #0f766e;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ito-draft-editor-panel__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.ito-draft-editor-panel__actions button {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 7px;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  background: #ffffff;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ito-draft-editor-panel__actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ito-draft-editor-panel textarea {
+  width: 100%;
+  height: 190px;
+  min-height: 0;
+  resize: vertical;
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 10px;
+  line-height: 1.35;
+  white-space: pre;
+}
+
+.ito-draft-editor-panel__tabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
+
+.ito-draft-editor-panel__tabs button {
+  padding: 5px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-family: Inter, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.ito-draft-editor-panel__tabs button.is-active {
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.32);
+  color: #1d4ed8;
+}
+
+.ito-draft-editor-panel__building-select {
+  width: 100%;
+  padding: 5px 7px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--color-text);
+  font-family: Inter, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ito-draft-editor-panel__edge-options {
+  display: grid;
+  gap: 5px;
+}
+
+.ito-draft-editor-panel__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-muted);
+  font-family: Inter, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ito-draft-editor-panel__edge-hint {
+  padding: 5px 7px;
+  border: 1px solid rgba(34, 197, 94, 0.28);
+  border-radius: 6px;
+  background: rgba(240, 253, 244, 0.9);
+  color: #15803d;
+  font-family: Inter, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ============================ ROUTE STATS ============================ */
+
+.ito-route-stats {
+  display: flex;
+  gap: 12px;
+  margin-top: 2px;
+  padding: 8px 12px;
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  border-radius: 8px;
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.ito-route-stats__item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ito-route-stats__sep {
+  width: 1px;
+  align-self: stretch;
+  background: rgba(34, 197, 94, 0.25);
+}
+
+.ito-route-stats__value {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Panel del editor temporal de rutas — overlay 2D fuera del Canvas */
+.ito-draft-panel-anchor {
+  position: absolute;
+  bottom: 12px;
+  right: 72px;
+  z-index: 20;
 }
 
 /* ============================ MAP LEGEND ============================ */

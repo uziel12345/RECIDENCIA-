@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPatch, apiPost, apiPut, apiUpload } from "./client.ts";
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut, apiUpload } from "./client.js";
 import type {
   Building,
   BuildingCategory,
@@ -6,7 +6,7 @@ import type {
   CreateBuildingInput,
   UpdateBuildingInput,
   UpdateBuildingStatusInput,
-} from "../types/building.types.ts";
+} from "../types/building.types.js";
 
 export type PaginatedBuildingsResponse = {
   data: Building[];

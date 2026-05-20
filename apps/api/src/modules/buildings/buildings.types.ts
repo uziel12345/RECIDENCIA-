@@ -14,6 +14,7 @@ export interface BuildingRow extends RowDataPacket {
   longitude: number | null;
   is_active: boolean | number;
   is_priority: boolean | number;
+  deleted_at: string | null;
   category_code: string;
   category_name: string;
   category_color: string | null;

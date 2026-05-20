@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
 import { CampusViewer } from "../../components/viewer/CampusViewer";
 import { BuildingSidebar } from "../buildings/components/BuildingSidebar";
@@ -11,6 +11,7 @@ import { MobileBottomSheet, type SheetState } from "./components/MobileBottomShe
 import { MobileQuickActions } from "./components/MobileQuickActions";
 import { MobileTopBar } from "./components/MobileTopBar";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import { ChevronLeftIcon, ChevronRightIcon } from "../shared/Icons";
 
 export function CampusPage() {
   const isMobile = useIsMobile();
@@ -47,12 +48,28 @@ export function CampusPage() {
   // ----------------------------------------------------------------------
   // Desktop layout
   // ----------------------------------------------------------------------
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const toggleSidebar = useCallback(() => setSidebarCollapsed((c) => !c), []);
+
   if (!isMobile) {
     return (
-      <div className="ito-campus">
-        <BuildingSidebar isMobile={false} />
+      <div
+        className="ito-campus"
+        style={{ gridTemplateColumns: sidebarCollapsed ? "0px 1fr" : "385px 1fr" }}
+      >
+        <div className="ito-sidebar-wrapper">
+          <BuildingSidebar isMobile={false} />
+        </div>
 
         <div className="ito-campus__viewer">
+          <button
+            type="button"
+            className="ito-sidebar-toggle"
+            onClick={toggleSidebar}
+            title={sidebarCollapsed ? "Mostrar panel" : "Ocultar panel"}
+          >
+            {sidebarCollapsed ? <ChevronRightIcon size={14} /> : <ChevronLeftIcon size={14} />}
+          </button>
           <CampusViewer isMobile={false} mobilePanelOpen={false} />
         </div>
       </div>

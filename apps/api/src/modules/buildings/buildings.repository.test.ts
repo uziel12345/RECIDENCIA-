@@ -277,6 +277,7 @@ describe("BuildingsRepository", () => {
 
     expect(db.query).toHaveBeenCalledWith(expect.any(String), [
       false,
+      false,
       "building-1",
     ]);
   });
@@ -290,6 +291,7 @@ describe("BuildingsRepository", () => {
 
     expect(db.query).toHaveBeenCalledWith(expect.any(String), ["building-1"]);
     expect(db.query.mock.calls[0][0]).toContain("SET is_active = FALSE");
+    expect(db.query.mock.calls[0][0]).toContain("deleted_at = NOW()");
   });
 
   it("findAllCategories returns categories", async () => {

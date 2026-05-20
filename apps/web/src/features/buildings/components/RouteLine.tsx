@@ -15,7 +15,11 @@
 import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import { Html, Line } from "@react-three/drei";
-import { getNavigationRouteApi } from "@ito-map/shared";
+import {
+  distanceToEstimatedSeconds,
+  getNavigationEdgeWeight,
+  getNavigationRouteApi,
+} from "@ito-map/shared";
 
 import { useBuildingStore } from "../../../store/building-store";
 import { useLocationStore } from "../../../store/location-store";
@@ -44,10 +48,12 @@ type RouteRenderData = {
   userStartPoint: THREE.Vector3;
   endPoint: THREE.Vector3;
   destinationName: string;
+  totalDistance: number;
+  estimatedSeconds: number;
 };
 
-// Altura suficiente para que la línea quede visible sobre los techos de los edificios
-const ROUTE_HEIGHT_OFFSET = 22;
+// Elevada sobre el modelo para que no quede oculta por techos o superficies 3D.
+const ROUTE_HEIGHT_OFFSET = 8;
 
 function distance3D(a: Position3D, b: Position3D): number {
   const dx = a.x - b.x;
@@ -82,17 +88,6 @@ function findNearestNode(
   return nearest;
 }
 
-function getEdgeWeight(edge: NavigationEdge): number {
-  let weight = Number(edge.distance);
-
-  if (edge.path_type === "stairs") weight *= 3.0;
-  if (edge.path_type === "ramp") weight *= 1.4;
-  if (edge.path_type === "outdoor") weight *= 1.2;
-  if (edge.path_type === "hallway") weight *= 0.85;
-
-  return weight;
-}
-
 function buildRoutePoints(
   mapPosition: Position3D,
   pathNodes: NavigationNode[]
@@ -117,7 +112,7 @@ function buildRoutePoints(
   );
 
   return {
-    routePoints: [userStartPoint, ...nodePoints],
+    routePoints: nodePoints,
     userStartPoint,
     endPoint: nodePoints[nodePoints.length - 1] ?? null,
   };
@@ -128,6 +123,8 @@ export function RouteLine() {
   const setCurrentRouteNodeIds = useBuildingStore(
     (state) => state.setCurrentRouteNodeIds
   );
+  const setRouteStats = useBuildingStore((state) => state.setRouteStats);
+  const setRouteError = useBuildingStore((state) => state.setRouteError);
 
   const mapPosition = useLocationStore((state) => state.mapPosition);
   const permission = useLocationStore((state) => state.permission);
@@ -187,7 +184,7 @@ export function RouteLine() {
       edges.map((edge) => ({
         from: edge.from_node_id,
         to: edge.to_node_id,
-        weight: getEdgeWeight(edge),
+        weight: getNavigationEdgeWeight(edge),
         bidirectional: edge.is_bidirectional,
       })),
     [edges]
@@ -199,16 +196,34 @@ export function RouteLine() {
     async function calculateRoute() {
       setRouteData(null);
 
-      if (
-        loading ||
-        !routeDestination ||
-        !mapPosition ||
-        permission !== "granted" ||
-        nodes.length === 0 ||
-        graphEdges.length === 0 ||
-        entrances.length === 0
-      ) {
+      if (loading || !routeDestination) {
         setCurrentRouteNodeIds([]);
+        return;
+      }
+
+      if (permission !== "granted") {
+        setCurrentRouteNodeIds([]);
+        setRouteStats(null);
+        setRouteError("Activa el permiso de ubicación para trazar la ruta.");
+        return;
+      }
+
+      if (!mapPosition) {
+        setCurrentRouteNodeIds([]);
+        setRouteStats(null);
+        setRouteError("Esperando tu ubicación actual para trazar la ruta.");
+        return;
+      }
+
+      if (nodes.length === 0 || graphEdges.length === 0) {
+        setCurrentRouteNodeIds([]);
+        setRouteError("No hay datos de navegación disponibles en el servidor.");
+        return;
+      }
+
+      if (entrances.length === 0) {
+        setCurrentRouteNodeIds([]);
+        setRouteError("Las entradas de edificios no están configuradas aún.");
         return;
       }
 
@@ -224,6 +239,7 @@ export function RouteLine() {
       if (!nearestNode) {
         console.warn("[RouteLine] No se encontró nodo cercano al usuario.");
         setCurrentRouteNodeIds([]);
+        setRouteError("No se pudo detectar tu posición en el mapa del campus.");
         return;
       }
 
@@ -243,11 +259,14 @@ export function RouteLine() {
           `[RouteLine] No se encontró entrada para el edificio: ${routeDestination.name}`
         );
         setCurrentRouteNodeIds([]);
+        setRouteError(`${routeDestination.name} no tiene una entrada configurada.`);
         return;
       }
 
       let pathNodeIds: string[] = [];
       let pathNodes: NavigationNode[] = [];
+      let totalDistance = 0;
+      let estimatedSeconds = 0;
 
       try {
         const backendRoute = await getNavigationRouteApi(
@@ -257,6 +276,8 @@ export function RouteLine() {
 
         pathNodeIds = backendRoute.node_ids;
         pathNodes = backendRoute.nodes;
+        totalDistance = backendRoute.total_distance ?? 0;
+        estimatedSeconds = backendRoute.estimated_seconds ?? 0;
 
         console.info("[RouteLine] Ruta calculada desde backend.");
       } catch (error) {
@@ -274,6 +295,16 @@ export function RouteLine() {
         pathNodes = pathNodeIds
           .map((id) => nodes.find((node) => node.id === id) ?? null)
           .filter((node): node is NavigationNode => node !== null);
+
+        // Calcular distancia local sumando segmentos
+        for (let i = 0; i < pathNodes.length - 1; i++) {
+          const a = pathNodes[i];
+          const b = pathNodes[i + 1];
+          const dx = Number(a.x) - Number(b.x);
+          const dz = Number(a.z) - Number(b.z);
+          totalDistance += Math.sqrt(dx * dx + dz * dz);
+        }
+        estimatedSeconds = distanceToEstimatedSeconds(totalDistance);
       }
 
       if (cancelled) return;
@@ -283,7 +314,9 @@ export function RouteLine() {
           `[RouteLine] Sin ruta de ${nearestNode.id} → ${destinationEntrance.node_id}`
         );
         setCurrentRouteNodeIds([]);
+        setRouteStats(null);
         setRouteData(null);
+        setRouteError("No se encontró una ruta disponible hacia este edificio.");
         return;
       }
 
@@ -298,11 +331,14 @@ export function RouteLine() {
 
       if (!endPoint || routePoints.length < 2) {
         setCurrentRouteNodeIds([]);
+        setRouteStats(null);
         setRouteData(null);
         return;
       }
 
       setCurrentRouteNodeIds(pathNodeIds);
+      setRouteStats({ totalDistance, estimatedSeconds });
+      setRouteError(null);
 
       setRouteData({
         routeNodeIds: pathNodeIds,
@@ -310,6 +346,16 @@ export function RouteLine() {
         userStartPoint,
         endPoint,
         destinationName: routeDestination.name,
+        totalDistance,
+        estimatedSeconds,
+      });
+
+      console.info("[RouteLine] Ruta lista para renderizar", {
+        destination: routeDestination.name,
+        nearestNode: nearestNode.code,
+        destinationNode: destinationEntrance.node_code,
+        points: routePoints.length,
+        totalDistance,
       });
     }
 
@@ -327,31 +373,51 @@ export function RouteLine() {
     graphEdges,
     entrances,
     setCurrentRouteNodeIds,
+    setRouteStats,
+    setRouteError,
   ]);
 
   if (!routeData) return null;
 
-  // Nodos intermedios (excluye inicio y fin que ya tienen su propia esfera)
+  // Nodos intermedios del grafo (excluye inicio y fin que ya tienen su propia esfera).
   const waypointPoints = routeData.routePoints.slice(1, -1);
 
   return (
     <>
-      <Line points={routeData.routePoints} color="#22c55e" lineWidth={4} />
+      <Line
+        points={routeData.routePoints}
+        color="#ffffff"
+        lineWidth={12}
+        transparent
+        opacity={0.9}
+        depthTest={false}
+        renderOrder={20}
+      />
+
+      <Line
+        points={routeData.routePoints}
+        color="#22c55e"
+        lineWidth={7}
+        transparent
+        opacity={1}
+        depthTest={false}
+        renderOrder={21}
+      />
 
       {waypointPoints.map((point, i) => (
         <mesh key={i} position={point}>
-          <sphereGeometry args={[0.7, 12, 12]} />
-          <meshStandardMaterial color="#16a34a" />
+          <sphereGeometry args={[0.45, 12, 12]} />
+          <meshStandardMaterial color="#15803d" />
         </mesh>
       ))}
 
-      <mesh position={routeData.userStartPoint}>
-        <sphereGeometry args={[1.2, 20, 20]} />
+      <mesh position={routeData.routePoints[0] ?? routeData.userStartPoint}>
+        <sphereGeometry args={[0.95, 20, 20]} />
         <meshStandardMaterial color="#22c55e" />
       </mesh>
 
       <mesh position={routeData.endPoint}>
-        <sphereGeometry args={[1.2, 20, 20]} />
+        <sphereGeometry args={[0.95, 20, 20]} />
         <meshStandardMaterial color="#ef4444" />
       </mesh>
 
