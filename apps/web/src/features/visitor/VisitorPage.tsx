@@ -14,7 +14,7 @@ import {
 } from "../campus/components/MobileBottomSheet";
 import { MobileQuickActions } from "../campus/components/MobileQuickActions";
 import { ROUTES } from "../../types/routes";
-import { UsersIcon, LogOutIcon, CompassIcon, InfoIcon } from "../shared/Icons";
+import { UsersIcon, LogOutIcon, CompassIcon, InfoIcon, ChevronLeftIcon, ChevronRightIcon } from "../shared/Icons";
 import { VisitorTopBar } from "./components/VisitorTopBar";
 import { QuickDestinations } from "./components/QuickDestinations";
 import {
@@ -93,10 +93,15 @@ export function VisitorPage() {
     ];
   }, [sheetState]);
 
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
   if (!isMobile) {
     return (
-      <div className="visitor-page">
-        <aside className="visitor-page__sidebar">
+      <div
+        className="visitor-page"
+        style={{ gridTemplateColumns: sidebarCollapsed ? "0px 1fr" : "380px 1fr" }}
+      >
+        <aside className="visitor-page__sidebar" style={{ overflow: "hidden", minWidth: 0 }}>
           <div className="visitor-page__sidebar-header">
             <div className="visitor-page__user">
               <div className="visitor-page__user-avatar">
@@ -148,7 +153,15 @@ export function VisitorPage() {
         </aside>
 
         <main className="visitor-page__main">
-          <div className="visitor-page__viewer">
+          <div className="visitor-page__viewer" style={{ position: "relative" }}>
+            <button
+              type="button"
+              className="ito-sidebar-toggle"
+              onClick={() => setSidebarCollapsed((c) => !c)}
+              title={sidebarCollapsed ? "Mostrar panel" : "Ocultar panel"}
+            >
+              {sidebarCollapsed ? <ChevronRightIcon size={14} /> : <ChevronLeftIcon size={14} />}
+            </button>
             <CampusViewer isMobile={false} mobilePanelOpen={false} />
           </div>
         </main>

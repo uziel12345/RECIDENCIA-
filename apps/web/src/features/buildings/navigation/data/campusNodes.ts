@@ -20,7 +20,7 @@ export const campusNodes: CampusNode[] = [
     x: 8,
     y: 0,
     z: 0,
-    neighbors: ["n-cruce-biblioteca-centro", "n-pasillo-cafeteria-1", "n-pasillo-l-1"],
+    neighbors: ["n-cruce-biblioteca-centro", "n-pasillo-cafeteria-1", "n-acceso-asesorias"],
   },
   {
     id: "n-cruce-biblioteca-centro",
@@ -48,14 +48,32 @@ export const campusNodes: CampusNode[] = [
     x: -1,
     y: 0,
     z: -88,
-    neighbors: ["n-pasillo-centro-1", "n-acceso-centro-computo", "n-pasillo-postgrado-1"],
+    neighbors: ["n-pasillo-centro-1", "n-acceso-centro-computo", "n-pasillo-central-oeste"],
+  },
+  {
+    // Nodo intermedio nuevo: rompe el tramo de 89u entre centro-2 y postgrado-1
+    // Evita que A* tome el camino recto que cruza toda la zona de posgrado
+    id: "n-pasillo-central-oeste",
+    x: -45,
+    y: 0,
+    z: -90,
+    neighbors: ["n-pasillo-centro-2", "n-pasillo-postgrado-1"],
   },
   {
     id: "n-acceso-centro-computo",
     x: 2,
     y: 0,
     z: -112,
-    neighbors: ["n-pasillo-centro-2", "n-pasillo-h-1", "n-cruce-sur-cc", "n-pasillo-doctorado-1"],
+    neighbors: ["n-pasillo-centro-2", "n-esquina-cc-h", "n-cruce-sur-cc", "n-pasillo-doctorado-1"],
+  },
+  {
+    // Nodo esquina nuevo: convierte la diagonal CC↔h-1 en recorrido en L
+    // CC(x=2,z=-112) → aquí(x=-30,z=-112) → h-1(x=-30,z=-60)
+    id: "n-esquina-cc-h",
+    x: -30,
+    y: 0,
+    z: -112,
+    neighbors: ["n-acceso-centro-computo", "n-pasillo-h-1"],
   },
   {
     // Movido al borde oeste del campus (antes x=-10, muy al centro, cruzaba E/F)
@@ -63,7 +81,7 @@ export const campusNodes: CampusNode[] = [
     x: -30,
     y: 0,
     z: -60,
-    neighbors: ["n-acceso-centro-computo", "n-pasillo-h-1b"],
+    neighbors: ["n-esquina-cc-h", "n-pasillo-h-1b"],
   },
   {
     // Nodo intermedio nuevo: cubre el tramo largo h-1 → h-2 por el borde oeste
@@ -87,7 +105,16 @@ export const campusNodes: CampusNode[] = [
     x: -42,
     y: 0,
     z: 74,
-    neighbors: ["n-pasillo-h-2", "n-acceso-h", "n-pasillo-i-1", "n-pasillo-f-1"],
+    neighbors: ["n-pasillo-h-2", "n-acceso-h", "n-pasillo-i-1", "n-cruce-h-f"],
+  },
+  {
+    // Nodo esquina nuevo: convierte la diagonal h-3↔f-1 en recorrido en L
+    // h-3(x=-42,z=74) → aquí(x=-4,z=74) → f-1(x=4,z=108)
+    id: "n-cruce-h-f",
+    x: -4,
+    y: 0,
+    z: 74,
+    neighbors: ["n-pasillo-h-3", "n-pasillo-f-1"],
   },
   {
     id: "n-acceso-h",
@@ -151,7 +178,7 @@ export const campusNodes: CampusNode[] = [
     x: 4,
     y: 0,
     z: 108,
-    neighbors: ["n-pasillo-e-1", "n-acceso-f", "n-pasillo-g-1", "n-pasillo-h-3"],
+    neighbors: ["n-pasillo-e-1", "n-acceso-f", "n-pasillo-g-1", "n-cruce-h-f"],
   },
   {
     id: "n-acceso-f",
@@ -314,7 +341,7 @@ export const campusNodes: CampusNode[] = [
     x: 6,
     y: 0,
     z: -16,
-    neighbors: ["n-acceso-biblioteca", "n-acceso-fisico-quimica", "n-acceso-l", "n-pasillo-x-1"],
+    neighbors: ["n-acceso-fisico-quimica", "n-acceso-l", "n-pasillo-x-1"],
   },
   {
     id: "n-acceso-l",
@@ -448,7 +475,7 @@ export const campusNodes: CampusNode[] = [
     x: -90,
     y: 0,
     z: -92,
-    neighbors: ["n-pasillo-1009-1", "n-acceso-postgrado", "n-acceso-lab-electrica", "n-pasillo-centro-2"],
+    neighbors: ["n-pasillo-central-oeste", "n-acceso-postgrado", "n-acceso-lab-electrica", "n-pasillo-1009-1"],
   },
   {
     id: "n-acceso-postgrado",
@@ -513,7 +540,7 @@ export const campusNodes: CampusNode[] = [
     id: "n-acceso-electronica",
     x: 54,
     y: 0,
-    z: -84,
+    z: -50,
     neighbors: ["n-pasillo-electronica-1"],
   },
   {
@@ -534,7 +561,7 @@ export const campusNodes: CampusNode[] = [
     id: "n-acceso-aulas-enie",
     x: 54,
     y: 0,
-    z: -148,
+    z: -107,
     neighbors: ["n-pasillo-audiovisual-post-1", "n-pasillo-quimica-bio-1"],
   },
   {
@@ -542,21 +569,23 @@ export const campusNodes: CampusNode[] = [
     x: 28,
     y: 0,
     z: -156,
-    neighbors: ["n-pasillo-doctorado-1", "n-acceso-quimica-bioquimica", "n-acceso-asesorias", "n-acceso-aulas-enie"],
+    neighbors: ["n-pasillo-doctorado-1", "n-acceso-quimica-bioquimica", "n-acceso-aulas-enie"],
   },
   {
     id: "n-acceso-quimica-bioquimica",
     x: 26,
     y: 0,
-    z: -168,
+    z: -127,
     neighbors: ["n-pasillo-quimica-bio-1"],
   },
   {
+    // Corregido: el edificio Asesorias está en campus_z≈-4 según GLB (antes z=-184, diff=180)
+    // Conectado a n-acceso-biblioteca (5.66u) en lugar de n-pasillo-quimica-bio-1 (152u)
     id: "n-acceso-asesorias",
-    x: 16,
+    x: 12,
     y: 0,
-    z: -184,
-    neighbors: ["n-pasillo-quimica-bio-1"],
+    z: -4,
+    neighbors: ["n-acceso-biblioteca"],
   },
   {
     // Reubicar sobre el eje del pasillo del doctorado (antes x=14,z=-86 — en medio del vacío)

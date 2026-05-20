@@ -1,10 +1,10 @@
-import { apiGet } from "./client.ts";
+import { apiGet } from "./client.js";
 import type {
   BuildingEntrance,
   NavigationEdge,
   NavigationNode,
   RouteResult,
-} from "../types/navigation.types.ts";
+} from "../types/navigation.types.js";
 
 export function getNavigationNodesApi(): Promise<NavigationNode[]> {
   return apiGet<NavigationNode[]>("/navigation/nodes");

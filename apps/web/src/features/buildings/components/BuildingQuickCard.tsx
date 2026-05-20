@@ -3,23 +3,13 @@ import { useBuildingStore } from "../../../store/building-store";
 import { useLocationStore } from "../../../store/location-store";
 import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
+import { resolveApiAssetUrl } from "../../../utils/resolve-api-asset-url";
 import type { Building } from "../types/building";
 
 type BuildingQuickCardProps = {
   building: Building;
   onOpenDetails: () => void;
 };
-
-function resolveImageUrl(url: string | null): string | null {
-  if (!url) return null;
-  if (url.startsWith("http://") || url.startsWith("https://")) return url;
-
-  const apiBaseUrl =
-    import.meta.env.VITE_API_URL || "http://localhost:3001/api";
-  const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, "");
-
-  return `${apiOrigin}${url.startsWith("/") ? "" : "/"}${url}`;
-}
 
 export function BuildingQuickCard({
   building,
@@ -34,7 +24,7 @@ export function BuildingQuickCard({
   const accentColor = building.category_color || accent.fg;
 
   const canRoute = permission === "granted" && mapPosition !== null;
-  const coverUrl = resolveImageUrl(building.cover_image_url);
+  const coverUrl = resolveApiAssetUrl(building.cover_image_url);
 
   return (
     <motion.div

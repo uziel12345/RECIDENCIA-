@@ -6,11 +6,30 @@ type RoutePanelProps = {
   compact?: boolean;
 };
 
+// Devuelve "" para ocultar el label cuando no hay distancia válida (distinto de shared formatDistance)
+function formatRouteDistance(meters: number): string {
+  if (!Number.isFinite(meters) || meters <= 0) return "";
+  if (meters < 1000) return `${Math.round(meters)} m`;
+  return `${(meters / 1000).toFixed(1)} km`;
+}
+
+function formatDuration(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "";
+  if (seconds < 60) return `${Math.round(seconds)} seg`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rem = minutes % 60;
+  return `${hours} h ${rem} min`;
+}
+
 export function RoutePanel({ compact = false }: RoutePanelProps) {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const routeDestination = useBuildingStore((state) => state.routeDestination);
   const setRouteDestination = useBuildingStore((state) => state.setRouteDestination);
   const clearRoute = useBuildingStore((state) => state.clearRoute);
+  const routeStats = useBuildingStore((state) => state.routeStats);
+  const routeError = useBuildingStore((state) => state.routeError);
 
   const permission = useLocationStore((state) => state.permission);
   const geoPosition = useLocationStore((state) => state.geoPosition);
@@ -18,6 +37,9 @@ export function RoutePanel({ compact = false }: RoutePanelProps) {
 
   const hasValidLocation = permission === "granted" && mapPosition !== null;
   const canGenerate = !!selectedBuilding && hasValidLocation;
+
+  const distanceLabel = routeStats ? formatRouteDistance(routeStats.totalDistance) : null;
+  const durationLabel = routeStats ? formatDuration(routeStats.estimatedSeconds) : null;
 
   const statusInfo = (() => {
     if (permission === "granted") {
@@ -118,6 +140,31 @@ export function RoutePanel({ compact = false }: RoutePanelProps) {
           </div>
         </div>
       </div>
+
+      {routeError && (
+        <div
+          className="ito-route-status ito-route-status--danger"
+          role="alert"
+          style={{ gap: 8 }}
+        >
+          <Icon name="alert" size={14} />
+          <span>{routeError}</span>
+        </div>
+      )}
+
+      {routeStats && distanceLabel && durationLabel && (
+        <div className="ito-route-stats" aria-label="Resumen de la ruta">
+          <div className="ito-route-stats__item">
+            <Icon name="clock" size={13} />
+            <span className="ito-route-stats__value">{durationLabel}</span>
+          </div>
+          <div className="ito-route-stats__sep" />
+          <div className="ito-route-stats__item">
+            <Icon name="route" size={13} />
+            <span className="ito-route-stats__value">{distanceLabel}</span>
+          </div>
+        </div>
+      )}
 
       <div className="ito-route-actions">
         <button

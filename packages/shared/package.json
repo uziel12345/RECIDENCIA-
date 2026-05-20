@@ -8,7 +8,13 @@
   "exports": {
     ".": {
       "types": "./src/index.ts",
-      "import": "./src/index.ts"
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./utils/navigation": {
+      "types": "./src/utils/navigation.utils.ts",
+      "import": "./src/utils/navigation.utils.ts",
+      "default": "./src/utils/navigation.utils.ts"
     }
   },
   "sideEffects": false

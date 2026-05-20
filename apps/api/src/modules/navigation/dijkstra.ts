@@ -13,6 +13,54 @@ export type PathResult = {
 
 type Graph = Map<string, Array<{ to: string; weight: number }>>;
 
+// Binary min-heap keyed by distance — O(log V) push/pop vs O(V) linear scan
+class MinHeap {
+  private heap: Array<{ nodeId: string; dist: number }> = [];
+
+  get size(): number {
+    return this.heap.length;
+  }
+
+  push(nodeId: string, dist: number): void {
+    this.heap.push({ nodeId, dist });
+    this.bubbleUp(this.heap.length - 1);
+  }
+
+  pop(): { nodeId: string; dist: number } | null {
+    if (this.heap.length === 0) return null;
+    const top = this.heap[0]!;
+    const last = this.heap.pop()!;
+    if (this.heap.length > 0) {
+      this.heap[0] = last;
+      this.sinkDown(0);
+    }
+    return top;
+  }
+
+  private bubbleUp(i: number): void {
+    while (i > 0) {
+      const parent = (i - 1) >> 1;
+      if (this.heap[parent]!.dist <= this.heap[i]!.dist) break;
+      [this.heap[parent], this.heap[i]] = [this.heap[i]!, this.heap[parent]!];
+      i = parent;
+    }
+  }
+
+  private sinkDown(i: number): void {
+    const n = this.heap.length;
+    for (;;) {
+      let smallest = i;
+      const left = 2 * i + 1;
+      const right = 2 * i + 2;
+      if (left < n && this.heap[left]!.dist < this.heap[smallest]!.dist) smallest = left;
+      if (right < n && this.heap[right]!.dist < this.heap[smallest]!.dist) smallest = right;
+      if (smallest === i) break;
+      [this.heap[smallest], this.heap[i]] = [this.heap[i]!, this.heap[smallest]!];
+      i = smallest;
+    }
+  }
+}
+
 function buildGraphFromEdges(edges: WeightedPathEdge[]): {
   graph: Graph;
   nodeIds: Set<string>;
@@ -34,18 +82,12 @@ function buildGraphFromEdges(edges: WeightedPathEdge[]): {
     nodeIds.add(edge.to);
 
     const fromList = graph.get(edge.from) ?? [];
-    fromList.push({
-      to: edge.to,
-      weight: edge.weight,
-    });
+    fromList.push({ to: edge.to, weight: edge.weight });
     graph.set(edge.from, fromList);
 
     if (edge.bidirectional) {
       const toList = graph.get(edge.to) ?? [];
-      toList.push({
-        to: edge.from,
-        weight: edge.weight,
-      });
+      toList.push({ to: edge.from, weight: edge.weight });
       graph.set(edge.to, toList);
     }
   }
@@ -74,90 +116,54 @@ export function findShortestPathFromEdges(
   edges: WeightedPathEdge[]
 ): PathResult {
   if (!startNodeId || !endNodeId) {
-    return {
-      nodeIds: [],
-      totalWeight: 0,
-      found: false,
-    };
+    return { nodeIds: [], totalWeight: 0, found: false };
   }
 
   if (startNodeId === endNodeId) {
-    return {
-      nodeIds: [startNodeId],
-      totalWeight: 0,
-      found: true,
-    };
+    return { nodeIds: [startNodeId], totalWeight: 0, found: true };
   }
 
   const { graph, nodeIds } = buildGraphFromEdges(edges);
 
   if (!nodeIds.has(startNodeId) || !nodeIds.has(endNodeId)) {
-    return {
-      nodeIds: [],
-      totalWeight: 0,
-      found: false,
-    };
+    return { nodeIds: [], totalWeight: 0, found: false };
   }
 
   const distances = new Map<string, number>();
   const previous = new Map<string, string | null>();
-  const unvisited = new Set<string>();
 
   for (const nodeId of nodeIds) {
     distances.set(nodeId, Infinity);
     previous.set(nodeId, null);
-    unvisited.add(nodeId);
   }
-
   distances.set(startNodeId, 0);
 
-  while (unvisited.size > 0) {
-    let currentNodeId: string | null = null;
-    let currentMinDistance = Infinity;
+  const heap = new MinHeap();
+  heap.push(startNodeId, 0);
 
-    for (const nodeId of unvisited) {
-      const distance = distances.get(nodeId) ?? Infinity;
+  while (heap.size > 0) {
+    const { nodeId: currentNodeId, dist: currentDist } = heap.pop()!;
 
-      if (distance < currentMinDistance) {
-        currentMinDistance = distance;
-        currentNodeId = nodeId;
-      }
-    }
-
-    if (currentNodeId === null || currentMinDistance === Infinity) {
-      break;
-    }
+    // Lazy deletion: stale entry for a node already settled with a shorter path
+    if (currentDist > (distances.get(currentNodeId) ?? Infinity)) continue;
 
     if (currentNodeId === endNodeId) {
       return {
         nodeIds: reconstructPath(previous, endNodeId),
-        totalWeight: currentMinDistance,
+        totalWeight: currentDist,
         found: true,
       };
     }
 
-    unvisited.delete(currentNodeId);
-
-    const neighbors = graph.get(currentNodeId) ?? [];
-
-    for (const neighbor of neighbors) {
-      if (!unvisited.has(neighbor.to)) {
-        continue;
-      }
-
-      const tentativeDistance =
-        (distances.get(currentNodeId) ?? Infinity) + neighbor.weight;
-
-      if (tentativeDistance < (distances.get(neighbor.to) ?? Infinity)) {
-        distances.set(neighbor.to, tentativeDistance);
+    for (const neighbor of graph.get(currentNodeId) ?? []) {
+      const tentative = currentDist + neighbor.weight;
+      if (tentative < (distances.get(neighbor.to) ?? Infinity)) {
+        distances.set(neighbor.to, tentative);
         previous.set(neighbor.to, currentNodeId);
+        heap.push(neighbor.to, tentative);
       }
     }
   }
 
-  return {
-    nodeIds: [],
-    totalWeight: 0,
-    found: false,
-  };
+  return { nodeIds: [], totalWeight: 0, found: false };
 }

@@ -69,7 +69,12 @@ const storage = multer.diskStorage({
     file: UploadedFileInfo,
     callback: FilenameCallback
   ) => {
-    const extension = path.extname(file.originalname).toLowerCase();
+    const mimeToExt: Record<string, string> = {
+      "image/jpeg": ".jpg",
+      "image/png": ".png",
+      "image/webp": ".webp",
+    };
+    const extension = mimeToExt[file.mimetype] ?? ".jpg";
     const safeFileName = `${crypto.randomUUID()}${extension}`;
 
     callback(null, safeFileName);

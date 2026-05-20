@@ -1,11 +1,11 @@
-export * from "./types/api.types.ts";
-export * from "./types/building.types.ts";
-export * from "./types/navigation.types.ts";
-export * from "./types/auth.types.ts";
+export * from "./types/api.types.js";
+export * from "./types/building.types.js";
+export * from "./types/navigation.types.js";
+export * from "./types/auth.types.js";
 
-export * from "./utils/navigation.utils.ts";
+export * from "./utils/navigation.utils.js";
 
-export * from "./api/client.ts";
-export * from "./api/buildings.api.ts";
-export * from "./api/navigation.api.ts";
-export * from "./api/auth.api.ts";
+export * from "./api/client.js";
+export * from "./api/buildings.api.js";
+export * from "./api/navigation.api.js";
+export * from "./api/auth.api.js";
