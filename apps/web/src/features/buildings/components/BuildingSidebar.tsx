@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useBuildingStore } from "../../../store/building-store";
 import { useLocationStore } from "../../../store/location-store";
+import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { RoutePanel } from "./RoutePanel";
 import { getBuildings } from "../../../services/buildings.service";
 import { BuildingSearch } from "./BuildingSearch";
@@ -27,6 +28,45 @@ function getBuildingDescription(building: Building): string {
   return `Ubicación del campus relacionada con ${building.category_name}.`;
 }
 
+function getBuildingSearchAliases(building: Building): string {
+  const category = normalizeSearchText(building.category_name);
+  const code = normalizeSearchText(building.code);
+  const name = normalizeSearchText(building.name);
+  const aliases: string[] = [];
+
+  if (category.includes("servicio") || code.includes("ase")) {
+    aliases.push(
+      "tramite tramites constancia constancias kardex documentos inscripcion reinscripcion control escolar servicios escolares becas pagos atencion estudiante"
+    );
+  }
+
+  if (category.includes("aula") || /^([a-z]|x|x001)$/i.test(building.code)) {
+    aliases.push("aula aulas salon salones clase clases maestro materia horario");
+  }
+
+  if (category.includes("laboratorio") || name.includes("laboratorio")) {
+    aliases.push(
+      "laboratorio laboratorios practica practicas computo investigacion equipo taller"
+    );
+  }
+
+  if (category.includes("biblioteca") || code.includes("bib")) {
+    aliases.push("biblioteca libro libros prestamo consulta estudio estudiar");
+  }
+
+  if (category.includes("administrativo")) {
+    aliases.push(
+      "direccion administracion oficina oficinas coordinacion finanzas pagos recursos humanos"
+    );
+  }
+
+  if (name.includes("cafeteria") || code.includes("caf")) {
+    aliases.push("cafeteria cafe comida alimentos bebidas");
+  }
+
+  return aliases.join(" ");
+}
+
 type BuildingSidebarProps = {
   isMobile?: boolean;
   onItemSelected?: (building: Building) => void;
@@ -38,12 +78,17 @@ export function BuildingSidebar({
   onItemSelected,
 }: BuildingSidebarProps) {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
+  const routeDestination = useBuildingStore((state) => state.routeDestination);
   const setSelectedBuilding = useBuildingStore(
     (state) => state.setSelectedBuilding
   );
   const searchTerm = useBuildingStore((state) => state.searchTerm);
   const permission = useLocationStore((state) => state.permission);
   const mapPosition = useLocationStore((state) => state.mapPosition);
+  const canUseRoutes = useAdminAuthStore(
+    (state) => state.isAuthenticated && state.user?.role === "superadmin"
+  );
+  const isPublicDesktop = !isMobile && !canUseRoutes;
 
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,6 +156,7 @@ export function BuildingSidebar({
           building.model_node_name,
           building.category_code,
           building.category_name,
+          getBuildingSearchAliases(building),
         ]
           .map(normalizeSearchText)
           .join(" ");
@@ -143,9 +189,13 @@ export function BuildingSidebar({
 
   return (
     <aside
-      className={isMobile ? "ito-sidebar ito-sidebar--mobile" : "ito-sidebar"}
+      className={
+        isMobile
+          ? "ito-sidebar ito-sidebar--mobile"
+          : `ito-sidebar${isPublicDesktop ? " ito-sidebar--public" : ""}`
+      }
     >
-      {!isMobile && (
+      {!isMobile && canUseRoutes && (
         <header className="ito-brand">
           <div className="ito-brand__mark" aria-hidden="true">
             <Icon name="map" size={22} />
@@ -172,7 +222,19 @@ export function BuildingSidebar({
         </header>
       )}
 
-      {!isMobile && (
+      {isPublicDesktop && (
+        <header className="ito-public-search-head">
+          <div className="ito-public-search-head__icon" aria-hidden="true">
+            <Icon name="search" size={20} />
+          </div>
+          <div>
+            <h2>Busca en el campus</h2>
+            <p>Edificios, aulas, tramites y servicios escolares.</p>
+          </div>
+        </header>
+      )}
+
+      {!isMobile && canUseRoutes && (
         <div className="ito-quick-stats" role="list">
           <div className="ito-quick-stat" role="listitem">
             <span className="ito-quick-stat__value">{totalActive}</span>
@@ -203,7 +265,7 @@ export function BuildingSidebar({
         <BuildingSearch />
       </div>
 
-      {categories.length > 0 && (
+      {!isMobile && canUseRoutes && categories.length > 0 && (
         <div className="ito-sidebar__section">
           <div
             className="ito-chip-row"
@@ -270,9 +332,9 @@ export function BuildingSidebar({
         </div>
       )}
 
-      {selectedBuilding && (
+      {(selectedBuilding || routeDestination) && (
         <div className="ito-sidebar__section">
-          <RoutePanel compact={isMobile} />
+          <RoutePanel compact={isMobile} canUseDemo={canUseRoutes} />
         </div>
       )}
 

@@ -1,4 +1,5 @@
 import { useBuildingStore } from "../../../store/building-store";
+import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { getBuildings } from "../../../services/buildings.service";
 import { useEffect, useState } from "react";
 import type { Building } from "../../buildings/types/building";
@@ -78,6 +79,9 @@ export function QuickDestinations({ compact = false, onSelect }: QuickDestinatio
   const [buildings, setBuildings] = useState<Building[]>([]);
   const setSelectedBuilding = useBuildingStore((s) => s.setSelectedBuilding);
   const setRouteDestination = useBuildingStore((s) => s.setRouteDestination);
+  const canUseRoutes = useAdminAuthStore(
+    (state) => state.isAuthenticated && state.user?.role === "superadmin"
+  );
 
   useEffect(() => {
     getBuildings().then(setBuildings);
@@ -90,7 +94,9 @@ export function QuickDestinations({ compact = false, onSelect }: QuickDestinatio
     
     if (building) {
       setSelectedBuilding(building);
-      setRouteDestination(building);
+      if (canUseRoutes) {
+        setRouteDestination(building);
+      }
       onSelect?.();
     }
   };

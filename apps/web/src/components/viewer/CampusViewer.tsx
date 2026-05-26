@@ -5,8 +5,12 @@ import type { Mesh, MeshBasicMaterial, RingGeometry } from "three";
 import type { Building } from "../../features/buildings/types/building";
 import { useLocationStore } from "../../store/location-store";
 import { useBuildingStore } from "../../store/building-store";
+import { useAdminAuthStore } from "../../store/admin-auth-store";
 import { getBuildings } from "../../services/buildings.service";
-import { startUserLocationTracking } from "../../features/location/services/geolocation";
+import {
+  startUserLocationTracking,
+  stopUserLocationTracking,
+} from "../../features/location/services/geolocation";
 import { RouteLine } from "../../features/buildings/components/RouteLine";
 import { Icon, type IconName } from "../ui/Icons";
 import { getCategoryAccent } from "../ui/categoryAccent";
@@ -16,6 +20,7 @@ import {
   useDraftEditor,
 } from "./NavigationDraftEditorLayer";
 import { NavigationDebugLayer } from "./NavigationDebugLayer";
+import { DestinationBuildingHighlight } from "./DestinationBuildingHighlight";
 
 const MODEL_PATH = "/models/campus.glb";
 
@@ -31,6 +36,7 @@ type FocusPoint = {
 type CampusViewerProps = {
   isMobile?: boolean;
   mobilePanelOpen?: boolean;
+  enableAdminTools?: boolean;
 };
 
 type NavigationDebugMode = "hidden" | "all" | "issues";
@@ -123,7 +129,7 @@ function UserLocationMarker() {
               boxShadow: "0 4px 10px rgba(15, 23, 42, 0.16)",
             }}
           >
-            Ubicación aproximada
+            UbicaciÃ³n aproximada
           </div>
         </Html>
       )}
@@ -292,6 +298,12 @@ function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
 function CampusModel() {
   const { scene } = useGLTF(MODEL_PATH);
 
+  useMemo(() => {
+    scene.traverse((child) => {
+      if (child.name.startsWith("NavMesh")) child.visible = false;
+    });
+  }, [scene]);
+
   return <primitive object={scene} />;
 }
 
@@ -304,6 +316,7 @@ type ViewerToolbarProps = {
   onZoom: (delta: number) => void;
   onToggleNavigationDebug: () => void;
   onToggleDraftEditor: () => void;
+  canUseAdvancedTools?: boolean;
   isMobile?: boolean;
 };
 
@@ -316,6 +329,7 @@ function ViewerToolbar({
   onZoom,
   onToggleNavigationDebug,
   onToggleDraftEditor,
+  canUseAdvancedTools = false,
   isMobile = false,
 }: ViewerToolbarProps) {
   const showNavigationDebug = navigationDebugMode !== "hidden";
@@ -324,7 +338,7 @@ function ViewerToolbar({
       ? "Depurar rutas"
       : navigationDebugMode === "all"
         ? "Ver solo problemas"
-        : "Ocultar depuración";
+        : "Ocultar depuraciÃ³n";
 
   return (
     <div
@@ -338,8 +352,8 @@ function ViewerToolbar({
           hasLocation ? "ito-toolbar__btn--accent" : ""
         }`}
         onClick={onFocusUser}
-        aria-label="Centrar en mi ubicación"
-        title={hasLocation ? "Centrar en mi ubicación" : "Esperando ubicación…"}
+        aria-label="Centrar en mi ubicaciÃ³n"
+        title={hasLocation ? "Centrar en mi ubicaciÃ³n" : "Esperando ubicaciÃ³nâ€¦"}
         disabled={!hasLocation}
       >
         <Icon name="crosshair" size={18} />
@@ -379,27 +393,31 @@ function ViewerToolbar({
         <Icon name="home" size={18} />
       </button>
 
-      <button
-        type="button"
-        className={`ito-toolbar__btn ${showNavigationDebug ? "is-active" : ""}`}
-        onClick={onToggleNavigationDebug}
-        aria-label="Mostrar nodos y rutas de depuración"
-        aria-pressed={showNavigationDebug}
-        title={debugTitle}
-      >
-        <Icon name="layers" size={18} />
-      </button>
+      {canUseAdvancedTools && (
+        <>
+          <button
+            type="button"
+            className={`ito-toolbar__btn ${showNavigationDebug ? "is-active" : ""}`}
+            onClick={onToggleNavigationDebug}
+            aria-label="Mostrar nodos y rutas de depuracion"
+            aria-pressed={showNavigationDebug}
+            title={debugTitle}
+          >
+            <Icon name="layers" size={18} />
+          </button>
 
-      <button
-        type="button"
-        className={`ito-toolbar__btn ${draftEditorActive ? "is-active" : ""}`}
-        onClick={onToggleDraftEditor}
-        aria-label="Dibujar ruta temporal"
-        aria-pressed={draftEditorActive}
-        title={draftEditorActive ? "Salir del editor temporal" : "Dibujar ruta"}
-      >
-        <Icon name="edit" size={17} />
-      </button>
+          <button
+            type="button"
+            className={`ito-toolbar__btn ${draftEditorActive ? "is-active" : ""}`}
+            onClick={onToggleDraftEditor}
+            aria-label="Dibujar ruta temporal"
+            aria-pressed={draftEditorActive}
+            title={draftEditorActive ? "Salir del editor temporal" : "Dibujar ruta"}
+          >
+            <Icon name="edit" size={17} />
+          </button>
+        </>
+      )}
     </div>
   );
 }
@@ -442,8 +460,8 @@ function CategoryLegend({ buildings }: CategoryLegendProps) {
   if (items.length === 0) return null;
 
   return (
-    <div className="ito-legend anim-fade-in" aria-label="Leyenda de categorías">
-      <div className="ito-legend__title">Categorías</div>
+    <div className="ito-legend anim-fade-in" aria-label="Leyenda de categorÃ­as">
+      <div className="ito-legend__title">CategorÃ­as</div>
 
       <div className="ito-legend__items">
         {items.map((item) => (
@@ -474,7 +492,7 @@ function ViewerLoading() {
     <div className="ito-viewer-loading" aria-live="polite" aria-busy="true">
       <div className="ito-viewer-loading__inner">
         <div className="ito-viewer-loading__spinner" aria-hidden="true" />
-        <div className="ito-viewer-loading__title">Cargando campus 3D…</div>
+        <div className="ito-viewer-loading__title">Cargando campus 3Dâ€¦</div>
         <div className="ito-viewer-loading__subtitle">
           Preparando tu mapa interactivo
         </div>
@@ -486,12 +504,22 @@ function ViewerLoading() {
 export function CampusViewer({
   isMobile = false,
   mobilePanelOpen = false,
+  enableAdminTools = false,
 }: CampusViewerProps) {
   // OrbitControls ref type from @react-three/drei uses three-stdlib internals
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const controlsRef = useRef<any>(null);
   const mapPosition = useLocationStore((state) => state.mapPosition);
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
+  const routeDestination = useBuildingStore((state) => state.routeDestination);
+  const adminUser = useAdminAuthStore((state) => state.user);
+  const isAdminAuthenticated = useAdminAuthStore(
+    (state) => state.isAuthenticated
+  );
+  const canUseAdvancedTools =
+    isAdminAuthenticated &&
+    (adminUser?.role === "superadmin" ||
+      (enableAdminTools && adminUser?.role === "admin"));
 
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [focus, setFocus] = useState<FocusPoint | null>(null);
@@ -502,8 +530,15 @@ export function CampusViewer({
   const draftEditor = useDraftEditor();
 
   useEffect(() => {
+    if (canUseAdvancedTools) return;
+    setNavigationDebugMode("hidden");
+    setDraftEditorActive(false);
+  }, [canUseAdvancedTools]);
+
+  useEffect(() => {
     getBuildings().then(setBuildings);
     startUserLocationTracking({ isMobile });
+    return () => stopUserLocationTracking();
   }, [isMobile]);
 
   useEffect(() => {
@@ -554,6 +589,14 @@ export function CampusViewer({
       z: selectedBuilding.z,
     });
   }, [selectedBuilding]);
+
+  useEffect(() => {
+    if (!routeDestination || !mapPosition || !controlsRef.current) return;
+
+    const controls = controlsRef.current;
+    controls.target.set(mapPosition.x, 0, mapPosition.z);
+    controls.update();
+  }, [routeDestination, mapPosition]);
 
   useEffect(() => {
     if (buildings.length > 0) {
@@ -632,15 +675,18 @@ export function CampusViewer({
           onToggleDraftEditor={() =>
             setDraftEditorActive((current) => !current)
           }
+          canUseAdvancedTools={canUseAdvancedTools}
           isMobile={isMobile}
         />
       )}
 
-      {!isMobile && !mobilePanelOpen && <CategoryLegend buildings={buildings} />}
+      {canUseAdvancedTools && !isMobile && !mobilePanelOpen && (
+        <CategoryLegend buildings={buildings} />
+      )}
 
       {isModelLoading && <ViewerLoading />}
 
-      {draftEditorActive && (
+      {canUseAdvancedTools && draftEditorActive && (
         <div className="ito-draft-panel-anchor">
           <NavigationDraftEditorPanel
             controls={draftEditor}
@@ -683,16 +729,19 @@ export function CampusViewer({
         <Suspense fallback={null}>
           <group rotation={[0, CAMPUS_ROTATION_Y, 0]}>
             <CampusModel />
-            {showNavigationDebug && (
+            {canUseAdvancedTools && showNavigationDebug && (
               <NavigationDebugLayer
                 showOnlyIssues={navigationDebugMode === "issues"}
               />
             )}
-            <NavigationDraftEditorLayer
-              active={draftEditorActive}
-              controls={draftEditor}
-            />
+            {canUseAdvancedTools && (
+              <NavigationDraftEditorLayer
+                active={draftEditorActive}
+                controls={draftEditor}
+              />
+            )}
             <RouteLine />
+            <DestinationBuildingHighlight />
             <UserLocationMarker />
             {!hideBuildingLabels && (
               <BuildingLabels buildings={buildings} isMobile={isMobile} />
@@ -705,3 +754,5 @@ export function CampusViewer({
 }
 
 useGLTF.preload(MODEL_PATH);
+
+

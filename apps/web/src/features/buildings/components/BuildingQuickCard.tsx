@@ -122,7 +122,7 @@ export function BuildingQuickCard({
             style={{ background: accentColor, borderColor: accentColor }}
           >
             <Icon name="route" size={16} />
-            <span>{canRoute ? "Trazar ruta" : "Ver ruta"}</span>
+            <span>Como llegar</span>
             <Icon name="arrow-right" size={14} />
           </button>
         </div>

@@ -1,6 +1,7 @@
 {
   "name": "api",
   "version": "1.0.0",
+  "type": "module",
   "description": "Backend API para mapa 3D del Instituto Tecnológico de Oaxaca",
   "main": "src/server.ts",
   "scripts": {

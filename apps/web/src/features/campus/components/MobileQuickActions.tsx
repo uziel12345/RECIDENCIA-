@@ -1,4 +1,5 @@
 import { Icon, type IconName } from "../../../components/ui/Icons";
+import type { CSSProperties } from "react";
 
 type Action = {
   id: string;
@@ -36,7 +37,10 @@ function getButtonClassName(action: Action) {
 export function MobileQuickActions({ actions }: MobileQuickActionsProps) {
   return (
     <nav className="ito-mobile-bar" aria-label="Navegación rápida móvil">
-      <div className="ito-mobile-bar__inner">
+      <div
+        className="ito-mobile-bar__inner"
+        style={{ "--mobile-action-count": actions.length } as CSSProperties}
+      >
         {actions.map((action) => (
           <button
             key={action.id}

@@ -120,6 +120,7 @@ export function applyManualCalibration(input: {
   targetZ: number;
 }): void {
   const {
+    setPermission,
     setManualCalibration,
     setMapPosition,
     setIsLowAccuracy,
@@ -139,8 +140,9 @@ export function applyManualCalibration(input: {
     z: input.targetZ,
   });
 
+  setPermission("granted");
   setIsLowAccuracy(false);
-  setErrorMessage(`Ubicación calibrada manualmente en ${input.buildingName}.`);
+  setErrorMessage(null);
 }
 
 export function clearManualCalibration(): void {

@@ -3,9 +3,18 @@ import { Html, Line } from "@react-three/drei";
 import { useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import type { Building, EdgePathType, NavigationNode } from "@ito-map/shared";
-import { getNavigationNodes } from "../../services/navigation.service";
+import {
+  createBuildingEntrance,
+  createNavigationEdge,
+  createNavigationNode,
+  deleteNavigationEdge,
+  deleteNavigationNode,
+  getNavigationEdges,
+  getNavigationNodes,
+  type NavigationEdge,
+} from "../../services/navigation.service";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 type PathNodeItem =
   | { kind: "new"; id: number; x: number; z: number }
@@ -33,9 +42,13 @@ export type DraftEditorControls = {
   entranceNodes: DraftEntranceNode[];
   draftSql: string;
   availableNodes: NavigationNode[];
+  availableEdges: NavigationEdge[];
   selectedBuilding: { id: string; name: string } | null;
   edgePathType: EdgePathType;
   edgeBidirectional: boolean;
+  saving: boolean;
+  saveError: string | null;
+  saveMessage: string | null;
   canFinalizePath: boolean;
   setNodeType: (type: "path" | "entrance") => void;
   setSelectedBuilding: (b: { id: string; name: string } | null) => void;
@@ -44,11 +57,14 @@ export type DraftEditorControls = {
   extendPath: (item: PathNodeItem) => void;
   finalizePath: () => void;
   addEntranceNode: (x: number, z: number) => void;
+  saveDraftToDatabase: () => Promise<void>;
+  deleteExistingNode: (id: string) => Promise<void>;
+  deleteExistingEdge: (id: string) => Promise<void>;
   undoLast: () => void;
   clearDraft: () => void;
 };
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const DRAFT_Y = 3.1;
 const DRAFT_PLANE_SIZE = 520;
@@ -63,7 +79,7 @@ const EDGE_PATH_LABELS: Record<EdgePathType, string> = {
   stairs: "Escaleras",
 };
 
-// ─── SQL generation ───────────────────────────────────────────────────────────
+// â”€â”€â”€ SQL generation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function sqlStr(value: string): string {
   return `'${value.replaceAll("'", "''")}'`;
@@ -163,7 +179,7 @@ function buildDraftSql(
       `\n-- Nodos de acceso a edificio (${entranceNodes.length})\nINSERT INTO navigation_nodes\n  (code, name, node_type, x, y, z, floor_level, is_walkable, is_active, metadata)\nVALUES\n${values}\nON DUPLICATE KEY UPDATE\n  node_type = VALUES(node_type), x = VALUES(x), y = VALUES(y), z = VALUES(z),\n  is_active = 1, updated_at = CURRENT_TIMESTAMP;`
     );
 
-    // Auto-conectar entrada al nodo de camino más cercano
+    // Auto-conectar entrada al nodo de camino mÃ¡s cercano
     const allPathNodes: { code: string; x: number; z: number }[] = [];
     allPaths.forEach((path, pi) => {
       const codeMap = buildNodeCodeMap(path, pi);
@@ -173,7 +189,7 @@ function buildDraftSql(
     });
 
     if (allPathNodes.length > 0) {
-      parts.push(`\n-- Conexión entrada → nodo de camino más cercano`);
+      parts.push(`\n-- ConexiÃ³n entrada â†’ nodo de camino mÃ¡s cercano`);
       entranceNodes.forEach((en, i) => {
         const ec = entranceCode(i);
         let nearest: { code: string; dist: number } | null = null;
@@ -202,7 +218,7 @@ function buildDraftSql(
   return parts.join("\n");
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function round4(v: number): number {
   return Number(v.toFixed(4));
@@ -221,6 +237,11 @@ export function useDraftEditor(): DraftEditorControls {
   const [edgePathType, setEdgePathTypeState] = useState<EdgePathType>("walkway");
   const [edgeBidirectional, setEdgeBidirectionalState] = useState(true);
   const [availableNodes, setAvailableNodes] = useState<NavigationNode[]>([]);
+  const [availableEdges, setAvailableEdges] = useState<NavigationEdge[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   // Carga nodos existentes de la BD mientras se dibuja en modo camino
   useEffect(() => {
@@ -233,13 +254,16 @@ export function useDraftEditor(): DraftEditorControls {
       return;
     }
 
-    getNavigationNodes().then((nodes) => {
-      if (!cancelled) setAvailableNodes(nodes.filter((n) => n.is_active));
+    Promise.all([getNavigationNodes(), getNavigationEdges()]).then(([nodes, edges]) => {
+      if (!cancelled) {
+        setAvailableNodes(nodes.filter((n) => n.is_active));
+        setAvailableEdges(edges.filter((e) => e.is_active));
+      }
     });
     return () => {
       cancelled = true;
     };
-  }, [nodeType]);
+  }, [nodeType, refreshKey]);
 
   const draftSql = useMemo(
     () => buildDraftSql(completedPaths, activePath, entranceNodes),
@@ -296,6 +320,145 @@ export function useDraftEditor(): DraftEditorControls {
     ]);
   }
 
+  async function saveDraftToDatabase() {
+    const allPaths = activePath ? [...completedPaths, activePath] : completedPaths;
+    const hasPaths = allPaths.some((path) => path.nodes.length > 0);
+    const hasEntrances = entranceNodes.length > 0;
+    if (!hasPaths && !hasEntrances) return;
+
+    setSaving(true);
+    setSaveError(null);
+    setSaveMessage(null);
+
+    try {
+      const savedPathNodes: { id: string; x: number; z: number }[] = [];
+
+      for (let pi = 0; pi < allPaths.length; pi++) {
+        const path = allPaths[pi];
+        const resolved = new Map<number, { id: string; x: number; z: number }>();
+
+        for (let ni = 0; ni < path.nodes.length; ni++) {
+          const node = path.nodes[ni];
+          if (node.kind === "existing") {
+            const item = { id: node.nodeId, x: node.x, z: node.z };
+            resolved.set(ni, item);
+            savedPathNodes.push(item);
+          } else {
+            const created = await createNavigationNode({
+              code: `nav-p${pi + 1}-n${ni + 1}-${Date.now().toString(36)}`,
+              name: `Camino ${pi + 1} nodo ${ni + 1}`,
+              node_type: "intersection",
+              x: node.x,
+              y: 0,
+              z: node.z,
+              metadata: { source: "admin-editor" },
+            });
+            const item = { id: created.id, x: Number(created.x), z: Number(created.z) };
+            resolved.set(ni, item);
+            savedPathNodes.push(item);
+          }
+        }
+
+        for (let ni = 0; ni < path.nodes.length - 1; ni++) {
+          const from = resolved.get(ni);
+          const to = resolved.get(ni + 1);
+          if (!from || !to) continue;
+
+          await createNavigationEdge({
+            from_node_id: from.id,
+            to_node_id: to.id,
+            path_type: path.pathType,
+            is_bidirectional: path.isBidirectional,
+            is_accessible: true,
+            metadata: { source: "admin-editor" },
+          });
+        }
+      }
+
+      for (const entrance of entranceNodes) {
+        const created = await createNavigationNode({
+          code: `nav-access-${Date.now().toString(36)}-${entrance.id}`,
+          name: `Acceso ${entrance.buildingName}`,
+          node_type: "building_access",
+          x: entrance.x,
+          y: 0,
+          z: entrance.z,
+          metadata: {
+            source: "admin-editor",
+            building_id: entrance.buildingId,
+          },
+        });
+
+        await createBuildingEntrance({
+          building_id: entrance.buildingId,
+          node_id: created.id,
+          entrance_name: `Acceso ${entrance.buildingName}`,
+          entrance_type: "main",
+          is_primary: false,
+          is_accessible: true,
+        });
+
+        const nearest = savedPathNodes.reduce<{
+          id: string;
+          distance: number;
+        } | null>((current, node) => {
+          const distance = Math.hypot(entrance.x - node.x, entrance.z - node.z);
+          if (!current || distance < current.distance) return { id: node.id, distance };
+          return current;
+        }, null);
+
+        if (nearest) {
+          await createNavigationEdge({
+            from_node_id: created.id,
+            to_node_id: nearest.id,
+            path_type: "walkway",
+            is_bidirectional: true,
+            is_accessible: true,
+            metadata: { source: "admin-editor", auto_connected: true },
+          });
+        }
+      }
+
+      clearDraft();
+      setRefreshKey((value) => value + 1);
+      setSaveMessage("Cambios guardados en la base de datos.");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "No se pudo guardar");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteExistingNode(id: string) {
+    if (!id) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await deleteNavigationNode(id);
+      setRefreshKey((value) => value + 1);
+      setSaveMessage("Nodo desactivado.");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "No se pudo eliminar el nodo");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteExistingEdge(id: string) {
+    if (!id) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await deleteNavigationEdge(id);
+      setRefreshKey((value) => value + 1);
+      setSaveMessage("Arista desactivada.");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "No se pudo eliminar la arista");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function undoLast() {
     if (activePath) {
       if (activePath.nodes.length <= 1) {
@@ -323,9 +486,13 @@ export function useDraftEditor(): DraftEditorControls {
     entranceNodes,
     draftSql,
     availableNodes,
+    availableEdges,
     selectedBuilding,
     edgePathType,
     edgeBidirectional,
+    saving,
+    saveError,
+    saveMessage,
     canFinalizePath,
     setNodeType,
     setSelectedBuilding,
@@ -334,12 +501,15 @@ export function useDraftEditor(): DraftEditorControls {
     extendPath,
     finalizePath,
     addEntranceNode,
+    saveDraftToDatabase,
+    deleteExistingNode,
+    deleteExistingEdge,
     undoLast,
     clearDraft,
   };
 }
 
-// ─── 3D Layer ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ 3D Layer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 type NavigationDraftEditorLayerProps = {
   active: boolean;
@@ -399,7 +569,7 @@ export function NavigationDraftEditorLayer({
 
   if (!active) return null;
 
-  // Puntos de la ruta activa para dibujar la línea de preview
+  // Puntos de la ruta activa para dibujar la lÃ­nea de preview
   const activeLinePoints = activePath
     ? activePath.nodes.map((n) => new THREE.Vector3(n.x, DRAFT_Y + 0.3, n.z))
     : [];
@@ -418,7 +588,7 @@ export function NavigationDraftEditorLayer({
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
-      {/* Nodos existentes de la BD — clickeables para conectar caminos */}
+      {/* Nodos existentes de la BD â€” clickeables para conectar caminos */}
       {nodeType === "path" &&
         availableNodes.map((node) => (
           <group key={node.id} position={[Number(node.x), DRAFT_Y, Number(node.z)]}>
@@ -483,7 +653,7 @@ export function NavigationDraftEditorLayer({
                 {isLast && (
                   <Html position={[0, 3.2, 0]} center>
                     <div className="ito-nav-debug-label ito-nav-debug-label--draft">
-                      <strong>Último nodo</strong>
+                      <strong>Ãšltimo nodo</strong>
                       <span>
                         x {node.x.toFixed(1)}, z {node.z.toFixed(1)}
                       </span>
@@ -519,7 +689,7 @@ export function NavigationDraftEditorLayer({
   );
 }
 
-// ─── 2D Panel ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ 2D Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 type NavigationDraftEditorPanelProps = {
   controls: DraftEditorControls;
@@ -541,7 +711,13 @@ export function NavigationDraftEditorPanel({
     edgeBidirectional,
     canFinalizePath,
     availableNodes,
+    availableEdges,
+    saving,
+    saveError,
+    saveMessage,
   } = controls;
+  const [nodeToDelete, setNodeToDelete] = useState("");
+  const [edgeToDelete, setEdgeToDelete] = useState("");
 
   const totalPathNodes = [
     ...completedPaths.flatMap((p) => p.nodes),
@@ -558,7 +734,7 @@ export function NavigationDraftEditorPanel({
       const n = activePath.nodes.length;
       return n === 1
         ? "1 nodo colocado. Sigue haciendo clic para extender."
-        : `${n} nodos. Continúa o finaliza el camino.`;
+        : `${n} nodos. ContinÃºa o finaliza el camino.`;
     }
     if (!selectedBuilding) return "Selecciona un edificio para colocar su entrada.";
     return `Colocando accesos de "${selectedBuilding.name}".`;
@@ -575,12 +751,12 @@ export function NavigationDraftEditorPanel({
       completedPaths.length > 0 && `${completedPaths.length} camino${completedPaths.length > 1 ? "s" : ""}`,
       entranceNodes.length > 0 && `${entranceNodes.length} entrada${entranceNodes.length > 1 ? "s" : ""}`,
     ].filter(Boolean);
-    return parts.join(" · ");
+    return parts.join(" Â· ");
   })();
 
   return (
     <div className="ito-draft-editor-panel">
-      <strong>Editor de navegación</strong>
+      <strong>Editor de navegaciÃ³n</strong>
 
       {/* Tabs */}
       <div className="ito-draft-editor-panel__tabs">
@@ -637,7 +813,7 @@ export function NavigationDraftEditorPanel({
             controls.setSelectedBuilding(b ? { id: b.id, name: b.name } : null);
           }}
         >
-          <option value="">— Selecciona un edificio —</option>
+          <option value="">â€” Selecciona un edificio â€”</option>
           {buildings.map((b) => (
             <option key={b.id} value={b.id}>
               {b.name}
@@ -653,10 +829,12 @@ export function NavigationDraftEditorPanel({
       <span>{statusText}</span>
 
       {statsLabel && <span>{statsLabel}</span>}
-
-      <span className="ito-draft-editor-panel__error">
-        Selección de edificios pausada.
-      </span>
+      {saveError && (
+        <span className="ito-draft-editor-panel__error">{saveError}</span>
+      )}
+      {saveMessage && (
+        <span className="ito-draft-editor-panel__snap">{saveMessage}</span>
+      )}
 
       {/* Acciones */}
       <div className="ito-draft-editor-panel__actions">
@@ -665,6 +843,13 @@ export function NavigationDraftEditorPanel({
             Finalizar camino
           </button>
         )}
+        <button
+          type="button"
+          onClick={controls.saveDraftToDatabase}
+          disabled={!hasAnything || saving}
+        >
+          {saving ? "Guardando..." : "Guardar en BD"}
+        </button>
         <button type="button" onClick={controls.undoLast} disabled={!hasAnything}>
           Deshacer
         </button>
@@ -673,7 +858,58 @@ export function NavigationDraftEditorPanel({
         </button>
       </div>
 
+      <div className="ito-draft-editor-panel__edge-options">
+        <select
+          className="ito-draft-editor-panel__building-select"
+          value={nodeToDelete}
+          onChange={(event) => setNodeToDelete(event.target.value)}
+        >
+          <option value="">Eliminar nodo...</option>
+          {availableNodes.map((node) => (
+            <option key={node.id} value={node.id}>
+              {node.code} - {node.name ?? node.node_type}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          disabled={!nodeToDelete || saving}
+          onClick={async () => {
+            await controls.deleteExistingNode(nodeToDelete);
+            setNodeToDelete("");
+          }}
+        >
+          Eliminar nodo
+        </button>
+      </div>
+
+      <div className="ito-draft-editor-panel__edge-options">
+        <select
+          className="ito-draft-editor-panel__building-select"
+          value={edgeToDelete}
+          onChange={(event) => setEdgeToDelete(event.target.value)}
+        >
+          <option value="">Eliminar arista...</option>
+          {availableEdges.map((edge) => (
+            <option key={edge.id} value={edge.id}>
+              {edge.from_node_id.slice(0, 8)} - {edge.to_node_id.slice(0, 8)}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          disabled={!edgeToDelete || saving}
+          onClick={async () => {
+            await controls.deleteExistingEdge(edgeToDelete);
+            setEdgeToDelete("");
+          }}
+        >
+          Eliminar arista
+        </button>
+      </div>
+
       <textarea readOnly value={draftSql} aria-label="SQL generado" />
     </div>
   );
 }
+

@@ -1,49 +1,21 @@
-/**
- * RouteLine.tsx
- *
- * Renderiza la línea de ruta en el mapa 3D desde la ubicación del usuario
- * hasta el edificio destino.
- *
- * Flujo actual:
- * 1. Busca el nodo más cercano al usuario.
- * 2. Busca la entrada del edificio destino.
- * 3. Intenta calcular la ruta desde el backend:
- *    GET /api/navigation/route?fromNodeId=...&toNodeId=...
- * 4. Si el backend falla, usa Dijkstra local como respaldo.
- */
-
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { Html, Line } from "@react-three/drei";
-import {
-  distanceToEstimatedSeconds,
-  getNavigationEdgeWeight,
-  getNavigationRouteApi,
-} from "@ito-map/shared";
+import { useFrame } from "@react-three/fiber";
+import { distanceToEstimatedSeconds } from "@ito-map/shared";
 
 import { useBuildingStore } from "../../../store/building-store";
 import { useLocationStore } from "../../../store/location-store";
 import {
   getBuildingEntrances,
-  getNavigationEdges,
-  getNavigationNodes,
   type BuildingEntrance,
-  type NavigationEdge,
-  type NavigationNode,
 } from "../../../services/navigation.service";
-import {
-  findPathFromEdges,
-  type WeightedPathEdge,
-} from "../navigation/utils/pathfinding";
+import { useNavigationGraph } from "../navigation/hooks/useNavigationGraph";
 
-type Position3D = {
-  x: number;
-  y: number;
-  z: number;
-};
+const ROUTE_HEIGHT = 8;
+const ARROW_SPACING = 18; // unidades entre flechas direccionales
 
 type RouteRenderData = {
-  routeNodeIds: string[];
   routePoints: THREE.Vector3[];
   userStartPoint: THREE.Vector3;
   endPoint: THREE.Vector3;
@@ -52,422 +24,394 @@ type RouteRenderData = {
   estimatedSeconds: number;
 };
 
-// Elevada sobre el modelo para que no quede oculta por techos o superficies 3D.
-const ROUTE_HEIGHT_OFFSET = 8;
-
-function distance3D(a: Position3D, b: Position3D): number {
-  const dx = a.x - b.x;
-  const dy = a.y - b.y;
-  const dz = a.z - b.z;
-
-  return Math.sqrt(dx * dx + dy * dy + dz * dz);
+function calcTotalDistance(path: THREE.Vector3[]): number {
+  let d = 0;
+  for (let i = 0; i < path.length - 1; i++) d += path[i].distanceTo(path[i + 1]);
+  return d;
 }
 
-function findNearestNode(
-  position: Position3D,
-  nodes: NavigationNode[]
-): NavigationNode | null {
-  if (nodes.length === 0) return null;
+// Devuelve puntos equiespaciados a lo largo del path para las flechas
+function sampleArrowPoints(
+  path: THREE.Vector3[],
+  spacing: number
+): { position: THREE.Vector3; direction: THREE.Vector3 }[] {
+  if (path.length < 2) return [];
 
-  let nearest: NavigationNode | null = null;
-  let minDist = Infinity;
+  const result: { position: THREE.Vector3; direction: THREE.Vector3 }[] = [];
+  let accumulated = spacing * 0.5; // empieza a mitad de distancia para centrar
 
-  for (const node of nodes) {
-    const distance = distance3D(position, {
-      x: Number(node.x),
-      y: Number(node.y),
-      z: Number(node.z),
-    });
+  for (let i = 0; i < path.length - 1; i++) {
+    const a = path[i];
+    const b = path[i + 1];
+    const segLen = a.distanceTo(b);
+    const dir = b.clone().sub(a).normalize();
 
-    if (distance < minDist) {
-      minDist = distance;
-      nearest = node;
+    while (accumulated <= segLen) {
+      result.push({
+        position: a.clone().addScaledVector(dir, accumulated),
+        direction: dir.clone(),
+      });
+      accumulated += spacing;
     }
+    accumulated -= segLen;
   }
-
-  return nearest;
+  return result;
 }
 
-function buildRoutePoints(
-  mapPosition: Position3D,
-  pathNodes: NavigationNode[]
-): {
-  routePoints: THREE.Vector3[];
-  userStartPoint: THREE.Vector3;
-  endPoint: THREE.Vector3 | null;
-} {
-  const userStartPoint = new THREE.Vector3(
-    mapPosition.x,
-    mapPosition.y + ROUTE_HEIGHT_OFFSET,
-    mapPosition.z
-  );
+// ── Flecha individual animada ──────────────────────────────────────────────────
 
-  const nodePoints = pathNodes.map(
-    (node) =>
-      new THREE.Vector3(
-        Number(node.x),
-        Number(node.y) + ROUTE_HEIGHT_OFFSET,
-        Number(node.z)
-      )
-  );
+function RouteArrow({
+  position,
+  direction,
+  index,
+}: {
+  position: THREE.Vector3;
+  direction: THREE.Vector3;
+  index: number;
+}) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const DEFAULT_UP = new THREE.Vector3(0, 1, 0);
 
-  return {
-    routePoints: nodePoints,
-    userStartPoint,
-    endPoint: nodePoints[nodePoints.length - 1] ?? null,
-  };
+  // Quaternion para alinear el cono con la dirección de movimiento (plano XZ)
+  const flatDir = new THREE.Vector3(direction.x, 0, direction.z).normalize();
+  const quaternion = new THREE.Quaternion().setFromUnitVectors(DEFAULT_UP, flatDir);
+
+  useFrame(({ clock }) => {
+    if (!meshRef.current) return;
+    // Pulso con offset por índice para efecto "marching"
+    const t = (Math.sin(clock.getElapsedTime() * 2.5 - index * 0.9) + 1) / 2;
+    const mat = meshRef.current.material as THREE.MeshStandardMaterial;
+    mat.opacity = 0.45 + t * 0.5;
+  });
+
+  return (
+    <mesh
+      ref={meshRef}
+      position={position}
+      quaternion={quaternion}
+    >
+      <coneGeometry args={[0.7, 2.2, 6]} />
+      <meshStandardMaterial
+        color="#22c55e"
+        emissive="#16a34a"
+        emissiveIntensity={0.4}
+        transparent
+        opacity={0.8}
+      />
+    </mesh>
+  );
 }
+
+// ── Línea con pulso animado ────────────────────────────────────────────────────
+
+function AnimatedRouteLine({ points }: { points: THREE.Vector3[] }) {
+  const lineRef = useRef<THREE.Line>(null);
+
+  useFrame(({ clock }) => {
+    if (!lineRef.current) return;
+    const mat = lineRef.current.material as THREE.LineBasicMaterial;
+    const t = (Math.sin(clock.getElapsedTime() * 2) + 1) / 2;
+    mat.opacity = 0.75 + t * 0.2;
+  });
+
+  return (
+    <>
+      {/* Sombra blanca */}
+      <Line
+        points={points}
+        color="#ffffff"
+        lineWidth={14}
+        transparent
+        opacity={0.55}
+        depthTest={false}
+        renderOrder={20}
+      />
+      {/* Línea principal verde */}
+      <Line
+        ref={lineRef as React.Ref<never>}
+        points={points}
+        color="#22c55e"
+        lineWidth={7}
+        transparent
+        opacity={0.95}
+        depthTest={false}
+        renderOrder={21}
+      />
+    </>
+  );
+}
+
+// ── Conector punteado usuario → primer nodo ────────────────────────────────────
+
+function UserConnector({
+  userPoint,
+  routeStart,
+}: {
+  userPoint: THREE.Vector3;
+  routeStart: THREE.Vector3;
+}) {
+  if (userPoint.distanceTo(routeStart) < 2) return null;
+
+  return (
+    <Line
+      points={[userPoint, routeStart]}
+      color="#94a3b8"
+      lineWidth={3}
+      dashed
+      dashSize={2.5}
+      gapSize={1.8}
+      transparent
+      opacity={0.65}
+      depthTest={false}
+      renderOrder={19}
+    />
+  );
+}
+
+// ── Marcador de destino ────────────────────────────────────────────────────────
+
+function DestinationMarker({
+  point,
+  name,
+}: {
+  point: THREE.Vector3;
+  name: string;
+}) {
+  const ringRef = useRef<THREE.Mesh>(null);
+
+  useFrame(({ clock }) => {
+    if (!ringRef.current) return;
+    const t = (Math.sin(clock.getElapsedTime() * 2.2) + 1) / 2;
+    ringRef.current.scale.set(1 + t * 0.4, 1 + t * 0.4, 1);
+    (ringRef.current.material as THREE.MeshBasicMaterial).opacity = 0.6 - t * 0.3;
+  });
+
+  const groundPos = new THREE.Vector3(point.x, 0.5, point.z);
+
+  return (
+    <>
+      {/* Esfera destino */}
+      <mesh position={point}>
+        <sphereGeometry args={[1.3, 20, 20]} />
+        <meshStandardMaterial color="#ef4444" emissive="#b91c1c" emissiveIntensity={0.7} />
+      </mesh>
+
+      {/* Ring pulsante en el suelo */}
+      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={groundPos}>
+        <ringGeometry args={[4.5, 6.5, 32]} />
+        <meshBasicMaterial color="#ef4444" transparent opacity={0.5} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Label destino */}
+      <Html
+        position={[point.x, point.y + 4, point.z]}
+        center
+      >
+        <div
+          style={{
+            background: "rgba(239,68,68,0.94)",
+            color: "#fff",
+            padding: "6px 12px",
+            borderRadius: 999,
+            fontSize: 11,
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+            boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
+            pointerEvents: "none",
+          }}
+        >
+          Destino — {name}
+        </div>
+      </Html>
+    </>
+  );
+}
+
+// ── Componente principal ───────────────────────────────────────────────────────
 
 export function RouteLine() {
-  const routeDestination = useBuildingStore((state) => state.routeDestination);
-  const setCurrentRouteNodeIds = useBuildingStore(
-    (state) => state.setCurrentRouteNodeIds
-  );
-  const setRouteStats = useBuildingStore((state) => state.setRouteStats);
-  const setRouteError = useBuildingStore((state) => state.setRouteError);
+  const routeDestination = useBuildingStore((s) => s.routeDestination);
+  const setCurrentRouteNodeIds = useBuildingStore((s) => s.setCurrentRouteNodeIds);
+  const setRouteStats = useBuildingStore((s) => s.setRouteStats);
+  const setRouteError = useBuildingStore((s) => s.setRouteError);
 
-  const mapPosition = useLocationStore((state) => state.mapPosition);
-  const permission = useLocationStore((state) => state.permission);
+  const mapPosition = useLocationStore((s) => s.mapPosition);
+  const permission = useLocationStore((s) => s.permission);
 
-  const [nodes, setNodes] = useState<NavigationNode[]>([]);
-  const [edges, setEdges] = useState<NavigationEdge[]>([]);
   const [entrances, setEntrances] = useState<BuildingEntrance[]>([]);
   const [loading, setLoading] = useState(true);
   const [routeData, setRouteData] = useState<RouteRenderData | null>(null);
 
+  const { findPath, isReady } = useNavigationGraph();
+
+  // Carga entradas una sola vez al montar
   useEffect(() => {
     let mounted = true;
-
-    async function loadNavigationData() {
-      try {
-        const [nodesData, edgesData, entrancesData] = await Promise.all([
-          getNavigationNodes(),
-          getNavigationEdges(),
-          getBuildingEntrances(),
-        ]);
-
-        if (!mounted) return;
-
-        const activeNodes = nodesData.filter(
-          (node) => node.is_active && node.is_walkable
-        );
-
-        const activeEdges = edgesData.filter(
-          (edge) => edge.is_active && edge.is_accessible
-        );
-
-        const activeEntrances = entrancesData.filter(
-          (entrance) => entrance.is_accessible
-        );
-
-        setNodes(activeNodes);
-        setEdges(activeEdges);
-        setEntrances(activeEntrances);
-      } catch (error) {
-        console.error("Error cargando datos de navegación:", error);
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    loadNavigationData();
-
-    return () => {
-      mounted = false;
-    };
+    getBuildingEntrances()
+      .then((data) => {
+        if (mounted) setEntrances(data.filter((e) => e.is_accessible));
+      })
+      .catch((err: unknown) => console.error("Error cargando entradas:", err))
+      .finally(() => { if (mounted) setLoading(false); });
+    return () => { mounted = false; };
   }, []);
 
-  const graphEdges = useMemo<WeightedPathEdge[]>(
-    () =>
-      edges.map((edge) => ({
-        from: edge.from_node_id,
-        to: edge.to_node_id,
-        weight: getNavigationEdgeWeight(edge),
-        bidirectional: edge.is_bidirectional,
-      })),
-    [edges]
-  );
-
+  // Calcula la ruta cada vez que cambia: destino, posición, grafo listo
   useEffect(() => {
     let cancelled = false;
 
-    async function calculateRoute() {
-      setRouteData(null);
+    setRouteData(null);
 
-      if (loading || !routeDestination) {
-        setCurrentRouteNodeIds([]);
-        return;
-      }
-
-      if (permission !== "granted") {
-        setCurrentRouteNodeIds([]);
-        setRouteStats(null);
-        setRouteError("Activa el permiso de ubicación para trazar la ruta.");
-        return;
-      }
-
-      if (!mapPosition) {
-        setCurrentRouteNodeIds([]);
-        setRouteStats(null);
-        setRouteError("Esperando tu ubicación actual para trazar la ruta.");
-        return;
-      }
-
-      if (nodes.length === 0 || graphEdges.length === 0) {
-        setCurrentRouteNodeIds([]);
-        setRouteError("No hay datos de navegación disponibles en el servidor.");
-        return;
-      }
-
-      if (entrances.length === 0) {
-        setCurrentRouteNodeIds([]);
-        setRouteError("Las entradas de edificios no están configuradas aún.");
-        return;
-      }
-
-      const nearestNode = findNearestNode(
-        {
-          x: mapPosition.x,
-          y: mapPosition.y,
-          z: mapPosition.z,
-        },
-        nodes
-      );
-
-      if (!nearestNode) {
-        console.warn("[RouteLine] No se encontró nodo cercano al usuario.");
-        setCurrentRouteNodeIds([]);
-        setRouteError("No se pudo detectar tu posición en el mapa del campus.");
-        return;
-      }
-
-      const destinationEntrance =
-        entrances.find(
-          (entrance) =>
-            entrance.building_id === routeDestination.id &&
-            entrance.is_primary
-        ) ??
-        entrances.find(
-          (entrance) => entrance.building_id === routeDestination.id
-        ) ??
-        null;
-
-      if (!destinationEntrance) {
-        console.warn(
-          `[RouteLine] No se encontró entrada para el edificio: ${routeDestination.name}`
-        );
-        setCurrentRouteNodeIds([]);
-        setRouteError(`${routeDestination.name} no tiene una entrada configurada.`);
-        return;
-      }
-
-      let pathNodeIds: string[] = [];
-      let pathNodes: NavigationNode[] = [];
-      let totalDistance = 0;
-      let estimatedSeconds = 0;
-
-      try {
-        const backendRoute = await getNavigationRouteApi(
-          nearestNode.id,
-          destinationEntrance.node_id
-        );
-
-        pathNodeIds = backendRoute.node_ids;
-        pathNodes = backendRoute.nodes;
-        totalDistance = backendRoute.total_distance ?? 0;
-        estimatedSeconds = backendRoute.estimated_seconds ?? 0;
-
-        console.info("[RouteLine] Ruta calculada desde backend.");
-      } catch (error) {
-        console.warn(
-          "[RouteLine] No se pudo calcular ruta en backend. Usando Dijkstra local.",
-          error
-        );
-
-        pathNodeIds = findPathFromEdges(
-          nearestNode.id,
-          destinationEntrance.node_id,
-          graphEdges
-        );
-
-        pathNodes = pathNodeIds
-          .map((id) => nodes.find((node) => node.id === id) ?? null)
-          .filter((node): node is NavigationNode => node !== null);
-
-        // Calcular distancia local sumando segmentos
-        for (let i = 0; i < pathNodes.length - 1; i++) {
-          const a = pathNodes[i];
-          const b = pathNodes[i + 1];
-          const dx = Number(a.x) - Number(b.x);
-          const dz = Number(a.z) - Number(b.z);
-          totalDistance += Math.sqrt(dx * dx + dz * dz);
-        }
-        estimatedSeconds = distanceToEstimatedSeconds(totalDistance);
-      }
-
-      if (cancelled) return;
-
-      if (pathNodeIds.length === 0 || pathNodes.length === 0) {
-        console.warn(
-          `[RouteLine] Sin ruta de ${nearestNode.id} → ${destinationEntrance.node_id}`
-        );
-        setCurrentRouteNodeIds([]);
-        setRouteStats(null);
-        setRouteData(null);
-        setRouteError("No se encontró una ruta disponible hacia este edificio.");
-        return;
-      }
-
-      const { routePoints, userStartPoint, endPoint } = buildRoutePoints(
-        {
-          x: mapPosition.x,
-          y: mapPosition.y,
-          z: mapPosition.z,
-        },
-        pathNodes
-      );
-
-      if (!endPoint || routePoints.length < 2) {
-        setCurrentRouteNodeIds([]);
-        setRouteStats(null);
-        setRouteData(null);
-        return;
-      }
-
-      setCurrentRouteNodeIds(pathNodeIds);
-      setRouteStats({ totalDistance, estimatedSeconds });
-      setRouteError(null);
-
-      setRouteData({
-        routeNodeIds: pathNodeIds,
-        routePoints,
-        userStartPoint,
-        endPoint,
-        destinationName: routeDestination.name,
-        totalDistance,
-        estimatedSeconds,
-      });
-
-      console.info("[RouteLine] Ruta lista para renderizar", {
-        destination: routeDestination.name,
-        nearestNode: nearestNode.code,
-        destinationNode: destinationEntrance.node_code,
-        points: routePoints.length,
-        totalDistance,
-      });
+    if (loading || !routeDestination) {
+      setCurrentRouteNodeIds([]);
+      return;
     }
 
-    calculateRoute();
+    if (!isReady) {
+      setCurrentRouteNodeIds([]);
+      setRouteStats(null);
+      setRouteError("Preparando el grafo de navegacion del campus.");
+      return;
+    }
 
-    return () => {
-      cancelled = true;
-    };
+    if (permission !== "granted") {
+      setCurrentRouteNodeIds([]);
+      setRouteStats(null);
+      setRouteError("Activa el permiso de ubicacion para trazar la ruta.");
+      return;
+    }
+
+    if (!mapPosition) {
+      setCurrentRouteNodeIds([]);
+      setRouteStats(null);
+      setRouteError("Esperando tu ubicacion actual para trazar la ruta.");
+      return;
+    }
+
+    const destinationEntrance =
+      entrances.find((e) => e.building_id === routeDestination.id && e.is_primary) ??
+      entrances.find((e) => e.building_id === routeDestination.id) ??
+      null;
+
+    if (!destinationEntrance) {
+      setCurrentRouteNodeIds([]);
+      setRouteError(`${routeDestination.name} no tiene una entrada configurada.`);
+      return;
+    }
+
+    const dx = Number(destinationEntrance.node_x);
+    const dy = Number(destinationEntrance.node_y);
+    const dz = Number(destinationEntrance.node_z);
+
+    if (!Number.isFinite(dx) || !Number.isFinite(dy) || !Number.isFinite(dz)) {
+      setCurrentRouteNodeIds([]);
+      setRouteStats(null);
+      setRouteError("La entrada del edificio no tiene coordenadas validas.");
+      return;
+    }
+
+    const from = new THREE.Vector3(mapPosition.x, 0, mapPosition.z);
+    const to   = new THREE.Vector3(dx, dy, dz);
+
+    const rawPath = findPath(from, to);
+    if (cancelled) return;
+
+    if (rawPath.length < 2) {
+      setCurrentRouteNodeIds([]);
+      setRouteStats(null);
+      setRouteData(null);
+      setRouteError("No se encontro una ruta disponible hacia este edificio.");
+      return;
+    }
+
+    const totalDistance = calcTotalDistance(rawPath);
+    const estimatedSeconds = distanceToEstimatedSeconds(totalDistance);
+
+    // Elevar puntos a ROUTE_HEIGHT para visibilidad
+    const routePoints = rawPath.map(
+      (p) => new THREE.Vector3(p.x, p.y + ROUTE_HEIGHT, p.z)
+    );
+    const userStartPoint = new THREE.Vector3(
+      mapPosition.x, mapPosition.y + ROUTE_HEIGHT, mapPosition.z
+    );
+    const endPoint = routePoints[routePoints.length - 1]!;
+
+    setCurrentRouteNodeIds([]);
+    setRouteStats({ totalDistance, estimatedSeconds });
+    setRouteError(null);
+    setRouteData({
+      routePoints,
+      userStartPoint,
+      endPoint,
+      destinationName: routeDestination.name,
+      totalDistance,
+      estimatedSeconds,
+    });
+
+    return () => { cancelled = true; };
   }, [
-    loading,
-    routeDestination,
-    mapPosition,
-    permission,
-    nodes,
-    graphEdges,
-    entrances,
-    setCurrentRouteNodeIds,
-    setRouteStats,
-    setRouteError,
+    loading, isReady, routeDestination, mapPosition, permission, entrances,
+    findPath, setCurrentRouteNodeIds, setRouteStats, setRouteError,
   ]);
 
   if (!routeData) return null;
 
-  // Nodos intermedios del grafo (excluye inicio y fin que ya tienen su propia esfera).
-  const waypointPoints = routeData.routePoints.slice(1, -1);
+  const { routePoints, userStartPoint, endPoint, destinationName } = routeData;
+
+  // Puntos de la ruta en el plano XZ (para calcular flechas)
+  const arrowData = sampleArrowPoints(routePoints, ARROW_SPACING);
 
   return (
     <>
-      <Line
-        points={routeData.routePoints}
-        color="#ffffff"
-        lineWidth={12}
-        transparent
-        opacity={0.9}
-        depthTest={false}
-        renderOrder={20}
-      />
+      {/* Conector punteado: posición GPS → inicio de ruta */}
+      <UserConnector userPoint={userStartPoint} routeStart={routePoints[0]!} />
 
-      <Line
-        points={routeData.routePoints}
-        color="#22c55e"
-        lineWidth={7}
-        transparent
-        opacity={1}
-        depthTest={false}
-        renderOrder={21}
-      />
+      {/* Línea principal animada */}
+      <AnimatedRouteLine points={routePoints} />
 
-      {waypointPoints.map((point, i) => (
-        <mesh key={i} position={point}>
-          <sphereGeometry args={[0.45, 12, 12]} />
-          <meshStandardMaterial color="#15803d" />
-        </mesh>
+      {/* Flechas direccionales */}
+      {arrowData.map((arrow, i) => (
+        <RouteArrow
+          key={i}
+          position={arrow.position}
+          direction={arrow.direction}
+          index={i}
+        />
       ))}
 
-      <mesh position={routeData.routePoints[0] ?? routeData.userStartPoint}>
-        <sphereGeometry args={[0.95, 20, 20]} />
-        <meshStandardMaterial color="#22c55e" />
-      </mesh>
-
-      <mesh position={routeData.endPoint}>
-        <sphereGeometry args={[0.95, 20, 20]} />
-        <meshStandardMaterial color="#ef4444" />
+      {/* Marcador inicio */}
+      <mesh position={routePoints[0] ?? userStartPoint}>
+        <sphereGeometry args={[1.1, 20, 20]} />
+        <meshStandardMaterial color="#22c55e" emissive="#166534" emissiveIntensity={0.4} />
       </mesh>
 
       <Html
         position={[
-          routeData.userStartPoint.x,
-          routeData.userStartPoint.y + 2.5,
-          routeData.userStartPoint.z,
+          userStartPoint.x,
+          userStartPoint.y + 3.5,
+          userStartPoint.z,
         ]}
         center
       >
         <div
           style={{
-            background: "rgba(34, 197, 94, 0.94)",
-            color: "#ffffff",
-            padding: "6px 10px",
-            borderRadius: "999px",
-            fontSize: "11px",
+            background: "rgba(34,197,94,0.94)",
+            color: "#fff",
+            padding: "6px 12px",
+            borderRadius: 999,
+            fontSize: 11,
             fontWeight: 700,
             whiteSpace: "nowrap",
-            boxShadow: "0 8px 18px rgba(0,0,0,0.18)",
+            boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
+            pointerEvents: "none",
           }}
         >
-          Inicio, tu ubicación
+          Tu ubicacion
         </div>
       </Html>
 
-      <Html
-        position={[
-          routeData.endPoint.x,
-          routeData.endPoint.y + 2.5,
-          routeData.endPoint.z,
-        ]}
-        center
-      >
-        <div
-          style={{
-            background: "rgba(239, 68, 68, 0.94)",
-            color: "#ffffff",
-            padding: "6px 10px",
-            borderRadius: "999px",
-            fontSize: "11px",
-            fontWeight: 700,
-            whiteSpace: "nowrap",
-            boxShadow: "0 8px 18px rgba(0,0,0,0.18)",
-          }}
-        >
-          Destino, {routeData.destinationName}
-        </div>
-      </Html>
+      {/* Marcador destino */}
+      <DestinationMarker point={endPoint} name={destinationName} />
     </>
   );
 }

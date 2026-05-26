@@ -54,11 +54,13 @@ export function StudentPage() {
   const [showServices, setShowServices] = useState(false);
 
   useEffect(() => {
-    getBuildings().then((data) => {
-      setTotalBuildings(
-        data.filter((building: Building) => building.is_active).length
-      );
-    });
+    getBuildings()
+      .then((data) => {
+        setTotalBuildings(
+          data.filter((building: Building) => building.is_active).length
+        );
+      })
+      .catch(() => setTotalBuildings(0));
   }, []);
 
   const handleLogout = () => {
@@ -69,11 +71,41 @@ export function StudentPage() {
   const handleNavigateFromSchedule = () => {
     setViewMode("map");
     setShowSchedule(false);
+    setShowServices(false);
     setSheetState("closed");
   };
 
   const handleSelectService = (service: CampusService) => {
     setSearchTerm(service.searchTerm);
+    setShowServices(false);
+    setViewMode("map");
+    setSheetState("full");
+  };
+
+  const openBuildingSearch = () => {
+    setShowSchedule(false);
+    setShowServices(false);
+    setViewMode("map");
+    setSheetState("full");
+    window.setTimeout(() => {
+      document.getElementById("building-search")?.focus();
+    }, 360);
+  };
+
+  const openSchedule = () => {
+    setShowServices(false);
+    setSheetState("closed");
+    setShowSchedule(true);
+  };
+
+  const openServices = () => {
+    setShowSchedule(false);
+    setSheetState("closed");
+    setShowServices(true);
+  };
+
+  const openBuildings = () => {
+    setShowSchedule(false);
     setShowServices(false);
     setViewMode("map");
     setSheetState("full");
@@ -85,39 +117,38 @@ export function StudentPage() {
         id: "schedule",
         label: "Horario",
         icon: "calendar" as const,
-        onClick: () => setShowSchedule(true),
+        onClick: openSchedule,
+        active: showSchedule,
       },
       {
         id: "services",
         label: "Servicios",
         icon: "info" as const,
-        onClick: () => setShowServices(true),
-      },
-      {
-        id: "search",
-        label: "Buscar",
-        icon: "search" as const,
-        onClick: () => setSheetState("full"),
-        active: sheetState === "full",
+        onClick: openServices,
+        active: showServices,
       },
       {
         id: "list",
         label: "Edificios",
         icon: "list" as const,
-        onClick: () => setSheetState(sheetState === "peek" ? "full" : "peek"),
-        active: sheetState === "peek",
+        onClick: openBuildings,
+        active: sheetState !== "closed" && !showSchedule && !showServices,
         primary: true,
       },
     ];
-  }, [sheetState]);
+  }, [sheetState, showSchedule, showServices]);
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   if (!isMobile) {
     return (
       <div
-        className="student-page"
-        style={{ gridTemplateColumns: sidebarCollapsed ? "0px 1fr" : "380px 1fr" }}
+        className={`student-page${sidebarCollapsed ? " is-sidebar-collapsed" : ""}`}
+        style={{
+          gridTemplateColumns: sidebarCollapsed
+            ? "0px minmax(0, 1fr)"
+            : "var(--desktop-sidebar-width) minmax(0, 1fr)",
+        }}
       >
         <aside className="student-page__sidebar" style={{ overflow: "hidden", minWidth: 0 }}>
           <div className="student-page__sidebar-header">
@@ -153,7 +184,7 @@ export function StudentPage() {
               onClick={() => setViewMode("map")}
             >
               <MapIcon size={18} />
-              <span>Mapa del Campus</span>
+              <span>Mapa</span>
             </button>
 
             <button
@@ -253,7 +284,7 @@ export function StudentPage() {
 
       <StudentTopBar
         userName={user?.name || "Estudiante"}
-        onSearchClick={() => setSheetState("full")}
+        onSearchClick={openBuildingSearch}
         onLogout={handleLogout}
       />
 

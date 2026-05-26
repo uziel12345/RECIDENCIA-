@@ -1,4 +1,4 @@
-import { useBuildingStore } from "../../../store/building-store";
+﻿import { useBuildingStore } from "../../../store/building-store";
 import { Icon } from "../../../components/ui/Icons";
 
 export function BuildingSearch() {
@@ -15,10 +15,10 @@ export function BuildingSearch() {
         id="building-search"
         type="search"
         className="ito-search__input"
-        placeholder="Buscar edificio, código o categoría…"
+        placeholder="Buscar aula, tramite o edificio..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        aria-label="Buscar edificio"
+        aria-label="Buscar edificio, aula, tramite o servicio"
         autoComplete="off"
       />
 
@@ -27,7 +27,7 @@ export function BuildingSearch() {
           type="button"
           className="ito-search__clear"
           onClick={() => setSearchTerm("")}
-          aria-label="Limpiar búsqueda"
+          aria-label="Limpiar busqueda"
         >
           <Icon name="close" size={14} />
         </button>

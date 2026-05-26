@@ -1,9 +1,21 @@
 import { useBuildingStore } from "../../../store/building-store";
 import { useLocationStore } from "../../../store/location-store";
 import { Icon } from "../../../components/ui/Icons";
+import {
+  applyManualCalibration,
+  clearManualCalibration,
+} from "../../location/services/geolocation";
+
+const SIMULATED_LOCATION = {
+  buildingId: "cc-simulado",
+  buildingName: "Centro de Cómputo",
+  targetX: -10.7109,
+  targetZ: -119.5335,
+};
 
 type RoutePanelProps = {
   compact?: boolean;
+  canUseDemo?: boolean;
 };
 
 // Devuelve "" para ocultar el label cuando no hay distancia válida (distinto de shared formatDistance)
@@ -23,7 +35,7 @@ function formatDuration(seconds: number): string {
   return `${hours} h ${rem} min`;
 }
 
-export function RoutePanel({ compact = false }: RoutePanelProps) {
+export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelProps) {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const routeDestination = useBuildingStore((state) => state.routeDestination);
   const setRouteDestination = useBuildingStore((state) => state.setRouteDestination);
@@ -34,8 +46,10 @@ export function RoutePanel({ compact = false }: RoutePanelProps) {
   const permission = useLocationStore((state) => state.permission);
   const geoPosition = useLocationStore((state) => state.geoPosition);
   const mapPosition = useLocationStore((state) => state.mapPosition);
+  const manualCalibration = useLocationStore((state) => state.manualCalibration);
 
   const hasValidLocation = permission === "granted" && mapPosition !== null;
+  const isSimulated = !!manualCalibration;
   const canGenerate = !!selectedBuilding && hasValidLocation;
 
   const distanceLabel = routeStats ? formatRouteDistance(routeStats.totalDistance) : null;
@@ -101,6 +115,31 @@ export function RoutePanel({ compact = false }: RoutePanelProps) {
         </div>
       </div>
 
+      {canUseDemo && !hasValidLocation && (
+        <button
+          type="button"
+          className="ito-btn ito-btn--ghost"
+          style={{ width: "100%", justifyContent: "center", fontSize: 13 }}
+          onClick={() => applyManualCalibration(SIMULATED_LOCATION)}
+        >
+          <Icon name="location" size={14} />
+          <span>Simular ubicación (demo)</span>
+        </button>
+      )}
+
+      {canUseDemo && isSimulated && (
+        <div
+          className="ito-route-status ito-route-status--warning"
+          role="status"
+          style={{ gap: 8, cursor: "pointer" }}
+          onClick={clearManualCalibration}
+          title="Haz clic para quitar la simulación"
+        >
+          <Icon name="alert" size={13} />
+          <span>Ubicación simulada en {manualCalibration!.buildingName} · Toca para quitar</span>
+        </div>
+      )}
+
       <div style={{ display: "grid", gap: 8 }}>
         <div className="ito-route-step">
           <div
@@ -112,9 +151,13 @@ export function RoutePanel({ compact = false }: RoutePanelProps) {
           <div className="ito-route-step__main">
             <div className="ito-route-step__label">Origen</div>
             <div className="ito-route-step__value">
-              {hasValidLocation ? "Tu ubicación actual" : "Ubicación pendiente"}
+              {isSimulated
+                ? `Simulado: ${manualCalibration!.buildingName}`
+                : hasValidLocation
+                  ? "Tu ubicación actual"
+                  : "Ubicación pendiente"}
             </div>
-            {hasValidLocation && (
+            {hasValidLocation && !isSimulated && (
               <div className="ito-route-step__hint">Detectada en el campus</div>
             )}
           </div>
@@ -179,7 +222,7 @@ export function RoutePanel({ compact = false }: RoutePanelProps) {
           style={{ flex: 1 }}
         >
           <Icon name="route" size={16} />
-          <span>Generar ruta</span>
+          <span>Como llegar</span>
         </button>
 
         <button

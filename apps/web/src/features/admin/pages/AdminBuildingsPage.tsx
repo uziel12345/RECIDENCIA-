@@ -49,6 +49,10 @@ export function AdminBuildingsPage() {
     void navigate(ROUTES.ADMIN_LOGIN, { replace: true });
   }
 
+  function handleOpenNavigation() {
+    void navigate(ROUTES.ADMIN_NAVIGATION);
+  }
+
   return (
     <main style={styles.page}>
       <header style={styles.header}>
@@ -68,15 +72,33 @@ export function AdminBuildingsPage() {
               </strong>
             </p>
           ) : null}
+
+          <button
+            type="button"
+            onClick={handleOpenNavigation}
+            style={styles.navShortcutButton}
+          >
+            Abrir mapa de navegacion
+          </button>
         </div>
 
-        <button
-          type="button"
-          onClick={handleLogout}
-          style={styles.secondaryButton}
-        >
-          Cerrar sesión
-        </button>
+        <div style={styles.headerActions}>
+          <button
+            type="button"
+            onClick={handleOpenNavigation}
+            style={styles.primaryButton}
+          >
+            Navegacion
+          </button>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            style={styles.secondaryButton}
+          >
+            Cerrar sesión
+          </button>
+        </div>
       </header>
 
       {error ? (
@@ -146,6 +168,11 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "flex-start",
     marginBottom: "22px",
   },
+  headerActions: {
+    display: "flex",
+    gap: "10px",
+    alignItems: "center",
+  },
   layout: {
     display: "grid",
     gridTemplateColumns: "minmax(320px, 440px) 1fr",
@@ -172,12 +199,32 @@ const styles: Record<string, CSSProperties> = {
     margin: "8px 0 0",
     color: "#334155",
   },
+  navShortcutButton: {
+    marginTop: "16px",
+    border: "1px solid #1d4ed8",
+    borderRadius: "14px",
+    padding: "12px 16px",
+    background: "#2563eb",
+    color: "#ffffff",
+    fontWeight: 900,
+    cursor: "pointer",
+    boxShadow: "0 10px 22px rgba(37, 99, 235, 0.22)",
+  },
   secondaryButton: {
     border: "1px solid #cbd5e1",
     borderRadius: "14px",
     padding: "10px 14px",
     background: "#ffffff",
     color: "#0f172a",
+    fontWeight: 800,
+    cursor: "pointer",
+  },
+  primaryButton: {
+    border: "1px solid #1d4ed8",
+    borderRadius: "14px",
+    padding: "10px 14px",
+    background: "#2563eb",
+    color: "#ffffff",
     fontWeight: 800,
     cursor: "pointer",
   },

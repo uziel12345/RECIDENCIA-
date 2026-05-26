@@ -2,13 +2,20 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import path from "path";
+import { fileURLToPath } from "url";
 
 import routes from "./routes/index.js";
 import { notFoundHandler } from "./shared/middlewares/not-found.js";
 import { errorHandler } from "./shared/middlewares/error-handler.js";
 import { env } from "./config/env.js";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const webDist = path.resolve(__dirname, "../../web/dist");
+
 const app = express();
+
+app.set("trust proxy", 1);
 
 const allowedOrigins = env.corsOrigin
   .split(",")
@@ -17,6 +24,11 @@ const allowedOrigins = env.corsOrigin
 
 app.use(
   helmet({
+    contentSecurityPolicy: {
+      directives: {
+        "script-src": ["'self'", "'wasm-unsafe-eval'"],
+      },
+    },
     crossOriginResourcePolicy: {
       policy: "cross-origin",
     },
@@ -61,6 +73,15 @@ app.use(
 app.use("/uploads", express.static("uploads"));
 
 app.use("/api", routes);
+
+app.use(express.static(webDist));
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api")) {
+    next();
+    return;
+  }
+  res.sendFile(path.join(webDist, "index.html"));
+});
 
 app.use(notFoundHandler);
 app.use(errorHandler);

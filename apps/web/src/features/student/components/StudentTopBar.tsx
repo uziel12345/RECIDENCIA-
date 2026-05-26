@@ -21,6 +21,7 @@ export function StudentTopBar({ userName, onSearchClick, onLogout }: StudentTopB
 
       <div className="student-top-bar__actions">
         <button
+          type="button"
           className="student-top-bar__btn"
           onClick={onSearchClick}
           aria-label="Buscar edificio"
@@ -28,9 +29,10 @@ export function StudentTopBar({ userName, onSearchClick, onLogout }: StudentTopB
           <SearchIcon size={20} />
         </button>
         <button
+          type="button"
           className="student-top-bar__btn student-top-bar__btn--logout"
           onClick={onLogout}
-          aria-label="Cerrar sesion"
+          aria-label="Cerrar sesión"
         >
           <LogOutIcon size={20} />
         </button>

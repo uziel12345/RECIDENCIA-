@@ -22,6 +22,7 @@ export async function apiGet<T>(endpoint: string): Promise<T> {
   const response = await fetch(`${config.baseUrl}${endpoint}`, {
     method: "GET",
     headers,
+    cache: "no-store",
   });
 
   return parseApiResponse<T>(response);

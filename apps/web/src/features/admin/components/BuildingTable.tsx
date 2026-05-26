@@ -54,14 +54,20 @@ export function BuildingTable({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onRefresh}
-          disabled={loadingBuildings}
-          style={styles.secondaryButton}
-        >
-          {loadingBuildings ? "Cargando..." : "Recargar"}
-        </button>
+        <div style={styles.tableHeaderActions}>
+          <a href="/admin/navigation" style={styles.primaryLink}>
+            Mapa de navegacion
+          </a>
+
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={loadingBuildings}
+            style={styles.secondaryButton}
+          >
+            {loadingBuildings ? "Cargando..." : "Recargar"}
+          </button>
+        </div>
       </div>
 
       <div style={styles.filters}>
@@ -273,6 +279,20 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 800,
     cursor: "pointer",
   },
+  primaryLink: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    border: "1px solid #1d4ed8",
+    borderRadius: "14px",
+    padding: "10px 14px",
+    background: "#2563eb",
+    color: "#ffffff",
+    fontWeight: 900,
+    cursor: "pointer",
+    textDecoration: "none",
+    whiteSpace: "nowrap",
+  },
   editButton: {
     border: "1px solid #bfdbfe",
     borderRadius: "12px",
@@ -315,6 +335,13 @@ const styles: Record<string, CSSProperties> = {
     gap: "16px",
     alignItems: "flex-start",
     marginBottom: "16px",
+  },
+  tableHeaderActions: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: "10px",
+    flexWrap: "wrap",
   },
   tableWrapper: {
     overflowX: "auto",

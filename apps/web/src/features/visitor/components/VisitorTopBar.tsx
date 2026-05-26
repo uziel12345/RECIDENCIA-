@@ -22,7 +22,7 @@ export function VisitorTopBar({ onSearchClick, onLogout }: VisitorTopBarProps) {
       <div className="visitor-top-bar__actions">
         <button
           type="button"
-          className="visitor-top-bar__button"
+          className="visitor-top-bar__button visitor-top-bar__button--search"
           onClick={onSearchClick}
           aria-label="Buscar edificio"
           title="Buscar edificio"
@@ -32,7 +32,7 @@ export function VisitorTopBar({ onSearchClick, onLogout }: VisitorTopBarProps) {
 
         <button
           type="button"
-          className="visitor-top-bar__button"
+          className="visitor-top-bar__button visitor-top-bar__button--logout"
           onClick={onLogout}
           aria-label="Salir"
           title="Salir"

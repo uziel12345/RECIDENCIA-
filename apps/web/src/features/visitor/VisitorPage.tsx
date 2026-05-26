@@ -14,7 +14,13 @@ import {
 } from "../campus/components/MobileBottomSheet";
 import { MobileQuickActions } from "../campus/components/MobileQuickActions";
 import { ROUTES } from "../../types/routes";
-import { UsersIcon, LogOutIcon, CompassIcon, InfoIcon, ChevronLeftIcon, ChevronRightIcon } from "../shared/Icons";
+import {
+  UsersIcon,
+  LogOutIcon,
+  CompassIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "../shared/Icons";
 import { VisitorTopBar } from "./components/VisitorTopBar";
 import { QuickDestinations } from "./components/QuickDestinations";
 import {
@@ -43,11 +49,13 @@ export function VisitorPage() {
   const [showServices, setShowServices] = useState(false);
 
   useEffect(() => {
-    getBuildings().then((data) => {
-      setTotalBuildings(
-        data.filter((building: Building) => building.is_active).length
-      );
-    });
+    getBuildings()
+      .then((data) => {
+        setTotalBuildings(
+          data.filter((building: Building) => building.is_active).length
+        );
+      })
+      .catch(() => setTotalBuildings(0));
   }, []);
 
   const handleLogout = () => {
@@ -58,6 +66,34 @@ export function VisitorPage() {
   const handleSelectService = (service: CampusService) => {
     setSearchTerm(service.searchTerm);
     setShowServices(false);
+    setShowQuickDest(false);
+    setSheetState("full");
+  };
+
+  const openBuildingSearch = () => {
+    setShowQuickDest(false);
+    setShowServices(false);
+    setSheetState("full");
+    window.setTimeout(() => {
+      document.getElementById("building-search")?.focus();
+    }, 360);
+  };
+
+  const openQuickDestinations = () => {
+    setShowServices(false);
+    setSheetState("closed");
+    setShowQuickDest(true);
+  };
+
+  const openServices = () => {
+    setShowQuickDest(false);
+    setSheetState("closed");
+    setShowServices(true);
+  };
+
+  const openBuildings = () => {
+    setShowQuickDest(false);
+    setShowServices(false);
     setSheetState("full");
   };
 
@@ -67,39 +103,38 @@ export function VisitorPage() {
         id: "quick",
         label: "Destinos",
         icon: "compass" as const,
-        onClick: () => setShowQuickDest(true),
+        onClick: openQuickDestinations,
+        active: showQuickDest,
       },
       {
         id: "services",
         label: "Servicios",
         icon: "info" as const,
-        onClick: () => setShowServices(true),
-      },
-      {
-        id: "search",
-        label: "Buscar",
-        icon: "search" as const,
-        onClick: () => setSheetState("full"),
-        active: sheetState === "full",
+        onClick: openServices,
+        active: showServices,
       },
       {
         id: "list",
         label: "Edificios",
         icon: "list" as const,
-        onClick: () => setSheetState(sheetState === "peek" ? "full" : "peek"),
-        active: sheetState === "peek",
+        onClick: openBuildings,
+        active: sheetState !== "closed" && !showQuickDest && !showServices,
         primary: true,
       },
     ];
-  }, [sheetState]);
+  }, [sheetState, showQuickDest, showServices]);
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   if (!isMobile) {
     return (
       <div
-        className="visitor-page"
-        style={{ gridTemplateColumns: sidebarCollapsed ? "0px 1fr" : "380px 1fr" }}
+        className={`visitor-page${sidebarCollapsed ? " is-sidebar-collapsed" : ""}`}
+        style={{
+          gridTemplateColumns: sidebarCollapsed
+            ? "0px minmax(0, 1fr)"
+            : "var(--desktop-sidebar-width) minmax(0, 1fr)",
+        }}
       >
         <aside className="visitor-page__sidebar" style={{ overflow: "hidden", minWidth: 0 }}>
           <div className="visitor-page__sidebar-header">
@@ -133,18 +168,6 @@ export function VisitorPage() {
             </h3>
 
             <QuickDestinations compact />
-          </div>
-
-          <div className="visitor-page__quick-section">
-            <h3 className="visitor-page__section-title">
-              <InfoIcon size={16} />
-              <span>Servicios frecuentes</span>
-            </h3>
-
-            <CampusServicesPanel
-              compact
-              onSelectService={handleSelectService}
-            />
           </div>
 
           <div className="visitor-page__sidebar-content">
@@ -189,7 +212,7 @@ export function VisitorPage() {
       <CampusViewer isMobile mobilePanelOpen={sheetState === "full"} />
 
       <VisitorTopBar
-        onSearchClick={() => setSheetState("full")}
+        onSearchClick={openBuildingSearch}
         onLogout={handleLogout}
       />
 

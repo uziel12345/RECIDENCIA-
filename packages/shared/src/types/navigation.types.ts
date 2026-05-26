@@ -58,6 +58,9 @@ export type BuildingEntrance = {
   building_name: string;
   node_code: string;
   node_name: string | null;
+  node_x: number;
+  node_y: number;
+  node_z: number;
 };
 
 export type RouteNode = NavigationNode;
@@ -67,5 +70,36 @@ export type RouteResult = {
   nodes: RouteNode[];
   total_distance: number;
   estimated_seconds: number;
+};
+
+export type CreateNavigationNodeInput = {
+  code?: string;
+  name?: string | null;
+  node_type: NavigationPathType;
+  x: number;
+  y?: number;
+  z: number;
+  floor_level?: number;
+  is_walkable?: boolean;
+  metadata?: Record<string, unknown> | null;
+};
+
+export type CreateNavigationEdgeInput = {
+  from_node_id: string;
+  to_node_id: string;
+  distance?: number;
+  path_type?: EdgePathType;
+  is_bidirectional?: boolean;
+  is_accessible?: boolean;
+  metadata?: Record<string, unknown> | null;
+};
+
+export type CreateBuildingEntranceInput = {
+  building_id: string;
+  node_id: string;
+  entrance_name?: string | null;
+  entrance_type?: BuildingEntranceType;
+  is_primary?: boolean;
+  is_accessible?: boolean;
 };
 

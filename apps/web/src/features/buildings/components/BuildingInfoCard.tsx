@@ -14,7 +14,7 @@ function getBuildingDescription(building: Building): string {
     return building.description.trim();
   }
 
-  return `Este edificio pertenece a la categoría ${building.category_name}. Puedes seleccionarlo como destino para generar una ruta dentro del campus.`;
+  return `Este edificio pertenece a la categorÃ­a ${building.category_name}. Puedes seleccionarlo como destino para generar una ruta dentro del campus.`;
 }
 
 export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
@@ -33,7 +33,7 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
   return (
     <article
       className="ito-info-card"
-      aria-label={`Información de ${building.name}`}
+      aria-label={`InformaciÃ³n de ${building.name}`}
     >
       {coverUrl ? (
         <div className="ito-info-card__cover">
@@ -48,7 +48,7 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
             type="button"
             className="ito-info-card__close"
             onClick={() => setSelectedBuilding(null)}
-            aria-label="Cerrar información"
+            aria-label="Cerrar informaciÃ³n"
           >
             <Icon name="close" size={16} />
           </button>
@@ -66,7 +66,7 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
 
           <div className="ito-info-card__hero-text">
             <div className="ito-info-card__code">
-              Edificio {building.code || "Sin código"}
+              Edificio {building.code || "Sin cÃ³digo"}
             </div>
             <h3 className="ito-info-card__name">{building.name}</h3>
           </div>
@@ -75,7 +75,7 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
             type="button"
             className="ito-info-card__close"
             onClick={() => setSelectedBuilding(null)}
-            aria-label="Cerrar información"
+            aria-label="Cerrar informaciÃ³n"
           >
             <Icon name="close" size={16} />
           </button>
@@ -85,7 +85,7 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
       {coverUrl && (
         <div className="ito-info-card__cover-title">
           <div className="ito-info-card__code">
-            Edificio {building.code || "Sin código"}
+            Edificio {building.code || "Sin cÃ³digo"}
           </div>
           <h3 className="ito-info-card__name">{building.name}</h3>
         </div>
@@ -93,7 +93,7 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
 
       <div className="ito-info-card__body">
         <div className="ito-info-card__row">
-          <span className="ito-info-card__label">Categoría</span>
+          <span className="ito-info-card__label">CategorÃ­a</span>
           <CategoryBadge name={building.category_name} />
         </div>
 
@@ -105,7 +105,7 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
         )}
 
         <div className="ito-info-card__row ito-info-card__row--block">
-          <span className="ito-info-card__label">Descripción</span>
+          <span className="ito-info-card__label">DescripciÃ³n</span>
           <p className="ito-info-card__text">
             {getBuildingDescription(building)}
           </p>
@@ -149,7 +149,7 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
             onClick={() => setRouteDestination(building)}
           >
             <Icon name="route" size={16} />
-            <span>Trazar ruta aquí</span>
+            <span>Como llegar</span>
           </button>
 
           <button
@@ -165,3 +165,4 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
     </article>
   );
 }
+

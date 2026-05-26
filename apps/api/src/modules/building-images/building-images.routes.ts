@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import { Router } from "express";
 import type { Request } from "express";
-import multer = require("multer");
+import multer from "multer";
 import { z } from "zod";
 import {
   deleteBuildingImage,

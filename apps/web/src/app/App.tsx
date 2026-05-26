@@ -22,6 +22,11 @@ const AdminBuildingsPage = lazy(async () => {
   return { default: AdminBuildingsPage };
 });
 
+const AdminNavigationPage = lazy(async () => {
+  const { AdminNavigationPage } = await import("../features/admin/pages/AdminNavigationPage");
+  return { default: AdminNavigationPage };
+});
+
 function MapLoadingFallback() {
   return (
     <div
@@ -117,6 +122,16 @@ export default function App() {
             <AdminProtectedRoute>
               <Suspense fallback={null}>
                 <AdminBuildingsPage />
+              </Suspense>
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_NAVIGATION}
+          element={
+            <AdminProtectedRoute>
+              <Suspense fallback={<MapLoadingFallback />}>
+                <AdminNavigationPage />
               </Suspense>
             </AdminProtectedRoute>
           }

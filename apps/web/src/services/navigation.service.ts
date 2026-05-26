@@ -1,14 +1,25 @@
 import {
+  createBuildingEntranceApi,
+  createNavigationEdgeApi,
+  createNavigationNodeApi,
+  deleteNavigationEdgeApi,
+  deleteNavigationNodeApi,
   getBuildingEntrancesApi,
   getNavigationEdgesApi,
   getNavigationNodesApi,
   type BuildingEntrance,
+  type CreateBuildingEntranceInput,
+  type CreateNavigationEdgeInput,
+  type CreateNavigationNodeInput,
   type NavigationEdge,
   type NavigationNode,
 } from "@ito-map/shared";
 
 export type {
   BuildingEntrance,
+  CreateBuildingEntranceInput,
+  CreateNavigationEdgeInput,
+  CreateNavigationNodeInput,
   NavigationEdge,
   NavigationNode,
 } from "@ito-map/shared";
@@ -23,4 +34,30 @@ export async function getNavigationEdges(): Promise<NavigationEdge[]> {
 
 export async function getBuildingEntrances(): Promise<BuildingEntrance[]> {
   return getBuildingEntrancesApi();
+}
+
+export async function createNavigationNode(
+  input: CreateNavigationNodeInput
+): Promise<NavigationNode> {
+  return createNavigationNodeApi(input);
+}
+
+export async function createNavigationEdge(
+  input: CreateNavigationEdgeInput
+): Promise<NavigationEdge> {
+  return createNavigationEdgeApi(input);
+}
+
+export async function createBuildingEntrance(
+  input: CreateBuildingEntranceInput
+): Promise<BuildingEntrance> {
+  return createBuildingEntranceApi(input);
+}
+
+export async function deleteNavigationNode(id: string): Promise<{ id: string }> {
+  return deleteNavigationNodeApi(id);
+}
+
+export async function deleteNavigationEdge(id: string): Promise<{ id: string }> {
+  return deleteNavigationEdgeApi(id);
 }
