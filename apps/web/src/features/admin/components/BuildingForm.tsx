@@ -121,60 +121,6 @@ export function BuildingForm({
             placeholder="Building_A"
           />
         </label>
-
-        <label style={styles.label}>
-          X
-          <input
-            value={form.x}
-            onChange={(event) => onUpdateFormField("x", event.target.value)}
-            style={styles.input}
-            placeholder="0"
-          />
-        </label>
-
-        <label style={styles.label}>
-          Y
-          <input
-            value={form.y}
-            onChange={(event) => onUpdateFormField("y", event.target.value)}
-            style={styles.input}
-            placeholder="0"
-          />
-        </label>
-
-        <label style={styles.label}>
-          Z
-          <input
-            value={form.z}
-            onChange={(event) => onUpdateFormField("z", event.target.value)}
-            style={styles.input}
-            placeholder="0"
-          />
-        </label>
-
-        <label style={styles.label}>
-          Latitud
-          <input
-            value={form.latitude}
-            onChange={(event) =>
-              onUpdateFormField("latitude", event.target.value)
-            }
-            style={styles.input}
-            placeholder="17.073"
-          />
-        </label>
-
-        <label style={styles.label}>
-          Longitud
-          <input
-            value={form.longitude}
-            onChange={(event) =>
-              onUpdateFormField("longitude", event.target.value)
-            }
-            style={styles.input}
-            placeholder="-96.726"
-          />
-        </label>
       </div>
 
       <label style={styles.label}>

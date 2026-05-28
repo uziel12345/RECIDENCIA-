@@ -1,6 +1,11 @@
 import type { Request, Response } from "express";
-import { loginAdmin } from "../modules/auth/auth.service.js";
-import type { LoginInput } from "../modules/auth/auth.schema.js";
+import {
+  createAdminUser,
+  listAdminUsers,
+  loginAdmin,
+  updateAdminUserStatus,
+} from "../modules/auth/auth.service.js";
+import type { CreateAdminUserInput, LoginInput } from "../modules/auth/auth.schema.js";
 
 export async function loginController(req: Request<{}, {}, LoginInput>, res: Response) {
   try {
@@ -31,6 +36,54 @@ export async function meController(req: Request, res: Response) {
     success: true,
     data: {
       user: req.authUser,
+    },
+  });
+}
+
+export async function listAdminUsersController(_req: Request, res: Response) {
+  const users = await listAdminUsers();
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      users,
+    },
+  });
+}
+
+export async function createAdminUserController(
+  req: Request<{}, {}, CreateAdminUserInput>,
+  res: Response
+) {
+  const user = await createAdminUser(req.body);
+
+  return res.status(201).json({
+    success: true,
+    data: {
+      user,
+    },
+  });
+}
+
+export async function updateAdminUserStatusController(
+  req: Request,
+  res: Response
+) {
+  const id = String(req.params.id);
+  const { is_active } = req.body as { is_active: boolean };
+  const user = await updateAdminUserStatus(id, is_active);
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "Usuario administrador no encontrado",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      user,
     },
   });
 }

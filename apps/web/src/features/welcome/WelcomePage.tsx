@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
+import { useState, type CSSProperties } from "react";
 import { useAuthStore } from "../../store/auth-store";
+import { useAdminAuthStore } from "../../store/admin-auth-store";
 import { ROUTES } from "../../types/routes";
 import { MapIcon, GraduationCapIcon, UsersIcon, BuildingIcon } from "../shared/Icons";
 
@@ -50,9 +52,24 @@ const roleCards: RoleCard[] = [
 export function WelcomePage() {
   const navigate = useNavigate();
   const { selectRole, hasCompletedOnboarding } = useAuthStore();
+  const {
+    user: adminUser,
+    isAuthenticated: hasAdminSession,
+    loadSession,
+    logout: logoutAdmin,
+  } = useAdminAuthStore();
+  const [showAdminSessionModal, setShowAdminSessionModal] = useState(false);
 
-  const handleRoleSelect = (card: RoleCard) => {
+  const handleRoleSelect = async (card: RoleCard) => {
     if (card.action === "admin-login") {
+      if (hasAdminSession) {
+        const sessionIsReady = adminUser ? true : await loadSession();
+        if (sessionIsReady) {
+          setShowAdminSessionModal(true);
+          return;
+        }
+      }
+
       navigate(ROUTES.ADMIN_LOGIN);
       return;
     }
@@ -67,6 +84,12 @@ export function WelcomePage() {
     } else {
       navigate(card.id === "student" ? ROUTES.STUDENT : ROUTES.VISITOR);
     }
+  };
+
+  const handleChangeAdminUser = () => {
+    logoutAdmin();
+    setShowAdminSessionModal(false);
+    navigate(ROUTES.ADMIN_LOGIN);
   };
 
   return (
@@ -127,6 +150,81 @@ export function WelcomePage() {
           <p>Mapa 3D Interactivo del Campus</p>
         </footer>
       </div>
+
+      {showAdminSessionModal ? (
+        <div style={styles.modalBackdrop} role="dialog" aria-modal="true">
+          <div style={styles.modal}>
+            <h2 style={styles.modalTitle}>Sesión administrativa activa</h2>
+            <p style={styles.modalText}>
+              Puedes continuar como {adminUser?.username ?? "administrador"} o cambiar de usuario.
+            </p>
+            <div style={styles.modalActions}>
+              <button
+                type="button"
+                onClick={() => navigate(ROUTES.ADMIN_BUILDINGS)}
+                style={styles.primaryButton}
+              >
+                Continuar
+              </button>
+              <button type="button" onClick={handleChangeAdminUser} style={styles.secondaryButton}>
+                Cambiar usuario
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
+
+const styles: Record<string, CSSProperties> = {
+  modalBackdrop: {
+    position: "fixed",
+    inset: 0,
+    display: "grid",
+    placeItems: "center",
+    background: "rgba(15, 23, 42, 0.55)",
+    padding: "20px",
+    zIndex: 50,
+  },
+  modal: {
+    width: "min(420px, 100%)",
+    background: "#ffffff",
+    borderRadius: "18px",
+    padding: "22px",
+    boxShadow: "0 22px 50px rgba(15, 23, 42, 0.25)",
+  },
+  modalTitle: {
+    margin: "0 0 8px",
+    color: "#0f172a",
+    fontSize: "22px",
+  },
+  modalText: {
+    margin: "0 0 18px",
+    color: "#475569",
+    lineHeight: 1.5,
+  },
+  modalActions: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+  },
+  primaryButton: {
+    border: "1px solid #1d4ed8",
+    borderRadius: "12px",
+    padding: "10px 14px",
+    background: "#2563eb",
+    color: "#ffffff",
+    fontWeight: 800,
+    cursor: "pointer",
+  },
+  secondaryButton: {
+    border: "1px solid #cbd5e1",
+    borderRadius: "12px",
+    padding: "10px 14px",
+    background: "#ffffff",
+    color: "#0f172a",
+    fontWeight: 800,
+    cursor: "pointer",
+  },
+};

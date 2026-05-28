@@ -1,22 +1,9 @@
 import bcrypt from "bcryptjs";
+import { randomUUID } from "node:crypto";
 import jwt, { type Secret, type SignOptions } from "jsonwebtoken";
+import type { AuthUser, UserRole } from "@ito-map/shared";
 import { pool } from "../../db/connection.js";
-
-export type UserRole =
-  | "superadmin"
-  | "admin"
-  | "servicios_escolares"
-  | "recursos_humanos"
-  | "viewer";
-
-export type AuthUser = {
-  id: string;
-  username: string;
-  full_name: string;
-  email: string;
-  role: UserRole;
-  is_active: boolean;
-};
+import type { CreateAdminUserInput } from "./auth.schema.js";
 
 export type LoginInput = {
   usernameOrEmail: string;
@@ -156,4 +143,106 @@ export async function loginAdmin(input: LoginInput): Promise<LoginResult> {
     token,
     user,
   };
+}
+
+export async function listAdminUsers(): Promise<AuthUser[]> {
+  const [rows] = await pool.query(
+    `
+      SELECT
+        id,
+        username,
+        full_name,
+        email,
+        role,
+        is_active
+      FROM admin_users
+      ORDER BY username ASC
+    `
+  );
+
+  return (rows as AdminUserRow[]).map(mapAdminUserToAuthUser);
+}
+
+export async function createAdminUser(
+  input: CreateAdminUserInput
+): Promise<AuthUser> {
+  const id = randomUUID();
+  const passwordHash = await bcrypt.hash(input.password, 12);
+
+  await pool.query(
+    `
+      INSERT INTO admin_users (
+        id,
+        username,
+        full_name,
+        email,
+        password_hash,
+        role,
+        is_active
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `,
+    [
+      id,
+      input.username.trim(),
+      input.full_name.trim(),
+      input.email.trim(),
+      passwordHash,
+      input.role,
+      input.is_active,
+    ]
+  );
+
+  const [rows] = await pool.query(
+    `
+      SELECT
+        id,
+        username,
+        full_name,
+        email,
+        password_hash,
+        role,
+        is_active
+      FROM admin_users
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [id]
+  );
+
+  return mapAdminUserToAuthUser((rows as AdminUserRow[])[0]);
+}
+
+export async function updateAdminUserStatus(
+  userId: string,
+  isActive: boolean
+): Promise<AuthUser | null> {
+  await pool.query(
+    `
+      UPDATE admin_users
+      SET is_active = ?
+      WHERE id = ?
+    `,
+    [isActive, userId]
+  );
+
+  const [rows] = await pool.query(
+    `
+      SELECT
+        id,
+        username,
+        full_name,
+        email,
+        password_hash,
+        role,
+        is_active
+      FROM admin_users
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [userId]
+  );
+
+  const users = rows as AdminUserRow[];
+  return users[0] ? mapAdminUserToAuthUser(users[0]) : null;
 }

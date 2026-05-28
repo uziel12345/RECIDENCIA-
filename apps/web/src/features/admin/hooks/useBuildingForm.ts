@@ -65,6 +65,19 @@ export function numberToFormValue(value: number | null | undefined): string {
   return String(value);
 }
 
+function currentNumberToPayload(value: unknown): number | null | undefined {
+  if (value === null) return null;
+  if (value === undefined) return undefined;
+  if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
 export function mapBuildingToForm(building: Building): BuildingFormState {
   return {
     code: safeText(building.code),
@@ -110,11 +123,11 @@ export function buildUpdateInput(
     slug: form.slug.trim() || createSlug(form.name),
     description: form.description.trim() || null,
     model_node_name: form.model_node_name.trim(),
-    x: toNullableNumber(form.x),
-    y: toNullableNumber(form.y),
-    z: toNullableNumber(form.z),
-    latitude: toNullableNumber(form.latitude),
-    longitude: toNullableNumber(form.longitude),
+    x: currentNumberToPayload(currentBuilding.x),
+    y: currentNumberToPayload(currentBuilding.y),
+    z: currentNumberToPayload(currentBuilding.z),
+    latitude: currentNumberToPayload(currentBuilding.latitude),
+    longitude: currentNumberToPayload(currentBuilding.longitude),
     category_code: form.category_code.trim(),
     is_active: Boolean(currentBuilding.is_active),
     is_priority: form.is_priority,

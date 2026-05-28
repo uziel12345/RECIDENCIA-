@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+const adminUserRoleSchema = z.enum([
+  "superadmin",
+  "admin",
+  "servicios_escolares",
+  "recursos_humanos",
+]);
+
 export const loginSchema = z.object({
   usernameOrEmail: z
     .string({ required_error: "El usuario o correo es obligatorio" })
@@ -12,3 +19,14 @@ export const loginSchema = z.object({
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
+
+export const createAdminUserSchema = z.object({
+  username: z.string({ required_error: "El usuario es obligatorio" }).min(3).max(80),
+  full_name: z.string({ required_error: "El nombre es obligatorio" }).min(3).max(255),
+  email: z.string({ required_error: "El correo es obligatorio" }).email().max(255),
+  password: z.string({ required_error: "La contraseÃ±a es obligatoria" }).min(6).max(128),
+  role: adminUserRoleSchema,
+  is_active: z.boolean(),
+});
+
+export type CreateAdminUserInput = z.infer<typeof createAdminUserSchema>;

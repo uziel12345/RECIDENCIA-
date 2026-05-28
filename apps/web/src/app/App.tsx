@@ -6,6 +6,7 @@ import { AdminLoginPage } from "../features/admin/pages/AdminLoginPage";
 import { useAuthStore } from "../store/auth-store";
 import { useAdminAuthStore } from "../store/admin-auth-store";
 import { ROUTES } from "../types/routes";
+import { ROLE_PERMISSIONS, type RolePermissions } from "@ito-map/shared";
 
 const StudentPage = lazy(async () => {
   const { StudentPage } = await import("../features/student/StudentPage");
@@ -25,6 +26,11 @@ const AdminBuildingsPage = lazy(async () => {
 const AdminNavigationPage = lazy(async () => {
   const { AdminNavigationPage } = await import("../features/admin/pages/AdminNavigationPage");
   return { default: AdminNavigationPage };
+});
+
+const AdminUsersPage = lazy(async () => {
+  const { AdminUsersPage } = await import("../features/admin/pages/AdminUsersPage");
+  return { default: AdminUsersPage };
 });
 
 function MapLoadingFallback() {
@@ -68,8 +74,10 @@ function MapLoadingFallback() {
 
 function AdminProtectedRoute({
   children,
+  permission,
 }: {
   children: React.ReactNode;
+  permission?: keyof RolePermissions;
 }) {
   const { isAuthenticated, loadSession, user } = useAdminAuthStore();
   // Token in storage but user not yet hydrated from backend (direct nav / page reload)
@@ -82,8 +90,21 @@ function AdminProtectedRoute({
 
   if (verifying) return null;
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     return <Navigate to={ROUTES.ADMIN_LOGIN} replace />;
+  }
+
+  if (permission && !ROLE_PERMISSIONS[user.role]?.[permission]) {
+    return (
+      <Navigate
+        to={
+          permission === "can_view_buildings"
+            ? ROUTES.ADMIN_LOGIN
+            : ROUTES.ADMIN_BUILDINGS
+        }
+        replace
+      />
+    );
   }
 
   return <>{children}</>;
@@ -119,7 +140,7 @@ export default function App() {
         <Route
           path={ROUTES.ADMIN_BUILDINGS}
           element={
-            <AdminProtectedRoute>
+            <AdminProtectedRoute permission="can_view_buildings">
               <Suspense fallback={null}>
                 <AdminBuildingsPage />
               </Suspense>
@@ -129,9 +150,19 @@ export default function App() {
         <Route
           path={ROUTES.ADMIN_NAVIGATION}
           element={
-            <AdminProtectedRoute>
+            <AdminProtectedRoute permission="can_edit_navigation">
               <Suspense fallback={<MapLoadingFallback />}>
                 <AdminNavigationPage />
+              </Suspense>
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_USERS}
+          element={
+            <AdminProtectedRoute permission="can_manage_admin_users">
+              <Suspense fallback={null}>
+                <AdminUsersPage />
               </Suspense>
             </AdminProtectedRoute>
           }
