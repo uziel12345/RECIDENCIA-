@@ -71,6 +71,10 @@ export function deleteNavigationEdgeApi(id: string): Promise<{ id: string }> {
   return apiDelete<{ id: string }>(`/navigation/edges/${encodeURIComponent(id)}`);
 }
 
+export function resetAllNavigationApi(): Promise<void> {
+  return apiDelete<void>("/navigation/all");
+}
+
 function withNoCache(endpoint: string): string {
   const separator = endpoint.includes("?") ? "&" : "?";
   return `${endpoint}${separator}_=${Date.now()}`;

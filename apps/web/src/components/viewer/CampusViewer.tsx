@@ -16,9 +16,9 @@ import { Icon, type IconName } from "../ui/Icons";
 import { getCategoryAccent } from "../ui/categoryAccent";
 import {
   NavigationDraftEditorLayer,
-  NavigationDraftEditorPanel,
   useDraftEditor,
 } from "./NavigationDraftEditorLayer";
+import { NavigationEditorModal } from "./NavigationEditorModal";
 import { NavigationDebugLayer } from "./NavigationDebugLayer";
 import { DestinationBuildingHighlight } from "./DestinationBuildingHighlight";
 
@@ -687,12 +687,11 @@ export function CampusViewer({
       {isModelLoading && <ViewerLoading />}
 
       {canUseAdvancedTools && draftEditorActive && (
-        <div className="ito-draft-panel-anchor">
-          <NavigationDraftEditorPanel
-            controls={draftEditor}
-            buildings={buildings}
-          />
-        </div>
+        <NavigationEditorModal
+          controls={draftEditor}
+          buildings={buildings}
+          onClose={() => setDraftEditorActive(false)}
+        />
       )}
 
       <Canvas

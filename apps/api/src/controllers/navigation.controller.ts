@@ -398,3 +398,15 @@ export async function invalidateNavigationCacheController(
     message: "Cache de navegación invalidado correctamente",
   });
 }
+
+export async function resetAllNavigationController(
+  _req: Request,
+  res: Response
+) {
+  await pool.query("DELETE FROM building_entrances");
+  await pool.query("DELETE FROM navigation_edges");
+  await pool.query("DELETE FROM navigation_nodes");
+
+  invalidateNavigationCache();
+  return sendSuccess(res, null, 200, "Todas las tablas de navegación limpiadas");
+}

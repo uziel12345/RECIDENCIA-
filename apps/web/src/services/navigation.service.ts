@@ -7,6 +7,7 @@ import {
   getBuildingEntrancesApi,
   getNavigationEdgesApi,
   getNavigationNodesApi,
+  resetAllNavigationApi,
   type BuildingEntrance,
   type CreateBuildingEntranceInput,
   type CreateNavigationEdgeInput,
@@ -60,4 +61,8 @@ export async function deleteNavigationNode(id: string): Promise<{ id: string }> 
 
 export async function deleteNavigationEdge(id: string): Promise<{ id: string }> {
   return deleteNavigationEdgeApi(id);
+}
+
+export async function resetAllNavigation(): Promise<void> {
+  await resetAllNavigationApi();
 }

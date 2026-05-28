@@ -11,6 +11,7 @@ import {
   deleteNavigationNode,
   getNavigationEdges,
   getNavigationNodes,
+  resetAllNavigation as resetAllNavigationService,
   type NavigationEdge,
 } from "../../services/navigation.service";
 
@@ -35,8 +36,22 @@ type DraftEntranceNode = {
   buildingName: string;
 };
 
+type PendingConnection = {
+  id: number;
+  fromNodeId: string;
+  fromCode: string;
+  fromX: number;
+  fromZ: number;
+  toNodeId: string;
+  toCode: string;
+  toX: number;
+  toZ: number;
+  distance: number;
+  pathType: EdgePathType;
+};
+
 export type DraftEditorControls = {
-  nodeType: "path" | "entrance";
+  nodeType: "path" | "entrance" | "connect" | "edit";
   activePath: DraftPath | null;
   completedPaths: DraftPath[];
   entranceNodes: DraftEntranceNode[];
@@ -50,7 +65,7 @@ export type DraftEditorControls = {
   saveError: string | null;
   saveMessage: string | null;
   canFinalizePath: boolean;
-  setNodeType: (type: "path" | "entrance") => void;
+  setNodeType: (type: "path" | "entrance" | "connect" | "edit") => void;
   setSelectedBuilding: (b: { id: string; name: string } | null) => void;
   setEdgePathType: (type: EdgePathType) => void;
   setEdgeBidirectional: (value: boolean) => void;
@@ -62,6 +77,25 @@ export type DraftEditorControls = {
   deleteExistingEdge: (id: string) => Promise<void>;
   undoLast: () => void;
   clearDraft: () => void;
+  connectingFromId: string | null;
+  connectingToId: string | null;
+  connectEdgePathType: EdgePathType;
+  setConnectingFromId: (id: string | null) => void;
+  setConnectingToId: (id: string | null) => void;
+  saveCurrentConnection: () => Promise<void>;
+  setConnectEdgePathType: (type: EdgePathType) => void;
+  editSelNode: NavigationNode | null;
+  editConnectMode: boolean;
+  editSubMode: "select" | "add-node";
+  addNodeType: "intersection" | "building_access";
+  setEditSelNode: (node: NavigationNode | null) => void;
+  startEditConnect: () => void;
+  connectEditNodes: (target: NavigationNode) => Promise<void>;
+  deleteEditNode: () => Promise<void>;
+  setEditSubMode: (mode: "select" | "add-node") => void;
+  setAddNodeType: (type: "intersection" | "building_access") => void;
+  addNodeToDatabase: (x: number, z: number) => Promise<void>;
+  resetAllNavigation: () => Promise<void>;
 };
 
 // â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -226,7 +260,7 @@ function round4(v: number): number {
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useDraftEditor(): DraftEditorControls {
-  const [nodeType, setNodeTypeState] = useState<"path" | "entrance">("path");
+  const [nodeType, setNodeTypeState] = useState<"path" | "entrance" | "connect" | "edit">("path");
   const [activePath, setActivePath] = useState<DraftPath | null>(null);
   const [completedPaths, setCompletedPaths] = useState<DraftPath[]>([]);
   const [entranceNodes, setEntranceNodes] = useState<DraftEntranceNode[]>([]);
@@ -242,17 +276,17 @@ export function useDraftEditor(): DraftEditorControls {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [connectingFromId, setConnectingFromId] = useState<string | null>(null);
+  const [connectingToId, setConnectingToId] = useState<string | null>(null);
+  const [connectEdgePathType, setConnectEdgePathTypeState] = useState<EdgePathType>("walkway");
+  const [editSelNode, setEditSelNodeState] = useState<NavigationNode | null>(null);
+  const [editConnectMode, setEditConnectMode] = useState(false);
+  const [editSubMode, setEditSubModeState] = useState<"select" | "add-node">("select");
+  const [addNodeType, setAddNodeTypeState] = useState<"intersection" | "building_access">("intersection");
 
-  // Carga nodos existentes de la BD mientras se dibuja en modo camino
+  // Carga nodos existentes de la BD (ambos modos los necesitan: path para snap visual, entrance para auto-conectar)
   useEffect(() => {
     let cancelled = false;
-
-    if (nodeType !== "path") {
-      queueMicrotask(() => {
-        if (!cancelled) setAvailableNodes([]);
-      });
-      return;
-    }
 
     Promise.all([getNavigationNodes(), getNavigationEdges()]).then(([nodes, edges]) => {
       if (!cancelled) {
@@ -272,8 +306,21 @@ export function useDraftEditor(): DraftEditorControls {
 
   const canFinalizePath = activePath !== null && activePath.nodes.length >= 2;
 
-  function setNodeType(type: "path" | "entrance") {
+  function setNodeType(type: "path" | "entrance" | "connect" | "edit") {
     setNodeTypeState(type);
+    if (type !== "connect") {
+      setConnectingFromId(null);
+      setConnectingToId(null);
+    }
+    if (type !== "edit") {
+      setEditSelNodeState(null);
+      setEditConnectMode(false);
+      setEditSubModeState("select");
+    }
+  }
+
+  function setConnectEdgePathType(type: EdgePathType) {
+    setConnectEdgePathTypeState(type);
   }
 
   function setEdgePathType(type: EdgePathType) {
@@ -398,7 +445,12 @@ export function useDraftEditor(): DraftEditorControls {
           is_accessible: true,
         });
 
-        const nearest = savedPathNodes.reduce<{
+        const dbNodes = availableNodes.map((n) => ({
+          id: n.id,
+          x: Number(n.x),
+          z: Number(n.z),
+        }));
+        const nearest = [...savedPathNodes, ...dbNodes].reduce<{
           id: string;
           distance: number;
         } | null>((current, node) => {
@@ -473,10 +525,156 @@ export function useDraftEditor(): DraftEditorControls {
     }
   }
 
+  async function saveCurrentConnection() {
+    const fromNode = availableNodes.find((n) => n.id === connectingFromId);
+    const toNode = availableNodes.find((n) => n.id === connectingToId);
+    if (!fromNode || !toNode) return;
+    setSaving(true);
+    setSaveError(null);
+    setSaveMessage(null);
+    try {
+      const dist = Math.hypot(
+        Number(fromNode.x) - Number(toNode.x),
+        Number(fromNode.z) - Number(toNode.z)
+      );
+      await createNavigationEdge({
+        from_node_id: fromNode.id,
+        to_node_id: toNode.id,
+        path_type: connectEdgePathType,
+        is_bidirectional: true,
+        is_accessible: true,
+        metadata: { source: "admin-editor", distance: dist.toFixed(2) },
+      });
+      setConnectingToId(null);
+      setRefreshKey((v) => v + 1);
+      setSaveMessage(`Conexión guardada: ${fromNode.code} ↔ ${toNode.code}`);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "No se pudo guardar la conexión");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function setEditSubMode(mode: "select" | "add-node") {
+    setEditSubModeState(mode);
+    if (mode === "add-node") {
+      setEditSelNodeState(null);
+      setEditConnectMode(false);
+    }
+  }
+
+  function setAddNodeType(type: "intersection" | "building_access") {
+    setAddNodeTypeState(type);
+  }
+
+  async function addNodeToDatabase(x: number, z: number) {
+    setSaving(true);
+    setSaveError(null);
+    setSaveMessage(null);
+    try {
+      const suffix = Date.now().toString(36);
+      const code =
+        addNodeType === "building_access"
+          ? `nav-acc-${suffix}`
+          : `nav-int-${suffix}`;
+      await createNavigationNode({
+        code,
+        name: addNodeType === "building_access" ? "Acceso" : "Nodo",
+        node_type: addNodeType,
+        x: round4(x),
+        y: 0,
+        z: round4(z),
+        metadata: { source: "admin-editor" },
+      });
+      setRefreshKey((v) => v + 1);
+      setSaveMessage(`Nodo creado en x:${x.toFixed(1)} z:${z.toFixed(1)}`);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "No se pudo crear el nodo");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function setEditSelNode(node: NavigationNode | null) {
+    setEditSelNodeState(node);
+    setEditConnectMode(false);
+  }
+
+  function startEditConnect() {
+    setEditConnectMode(true);
+  }
+
+  async function connectEditNodes(target: NavigationNode) {
+    if (!editSelNode) return;
+    setSaving(true);
+    setSaveError(null);
+    setSaveMessage(null);
+    try {
+      const distance = Math.hypot(
+        Number(editSelNode.x) - Number(target.x),
+        Number(editSelNode.z) - Number(target.z)
+      );
+      await createNavigationEdge({
+        from_node_id: editSelNode.id,
+        to_node_id: target.id,
+        path_type: connectEdgePathType,
+        is_bidirectional: true,
+        is_accessible: true,
+        metadata: { source: "admin-editor", distance: distance.toFixed(2) },
+      });
+      setEditConnectMode(false);
+      setRefreshKey((v) => v + 1);
+      setSaveMessage(`Arista creada: ${editSelNode.code} ↔ ${target.code}`);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "No se pudo crear la arista");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteEditNode() {
+    if (!editSelNode) return;
+    setSaving(true);
+    setSaveError(null);
+    setSaveMessage(null);
+    try {
+      await deleteNavigationNode(editSelNode.id);
+      setEditSelNodeState(null);
+      setEditConnectMode(false);
+      setRefreshKey((v) => v + 1);
+      setSaveMessage("Nodo eliminado.");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "No se pudo eliminar el nodo");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function clearDraft() {
     setActivePath(null);
     setCompletedPaths([]);
     setEntranceNodes([]);
+    setConnectingFromId(null);
+    setConnectingToId(null);
+    setEditSelNodeState(null);
+    setEditConnectMode(false);
+    setEditSubModeState("select");
+  }
+
+  async function resetAllNavigation() {
+    setSaving(true);
+    setSaveError(null);
+    setSaveMessage(null);
+    try {
+      await resetAllNavigationService();
+      clearDraft();
+      setRefreshKey((v) => v + 1);
+      setSaveMessage("Grafo limpiado. Tablas vacías.");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "No se pudo limpiar el grafo");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return {
@@ -506,6 +704,25 @@ export function useDraftEditor(): DraftEditorControls {
     deleteExistingEdge,
     undoLast,
     clearDraft,
+    connectingFromId,
+    connectingToId,
+    connectEdgePathType,
+    setConnectingFromId,
+    setConnectingToId,
+    saveCurrentConnection,
+    setConnectEdgePathType,
+    editSelNode,
+    editConnectMode,
+    editSubMode,
+    addNodeType,
+    setEditSelNode,
+    startEditConnect,
+    connectEditNodes,
+    deleteEditNode,
+    setEditSubMode,
+    setAddNodeType,
+    addNodeToDatabase,
+    resetAllNavigation,
   };
 }
 
@@ -530,8 +747,20 @@ export function NavigationDraftEditorLayer({
     completedPaths,
     entranceNodes,
     availableNodes,
+    availableEdges,
     extendPath,
     addEntranceNode,
+    connectingFromId,
+    connectingToId,
+    setConnectingFromId,
+    setConnectingToId,
+    editSelNode,
+    editConnectMode,
+    editSubMode,
+    setEditSelNode,
+    connectEditNodes,
+    addNodeToDatabase,
+    deleteExistingEdge,
   } = controls;
 
   function handlePlanePointerDown(event: ThreeEvent<PointerEvent>) {
@@ -562,8 +791,10 @@ export function NavigationDraftEditorLayer({
 
     if (nodeType === "path") {
       extendPath({ kind: "new", id: Date.now(), x: round4(parentPoint.x), z: round4(parentPoint.z) });
-    } else {
+    } else if (nodeType === "entrance") {
       addEntranceNode(parentPoint.x, parentPoint.z);
+    } else if (nodeType === "edit" && editSubMode === "add-node") {
+      addNodeToDatabase(parentPoint.x, parentPoint.z);
     }
   }
 
@@ -685,6 +916,135 @@ export function NavigationDraftEditorLayer({
           )}
         </group>
       ))}
+
+      {/* ── Modo Conectar ── origen → destino → guardar */}
+      {nodeType === "connect" &&
+        availableNodes.map((node) => {
+          const isFrom = node.id === connectingFromId;
+          const isTo = node.id === connectingToId;
+          const color = isFrom
+            ? "#facc15"
+            : isTo
+              ? "#22d3ee"
+              : node.node_type === "building_access"
+                ? "#f43f5e"
+                : "#2563eb";
+          return (
+            <group key={node.id} position={[Number(node.x), DRAFT_Y + 0.15, Number(node.z)]}>
+              <mesh
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  if (!connectingFromId) {
+                    setConnectingFromId(node.id);
+                    setConnectingToId(null);
+                  } else if (isFrom) {
+                    setConnectingFromId(null);
+                    setConnectingToId(null);
+                  } else {
+                    setConnectingToId(node.id);
+                  }
+                }}
+              >
+                <sphereGeometry args={[isFrom || isTo ? 1.4 : 1.0, 14, 14]} />
+                <meshBasicMaterial color={color} />
+              </mesh>
+              {isFrom && (
+                <Html position={[0, 3.5, 0]} center>
+                  <div className="ito-nav-debug-label ito-nav-debug-label--snap">
+                    <strong>Origen</strong><span>{node.code}</span>
+                  </div>
+                </Html>
+              )}
+              {isTo && (
+                <Html position={[0, 3.5, 0]} center>
+                  <div className="ito-nav-debug-label ito-nav-debug-label--draft">
+                    <strong>Destino</strong><span>{node.code}</span>
+                  </div>
+                </Html>
+              )}
+            </group>
+          );
+        })}
+
+      {/* Preview línea origen→destino */}
+      {nodeType === "connect" && connectingFromId && connectingToId && (() => {
+        const from = availableNodes.find((n) => n.id === connectingFromId);
+        const to = availableNodes.find((n) => n.id === connectingToId);
+        if (!from || !to) return null;
+        return (
+          <Line
+            points={[
+              new THREE.Vector3(Number(from.x), DRAFT_Y + 0.5, Number(from.z)),
+              new THREE.Vector3(Number(to.x), DRAFT_Y + 0.5, Number(to.z)),
+            ]}
+            color="#22d3ee"
+            lineWidth={4}
+            transparent
+            opacity={0.85}
+          />
+        );
+      })()}
+
+      {/* ── Modo Editar ── seleccionar nodo, conectar, eliminar nodo/arista */}
+      {nodeType === "edit" &&
+        availableEdges.map((edge) => {
+          const from = availableNodes.find((n) => n.id === edge.from_node_id);
+          const to = availableNodes.find((n) => n.id === edge.to_node_id);
+          if (!from || !to) return null;
+          const isRelated =
+            editSelNode?.id === edge.from_node_id || editSelNode?.id === edge.to_node_id;
+          return (
+            <Line
+              key={edge.id}
+              points={[
+                new THREE.Vector3(Number(from.x), DRAFT_Y + 0.2, Number(from.z)),
+                new THREE.Vector3(Number(to.x), DRAFT_Y + 0.2, Number(to.z)),
+              ]}
+              color={isRelated ? "#f97316" : "#4b5563"}
+              lineWidth={isRelated ? 3 : 1.5}
+              transparent
+              opacity={isRelated ? 0.95 : 0.35}
+            />
+          );
+        })}
+
+      {nodeType === "edit" &&
+        availableNodes.map((node) => {
+          const isSelected = editSelNode?.id === node.id;
+          const isConnectTarget = editConnectMode && !isSelected;
+          const color = isSelected
+            ? "#facc15"
+            : isConnectTarget
+              ? "#22d3ee"
+              : node.node_type === "building_access"
+                ? "#f43f5e"
+                : "#6366f1";
+          return (
+            <group key={node.id} position={[Number(node.x), DRAFT_Y + 0.15, Number(node.z)]}>
+              <mesh
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  if (editConnectMode && editSelNode && !isSelected) {
+                    connectEditNodes(node);
+                  } else {
+                    setEditSelNode(isSelected ? null : node);
+                  }
+                }}
+              >
+                <sphereGeometry args={[isSelected ? 1.6 : 1.1, 14, 14]} />
+                <meshBasicMaterial color={color} />
+              </mesh>
+              {isSelected && (
+                <Html position={[0, 4.5, 0]} center>
+                  <div className="ito-nav-debug-label ito-nav-debug-label--snap">
+                    <strong>{node.code}</strong>
+                    <span>{node.node_type}</span>
+                  </div>
+                </Html>
+              )}
+            </group>
+          );
+        })}
     </>
   );
 }
@@ -736,6 +1096,8 @@ export function NavigationDraftEditorPanel({
         ? "1 nodo colocado. Sigue haciendo clic para extender."
         : `${n} nodos. ContinÃºa o finaliza el camino.`;
     }
+    if (nodeType === "connect") return "";
+    if (nodeType === "edit") return "";
     if (!selectedBuilding) return "Selecciona un edificio para colocar su entrada.";
     return `Colocando accesos de "${selectedBuilding.name}".`;
   })();
@@ -773,6 +1135,20 @@ export function NavigationDraftEditorPanel({
           onClick={() => controls.setNodeType("entrance")}
         >
           Nodo de entrada
+        </button>
+        <button
+          type="button"
+          className={nodeType === "connect" ? "is-active" : ""}
+          onClick={() => controls.setNodeType("connect")}
+        >
+          Conectar
+        </button>
+        <button
+          type="button"
+          className={nodeType === "edit" ? "is-active" : ""}
+          onClick={() => controls.setNodeType("edit")}
+        >
+          Editar
         </button>
       </div>
 
@@ -821,6 +1197,195 @@ export function NavigationDraftEditorPanel({
           ))}
         </select>
       )}
+
+      {/* Modo Conectar */}
+      {nodeType === "connect" && (
+        <>
+          <select
+            className="ito-draft-editor-panel__building-select"
+            value={controls.connectEdgePathType}
+            onChange={(e) => controls.setConnectEdgePathType(e.target.value as EdgePathType)}
+          >
+            {(["walkway", "hallway", "outdoor", "ramp", "stairs"] as EdgePathType[]).map((t) => (
+              <option key={t} value={t}>{EDGE_PATH_LABELS[t]}</option>
+            ))}
+          </select>
+          <span>
+            {!controls.connectingFromId
+              ? "Clic en cualquier nodo para seleccionar origen."
+              : !controls.connectingToId
+                ? "Origen (amarillo) listo. Clic en nodo destino."
+                : (() => {
+                    const from = controls.availableNodes.find((n) => n.id === controls.connectingFromId);
+                    const to = controls.availableNodes.find((n) => n.id === controls.connectingToId);
+                    return `${from?.code ?? "?"} ↔ ${to?.code ?? "?"}`;
+                  })()}
+          </span>
+
+          {controls.connectingFromId && controls.connectingToId && (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={controls.saveCurrentConnection}
+              style={{ fontWeight: 700 }}
+            >
+              {saving ? "Guardando..." : "Guardar conexión"}
+            </button>
+          )}
+
+          {controls.connectingFromId && (
+            <button
+              type="button"
+              onClick={() => {
+                controls.setConnectingFromId(null);
+                controls.setConnectingToId(null);
+              }}
+            >
+              Cancelar
+            </button>
+          )}
+        </>
+      )}
+
+      {/* Modo Editar */}
+      {nodeType === "edit" && (() => {
+        const sel = controls.editSelNode;
+        const isAddMode = controls.editSubMode === "add-node";
+        const nodeEdges = sel
+          ? availableEdges.filter(
+              (e) => e.from_node_id === sel.id || e.to_node_id === sel.id
+            )
+          : [];
+        return (
+          <>
+            {/* Sub-modo toggle */}
+            <div className="ito-draft-editor-panel__tabs" style={{ marginBottom: 4 }}>
+              <button
+                type="button"
+                className={!isAddMode ? "is-active" : ""}
+                onClick={() => controls.setEditSubMode("select")}
+              >
+                Seleccionar
+              </button>
+              <button
+                type="button"
+                className={isAddMode ? "is-active" : ""}
+                onClick={() => controls.setEditSubMode("add-node")}
+              >
+                Agregar nodo
+              </button>
+            </div>
+
+            {/* ── Agregar nodo ── */}
+            {isAddMode && (
+              <>
+                <select
+                  className="ito-draft-editor-panel__building-select"
+                  value={controls.addNodeType}
+                  onChange={(e) =>
+                    controls.setAddNodeType(e.target.value as "intersection" | "building_access")
+                  }
+                >
+                  <option value="intersection">Camino (intersection)</option>
+                  <option value="building_access">Entrada (building_access)</option>
+                </select>
+                <span style={{ fontSize: 11 }}>
+                  {saving ? "Guardando nodo..." : "Clic en el mapa para colocar y guardar."}
+                </span>
+              </>
+            )}
+
+            {/* ── Seleccionar ── */}
+            {!isAddMode && (
+              <>
+                <select
+                  className="ito-draft-editor-panel__building-select"
+                  value={controls.connectEdgePathType}
+                  onChange={(e) => controls.setConnectEdgePathType(e.target.value as EdgePathType)}
+                >
+                  {(["walkway", "hallway", "outdoor", "ramp", "stairs"] as EdgePathType[]).map((t) => (
+                    <option key={t} value={t}>{EDGE_PATH_LABELS[t]}</option>
+                  ))}
+                </select>
+
+                {!sel && (
+                  <span style={{ fontSize: 11 }}>
+                    {availableNodes.length} nodos. Clic en uno para seleccionarlo.
+                  </span>
+                )}
+
+                {sel && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    <strong style={{ fontSize: 11 }}>{sel.code}</strong>
+                    <span style={{ fontSize: 10, opacity: 0.7 }}>
+                      {sel.node_type} · x{Number(sel.x).toFixed(1)} z{Number(sel.z).toFixed(1)}
+                    </span>
+
+                    <div className="ito-draft-editor-panel__actions" style={{ marginTop: 2 }}>
+                      {!controls.editConnectMode ? (
+                        <button type="button" onClick={controls.startEditConnect}>
+                          Conectar a otro
+                        </button>
+                      ) : (
+                        <button type="button" onClick={() => controls.setEditSelNode(sel)}>
+                          Cancelar
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={controls.deleteEditNode}
+                        style={{ background: "#dc2626" }}
+                      >
+                        Eliminar nodo
+                      </button>
+                    </div>
+
+                    {controls.editConnectMode && (
+                      <span style={{ fontSize: 10 }}>
+                        Clic en nodo destino (cian) para crear arista.
+                      </span>
+                    )}
+
+                    {nodeEdges.length > 0 && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: 4 }}>
+                        <strong style={{ fontSize: 11 }}>Aristas ({nodeEdges.length}):</strong>
+                        {nodeEdges.map((edge) => {
+                          const otherId =
+                            edge.from_node_id === sel.id ? edge.to_node_id : edge.from_node_id;
+                          const other = availableNodes.find((n) => n.id === otherId);
+                          return (
+                            <div
+                              key={edge.id}
+                              style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10 }}
+                            >
+                              <span style={{ flex: 1 }}>
+                                ↔ {other?.code ?? otherId.slice(0, 8)} · {edge.path_type}
+                              </span>
+                              <button
+                                type="button"
+                                disabled={saving}
+                                style={{ padding: "0 5px", fontSize: 10, background: "#dc2626" }}
+                                onClick={() => controls.deleteExistingEdge(edge.id)}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {nodeEdges.length === 0 && (
+                      <span style={{ fontSize: 10, opacity: 0.6 }}>Sin aristas conectadas.</span>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        );
+      })()}
 
       {/* Estado contextual */}
       {nodeType === "path" && availableNodes.length > 0 && (

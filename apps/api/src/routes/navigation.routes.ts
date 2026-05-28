@@ -10,6 +10,7 @@ import {
   getNavigationNodes,
   getNavigationRoute,
   invalidateNavigationCacheController,
+  resetAllNavigationController,
 } from "../controllers/navigation.controller.js";
 import {
   createBuildingEntranceSchema,
@@ -74,6 +75,13 @@ router.post(
   authenticate,
   authorize("superadmin", "admin"),
   asyncHandler(invalidateNavigationCacheController)
+);
+
+router.delete(
+  "/all",
+  authenticate,
+  authorize("superadmin"),
+  asyncHandler(resetAllNavigationController)
 );
 
 export default router;

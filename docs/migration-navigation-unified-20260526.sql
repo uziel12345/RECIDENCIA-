@@ -1,7 +1,7 @@
 -- ============================================================
 -- MIGRACIÓN UNIFICADA — Navegación campus ITO
 -- Fecha: 2026-05-26
--- 86 nodos (80 base + 6 esquinas) | 97 aristas | 38 entradas
+-- 86 nodos (80 base + 6 esquinas) | 98 aristas | 38 entradas
 --
 -- PREREQUISITO:  ya ejecutado
 -- ESTE ARCHIVO REEMPLAZA:
@@ -229,6 +229,11 @@ SELECT UUID(), n1.id, n2.id,   6.32, 1, 1, 'sidewalk', 1, NOW(), NOW() FROM navi
 SELECT UUID(), n1.id, n2.id,  14.87, 1, 1, 'sidewalk', 1, NOW(), NOW() FROM navigation_nodes n1 JOIN navigation_nodes n2 ON n2.code='n-acceso-aulas-enie'              WHERE n1.code='n-pasillo-audiovisual-post-1' UNION ALL
 -- (diagonal enie → quimica-bio eliminada; sustituida por L a través de esquina-enie-quimica)
 SELECT UUID(), n1.id, n2.id,  29.07, 1, 1, 'sidewalk', 1, NOW(), NOW() FROM navigation_nodes n1 JOIN navigation_nodes n2 ON n2.code='n-acceso-quimica-bioquimica'      WHERE n1.code='n-pasillo-quimica-bio-1' UNION ALL
+
+-- ── Pasillo central norte-sur (1) ────────────────────────────
+-- Une cruce-h-f (z=74) con esquina-dir-centro (z=28) — paso del corredor H hacia Biblioteca
+-- Sin este edge la A* daba vuelta por zona E/F (+70 unidades innecesarias)
+SELECT UUID(), n1.id, n2.id,  46.04, 1, 1, 'sidewalk', 1, NOW(), NOW() FROM navigation_nodes n1 JOIN navigation_nodes n2 ON n2.code='n-esquina-dir-centro'             WHERE n1.code='n-cruce-h-f' UNION ALL
 
 -- ── Aristas en L — esquinas originales (8) ────────────────────
 -- Fix 1: dir-biblioteca → esquina → cruce

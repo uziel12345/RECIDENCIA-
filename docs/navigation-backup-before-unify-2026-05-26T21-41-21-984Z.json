@@ -1,0 +1,2163 @@
+{
+  "createdAt": "2026-05-26T21:41:21.995Z",
+  "nodes": [
+    {
+      "id": "6cde7732-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n4-mpn37uow",
+      "name": "Camino 1 nodo 4",
+      "node_type": "intersection",
+      "x": "9.2454",
+      "y": "0.0000",
+      "z": "-40.2209",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:28:15.000Z",
+      "updated_at": "2026-05-26T20:28:15.000Z"
+    },
+    {
+      "id": "6c8f4e14-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n1-mpn37u3e",
+      "name": "Camino 1 nodo 1",
+      "node_type": "intersection",
+      "x": "-13.3307",
+      "y": "0.0000",
+      "z": "-117.7018",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:28:15.000Z",
+      "updated_at": "2026-05-26T20:28:15.000Z"
+    },
+    {
+      "id": "6ca85002-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n2-mpn37ufq",
+      "name": "Camino 1 nodo 2",
+      "node_type": "intersection",
+      "x": "-25.5043",
+      "y": "0.0000",
+      "z": "-71.1448",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:28:15.000Z",
+      "updated_at": "2026-05-26T20:28:15.000Z"
+    },
+    {
+      "id": "6cc2c628-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n3-mpn37ukg",
+      "name": "Camino 1 nodo 3",
+      "node_type": "intersection",
+      "x": "12.9017",
+      "y": "0.0000",
+      "z": "-59.5998",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:28:15.000Z",
+      "updated_at": "2026-05-26T20:28:15.000Z"
+    },
+    {
+      "id": "6cf6c565-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n5-mpn37uuf",
+      "name": "Camino 1 nodo 5",
+      "node_type": "intersection",
+      "x": "42.0627",
+      "y": "0.0000",
+      "z": "-31.6780",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:28:16.000Z",
+      "updated_at": "2026-05-26T20:28:16.000Z"
+    },
+    {
+      "id": "6d1380b7-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n6-mpn37uyn",
+      "name": "Camino 1 nodo 6",
+      "node_type": "intersection",
+      "x": "34.1851",
+      "y": "0.0000",
+      "z": "5.2839",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:28:16.000Z",
+      "updated_at": "2026-05-26T20:28:16.000Z"
+    },
+    {
+      "id": "6d2c3b58-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n7-mpn37v3l",
+      "name": "Camino 1 nodo 7",
+      "node_type": "intersection",
+      "x": "21.6733",
+      "y": "0.0000",
+      "z": "40.8011",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:28:16.000Z",
+      "updated_at": "2026-05-26T20:28:16.000Z"
+    },
+    {
+      "id": "a5094211-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n1-mpn39v9t",
+      "name": "Camino 1 nodo 1",
+      "node_type": "intersection",
+      "x": "-26.2715",
+      "y": "0.0000",
+      "z": "-69.4520",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:29:50.000Z",
+      "updated_at": "2026-05-26T20:29:50.000Z"
+    },
+    {
+      "id": "a578ede2-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n5-mpn39w0c",
+      "name": "Camino 1 nodo 5",
+      "node_type": "intersection",
+      "x": "-57.3730",
+      "y": "0.0000",
+      "z": "34.5483",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:29:50.000Z",
+      "updated_at": "2026-05-26T20:29:50.000Z"
+    },
+    {
+      "id": "a564fafb-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n4-mpn39vu0",
+      "name": "Camino 1 nodo 4",
+      "node_type": "intersection",
+      "x": "-55.1932",
+      "y": "0.0000",
+      "z": "21.2461",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:29:50.000Z",
+      "updated_at": "2026-05-26T20:29:50.000Z"
+    },
+    {
+      "id": "a53fd130-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n3-mpn39vqs",
+      "name": "Camino 1 nodo 3",
+      "node_type": "intersection",
+      "x": "-46.2853",
+      "y": "0.0000",
+      "z": "-3.7483",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:29:50.000Z",
+      "updated_at": "2026-05-26T20:29:50.000Z"
+    },
+    {
+      "id": "a52ff5bd-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n2-mpn39vjv",
+      "name": "Camino 1 nodo 2",
+      "node_type": "intersection",
+      "x": "-36.1494",
+      "y": "0.0000",
+      "z": "-37.9056",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:29:50.000Z",
+      "updated_at": "2026-05-26T20:29:50.000Z"
+    },
+    {
+      "id": "a59a2ef7-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n6-mpn39w49",
+      "name": "Camino 1 nodo 6",
+      "node_type": "intersection",
+      "x": "-21.2322",
+      "y": "0.0000",
+      "z": "45.2526",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:29:51.000Z",
+      "updated_at": "2026-05-26T20:29:51.000Z"
+    },
+    {
+      "id": "a5d1b54a-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n8-mpn39wdd",
+      "name": "Camino 1 nodo 8",
+      "node_type": "intersection",
+      "x": "2.1914",
+      "y": "0.0000",
+      "z": "37.7717",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:29:51.000Z",
+      "updated_at": "2026-05-26T20:29:51.000Z"
+    },
+    {
+      "id": "a5acb88f-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n7-mpn39wac",
+      "name": "Camino 1 nodo 7",
+      "node_type": "intersection",
+      "x": "-0.4592",
+      "y": "0.0000",
+      "z": "49.5781",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:29:51.000Z",
+      "updated_at": "2026-05-26T20:29:51.000Z"
+    },
+    {
+      "id": "b6aa9bbd-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n1-mpn3aicl",
+      "name": "Camino 1 nodo 1",
+      "node_type": "intersection",
+      "x": "-3.5697",
+      "y": "0.0000",
+      "z": "-44.3640",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:30:19.000Z",
+      "updated_at": "2026-05-26T20:30:19.000Z"
+    },
+    {
+      "id": "b7406a05-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n5-mpn3aix0",
+      "name": "Camino 1 nodo 5",
+      "node_type": "intersection",
+      "x": "-15.2648",
+      "y": "0.0000",
+      "z": "16.1872",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:30:20.000Z",
+      "updated_at": "2026-05-26T20:30:20.000Z"
+    },
+    {
+      "id": "b7178164-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n4-mpn3aiuz",
+      "name": "Camino 1 nodo 4",
+      "node_type": "intersection",
+      "x": "-20.2532",
+      "y": "0.0000",
+      "z": "13.9865",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:30:20.000Z",
+      "updated_at": "2026-05-26T20:30:20.000Z"
+    },
+    {
+      "id": "b70bb814-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n3-mpn3ainw",
+      "name": "Camino 1 nodo 3",
+      "node_type": "intersection",
+      "x": "-16.8128",
+      "y": "0.0000",
+      "z": "2.4416",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:30:20.000Z",
+      "updated_at": "2026-05-26T20:30:20.000Z"
+    },
+    {
+      "id": "b6e3b022-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n2-mpn3aie5",
+      "name": "Camino 1 nodo 2",
+      "node_type": "intersection",
+      "x": "-12.8280",
+      "y": "0.0000",
+      "z": "-18.3343",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:30:20.000Z",
+      "updated_at": "2026-05-26T20:30:20.000Z"
+    },
+    {
+      "id": "b74a5085-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n6-mpn3aj4h",
+      "name": "Camino 1 nodo 6",
+      "node_type": "intersection",
+      "x": "-20.9101",
+      "y": "0.0000",
+      "z": "28.5680",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:30:20.000Z",
+      "updated_at": "2026-05-26T20:30:20.000Z"
+    },
+    {
+      "id": "b7744225-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n7-mpn3aj6b",
+      "name": "Camino 1 nodo 7",
+      "node_type": "intersection",
+      "x": "-27.0339",
+      "y": "0.0000",
+      "z": "43.8411",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:30:21.000Z",
+      "updated_at": "2026-05-26T20:30:21.000Z"
+    },
+    {
+      "id": "c39173c6-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n1-mpn3az1q",
+      "name": "Camino 1 nodo 1",
+      "node_type": "intersection",
+      "x": "-11.6723",
+      "y": "0.0000",
+      "z": "-17.9372",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:30:41.000Z",
+      "updated_at": "2026-05-26T20:30:41.000Z"
+    },
+    {
+      "id": "c3cbd150-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n2-mpn3az3l",
+      "name": "Camino 1 nodo 2",
+      "node_type": "intersection",
+      "x": "36.8792",
+      "y": "0.0000",
+      "z": "-2.0634",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:30:41.000Z",
+      "updated_at": "2026-05-26T20:30:41.000Z"
+    },
+    {
+      "id": "d655c65a-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n1-mpn3bn3v",
+      "name": "Camino 1 nodo 1",
+      "node_type": "intersection",
+      "x": "-14.8464",
+      "y": "0.0000",
+      "z": "-108.3874",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:31:12.000Z",
+      "updated_at": "2026-05-26T20:31:12.000Z"
+    },
+    {
+      "id": "d6888a59-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n3-mpn3bnk6",
+      "name": "Camino 1 nodo 3",
+      "node_type": "intersection",
+      "x": "-71.5816",
+      "y": "0.0000",
+      "z": "-71.2142",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:31:13.000Z",
+      "updated_at": "2026-05-26T20:31:13.000Z"
+    },
+    {
+      "id": "d67d5758-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n2-mpn3bnd3",
+      "name": "Camino 1 nodo 2",
+      "node_type": "intersection",
+      "x": "-53.5600",
+      "y": "0.0000",
+      "z": "-121.8145",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:31:13.000Z",
+      "updated_at": "2026-05-26T20:31:13.000Z"
+    },
+    {
+      "id": "d6ae6cb1-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n4-mpn3bnm6",
+      "name": "Camino 1 nodo 4",
+      "node_type": "intersection",
+      "x": "-29.7684",
+      "y": "0.0000",
+      "z": "-55.9217",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:31:13.000Z",
+      "updated_at": "2026-05-26T20:31:13.000Z"
+    },
+    {
+      "id": "e8df7d11-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n2-mpn3cb3d",
+      "name": "Camino 1 nodo 2",
+      "node_type": "intersection",
+      "x": "-89.6254",
+      "y": "0.0000",
+      "z": "-40.9884",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:31:43.000Z",
+      "updated_at": "2026-05-26T20:31:43.000Z"
+    },
+    {
+      "id": "e8aadc90-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n1-mpn3cb2q",
+      "name": "Camino 1 nodo 1",
+      "node_type": "intersection",
+      "x": "-41.0544",
+      "y": "0.0000",
+      "z": "-22.5480",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:31:43.000Z",
+      "updated_at": "2026-05-26T20:31:43.000Z"
+    },
+    {
+      "id": "e90588ee-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n3-mpn3cbd2",
+      "name": "Camino 1 nodo 3",
+      "node_type": "intersection",
+      "x": "-101.1687",
+      "y": "0.0000",
+      "z": "-5.6256",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:31:44.000Z",
+      "updated_at": "2026-05-26T20:31:44.000Z"
+    },
+    {
+      "id": "e913c5b8-5941-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n4-mpn3cbjv",
+      "name": "Camino 1 nodo 4",
+      "node_type": "intersection",
+      "x": "-52.2134",
+      "y": "0.0000",
+      "z": "10.6864",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:31:44.000Z",
+      "updated_at": "2026-05-26T20:31:44.000Z"
+    },
+    {
+      "id": "4eaed8c6-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n1-mpn3fywm",
+      "name": "Camino 1 nodo 1",
+      "node_type": "intersection",
+      "x": "-57.9459",
+      "y": "0.0000",
+      "z": "36.0533",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:34:34.000Z",
+      "updated_at": "2026-05-26T20:34:34.000Z"
+    },
+    {
+      "id": "4f462c61-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n6-mpn3fzpc",
+      "name": "Camino 1 nodo 6",
+      "node_type": "intersection",
+      "x": "-137.7735",
+      "y": "0.0000",
+      "z": "4.8799",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:34:35.000Z",
+      "updated_at": "2026-05-26T20:34:35.000Z"
+    },
+    {
+      "id": "4f18fa97-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n5-mpn3fznl",
+      "name": "Camino 1 nodo 5",
+      "node_type": "intersection",
+      "x": "-139.2900",
+      "y": "0.0000",
+      "z": "19.7106",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:34:35.000Z",
+      "updated_at": "2026-05-26T20:34:35.000Z"
+    },
+    {
+      "id": "4f1028f1-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n4-mpn3fzfi",
+      "name": "Camino 1 nodo 4",
+      "node_type": "intersection",
+      "x": "-107.6040",
+      "y": "0.0000",
+      "z": "32.8628",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:34:35.000Z",
+      "updated_at": "2026-05-26T20:34:35.000Z"
+    },
+    {
+      "id": "4ee2b895-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n3-mpn3fzdv",
+      "name": "Camino 1 nodo 3",
+      "node_type": "intersection",
+      "x": "-82.1331",
+      "y": "0.0000",
+      "z": "41.9802",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:34:35.000Z",
+      "updated_at": "2026-05-26T20:34:35.000Z"
+    },
+    {
+      "id": "4ed9d184-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n2-mpn3fz5p",
+      "name": "Camino 1 nodo 2",
+      "node_type": "intersection",
+      "x": "-61.0107",
+      "y": "0.0000",
+      "z": "49.7696",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:34:35.000Z",
+      "updated_at": "2026-05-26T20:34:35.000Z"
+    },
+    {
+      "id": "6b5e927f-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n1-mpn3h09z",
+      "name": "Camino 1 nodo 1",
+      "node_type": "intersection",
+      "x": "-133.9015",
+      "y": "0.0000",
+      "z": "-9.2931",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:35:22.000Z",
+      "updated_at": "2026-05-26T20:35:22.000Z"
+    },
+    {
+      "id": "6b9867f0-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n2-mpn3h0bs",
+      "name": "Camino 1 nodo 2",
+      "node_type": "intersection",
+      "x": "-137.4324",
+      "y": "0.0000",
+      "z": "3.4796",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:35:23.000Z",
+      "updated_at": "2026-05-26T20:35:23.000Z"
+    },
+    {
+      "id": "8dd6a549-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n1-mpn3i8ni",
+      "name": "Camino 1 nodo 1",
+      "node_type": "intersection",
+      "x": "-133.3737",
+      "y": "0.0000",
+      "z": "-10.2665",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:36:20.000Z",
+      "updated_at": "2026-05-26T20:36:20.000Z"
+    },
+    {
+      "id": "8e343c05-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n4-mpn3i96y",
+      "name": "Camino 1 nodo 4",
+      "node_type": "intersection",
+      "x": "-87.7522",
+      "y": "0.0000",
+      "z": "-56.0925",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:36:21.000Z",
+      "updated_at": "2026-05-26T20:36:21.000Z"
+    },
+    {
+      "id": "8e4347f1-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n5-mpn3i9e2",
+      "name": "Camino 1 nodo 5",
+      "node_type": "intersection",
+      "x": "-84.3535",
+      "y": "0.0000",
+      "z": "-55.4676",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:36:21.000Z",
+      "updated_at": "2026-05-26T20:36:21.000Z"
+    },
+    {
+      "id": "8e6825e8-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n6-mpn3i9h1",
+      "name": "Camino 1 nodo 6",
+      "node_type": "intersection",
+      "x": "-81.4904",
+      "y": "0.0000",
+      "z": "-61.1601",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:36:21.000Z",
+      "updated_at": "2026-05-26T20:36:21.000Z"
+    },
+    {
+      "id": "8e0c9640-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n3-mpn3i94b",
+      "name": "Camino 1 nodo 3",
+      "node_type": "intersection",
+      "x": "-113.9377",
+      "y": "0.0000",
+      "z": "-65.6628",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:36:21.000Z",
+      "updated_at": "2026-05-26T20:36:21.000Z"
+    },
+    {
+      "id": "8dfe60f8-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n2-mpn3i8xc",
+      "name": "Camino 1 nodo 2",
+      "node_type": "intersection",
+      "x": "-130.9846",
+      "y": "0.0000",
+      "z": "-17.6047",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:36:21.000Z",
+      "updated_at": "2026-05-26T20:36:21.000Z"
+    },
+    {
+      "id": "a1b1f008-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n1-mpn3iycu",
+      "name": "Camino 1 nodo 1",
+      "node_type": "intersection",
+      "x": "-80.6183",
+      "y": "0.0000",
+      "z": "-61.9260",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:36:54.000Z",
+      "updated_at": "2026-05-26T20:36:54.000Z"
+    },
+    {
+      "id": "a1d9e3ea-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n2-mpn3iymi",
+      "name": "Camino 1 nodo 2",
+      "node_type": "intersection",
+      "x": "-70.6393",
+      "y": "0.0000",
+      "z": "-70.2371",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:36:54.000Z",
+      "updated_at": "2026-05-26T20:36:54.000Z"
+    },
+    {
+      "id": "b7a27859-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n1-mpn3jr07",
+      "name": "Camino 1 nodo 1",
+      "node_type": "intersection",
+      "x": "-13.3061",
+      "y": "0.0000",
+      "z": "-108.0173",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:37:30.000Z",
+      "updated_at": "2026-05-26T20:37:30.000Z"
+    },
+    {
+      "id": "b7d75228-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n2-mpn3jr0v",
+      "name": "Camino 1 nodo 2",
+      "node_type": "intersection",
+      "x": "24.8087",
+      "y": "0.0000",
+      "z": "-95.8117",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:37:31.000Z",
+      "updated_at": "2026-05-26T20:37:31.000Z"
+    },
+    {
+      "id": "b7fcc33e-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n3-mpn3jral",
+      "name": "Camino 1 nodo 3",
+      "node_type": "intersection",
+      "x": "28.3020",
+      "y": "0.0000",
+      "z": "-94.7727",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:37:31.000Z",
+      "updated_at": "2026-05-26T20:37:31.000Z"
+    },
+    {
+      "id": "b80b8157-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n4-mpn3jrh4",
+      "name": "Camino 1 nodo 4",
+      "node_type": "intersection",
+      "x": "14.6622",
+      "y": "0.0000",
+      "z": "-38.8774",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:37:31.000Z",
+      "updated_at": "2026-05-26T20:37:31.000Z"
+    },
+    {
+      "id": "dd3b62fe-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n2-mpn3l3hj",
+      "name": "Camino 1 nodo 2",
+      "node_type": "intersection",
+      "x": "36.2989",
+      "y": "0.0000",
+      "z": "-112.6168",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:38:33.000Z",
+      "updated_at": "2026-05-26T20:38:33.000Z"
+    },
+    {
+      "id": "dd126775-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n1-mpn3l385",
+      "name": "Camino 1 nodo 1",
+      "node_type": "intersection",
+      "x": "28.9374",
+      "y": "0.0000",
+      "z": "-96.0265",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:38:33.000Z",
+      "updated_at": "2026-05-26T20:38:33.000Z"
+    },
+    {
+      "id": "dd44c426-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n3-mpn3l3p1",
+      "name": "Camino 1 nodo 3",
+      "node_type": "intersection",
+      "x": "49.1430",
+      "y": "0.0000",
+      "z": "-109.3385",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:38:34.000Z",
+      "updated_at": "2026-05-26T20:38:34.000Z"
+    },
+    {
+      "id": "dd714944-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n4-mpn3l3qr",
+      "name": "Camino 1 nodo 4",
+      "node_type": "intersection",
+      "x": "57.0800",
+      "y": "0.0000",
+      "z": "-130.8634",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:38:34.000Z",
+      "updated_at": "2026-05-26T20:38:34.000Z"
+    },
+    {
+      "id": "dd78a5ce-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n5-mpn3l3z9",
+      "name": "Camino 1 nodo 5",
+      "node_type": "intersection",
+      "x": "69.0664",
+      "y": "0.0000",
+      "z": "-132.1691",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:38:34.000Z",
+      "updated_at": "2026-05-26T20:38:34.000Z"
+    },
+    {
+      "id": "ddb1c563-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n6-mpn3l40i",
+      "name": "Camino 1 nodo 6",
+      "node_type": "intersection",
+      "x": "79.4069",
+      "y": "0.0000",
+      "z": "-149.9874",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:38:34.000Z",
+      "updated_at": "2026-05-26T20:38:34.000Z"
+    },
+    {
+      "id": "ddd9c638-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n7-mpn3l4b4",
+      "name": "Camino 1 nodo 7",
+      "node_type": "intersection",
+      "x": "109.1301",
+      "y": "0.0000",
+      "z": "-140.6466",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:38:34.000Z",
+      "updated_at": "2026-05-26T20:38:34.000Z"
+    },
+    {
+      "id": "f76b122c-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n1-mpn3m1c7",
+      "name": "Camino 1 nodo 1",
+      "node_type": "intersection",
+      "x": "-0.1678",
+      "y": "0.0000",
+      "z": "-103.7826",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:39:17.000Z",
+      "updated_at": "2026-05-26T20:39:17.000Z"
+    },
+    {
+      "id": "f79443d7-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n2-mpn3m1ld",
+      "name": "Camino 1 nodo 2",
+      "node_type": "intersection",
+      "x": "12.3886",
+      "y": "0.0000",
+      "z": "-147.0813",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:39:18.000Z",
+      "updated_at": "2026-05-26T20:39:18.000Z"
+    },
+    {
+      "id": "f79d4953-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n3-mpn3m1su",
+      "name": "Camino 1 nodo 3",
+      "node_type": "intersection",
+      "x": "31.8526",
+      "y": "0.0000",
+      "z": "-141.8795",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:39:18.000Z",
+      "updated_at": "2026-05-26T20:39:18.000Z"
+    },
+    {
+      "id": "f7c706f3-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n4-mpn3m1ur",
+      "name": "Camino 1 nodo 4",
+      "node_type": "intersection",
+      "x": "39.4827",
+      "y": "0.0000",
+      "z": "-139.2883",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:39:18.000Z",
+      "updated_at": "2026-05-26T20:39:18.000Z"
+    },
+    {
+      "id": "f7d128df-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n5-mpn3m21z",
+      "name": "Camino 1 nodo 5",
+      "node_type": "intersection",
+      "x": "45.6352",
+      "y": "0.0000",
+      "z": "-129.0720",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:39:18.000Z",
+      "updated_at": "2026-05-26T20:39:18.000Z"
+    },
+    {
+      "id": "f7fa0b9d-5942-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n6-mpn3m240",
+      "name": "Camino 1 nodo 6",
+      "node_type": "intersection",
+      "x": "55.6794",
+      "y": "0.0000",
+      "z": "-128.1228",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:39:18.000Z",
+      "updated_at": "2026-05-26T20:39:18.000Z"
+    },
+    {
+      "id": "0cd38a05-5943-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n2-mpn3mt3i",
+      "name": "Camino 1 nodo 2",
+      "node_type": "intersection",
+      "x": "7.9086",
+      "y": "0.0000",
+      "z": "-40.5549",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:39:53.000Z",
+      "updated_at": "2026-05-26T20:39:53.000Z"
+    },
+    {
+      "id": "0caa5b22-5943-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n1-mpn3msuk",
+      "name": "Camino 1 nodo 1",
+      "node_type": "intersection",
+      "x": "-2.3024",
+      "y": "0.0000",
+      "z": "-43.8093",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:39:53.000Z",
+      "updated_at": "2026-05-26T20:39:53.000Z"
+    },
+    {
+      "id": "24f3a035-5943-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n1-mpn3no9f",
+      "name": "Camino 1 nodo 1",
+      "node_type": "intersection",
+      "x": "20.7007",
+      "y": "0.0000",
+      "z": "43.5417",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:40:34.000Z",
+      "updated_at": "2026-05-26T20:40:34.000Z"
+    },
+    {
+      "id": "25293af6-5943-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n3-mpn3noq1",
+      "name": "Camino 1 nodo 3",
+      "node_type": "intersection",
+      "x": "1.6316",
+      "y": "0.0000",
+      "z": "49.8736",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:40:34.000Z",
+      "updated_at": "2026-05-26T20:40:34.000Z"
+    },
+    {
+      "id": "25182b8b-5943-11f1-936f-d843ae05cb18",
+      "code": "nav-p1-n2-mpn3nojk",
+      "name": "Camino 1 nodo 2",
+      "node_type": "intersection",
+      "x": "18.5061",
+      "y": "0.0000",
+      "z": "51.6244",
+      "latitude": null,
+      "longitude": null,
+      "floor_level": 0,
+      "is_walkable": 1,
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:40:34.000Z",
+      "updated_at": "2026-05-26T20:40:34.000Z"
+    }
+  ],
+  "edges": [
+    {
+      "id": "6d4947f7-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "6c8f4e14-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "6ca85002-5941-11f1-936f-d843ae05cb18",
+      "distance": "48.1200",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:28:16.000Z",
+      "updated_at": "2026-05-26T20:28:16.000Z"
+    },
+    {
+      "id": "6d62dfa3-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "6ca85002-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "6cc2c628-5941-11f1-936f-d843ae05cb18",
+      "distance": "40.1000",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:28:16.000Z",
+      "updated_at": "2026-05-26T20:28:16.000Z"
+    },
+    {
+      "id": "6d9aefcf-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "6cde7732-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "6cf6c565-5941-11f1-936f-d843ae05cb18",
+      "distance": "33.9100",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:28:17.000Z",
+      "updated_at": "2026-05-26T20:28:17.000Z"
+    },
+    {
+      "id": "6d80df5a-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "6cc2c628-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "6cde7732-5941-11f1-936f-d843ae05cb18",
+      "distance": "19.7200",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:28:17.000Z",
+      "updated_at": "2026-05-26T20:28:17.000Z"
+    },
+    {
+      "id": "6db8539e-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "6cf6c565-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "6d1380b7-5941-11f1-936f-d843ae05cb18",
+      "distance": "37.7900",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:28:17.000Z",
+      "updated_at": "2026-05-26T20:28:17.000Z"
+    },
+    {
+      "id": "6dd17673-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "6d1380b7-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "6d2c3b58-5941-11f1-936f-d843ae05cb18",
+      "distance": "37.6600",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:28:17.000Z",
+      "updated_at": "2026-05-26T20:28:17.000Z"
+    },
+    {
+      "id": "a5dfac64-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "a5094211-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "a52ff5bd-5941-11f1-936f-d843ae05cb18",
+      "distance": "33.0600",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:29:51.000Z",
+      "updated_at": "2026-05-26T20:29:51.000Z"
+    },
+    {
+      "id": "a6057941-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "a52ff5bd-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "a53fd130-5941-11f1-936f-d843ae05cb18",
+      "distance": "35.6300",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:29:51.000Z",
+      "updated_at": "2026-05-26T20:29:51.000Z"
+    },
+    {
+      "id": "a6156957-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "a53fd130-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "a564fafb-5941-11f1-936f-d843ae05cb18",
+      "distance": "26.5300",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:29:51.000Z",
+      "updated_at": "2026-05-26T20:29:51.000Z"
+    },
+    {
+      "id": "a63bef4e-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "a564fafb-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "a578ede2-5941-11f1-936f-d843ae05cb18",
+      "distance": "13.4800",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:29:52.000Z",
+      "updated_at": "2026-05-26T20:29:52.000Z"
+    },
+    {
+      "id": "a64c5a1e-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "a578ede2-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "a59a2ef7-5941-11f1-936f-d843ae05cb18",
+      "distance": "37.6900",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:29:52.000Z",
+      "updated_at": "2026-05-26T20:29:52.000Z"
+    },
+    {
+      "id": "a681851e-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "a5acb88f-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "a5d1b54a-5941-11f1-936f-d843ae05cb18",
+      "distance": "12.1000",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:29:52.000Z",
+      "updated_at": "2026-05-26T20:29:52.000Z"
+    },
+    {
+      "id": "a671bd14-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "a59a2ef7-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "a5acb88f-5941-11f1-936f-d843ae05cb18",
+      "distance": "21.2200",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:29:52.000Z",
+      "updated_at": "2026-05-26T20:29:52.000Z"
+    },
+    {
+      "id": "b7e95a25-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "b7178164-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "b7406a05-5941-11f1-936f-d843ae05cb18",
+      "distance": "5.4500",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:30:21.000Z",
+      "updated_at": "2026-05-26T20:30:21.000Z"
+    },
+    {
+      "id": "b7b424cf-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "b70bb814-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "b7178164-5941-11f1-936f-d843ae05cb18",
+      "distance": "12.0500",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:30:21.000Z",
+      "updated_at": "2026-05-26T20:30:21.000Z"
+    },
+    {
+      "id": "b7ae6f00-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "b6e3b022-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "b70bb814-5941-11f1-936f-d843ae05cb18",
+      "distance": "21.1500",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:30:21.000Z",
+      "updated_at": "2026-05-26T20:30:21.000Z"
+    },
+    {
+      "id": "b7805c0c-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "b6aa9bbd-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "b6e3b022-5941-11f1-936f-d843ae05cb18",
+      "distance": "27.6300",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:30:21.000Z",
+      "updated_at": "2026-05-26T20:30:21.000Z"
+    },
+    {
+      "id": "b81d743e-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "b74a5085-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "b7744225-5941-11f1-936f-d843ae05cb18",
+      "distance": "16.4600",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:30:22.000Z",
+      "updated_at": "2026-05-26T20:30:22.000Z"
+    },
+    {
+      "id": "b810310b-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "b7406a05-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "b74a5085-5941-11f1-936f-d843ae05cb18",
+      "distance": "13.6100",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:30:22.000Z",
+      "updated_at": "2026-05-26T20:30:22.000Z"
+    },
+    {
+      "id": "c3f5b360-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "c39173c6-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "c3cbd150-5941-11f1-936f-d843ae05cb18",
+      "distance": "51.0800",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:30:42.000Z",
+      "updated_at": "2026-05-26T20:30:42.000Z"
+    },
+    {
+      "id": "d6eee0dd-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "d6888a59-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "d6ae6cb1-5941-11f1-936f-d843ae05cb18",
+      "distance": "44.5200",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:31:13.000Z",
+      "updated_at": "2026-05-26T20:31:13.000Z"
+    },
+    {
+      "id": "d6e1ed90-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "d67d5758-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "d6888a59-5941-11f1-936f-d843ae05cb18",
+      "distance": "53.7100",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:31:13.000Z",
+      "updated_at": "2026-05-26T20:31:13.000Z"
+    },
+    {
+      "id": "d6bbd533-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "d655c65a-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "d67d5758-5941-11f1-936f-d843ae05cb18",
+      "distance": "40.9800",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:31:13.000Z",
+      "updated_at": "2026-05-26T20:31:13.000Z"
+    },
+    {
+      "id": "e9497394-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "e8df7d11-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "e90588ee-5941-11f1-936f-d843ae05cb18",
+      "distance": "37.2000",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:31:44.000Z",
+      "updated_at": "2026-05-26T20:31:44.000Z"
+    },
+    {
+      "id": "e938c360-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "e8aadc90-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "e8df7d11-5941-11f1-936f-d843ae05cb18",
+      "distance": "51.9500",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:31:44.000Z",
+      "updated_at": "2026-05-26T20:31:44.000Z"
+    },
+    {
+      "id": "e96ff403-5941-11f1-936f-d843ae05cb18",
+      "from_node_id": "e90588ee-5941-11f1-936f-d843ae05cb18",
+      "to_node_id": "e913c5b8-5941-11f1-936f-d843ae05cb18",
+      "distance": "51.6000",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:31:44.000Z",
+      "updated_at": "2026-05-26T20:31:44.000Z"
+    },
+    {
+      "id": "4f502018-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "4eaed8c6-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "4ed9d184-5942-11f1-936f-d843ae05cb18",
+      "distance": "14.0500",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:34:35.000Z",
+      "updated_at": "2026-05-26T20:34:35.000Z"
+    },
+    {
+      "id": "4fb2564c-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "4f1028f1-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "4f18fa97-5942-11f1-936f-d843ae05cb18",
+      "distance": "34.3100",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:34:36.000Z",
+      "updated_at": "2026-05-26T20:34:36.000Z"
+    },
+    {
+      "id": "4f7be3f5-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "4ed9d184-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "4ee2b895-5942-11f1-936f-d843ae05cb18",
+      "distance": "22.5100",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:34:36.000Z",
+      "updated_at": "2026-05-26T20:34:36.000Z"
+    },
+    {
+      "id": "4f87d69f-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "4ee2b895-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "4f1028f1-5942-11f1-936f-d843ae05cb18",
+      "distance": "27.0500",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:34:36.000Z",
+      "updated_at": "2026-05-26T20:34:36.000Z"
+    },
+    {
+      "id": "4fbccddf-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "4f18fa97-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "4f462c61-5942-11f1-936f-d843ae05cb18",
+      "distance": "14.9100",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:34:36.000Z",
+      "updated_at": "2026-05-26T20:34:36.000Z"
+    },
+    {
+      "id": "6bc46c13-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "6b5e927f-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "6b9867f0-5942-11f1-936f-d843ae05cb18",
+      "distance": "13.2500",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "hallway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:35:23.000Z",
+      "updated_at": "2026-05-26T20:35:23.000Z"
+    },
+    {
+      "id": "8e7aa669-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "8dd6a549-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "8dfe60f8-5942-11f1-936f-d843ae05cb18",
+      "distance": "7.7200",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:36:21.000Z",
+      "updated_at": "2026-05-26T20:36:21.000Z"
+    },
+    {
+      "id": "8eb0e660-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "8e0c9640-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "8e343c05-5942-11f1-936f-d843ae05cb18",
+      "distance": "27.8800",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:36:22.000Z",
+      "updated_at": "2026-05-26T20:36:22.000Z"
+    },
+    {
+      "id": "8e9f2de4-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "8dfe60f8-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "8e0c9640-5942-11f1-936f-d843ae05cb18",
+      "distance": "50.9900",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:36:22.000Z",
+      "updated_at": "2026-05-26T20:36:22.000Z"
+    },
+    {
+      "id": "8ee47059-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "8e4347f1-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "8e6825e8-5942-11f1-936f-d843ae05cb18",
+      "distance": "6.3700",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:36:22.000Z",
+      "updated_at": "2026-05-26T20:36:22.000Z"
+    },
+    {
+      "id": "8ed4ff43-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "8e343c05-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "8e4347f1-5942-11f1-936f-d843ae05cb18",
+      "distance": "3.4600",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:36:22.000Z",
+      "updated_at": "2026-05-26T20:36:22.000Z"
+    },
+    {
+      "id": "a1e6e5d3-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "a1b1f008-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "a1d9e3ea-5942-11f1-936f-d843ae05cb18",
+      "distance": "12.9900",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:36:54.000Z",
+      "updated_at": "2026-05-26T20:36:54.000Z"
+    },
+    {
+      "id": "b82fface-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "b7a27859-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "b7d75228-5942-11f1-936f-d843ae05cb18",
+      "distance": "40.0200",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:37:31.000Z",
+      "updated_at": "2026-05-26T20:37:31.000Z"
+    },
+    {
+      "id": "b843a7d6-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "b7d75228-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "b7fcc33e-5942-11f1-936f-d843ae05cb18",
+      "distance": "3.6400",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:37:31.000Z",
+      "updated_at": "2026-05-26T20:37:31.000Z"
+    },
+    {
+      "id": "b864630b-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "b7fcc33e-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "b80b8157-5942-11f1-936f-d843ae05cb18",
+      "distance": "57.5400",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:37:32.000Z",
+      "updated_at": "2026-05-26T20:37:32.000Z"
+    },
+    {
+      "id": "ddea95da-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "dd126775-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "dd3b62fe-5942-11f1-936f-d843ae05cb18",
+      "distance": "18.1500",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:38:35.000Z",
+      "updated_at": "2026-05-26T20:38:35.000Z"
+    },
+    {
+      "id": "de2226a6-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "dd44c426-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "dd714944-5942-11f1-936f-d843ae05cb18",
+      "distance": "22.9400",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:38:35.000Z",
+      "updated_at": "2026-05-26T20:38:35.000Z"
+    },
+    {
+      "id": "de47ecd6-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "dd714944-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "dd78a5ce-5942-11f1-936f-d843ae05cb18",
+      "distance": "12.0600",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:38:35.000Z",
+      "updated_at": "2026-05-26T20:38:35.000Z"
+    },
+    {
+      "id": "de586a68-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "dd78a5ce-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "ddb1c563-5942-11f1-936f-d843ae05cb18",
+      "distance": "20.6000",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:38:35.000Z",
+      "updated_at": "2026-05-26T20:38:35.000Z"
+    },
+    {
+      "id": "de1123cd-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "dd3b62fe-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "dd44c426-5942-11f1-936f-d843ae05cb18",
+      "distance": "13.2600",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:38:35.000Z",
+      "updated_at": "2026-05-26T20:38:35.000Z"
+    },
+    {
+      "id": "de7f6115-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "ddb1c563-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "ddd9c638-5942-11f1-936f-d843ae05cb18",
+      "distance": "31.1600",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:38:36.000Z",
+      "updated_at": "2026-05-26T20:38:36.000Z"
+    },
+    {
+      "id": "f805d0ba-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "f76b122c-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "f79443d7-5942-11f1-936f-d843ae05cb18",
+      "distance": "45.0800",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:39:18.000Z",
+      "updated_at": "2026-05-26T20:39:18.000Z"
+    },
+    {
+      "id": "f82f9807-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "f79443d7-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "f79d4953-5942-11f1-936f-d843ae05cb18",
+      "distance": "20.1500",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:39:19.000Z",
+      "updated_at": "2026-05-26T20:39:19.000Z"
+    },
+    {
+      "id": "f83c2fc4-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "f79d4953-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "f7c706f3-5942-11f1-936f-d843ae05cb18",
+      "distance": "8.0600",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:39:19.000Z",
+      "updated_at": "2026-05-26T20:39:19.000Z"
+    },
+    {
+      "id": "f8641d3e-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "f7c706f3-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "f7d128df-5942-11f1-936f-d843ae05cb18",
+      "distance": "11.9300",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:39:19.000Z",
+      "updated_at": "2026-05-26T20:39:19.000Z"
+    },
+    {
+      "id": "f8714b2b-5942-11f1-936f-d843ae05cb18",
+      "from_node_id": "f7d128df-5942-11f1-936f-d843ae05cb18",
+      "to_node_id": "f7fa0b9d-5942-11f1-936f-d843ae05cb18",
+      "distance": "10.0900",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:39:19.000Z",
+      "updated_at": "2026-05-26T20:39:19.000Z"
+    },
+    {
+      "id": "0cdf4d5a-5943-11f1-936f-d843ae05cb18",
+      "from_node_id": "0caa5b22-5943-11f1-936f-d843ae05cb18",
+      "to_node_id": "0cd38a05-5943-11f1-936f-d843ae05cb18",
+      "distance": "10.7200",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:39:53.000Z",
+      "updated_at": "2026-05-26T20:39:53.000Z"
+    },
+    {
+      "id": "255e7d51-5943-11f1-936f-d843ae05cb18",
+      "from_node_id": "25182b8b-5943-11f1-936f-d843ae05cb18",
+      "to_node_id": "25293af6-5943-11f1-936f-d843ae05cb18",
+      "distance": "16.9700",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:40:34.000Z",
+      "updated_at": "2026-05-26T20:40:34.000Z"
+    },
+    {
+      "id": "254cdb5a-5943-11f1-936f-d843ae05cb18",
+      "from_node_id": "24f3a035-5943-11f1-936f-d843ae05cb18",
+      "to_node_id": "25182b8b-5943-11f1-936f-d843ae05cb18",
+      "distance": "8.3800",
+      "is_bidirectional": 1,
+      "is_accessible": 1,
+      "path_type": "walkway",
+      "is_active": 1,
+      "metadata": {
+        "source": "admin-editor"
+      },
+      "created_at": "2026-05-26T20:40:34.000Z",
+      "updated_at": "2026-05-26T20:40:34.000Z"
+    }
+  ],
+  "entrances": []
+}

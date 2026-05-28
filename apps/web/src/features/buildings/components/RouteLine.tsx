@@ -12,7 +12,7 @@ import {
 } from "../../../services/navigation.service";
 import { useNavigationGraph } from "../navigation/hooks/useNavigationGraph";
 
-const ROUTE_HEIGHT = 8;
+const ROUTE_HEIGHT = 3;
 const ARROW_SPACING = 18; // unidades entre flechas direccionales
 
 type RouteRenderData = {
