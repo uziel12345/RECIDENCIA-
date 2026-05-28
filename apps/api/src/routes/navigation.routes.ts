@@ -80,7 +80,7 @@ router.post(
 router.delete(
   "/all",
   authenticate,
-  authorize("superadmin"),
+  authorizePermission("can_manage_admin_users"),
   asyncHandler(resetAllNavigationController)
 );
 

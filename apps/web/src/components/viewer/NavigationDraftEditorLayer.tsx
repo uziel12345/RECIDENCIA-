@@ -36,20 +36,6 @@ type DraftEntranceNode = {
   buildingName: string;
 };
 
-type PendingConnection = {
-  id: number;
-  fromNodeId: string;
-  fromCode: string;
-  fromX: number;
-  fromZ: number;
-  toNodeId: string;
-  toCode: string;
-  toX: number;
-  toZ: number;
-  distance: number;
-  pathType: EdgePathType;
-};
-
 export type DraftEditorControls = {
   nodeType: "path" | "entrance" | "connect" | "edit";
   activePath: DraftPath | null;
@@ -760,7 +746,6 @@ export function NavigationDraftEditorLayer({
     setEditSelNode,
     connectEditNodes,
     addNodeToDatabase,
-    deleteExistingEdge,
   } = controls;
 
   function handlePlanePointerDown(event: ThreeEvent<PointerEvent>) {
