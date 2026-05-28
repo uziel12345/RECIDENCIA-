@@ -14,6 +14,9 @@ type BuildingTableProps = {
   page: number;
   totalPages: number;
   totalRecords: number;
+  canEditBuildings: boolean;
+  canEditPhotos: boolean;
+  canEditNavigation: boolean;
   onSearchTermChange: (value: string) => void;
   onStatusFilterChange: (value: AdminBuildingStatusFilter) => void;
   onPageChange: Dispatch<SetStateAction<number>>;
@@ -35,6 +38,9 @@ export function BuildingTable({
   page,
   totalPages,
   totalRecords,
+  canEditBuildings,
+  canEditPhotos,
+  canEditNavigation,
   onSearchTermChange,
   onStatusFilterChange,
   onPageChange,
@@ -55,9 +61,11 @@ export function BuildingTable({
         </div>
 
         <div style={styles.tableHeaderActions}>
-          <a href="/admin/navigation" style={styles.primaryLink}>
-            Mapa de navegacion
-          </a>
+          {canEditNavigation ? (
+            <a href="/admin/navigation" style={styles.primaryLink}>
+              Mapa de navegacion
+            </a>
+          ) : null}
 
           <button
             type="button"
@@ -100,7 +108,9 @@ export function BuildingTable({
               <th style={styles.th}>Categoría</th>
               <th style={styles.th}>Modelo 3D</th>
               <th style={styles.th}>Estado</th>
-              <th style={styles.th}>Acciones</th>
+              {canEditBuildings || canEditPhotos ? (
+                <th style={styles.th}>Acciones</th>
+              ) : null}
             </tr>
           </thead>
 
@@ -137,52 +147,63 @@ export function BuildingTable({
                       {isActive ? "Activo" : "Inactivo"}
                     </span>
                   </td>
-                  <td style={styles.td}>
-                    <div style={styles.actions}>
-                      <button
-                        type="button"
-                        onClick={() => onStartEdit(building)}
-                        disabled={actionLoadingId === building.id}
-                        style={styles.editButton}
-                      >
-                        Editar
-                      </button>
+                  {canEditBuildings || canEditPhotos ? (
+                    <td style={styles.td}>
+                      <div style={styles.actions}>
+                        {canEditBuildings ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => onStartEdit(building)}
+                              disabled={actionLoadingId === building.id}
+                              style={styles.editButton}
+                            >
+                              Editar
+                            </button>
 
-                      <button
-                        type="button"
-                        onClick={() => onOpenImages(building)}
-                        disabled={actionLoadingId === building.id}
-                        style={styles.photoButton}
-                      >
-                        Fotos
-                      </button>
+                            <button
+                              type="button"
+                              onClick={() => onToggleStatus(building)}
+                              disabled={actionLoadingId === building.id}
+                              style={styles.smallButton}
+                            >
+                              {isActive ? "Desactivar" : "Activar"}
+                            </button>
 
-                      <button
-                        type="button"
-                        onClick={() => onToggleStatus(building)}
-                        disabled={actionLoadingId === building.id}
-                        style={styles.smallButton}
-                      >
-                        {isActive ? "Desactivar" : "Activar"}
-                      </button>
+                            <button
+                              type="button"
+                              onClick={() => onDelete(building)}
+                              disabled={actionLoadingId === building.id}
+                              style={styles.dangerButton}
+                            >
+                              Eliminar
+                            </button>
+                          </>
+                        ) : null}
 
-                      <button
-                        type="button"
-                        onClick={() => onDelete(building)}
-                        disabled={actionLoadingId === building.id}
-                        style={styles.dangerButton}
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </td>
+                        {canEditPhotos ? (
+                          <button
+                            type="button"
+                            onClick={() => onOpenImages(building)}
+                            disabled={actionLoadingId === building.id}
+                            style={styles.photoButton}
+                          >
+                            Fotos
+                          </button>
+                        ) : null}
+                      </div>
+                    </td>
+                  ) : null}
                 </tr>
               );
             })}
 
             {filteredBuildings.length === 0 ? (
               <tr>
-                <td style={styles.emptyTd} colSpan={6}>
+                <td
+                  style={styles.emptyTd}
+                  colSpan={canEditBuildings || canEditPhotos ? 6 : 5}
+                >
                   No hay edificios para mostrar.
                 </td>
               </tr>

@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { ROLE_PERMISSIONS } from "@ito-map/shared";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { ROUTES } from "../../../types/routes";
@@ -11,6 +12,11 @@ import { safeText } from "../hooks/useBuildingForm";
 export function AdminBuildingsPage() {
   const { logout, user } = useAdminAuthStore();
   const navigate = useNavigate();
+  const permissions = user ? ROLE_PERMISSIONS[user.role] : null;
+  const canEditBuildings = Boolean(permissions?.can_edit_buildings);
+  const canEditPhotos = Boolean(permissions?.can_edit_photos);
+  const canEditNavigation = Boolean(permissions?.can_edit_navigation);
+  const canManageUsers = Boolean(permissions?.can_manage_users);
 
   const {
     buildings,
@@ -73,23 +79,37 @@ export function AdminBuildingsPage() {
             </p>
           ) : null}
 
-          <button
-            type="button"
-            onClick={handleOpenNavigation}
-            style={styles.navShortcutButton}
-          >
-            Abrir mapa de navegacion
-          </button>
+          {canEditNavigation ? (
+            <button
+              type="button"
+              onClick={handleOpenNavigation}
+              style={styles.navShortcutButton}
+            >
+              Abrir mapa de navegacion
+            </button>
+          ) : null}
         </div>
 
         <div style={styles.headerActions}>
-          <button
-            type="button"
-            onClick={handleOpenNavigation}
-            style={styles.primaryButton}
-          >
-            Navegacion
-          </button>
+          {canManageUsers ? (
+            <button
+              type="button"
+              onClick={() => navigate(ROUTES.ADMIN_USERS)}
+              style={styles.secondaryButton}
+            >
+              Usuarios
+            </button>
+          ) : null}
+
+          {canEditNavigation ? (
+            <button
+              type="button"
+              onClick={handleOpenNavigation}
+              style={styles.primaryButton}
+            >
+              Navegacion
+            </button>
+          ) : null}
 
           <button
             type="button"
@@ -109,18 +129,24 @@ export function AdminBuildingsPage() {
 
       {message ? <div style={styles.successBox}>{message}</div> : null}
 
-      <section style={styles.layout}>
-        <BuildingForm
-          form={form}
-          categories={categories}
-          isEditing={isEditing}
-          editingBuildingName={safeText(editingBuilding?.name)}
-          saving={saving}
-          onSubmit={handleSubmitBuilding}
-          onCancelEdit={handleCancelEdit}
-          onNameChange={handleNameChange}
-          onUpdateFormField={updateFormField}
-        />
+      <section
+        style={
+          canEditBuildings && isEditing ? styles.layout : styles.readOnlyLayout
+        }
+      >
+        {canEditBuildings && isEditing ? (
+          <BuildingForm
+            form={form}
+            categories={categories}
+            isEditing
+            editingBuildingName={safeText(editingBuilding?.name)}
+            saving={saving}
+            onSubmit={handleSubmitBuilding}
+            onCancelEdit={handleCancelEdit}
+            onNameChange={handleNameChange}
+            onUpdateFormField={updateFormField}
+          />
+        ) : null}
 
         <BuildingTable
           buildings={buildings}
@@ -133,6 +159,9 @@ export function AdminBuildingsPage() {
           page={page}
           totalPages={totalPages}
           totalRecords={totalRecords}
+          canEditBuildings={canEditBuildings}
+          canEditPhotos={canEditPhotos}
+          canEditNavigation={canEditNavigation}
           onSearchTermChange={setSearchTerm}
           onStatusFilterChange={setStatusFilter}
           onPageChange={setPage}
@@ -144,7 +173,7 @@ export function AdminBuildingsPage() {
         />
       </section>
 
-      {imageModalBuilding ? (
+      {canEditPhotos && imageModalBuilding ? (
         <BuildingImagesModal
           building={imageModalBuilding}
           onClose={() => setImageModalBuilding(null)}
@@ -178,6 +207,9 @@ const styles: Record<string, CSSProperties> = {
     gridTemplateColumns: "minmax(320px, 440px) 1fr",
     gap: "22px",
     alignItems: "start",
+  },
+  readOnlyLayout: {
+    display: "block",
   },
   pageTitle: {
     margin: 0,

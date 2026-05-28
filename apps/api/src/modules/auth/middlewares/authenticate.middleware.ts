@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt, { type Secret } from "jsonwebtoken";
+import type { AuthUser, UserRole } from "@ito-map/shared";
 import { pool } from "../../../db/connection.js";
-import type { AuthUser, UserRole } from "../auth.service.js";
 
 type JwtPayload = {
   sub: string;

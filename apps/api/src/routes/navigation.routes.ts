@@ -19,7 +19,7 @@ import {
   navigationIdSchema,
 } from "../controllers/navigation.schema.js";
 import { authenticate } from "../modules/auth/middlewares/authenticate.middleware.js";
-import { authorize } from "../modules/auth/middlewares/authorize.middleware.js";
+import { authorizePermission } from "../modules/auth/middlewares/authorize.middleware.js";
 import { validateBody, validateParams } from "../shared/middlewares/validator.js";
 import { asyncHandler } from "../shared/utils/async-handler.js";
 
@@ -33,7 +33,7 @@ router.get("/route", asyncHandler(getNavigationRoute));
 router.post(
   "/nodes",
   authenticate,
-  authorize("superadmin", "admin"),
+  authorizePermission("can_edit_navigation"),
   validateBody(createNavigationNodeSchema),
   asyncHandler(createNavigationNode)
 );
@@ -41,7 +41,7 @@ router.post(
 router.post(
   "/edges",
   authenticate,
-  authorize("superadmin", "admin"),
+  authorizePermission("can_edit_navigation"),
   validateBody(createNavigationEdgeSchema),
   asyncHandler(createNavigationEdge)
 );
@@ -49,7 +49,7 @@ router.post(
 router.post(
   "/building-entrances",
   authenticate,
-  authorize("superadmin", "admin"),
+  authorizePermission("can_edit_navigation"),
   validateBody(createBuildingEntranceSchema),
   asyncHandler(createBuildingEntrance)
 );
@@ -57,7 +57,7 @@ router.post(
 router.delete(
   "/nodes/:id",
   authenticate,
-  authorize("superadmin", "admin"),
+  authorizePermission("can_edit_navigation"),
   validateParams(navigationIdSchema),
   asyncHandler(deleteNavigationNode)
 );
@@ -65,7 +65,7 @@ router.delete(
 router.delete(
   "/edges/:id",
   authenticate,
-  authorize("superadmin", "admin"),
+  authorizePermission("can_edit_navigation"),
   validateParams(navigationIdSchema),
   asyncHandler(deleteNavigationEdge)
 );
@@ -73,7 +73,7 @@ router.delete(
 router.post(
   "/cache/invalidate",
   authenticate,
-  authorize("superadmin", "admin"),
+  authorizePermission("can_edit_navigation"),
   asyncHandler(invalidateNavigationCacheController)
 );
 
