@@ -24,7 +24,7 @@ export const createAdminUserSchema = z.object({
   username: z.string({ required_error: "El usuario es obligatorio" }).min(3).max(80),
   full_name: z.string({ required_error: "El nombre es obligatorio" }).min(3).max(255),
   email: z.string({ required_error: "El correo es obligatorio" }).email().max(255),
-  password: z.string({ required_error: "La contraseÃ±a es obligatoria" }).min(6).max(128),
+  password: z.string({ required_error: "La contraseña es obligatoria" }).min(8, "La contraseña debe tener al menos 8 caracteres").max(128),
   role: adminUserRoleSchema,
   is_active: z.boolean(),
 });
