@@ -1,4 +1,5 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import {
   createBuildingEntrance,
   createNavigationEdge,
@@ -23,12 +24,24 @@ import { authorizePermission } from "../modules/auth/middlewares/authorize.middl
 import { validateBody, validateParams } from "../shared/middlewares/validator.js";
 import { asyncHandler } from "../shared/utils/async-handler.js";
 
+// Límite específico para los endpoints públicos del grafo (previene scraping masivo)
+const navigationReadLimit = rateLimit({
+  windowMs: 60_000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Demasiadas solicitudes al grafo de navegación. Intenta en un momento.",
+  },
+});
+
 const router = Router();
 
-router.get("/nodes", asyncHandler(getNavigationNodes));
-router.get("/edges", asyncHandler(getNavigationEdges));
-router.get("/building-entrances", asyncHandler(getBuildingEntrances));
-router.get("/route", asyncHandler(getNavigationRoute));
+router.get("/nodes", navigationReadLimit, asyncHandler(getNavigationNodes));
+router.get("/edges", navigationReadLimit, asyncHandler(getNavigationEdges));
+router.get("/building-entrances", navigationReadLimit, asyncHandler(getBuildingEntrances));
+router.get("/route", navigationReadLimit, asyncHandler(getNavigationRoute));
 
 router.post(
   "/nodes",

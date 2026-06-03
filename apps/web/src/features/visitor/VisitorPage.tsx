@@ -15,12 +15,15 @@ import {
 import { MobileQuickActions } from "../campus/components/MobileQuickActions";
 import { ROUTES } from "../../types/routes";
 import {
+  BuildingIcon,
   UsersIcon,
   LogOutIcon,
   CompassIcon,
+  InfoIcon,
+  MapIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-} from "../shared/Icons";
+} from "../../components/ui/Icons";
 import { VisitorTopBar } from "./components/VisitorTopBar";
 import { QuickDestinations } from "./components/QuickDestinations";
 import {
@@ -28,6 +31,8 @@ import {
   type CampusService,
 } from "../shared/components/CampusServicesPanel";
 import { useIsMobile } from "../../hooks/useIsMobile";
+
+type VisitorViewMode = "map" | "destinations" | "services";
 
 export function VisitorPage() {
   const isMobile = useIsMobile();
@@ -47,6 +52,7 @@ export function VisitorPage() {
   const [totalBuildings, setTotalBuildings] = useState(0);
   const [showQuickDest, setShowQuickDest] = useState(false);
   const [showServices, setShowServices] = useState(false);
+  const [viewMode, setViewMode] = useState<VisitorViewMode>("map");
 
   useEffect(() => {
     getBuildings()
@@ -65,6 +71,7 @@ export function VisitorPage() {
 
   const handleSelectService = (service: CampusService) => {
     setSearchTerm(service.searchTerm);
+    setViewMode("map");
     setShowServices(false);
     setShowQuickDest(false);
     setSheetState("full");
@@ -129,12 +136,7 @@ export function VisitorPage() {
   if (!isMobile) {
     return (
       <div
-        className={`visitor-page${sidebarCollapsed ? " is-sidebar-collapsed" : ""}`}
-        style={{
-          gridTemplateColumns: sidebarCollapsed
-            ? "0px minmax(0, 1fr)"
-            : "var(--desktop-sidebar-width) minmax(0, 1fr)",
-        }}
+        className={`visitor-page visitor-page--fullmap${sidebarCollapsed ? " is-sidebar-collapsed" : ""}`}
       >
         <aside className="visitor-page__sidebar" style={{ overflow: "hidden", minWidth: 0 }}>
           <div className="visitor-page__sidebar-header">
@@ -161,18 +163,74 @@ export function VisitorPage() {
             </button>
           </div>
 
-          <div className="visitor-page__quick-section">
-            <h3 className="visitor-page__section-title">
-              <CompassIcon size={16} />
-              <span>Destinos populares</span>
-            </h3>
+          <nav className="visitor-page__nav" aria-label="Opciones de visitante">
+            <button
+              type="button"
+              className={`visitor-page__nav-item ${
+                viewMode === "map" ? "is-active" : ""
+              }`}
+              onClick={() => setViewMode("map")}
+            >
+              <MapIcon size={18} />
+              <span>Mapa</span>
+            </button>
 
-            <QuickDestinations compact />
-          </div>
+            <button
+              type="button"
+              className={`visitor-page__nav-item ${
+                viewMode === "destinations" ? "is-active" : ""
+              }`}
+              onClick={() => setViewMode("destinations")}
+            >
+              <CompassIcon size={18} />
+              <span>Destinos</span>
+            </button>
 
-          <div className="visitor-page__sidebar-content">
-            <BuildingSidebar isMobile={false} />
-          </div>
+            <button
+              type="button"
+              className={`visitor-page__nav-item ${
+                viewMode === "services" ? "is-active" : ""
+              }`}
+              onClick={() => setViewMode("services")}
+            >
+              <InfoIcon size={18} />
+              <span>Servicios</span>
+            </button>
+          </nav>
+
+          {viewMode === "map" && (
+            <div className="visitor-page__sidebar-content">
+              <BuildingSidebar
+                isMobile={false}
+                showGreeting
+              />
+            </div>
+          )}
+
+          {viewMode === "destinations" && (
+            <div className="visitor-page__panel">
+              <div className="visitor-page__panel-heading">
+                <div className="visitor-page__panel-icon">
+                  <BuildingIcon size={20} />
+                </div>
+                <div>
+                  <h2>Destinos populares</h2>
+                  <p>Elige un punto comun para ubicarlo rapidamente.</p>
+                </div>
+              </div>
+
+              <QuickDestinations onSelect={() => setViewMode("map")} />
+            </div>
+          )}
+
+          {viewMode === "services" && (
+            <div className="visitor-page__panel visitor-page__panel--flush">
+              <CampusServicesPanel
+                compact
+                onSelectService={handleSelectService}
+              />
+            </div>
+          )}
         </aside>
 
         <main className="visitor-page__main">

@@ -1,13 +1,15 @@
 import type { NextFunction, Request, Response } from "express";
-import jwt, { type Secret } from "jsonwebtoken";
-import type { AuthUser, UserRole } from "@ito-map/shared";
+import jwt from "jsonwebtoken";
 import { pool } from "../../../db/connection.js";
+import { env } from "../../../config/env.js";
+import type { AuthUser, UserRole } from "../auth.service.js";
 
 type JwtPayload = {
   sub: string;
   username: string;
   email: string;
   role: UserRole;
+  tv: number; // token_version
   iat?: number;
   exp?: number;
 };
@@ -19,6 +21,7 @@ type AdminUserRow = {
   email: string;
   role: UserRole;
   is_active: number | boolean;
+  token_version: number;
 };
 
 declare global {
@@ -29,33 +32,20 @@ declare global {
   }
 }
 
-function getJwtSecret(): Secret {
-  const secret = process.env.JWT_SECRET;
+function extractToken(req: Request): string | null {
+  const cookieToken = req.cookies?.admin_session as string | undefined;
+  if (cookieToken) return cookieToken;
 
-  if (!secret) {
-    throw new Error("JWT_SECRET no está configurado en el archivo .env");
-  }
-
-  return secret;
-}
-
-function extractBearerToken(req: Request): string | null {
   const authorization = req.headers.authorization;
-
-  if (!authorization) {
-    return null;
-  }
+  if (!authorization) return null;
 
   const [scheme, token] = authorization.split(" ");
-
-  if (scheme !== "Bearer" || !token) {
-    return null;
-  }
+  if (scheme !== "Bearer" || !token) return null;
 
   return token;
 }
 
-async function findActiveAdminById(userId: string): Promise<AuthUser | null> {
+async function findAdminRowById(userId: string): Promise<AdminUserRow | null> {
   const [rows] = await pool.query(
     `
       SELECT
@@ -64,7 +54,8 @@ async function findActiveAdminById(userId: string): Promise<AuthUser | null> {
         full_name,
         email,
         role,
-        is_active
+        is_active,
+        token_version
       FROM admin_users
       WHERE id = ?
       LIMIT 1
@@ -73,20 +64,7 @@ async function findActiveAdminById(userId: string): Promise<AuthUser | null> {
   );
 
   const users = rows as AdminUserRow[];
-  const user = users[0];
-
-  if (!user || !Boolean(user.is_active)) {
-    return null;
-  }
-
-  return {
-    id: user.id,
-    username: user.username,
-    full_name: user.full_name,
-    email: user.email,
-    role: user.role,
-    is_active: Boolean(user.is_active),
-  };
+  return users[0] ?? null;
 }
 
 export async function authenticate(
@@ -95,7 +73,7 @@ export async function authenticate(
   next: NextFunction
 ) {
   try {
-    const token = extractBearerToken(req);
+    const token = extractToken(req);
 
     if (!token) {
       return res.status(401).json({
@@ -104,7 +82,7 @@ export async function authenticate(
       });
     }
 
-    const payload = jwt.verify(token, getJwtSecret()) as JwtPayload;
+    const payload = jwt.verify(token, env.jwtSecret) as JwtPayload;
 
     if (!payload.sub) {
       return res.status(401).json({
@@ -113,16 +91,30 @@ export async function authenticate(
       });
     }
 
-    const user = await findActiveAdminById(payload.sub);
+    const row = await findAdminRowById(payload.sub);
 
-    if (!user) {
+    if (!row || !Boolean(row.is_active)) {
       return res.status(401).json({
         success: false,
         message: "Usuario no autorizado o inactivo",
       });
     }
 
-    req.authUser = user;
+    if (payload.tv !== row.token_version) {
+      return res.status(401).json({
+        success: false,
+        message: "Sesión revocada. Inicia sesión nuevamente.",
+      });
+    }
+
+    req.authUser = {
+      id: row.id,
+      username: row.username,
+      full_name: row.full_name,
+      email: row.email,
+      role: row.role,
+      is_active: Boolean(row.is_active),
+    };
 
     return next();
   } catch {

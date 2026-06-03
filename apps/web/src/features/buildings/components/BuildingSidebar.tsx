@@ -20,14 +20,6 @@ function normalizeSearchText(value: string | null | undefined): string {
     : "";
 }
 
-function getBuildingDescription(building: Building): string {
-  if (building.description && building.description.trim() !== "") {
-    return building.description.trim();
-  }
-
-  return `Ubicación del campus relacionada con ${building.category_name}.`;
-}
-
 function getBuildingSearchAliases(building: Building): string {
   const category = normalizeSearchText(building.category_name);
   const code = normalizeSearchText(building.code);
@@ -71,11 +63,16 @@ type BuildingSidebarProps = {
   isMobile?: boolean;
   onItemSelected?: (building: Building) => void;
   onClearSelection?: () => void;
+  showGreeting?: boolean;
+  userName?: string;
 };
 
 export function BuildingSidebar({
   isMobile = false,
   onItemSelected,
+  onClearSelection,
+  showGreeting = false,
+  userName,
 }: BuildingSidebarProps) {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const routeDestination = useBuildingStore((state) => state.routeDestination);
@@ -88,11 +85,13 @@ export function BuildingSidebar({
   const canUseRoutes = useAdminAuthStore(
     (state) => state.isAuthenticated && state.user?.role === "superadmin"
   );
+  const canUseDemo = canUseRoutes && import.meta.env.DEV;
   const isPublicDesktop = !isMobile && !canUseRoutes;
 
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [showAllBuildings, setShowAllBuildings] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -179,12 +178,29 @@ export function BuildingSidebar({
     [buildings]
   );
 
+  const recommendedBuildings = useMemo(() => {
+    const priority = buildings.filter((b) => b.is_active && b.is_priority);
+    if (priority.length > 0) return priority.slice(0, 5);
+    return buildings.filter((b) => b.is_active).slice(0, 4);
+  }, [buildings]);
+
   const hasLocation = permission === "granted" && mapPosition !== null;
   const hasSearchTerm = searchTerm.trim().length > 0;
+
+  const showList =
+    hasSearchTerm ||
+    activeCategory !== null ||
+    !isPublicDesktop ||
+    showAllBuildings;
 
   function handleSelectBuilding(building: Building) {
     setSelectedBuilding(building);
     onItemSelected?.(building);
+  }
+
+  function handleClearSelection() {
+    setSelectedBuilding(null);
+    onClearSelection?.();
   }
 
   return (
@@ -222,16 +238,24 @@ export function BuildingSidebar({
         </header>
       )}
 
-      {isPublicDesktop && (
-        <header className="ito-public-search-head">
-          <div className="ito-public-search-head__icon" aria-hidden="true">
-            <Icon name="search" size={20} />
-          </div>
-          <div>
-            <h2>Busca en el campus</h2>
-            <p>Edificios, aulas, tramites y servicios escolares.</p>
-          </div>
-        </header>
+      {isPublicDesktop && showGreeting && (
+        <div className="ito-sidebar__greeting">
+          <span className="ito-sidebar__greeting-question">
+            {userName
+              ? `¿A dónde vas hoy, ${userName.split(" ")[0]}?`
+              : "¿A dónde quieres ir hoy?"}
+          </span>
+          <span className="ito-sidebar__greeting-sub">
+            Busca aulas, servicios, laboratorios y más
+          </span>
+        </div>
+      )}
+
+      {isPublicDesktop && !showGreeting && (
+        <div className="ito-sidebar__hint">
+          <Icon name="search" size={14} aria-hidden="true" />
+          <span>Busca aulas, edificios o servicios</span>
+        </div>
       )}
 
       {!isMobile && canUseRoutes && (
@@ -265,7 +289,7 @@ export function BuildingSidebar({
         <BuildingSearch />
       </div>
 
-      {!isMobile && canUseRoutes && categories.length > 0 && (
+      {!isMobile && categories.length > 0 && (
         <div className="ito-sidebar__section">
           <div
             className="ito-chip-row"
@@ -328,114 +352,157 @@ export function BuildingSidebar({
 
       {selectedBuilding && (
         <div className="ito-sidebar__section ito-sidebar__section--card">
-          <BuildingInfoCard building={selectedBuilding} />
+          <BuildingInfoCard building={selectedBuilding} onClose={handleClearSelection} />
         </div>
       )}
 
       {(selectedBuilding || routeDestination) && (
         <div className="ito-sidebar__section">
-          <RoutePanel compact={isMobile} canUseDemo={canUseRoutes} />
+          <RoutePanel compact={isMobile} canUseDemo={canUseDemo} />
         </div>
       )}
 
-      <div className="ito-sidebar__section ito-sidebar__section--list">
-        <div className="ito-section-header">
-          <h2 className="ito-section-header__title">
-            {hasSearchTerm
-              ? "Resultados"
-              : activeCategory
-                ? activeCategory
-                : "Edificios"}
-          </h2>
-
-          <span className="ito-section-header__count">
-            {loading ? "…" : `${filteredBuildings.length}`}
-          </span>
-        </div>
-
-        {hasSearchTerm && (
-          <div className="ito-search-summary">
-            Buscando: <strong>{searchTerm}</strong>
-          </div>
-        )}
-
-        <div
-          className="ito-list"
-          style={isMobile ? { maxHeight: "none" } : undefined}
-        >
-          {loading ? (
-            <div className="ito-empty">
-              <div className="ito-empty__spinner" aria-hidden="true" />
-              <p>Cargando edificios…</p>
+      {isPublicDesktop && !showList && !loading && recommendedBuildings.length > 0 && (
+        <div className="ito-sidebar__section">
+          <div className="ito-recommended">
+            <div className="ito-recommended__header">
+              <span className="ito-recommended__title">Lugares destacados</span>
             </div>
-          ) : filteredBuildings.length === 0 ? (
-            <div className="ito-empty">
-              <Icon name="search" size={28} />
-              <p>No se encontraron edificios.</p>
-              <span>Intenta con otro término o categoría.</span>
-            </div>
-          ) : (
-            filteredBuildings.map((building) => {
-              const isSelected = selectedBuilding?.id === building.id;
+
+            {recommendedBuildings.map((building) => {
               const accent = getCategoryAccent(building.category_name);
+              const accentColor = building.category_color || accent.fg;
 
               return (
                 <button
                   key={building.id}
                   type="button"
-                  className={`ito-list-item ito-list-item--enhanced ${
-                    isSelected ? "is-selected" : ""
-                  }`}
+                  className="ito-recommended-item"
                   onClick={() => handleSelectBuilding(building)}
-                  aria-pressed={isSelected}
-                  style={
-                    isSelected
-                      ? {
-                          borderColor: accent.fg,
-                          boxShadow: `0 0 0 3px ${accent.bg}`,
-                        }
-                      : undefined
-                  }
                 >
-                  <span
-                    className="ito-list-item__rail"
+                  <div
+                    className="ito-recommended-item__icon"
+                    style={{ background: accent.bg }}
                     aria-hidden="true"
-                    style={{ background: accent.fg }}
-                  />
-
-                  <div className="ito-list-item__main">
-                    <div className="ito-list-item__title-row">
-                      <span className="ito-list-item__code">
-                        {building.code}
-                      </span>
-                      <CategoryBadge name={building.category_name} size="sm" />
-                    </div>
-
-                    <div className="ito-list-item__name">{building.name}</div>
-
-                    <p className="ito-list-item__description">
-                      {getBuildingDescription(building)}
-                    </p>
-
-                    <div className="ito-list-item__meta-row">
-                      <span className="ito-list-item__meta">
-                        {building.category_code}
-                      </span>
-                      <span className="ito-list-item__action">
-                        Ver detalles
-                      </span>
-                    </div>
+                  >
+                    <Icon name="building" size={16} style={{ color: accentColor }} />
                   </div>
 
-                  <span className="ito-list-item__chevron" aria-hidden="true">
-                    <Icon name="chevron-right" size={16} />
-                  </span>
+                  <div className="ito-recommended-item__text">
+                    <span className="ito-recommended-item__name">
+                      {building.name}
+                    </span>
+                    <span className="ito-recommended-item__category">
+                      {building.category_name}
+                    </span>
+                  </div>
+
+                  <div className="ito-recommended-item__go" aria-hidden="true">
+                    <Icon name="chevron-right" size={14} />
+                  </div>
                 </button>
               );
-            })
-          )}
+            })}
+
+            <button
+              type="button"
+              className="ito-list-expand-btn"
+              onClick={() => setShowAllBuildings(true)}
+            >
+              <Icon name="list" size={14} />
+              <span>Ver todos los edificios ({totalActive})</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {showList && (
+        <div className="ito-sidebar__section ito-sidebar__section--list">
+          <div className="ito-section-header">
+            <h2 className="ito-section-header__title">
+              {hasSearchTerm
+                ? "Resultados"
+                : activeCategory
+                  ? activeCategory
+                  : "Edificios"}
+            </h2>
+
+            <span className="ito-section-header__count">
+              {loading ? "…" : `${filteredBuildings.length}`}
+            </span>
+          </div>
+
+          {hasSearchTerm && (
+            <div className="ito-search-summary">
+              Buscando: <strong>{searchTerm}</strong>
+            </div>
+          )}
+
+          <div
+            className="ito-list"
+            style={isMobile ? { maxHeight: "none" } : undefined}
+          >
+            {loading ? (
+              <div className="ito-empty">
+                <div className="ito-empty__spinner" aria-hidden="true" />
+                <p>Cargando edificios…</p>
+              </div>
+            ) : filteredBuildings.length === 0 ? (
+              <div className="ito-empty">
+                <Icon name="search" size={28} />
+                <p>No se encontraron edificios.</p>
+                <span>Intenta con otro término o categoría.</span>
+              </div>
+            ) : (
+              filteredBuildings.map((building) => {
+                const isSelected = selectedBuilding?.id === building.id;
+                const accent = getCategoryAccent(building.category_name);
+
+                return (
+                  <button
+                    key={building.id}
+                    type="button"
+                    className={`ito-list-item ito-list-item--enhanced ${
+                      isSelected ? "is-selected" : ""
+                    }`}
+                    onClick={() => handleSelectBuilding(building)}
+                    aria-pressed={isSelected}
+                    style={
+                      isSelected
+                        ? {
+                            borderColor: accent.fg,
+                            boxShadow: `0 0 0 3px ${accent.bg}`,
+                          }
+                        : undefined
+                    }
+                  >
+                    <span
+                      className="ito-list-item__rail"
+                      aria-hidden="true"
+                      style={{ background: accent.fg }}
+                    />
+
+                    <div className="ito-list-item__main">
+                      <div className="ito-list-item__title-row">
+                        <span className="ito-list-item__code">
+                          {building.code}
+                        </span>
+                        <CategoryBadge name={building.category_name} size="sm" />
+                      </div>
+
+                      <div className="ito-list-item__name">{building.name}</div>
+                    </div>
+
+                    <span className="ito-list-item__chevron" aria-hidden="true">
+                      <Icon name="chevron-right" size={16} />
+                    </span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
 
       {!isMobile && (
         <footer className="ito-sidebar__footer">

@@ -14,10 +14,6 @@ type MeApiResponse = {
   user: AuthUser;
 };
 
-type AdminCheckResponse = {
-  message: string;
-};
-
 type AdminUsersResponse = {
   users: AuthUser[];
 };
@@ -26,17 +22,17 @@ type AdminUserResponse = {
   user: AuthUser;
 };
 
-export function loginAdminApi(input: LoginRequest): Promise<LoginResponse> {
+export async function loginAdminApi(input: LoginRequest): Promise<LoginResponse> {
   return apiPost<LoginResponse, LoginRequest>("/auth/login", input);
+}
+
+export async function logoutAdminApi(): Promise<void> {
+  await apiPost("/auth/logout", {});
 }
 
 export async function getMeApi(): Promise<AuthUser> {
   const response = await apiGet<MeApiResponse>("/auth/me");
   return response.user;
-}
-
-export function adminCheckApi(): Promise<AdminCheckResponse> {
-  return apiGet<AdminCheckResponse>("/auth/admin-check");
 }
 
 export async function getAdminUsersApi(): Promise<AuthUser[]> {

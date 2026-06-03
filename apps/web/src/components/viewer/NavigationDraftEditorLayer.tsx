@@ -15,7 +15,7 @@ import {
   type NavigationEdge,
 } from "../../services/navigation.service";
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Types â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 type PathNodeItem =
   | { kind: "new"; id: number; x: number; z: number }
@@ -35,6 +35,15 @@ type DraftEntranceNode = {
   buildingId: string;
   buildingName: string;
 };
+
+type DraftEntranceLink = {
+  id: number;
+  nodeId: string;
+  nodeCode: string;
+  buildingId: string;
+  buildingName: string;
+};
+
 
 export type DraftEditorControls = {
   nodeType: "path" | "entrance" | "connect" | "edit";
@@ -82,9 +91,13 @@ export type DraftEditorControls = {
   setAddNodeType: (type: "intersection" | "building_access") => void;
   addNodeToDatabase: (x: number, z: number) => Promise<void>;
   resetAllNavigation: () => Promise<void>;
+  draftEntranceLinks: DraftEntranceLink[];
+  addEntranceLink: (node: NavigationNode) => void;
+  removeEntranceLink: (id: number) => void;
+  saveEntranceLinks: () => Promise<void>;
 };
 
-// â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Constants â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 const DRAFT_Y = 3.1;
 const DRAFT_PLANE_SIZE = 520;
@@ -99,7 +112,7 @@ const EDGE_PATH_LABELS: Record<EdgePathType, string> = {
   stairs: "Escaleras",
 };
 
-// â”€â”€â”€ SQL generation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ SQL generation â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 function sqlStr(value: string): string {
   return `'${value.replaceAll("'", "''")}'`;
@@ -199,7 +212,7 @@ function buildDraftSql(
       `\n-- Nodos de acceso a edificio (${entranceNodes.length})\nINSERT INTO navigation_nodes\n  (code, name, node_type, x, y, z, floor_level, is_walkable, is_active, metadata)\nVALUES\n${values}\nON DUPLICATE KEY UPDATE\n  node_type = VALUES(node_type), x = VALUES(x), y = VALUES(y), z = VALUES(z),\n  is_active = 1, updated_at = CURRENT_TIMESTAMP;`
     );
 
-    // Auto-conectar entrada al nodo de camino mÃ¡s cercano
+    // Auto-conectar entrada al nodo de camino más cercano
     const allPathNodes: { code: string; x: number; z: number }[] = [];
     allPaths.forEach((path, pi) => {
       const codeMap = buildNodeCodeMap(path, pi);
@@ -209,7 +222,7 @@ function buildDraftSql(
     });
 
     if (allPathNodes.length > 0) {
-      parts.push(`\n-- ConexiÃ³n entrada â†’ nodo de camino mÃ¡s cercano`);
+      parts.push(`\n-- Conexión entrada → nodo de camino más cercano`);
       entranceNodes.forEach((en, i) => {
         const ec = entranceCode(i);
         let nearest: { code: string; dist: number } | null = null;
@@ -238,7 +251,7 @@ function buildDraftSql(
   return parts.join("\n");
 }
 
-// â”€â”€â”€ Hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Hook â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 function round4(v: number): number {
   return Number(v.toFixed(4));
@@ -269,6 +282,7 @@ export function useDraftEditor(): DraftEditorControls {
   const [editConnectMode, setEditConnectMode] = useState(false);
   const [editSubMode, setEditSubModeState] = useState<"select" | "add-node">("select");
   const [addNodeType, setAddNodeTypeState] = useState<"intersection" | "building_access">("intersection");
+  const [draftEntranceLinks, setDraftEntranceLinks] = useState<DraftEntranceLink[]>([]);
 
   // Carga nodos existentes de la BD (ambos modos los necesitan: path para snap visual, entrance para auto-conectar)
   useEffect(() => {
@@ -636,10 +650,61 @@ export function useDraftEditor(): DraftEditorControls {
     }
   }
 
+  function addEntranceLink(node: NavigationNode) {
+    if (!selectedBuilding) return;
+    setDraftEntranceLinks((prev) => {
+      if (prev.some((e) => e.nodeId === node.id && e.buildingId === selectedBuilding.id)) return prev;
+      return [
+        ...prev,
+        {
+          id: Date.now(),
+          nodeId: node.id,
+          nodeCode: node.code,
+          buildingId: selectedBuilding.id,
+          buildingName: selectedBuilding.name,
+        },
+      ];
+    });
+  }
+
+  function removeEntranceLink(id: number) {
+    setDraftEntranceLinks((prev) => prev.filter((e) => e.id !== id));
+  }
+
+  async function saveEntranceLinks() {
+    if (draftEntranceLinks.length === 0) return;
+    setSaving(true);
+    setSaveError(null);
+    setSaveMessage(null);
+    try {
+      for (const link of draftEntranceLinks) {
+        await createBuildingEntrance({
+          building_id: link.buildingId,
+          node_id: link.nodeId,
+          entrance_name: `Acceso ${link.buildingName}`,
+          entrance_type: "main",
+          is_primary: true,
+          is_accessible: true,
+        });
+      }
+      const count = draftEntranceLinks.length;
+      setDraftEntranceLinks([]);
+      setRefreshKey((v) => v + 1);
+      setSaveMessage(
+        `${count} entrada${count !== 1 ? "s" : ""} guardada${count !== 1 ? "s" : ""} en BD.`
+      );
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "No se pudo guardar las entradas");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function clearDraft() {
     setActivePath(null);
     setCompletedPaths([]);
     setEntranceNodes([]);
+    setDraftEntranceLinks([]);
     setConnectingFromId(null);
     setConnectingToId(null);
     setEditSelNodeState(null);
@@ -709,10 +774,14 @@ export function useDraftEditor(): DraftEditorControls {
     setAddNodeType,
     addNodeToDatabase,
     resetAllNavigation,
+    draftEntranceLinks,
+    addEntranceLink,
+    removeEntranceLink,
+    saveEntranceLinks,
   };
 }
 
-// â”€â”€â”€ 3D Layer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ 3D Layer â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 type NavigationDraftEditorLayerProps = {
   active: boolean;
@@ -734,6 +803,7 @@ export function NavigationDraftEditorLayer({
     entranceNodes,
     availableNodes,
     availableEdges,
+    selectedBuilding,
     extendPath,
     addEntranceNode,
     connectingFromId,
@@ -746,11 +816,20 @@ export function NavigationDraftEditorLayer({
     setEditSelNode,
     connectEditNodes,
     addNodeToDatabase,
+    draftEntranceLinks,
+    addEntranceLink,
+    removeEntranceLink,
   } = controls;
 
   function handlePlanePointerDown(event: ThreeEvent<PointerEvent>) {
     if (!active || !planeRef.current) return;
     if (event.button !== 0) return;
+    // In modes where plane clicks do nothing, don't intercept — let node spheres receive the event
+    const usesPlaneClick =
+      nodeType === "path" ||
+      nodeType === "entrance" ||
+      (nodeType === "edit" && editSubMode === "add-node");
+    if (!usesPlaneClick) return;
     event.stopPropagation();
     pointerStartRef.current = {
       clientX: event.nativeEvent.clientX,
@@ -785,7 +864,7 @@ export function NavigationDraftEditorLayer({
 
   if (!active) return null;
 
-  // Puntos de la ruta activa para dibujar la lÃ­nea de preview
+  // Puntos de la ruta activa para dibujar la línea de preview
   const activeLinePoints = activePath
     ? activePath.nodes.map((n) => new THREE.Vector3(n.x, DRAFT_Y + 0.3, n.z))
     : [];
@@ -804,7 +883,7 @@ export function NavigationDraftEditorLayer({
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
-      {/* Nodos existentes de la BD â€” clickeables para conectar caminos */}
+      {/* Nodos existentes de la BD — clickeables para conectar caminos */}
       {nodeType === "path" &&
         availableNodes.map((node) => (
           <group key={node.id} position={[Number(node.x), DRAFT_Y, Number(node.z)]}>
@@ -820,7 +899,7 @@ export function NavigationDraftEditorLayer({
                 });
               }}
             >
-              <sphereGeometry args={[0.75, 10, 10]} />
+              <sphereGeometry args={[1.2, 10, 10]} />
               <meshBasicMaterial color="#2563eb" transparent opacity={0.55} />
             </mesh>
           </group>
@@ -869,7 +948,7 @@ export function NavigationDraftEditorLayer({
                 {isLast && (
                   <Html position={[0, 3.2, 0]} center>
                     <div className="ito-nav-debug-label ito-nav-debug-label--draft">
-                      <strong>Ãšltimo nodo</strong>
+                      <strong>Último nodo</strong>
                       <span>
                         x {node.x.toFixed(1)}, z {node.z.toFixed(1)}
                       </span>
@@ -882,7 +961,46 @@ export function NavigationDraftEditorLayer({
         </group>
       )}
 
-      {/* Nodos de entrada a edificio */}
+      {/* Nodos existentes clickeables en modo Entradas — vincula con building_entrance */}
+      {nodeType === "entrance" && selectedBuilding &&
+        availableNodes.map((node) => {
+          const linked = draftEntranceLinks.find(
+            (e) => e.nodeId === node.id && e.buildingId === selectedBuilding.id
+          );
+          const isLinked = Boolean(linked);
+          const color = isLinked
+            ? "#22c55e"
+            : node.node_type === "building_access"
+              ? "#fb923c"
+              : "#86efac";
+          return (
+            <group key={node.id} position={[Number(node.x), DRAFT_Y + 0.15, Number(node.z)]}>
+              <mesh
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  if (isLinked) {
+                    removeEntranceLink(linked!.id);
+                  } else {
+                    addEntranceLink(node);
+                  }
+                }}
+              >
+                <sphereGeometry args={[isLinked ? 1.8 : 1.4, 14, 14]} />
+                <meshBasicMaterial color={color} />
+              </mesh>
+              {isLinked && (
+                <Html position={[0, 3.5, 0]} center>
+                  <div className="ito-nav-debug-label ito-nav-debug-label--snap">
+                    <strong>Acceso</strong>
+                    <span>{selectedBuilding.name}</span>
+                  </div>
+                </Html>
+              )}
+            </group>
+          );
+        })}
+
+      {/* Nodos de entrada a edificio (nuevos, colocados en plano) */}
       {entranceNodes.map((node, i) => (
         <group key={node.id} position={[node.x, DRAFT_Y + 0.15, node.z]}>
           <mesh>
@@ -930,7 +1048,7 @@ export function NavigationDraftEditorLayer({
                   }
                 }}
               >
-                <sphereGeometry args={[isFrom || isTo ? 1.4 : 1.0, 14, 14]} />
+                <sphereGeometry args={[isFrom || isTo ? 2.0 : 1.5, 14, 14]} />
                 <meshBasicMaterial color={color} />
               </mesh>
               {isFrom && (
@@ -1016,7 +1134,7 @@ export function NavigationDraftEditorLayer({
                   }
                 }}
               >
-                <sphereGeometry args={[isSelected ? 1.6 : 1.1, 14, 14]} />
+                <sphereGeometry args={[isSelected ? 2.0 : 1.5, 14, 14]} />
                 <meshBasicMaterial color={color} />
               </mesh>
               {isSelected && (
@@ -1034,7 +1152,7 @@ export function NavigationDraftEditorLayer({
   );
 }
 
-// â”€â”€â”€ 2D Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ 2D Panel â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 type NavigationDraftEditorPanelProps = {
   controls: DraftEditorControls;
@@ -1079,7 +1197,7 @@ export function NavigationDraftEditorPanel({
       const n = activePath.nodes.length;
       return n === 1
         ? "1 nodo colocado. Sigue haciendo clic para extender."
-        : `${n} nodos. ContinÃºa o finaliza el camino.`;
+        : `${n} nodos. Continúa o finaliza el camino.`;
     }
     if (nodeType === "connect") return "";
     if (nodeType === "edit") return "";
@@ -1103,7 +1221,7 @@ export function NavigationDraftEditorPanel({
 
   return (
     <div className="ito-draft-editor-panel">
-      <strong>Editor de navegaciÃ³n</strong>
+      <strong>Editor de navegación</strong>
 
       {/* Tabs */}
       <div className="ito-draft-editor-panel__tabs">
@@ -1174,7 +1292,7 @@ export function NavigationDraftEditorPanel({
             controls.setSelectedBuilding(b ? { id: b.id, name: b.name } : null);
           }}
         >
-          <option value="">â€” Selecciona un edificio â€”</option>
+          <option value="">— Selecciona un edificio —</option>
           {buildings.map((b) => (
             <option key={b.id} value={b.id}>
               {b.name}

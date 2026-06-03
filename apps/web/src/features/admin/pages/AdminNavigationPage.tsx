@@ -1,16 +1,73 @@
 import type { CSSProperties } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  getAdminBuildingsApi,
+  getNavigationNodesApi,
+  getNavigationEdgesApi,
+  getBuildingEntrancesApi,
+} from "@ito-map/shared";
 import { CampusViewer } from "../../../components/viewer/CampusViewer";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { ROUTES } from "../../../types/routes";
 
+type NavHealth = {
+  totalNodes: number;
+  totalEdges: number;
+  totalEntrances: number;
+  isolatedNodes: number;
+  buildingsWithoutEntrance: number;
+  totalActiveBuildings: number;
+};
+
 export function AdminNavigationPage() {
   const { logout, user } = useAdminAuthStore();
   const navigate = useNavigate();
+  const [health, setHealth] = useState<NavHealth | null>(null);
+  const [loadingHealth, setLoadingHealth] = useState(false);
+
+  const loadHealth = useCallback(async () => {
+    setLoadingHealth(true);
+    try {
+      const [buildings, nodes, edges, entrances] = await Promise.all([
+        getAdminBuildingsApi(),
+        getNavigationNodesApi(),
+        getNavigationEdgesApi(),
+        getBuildingEntrancesApi(),
+      ]);
+
+      const connectedIds = new Set<string>();
+      for (const edge of edges) {
+        connectedIds.add(edge.from_node_id);
+        connectedIds.add(edge.to_node_id);
+      }
+
+      const buildingsWithEntrance = new Set(entrances.map((e) => e.building_id));
+      const activeBuildings = buildings.filter((b) => b.is_active);
+
+      setHealth({
+        totalNodes: nodes.length,
+        totalEdges: edges.length,
+        totalEntrances: entrances.length,
+        isolatedNodes: nodes.filter((n) => !connectedIds.has(n.id)).length,
+        buildingsWithoutEntrance: activeBuildings.filter(
+          (b) => !buildingsWithEntrance.has(b.id)
+        ).length,
+        totalActiveBuildings: activeBuildings.length,
+      });
+    } catch {
+      // estadísticas no críticas, fallo silencioso
+    } finally {
+      setLoadingHealth(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadHealth();
+  }, [loadHealth]);
 
   function handleLogout() {
-    logout();
-    void navigate(ROUTES.ADMIN_LOGIN, { replace: true });
+    void logout().then(() => navigate(ROUTES.ADMIN_LOGIN, { replace: true }));
   }
 
   return (
@@ -60,6 +117,73 @@ export function AdminNavigationPage() {
             <strong>Estado</strong>
             <span>Visualizacion, borradores y guardado habilitados.</span>
             <span>Las eliminaciones desactivan datos para conservar historial.</span>
+          </div>
+
+          <div style={styles.healthBox}>
+            <div style={styles.healthHeader}>
+              <strong style={styles.panelTitle}>Salud del grafo</strong>
+              <button
+                type="button"
+                onClick={() => void loadHealth()}
+                disabled={loadingHealth}
+                style={styles.refreshBtn}
+              >
+                {loadingHealth ? "..." : "↻"}
+              </button>
+            </div>
+
+            {health === null ? (
+              <p style={{ ...styles.panelText, color: "#64748b" }}>
+                {loadingHealth ? "Cargando..." : "Sin datos"}
+              </p>
+            ) : (
+              <>
+                <div style={styles.statRow}>
+                  <span style={styles.statLabel}>Nodos</span>
+                  <span style={styles.statValue}>{health.totalNodes}</span>
+                </div>
+                <div style={styles.statRow}>
+                  <span style={styles.statLabel}>Aristas</span>
+                  <span style={styles.statValue}>{health.totalEdges}</span>
+                </div>
+                <div style={styles.statRow}>
+                  <span style={styles.statLabel}>Entradas</span>
+                  <span style={styles.statValue}>{health.totalEntrances}</span>
+                </div>
+
+                <div style={styles.divider} />
+
+                <div style={styles.statRow}>
+                  <span style={styles.statLabel}>Nodos aislados</span>
+                  <span
+                    style={
+                      health.isolatedNodes > 0
+                        ? styles.warnValue
+                        : styles.okValue
+                    }
+                  >
+                    {health.isolatedNodes > 0
+                      ? `⚠ ${health.isolatedNodes}`
+                      : "✓ 0"}
+                  </span>
+                </div>
+
+                <div style={styles.statRow}>
+                  <span style={styles.statLabel}>Edificios sin entrada</span>
+                  <span
+                    style={
+                      health.buildingsWithoutEntrance > 0
+                        ? styles.warnValue
+                        : styles.okValue
+                    }
+                  >
+                    {health.buildingsWithoutEntrance > 0
+                      ? `⚠ ${health.buildingsWithoutEntrance}/${health.totalActiveBuildings}`
+                      : `✓ 0/${health.totalActiveBuildings}`}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </aside>
 
@@ -182,5 +306,53 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 18,
     background: "#eef4fb",
     boxShadow: "0 18px 42px rgba(15, 23, 42, 0.12)",
+  },
+  healthBox: {
+    marginTop: 16,
+    padding: 13,
+    borderRadius: 14,
+    background: "#f8fafc",
+    border: "1px solid #e2e8f0",
+  },
+  healthHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  refreshBtn: {
+    background: "none",
+    border: "1px solid #cbd5e1",
+    borderRadius: 8,
+    padding: "3px 8px",
+    cursor: "pointer",
+    fontSize: 14,
+    color: "#475569",
+  },
+  statRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "4px 0",
+    fontSize: 13,
+  },
+  statLabel: {
+    color: "#64748b",
+  },
+  statValue: {
+    fontWeight: 700,
+    color: "#0f172a",
+  },
+  okValue: {
+    fontWeight: 700,
+    color: "#16a34a",
+  },
+  warnValue: {
+    fontWeight: 700,
+    color: "#d97706",
+  },
+  divider: {
+    borderTop: "1px solid #e2e8f0",
+    margin: "8px 0",
   },
 };

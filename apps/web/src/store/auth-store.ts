@@ -85,7 +85,3 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-// Helper hooks
-export const useUser = () => useAuthStore((state) => state.user);
-export const useIsAuthenticated = () => useAuthStore((state) => state.isAuthenticated);
-export const useUserRole = () => useAuthStore((state) => state.user?.role);

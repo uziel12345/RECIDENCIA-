@@ -1,7 +1,7 @@
 import { useBuildingStore } from "../../../store/building-store";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { getBuildings } from "../../../services/buildings.service";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Building } from "../../buildings/types/building";
 import { 
   BookOpenIcon, 
@@ -10,7 +10,7 @@ import {
   NavigationIcon,
   BuildingIcon,
   GraduationCapIcon 
-} from "../../shared/Icons";
+} from "../../../components/ui/Icons";
 
 interface QuickDestination {
   id: string;
@@ -28,7 +28,7 @@ const quickDestinations: QuickDestination[] = [
     name: "Admisiones",
     description: "Informes y tramites de ingreso",
     icon: <GraduationCapIcon size={20} />,
-    buildingCodes: ["DIR"],
+    buildingCodes: ["ASE", "DIR"],
     color: "#2563eb",
     bgColor: "#eff6ff",
   },
@@ -77,6 +77,8 @@ interface QuickDestinationsProps {
 
 export function QuickDestinations({ compact = false, onSelect }: QuickDestinationsProps) {
   const [buildings, setBuildings] = useState<Building[]>([]);
+  const [failedId, setFailedId] = useState<string | null>(null);
+  const failedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const setSelectedBuilding = useBuildingStore((s) => s.setSelectedBuilding);
   const setRouteDestination = useBuildingStore((s) => s.setRouteDestination);
   const canUseRoutes = useAdminAuthStore(
@@ -87,44 +89,66 @@ export function QuickDestinations({ compact = false, onSelect }: QuickDestinatio
     getBuildings().then(setBuildings);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (failedTimerRef.current !== null) clearTimeout(failedTimerRef.current);
+    };
+  }, []);
+
   const handleDestinationClick = (dest: QuickDestination) => {
-    const building = buildings.find((b) => 
-      dest.buildingCodes.includes(b.code)
-    );
-    
-    if (building) {
-      setSelectedBuilding(building);
-      if (canUseRoutes) {
-        setRouteDestination(building);
-      }
-      onSelect?.();
+    const building = buildings.find((b) => dest.buildingCodes.includes(b.code));
+
+    if (!building) {
+      if (failedTimerRef.current !== null) clearTimeout(failedTimerRef.current);
+      setFailedId(dest.id);
+      failedTimerRef.current = setTimeout(() => setFailedId(null), 2000);
+      return;
     }
+
+    setSelectedBuilding(building);
+    if (canUseRoutes) {
+      setRouteDestination(building);
+    }
+    onSelect?.();
   };
 
   return (
     <div className={`quick-destinations ${compact ? "quick-destinations--compact" : ""}`}>
-      {quickDestinations.map((dest) => (
-        <button
-          key={dest.id}
-          className="quick-destination"
-          onClick={() => handleDestinationClick(dest)}
-          style={{
-            "--dest-color": dest.color,
-            "--dest-bg": dest.bgColor,
-          } as React.CSSProperties}
-        >
-          <div className="quick-destination__icon">{dest.icon}</div>
-          <div className="quick-destination__content">
-            <span className="quick-destination__name">{dest.name}</span>
-            {!compact && (
-              <span className="quick-destination__desc">{dest.description}</span>
-            )}
-          </div>
-          <div className="quick-destination__arrow">
-            <NavigationIcon size={16} />
-          </div>
-        </button>
-      ))}
+      {quickDestinations.map((dest) => {
+        const unavailable = failedId === dest.id;
+
+        return (
+          <button
+            key={dest.id}
+            className={`quick-destination${unavailable ? " quick-destination--unavailable" : ""}`}
+            onClick={() => handleDestinationClick(dest)}
+            style={
+              unavailable
+                ? ({ "--dest-color": "#dc2626", "--dest-bg": "#fef2f2" } as React.CSSProperties)
+                : ({ "--dest-color": dest.color, "--dest-bg": dest.bgColor } as React.CSSProperties)
+            }
+          >
+            <div className="quick-destination__icon" aria-hidden="true">
+              {dest.icon}
+            </div>
+            <div className="quick-destination__content">
+              <span className="quick-destination__name">
+                {unavailable ? "No disponible" : dest.name}
+              </span>
+              {!compact && (
+                <span className="quick-destination__desc">
+                  {unavailable
+                    ? "Este destino no está en el mapa aún"
+                    : dest.description}
+                </span>
+              )}
+            </div>
+            <div className="quick-destination__arrow" aria-hidden="true">
+              <NavigationIcon size={16} />
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -80,8 +80,8 @@ function AdminProtectedRoute({
   permission?: keyof RolePermissions;
 }) {
   const { isAuthenticated, loadSession, user } = useAdminAuthStore();
-  // Token in storage but user not yet hydrated from backend (direct nav / page reload)
-  const [verifying, setVerifying] = useState(isAuthenticated && !user);
+  // On reload, Zustand memory is cleared; verify cookie with server before rendering
+  const [verifying, setVerifying] = useState(!user);
 
   useEffect(() => {
     if (!verifying) return;
@@ -132,7 +132,6 @@ export default function App() {
       <Routes>
         {/* Public Routes */}
         <Route path={ROUTES.WELCOME} element={<WelcomePage />} />
-        <Route path="/welcome" element={<WelcomePage />} />
         <Route path={ROUTES.ONBOARDING} element={<OnboardingPage />} />
 
         {/* Real Admin Auth */}

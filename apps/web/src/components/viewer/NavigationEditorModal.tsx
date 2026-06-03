@@ -111,6 +111,9 @@ export function NavigationEditorModal({ controls, buildings, onClose }: Props) {
     setAddNodeType,
     deleteExistingEdge,
     resetAllNavigation,
+    draftEntranceLinks,
+    removeEntranceLink,
+    saveEntranceLinks,
   } = controls;
 
   const [confirmReset, setConfirmReset] = useState(false);
@@ -657,20 +660,78 @@ export function NavigationEditorModal({ controls, buildings, onClose }: Props) {
 
               <div style={S.info(selectedBuilding ? "#86efac" : "#475569")}>
                 {!selectedBuilding
-                  ? "Selecciona un edificio y haz clic en el mapa para colocar su acceso."
-                  : `Colocando accesos de "${selectedBuilding.name}". Haz clic en el mapa.`}
+                  ? "Selecciona un edificio para comenzar."
+                  : "Haz clic sobre un nodo verde del mapa para vincularlo como acceso del edificio. Clic de nuevo para desvincular."}
               </div>
 
+              {/* ── Entradas vinculadas a nodos existentes ── */}
+              {draftEntranceLinks.length > 0 && (
+                <>
+                  <div style={{ color: "#64748b", fontSize: 11, fontWeight: 600 }}>
+                    Entradas a guardar ({draftEntranceLinks.length})
+                  </div>
+                  {draftEntranceLinks.map((link) => (
+                    <div
+                      key={link.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "5px 8px",
+                        background: "#0a2010",
+                        borderRadius: 6,
+                        fontSize: 11,
+                        border: "1px solid #14532d",
+                      }}
+                    >
+                      <span style={{ flex: 1, color: "#86efac" }}>
+                        {link.buildingName}
+                      </span>
+                      <span style={{ color: "#475569", fontSize: 10 }}>
+                        {link.nodeCode}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={() => removeEntranceLink(link.id)}
+                        style={{
+                          padding: "1px 7px",
+                          background: "#7f1d1d",
+                          border: "none",
+                          color: "#fca5a5",
+                          borderRadius: 4,
+                          cursor: "pointer",
+                          fontSize: 11,
+                          opacity: saving ? 0.5 : 1,
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    style={{ ...S.btn("primary"), width: "100%", opacity: saving ? 0.5 : 1 }}
+                    disabled={saving}
+                    onClick={saveEntranceLinks}
+                  >
+                    {saving ? "Guardando..." : `Guardar ${draftEntranceLinks.length} entrada${draftEntranceLinks.length !== 1 ? "s" : ""}`}
+                  </button>
+                  <button
+                    type="button"
+                    style={{ ...S.btn(), width: "100%" }}
+                    onClick={clearDraft}
+                  >
+                    Limpiar
+                  </button>
+                </>
+              )}
+
+              {/* ── Entradas nuevas colocadas en el mapa ── */}
               {entranceNodes.length > 0 && (
                 <>
-                  <div
-                    style={{
-                      color: "#64748b",
-                      fontSize: 11,
-                      fontWeight: 600,
-                    }}
-                  >
-                    Entradas en borrador ({entranceNodes.length})
+                  <div style={{ color: "#64748b", fontSize: 11, fontWeight: 600, marginTop: 4 }}>
+                    Nodos nuevos en borrador ({entranceNodes.length})
                   </div>
                   {entranceNodes.map((en) => (
                     <div
@@ -694,15 +755,11 @@ export function NavigationEditorModal({ controls, buildings, onClose }: Props) {
                   ))}
                   <button
                     type="button"
-                    style={{
-                      ...S.btn("primary"),
-                      width: "100%",
-                      opacity: saving ? 0.5 : 1,
-                    }}
+                    style={{ ...S.btn("primary"), width: "100%", opacity: saving ? 0.5 : 1 }}
                     disabled={saving}
                     onClick={saveDraftToDatabase}
                   >
-                    {saving ? "Guardando..." : "Guardar entradas en BD"}
+                    {saving ? "Guardando..." : "Guardar nodos nuevos en BD"}
                   </button>
                   <button
                     type="button"

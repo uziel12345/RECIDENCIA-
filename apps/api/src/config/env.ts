@@ -2,11 +2,27 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+const JWT_SECRET_MIN_LENGTH = 32;
+
 function requireEnv(name: string): string {
   const value = process.env[name];
 
   if (!value || value.trim() === "") {
     throw new Error(`Falta la variable de entorno: ${name}`);
+  }
+
+  return value;
+}
+
+function requireSecureSecret(name: string): string {
+  const value = requireEnv(name);
+
+  if (value.length < JWT_SECRET_MIN_LENGTH) {
+    throw new Error(
+      `${name} debe tener al menos ${JWT_SECRET_MIN_LENGTH} caracteres. ` +
+      `Longitud actual: ${value.length}. ` +
+      `Genera un secreto seguro con: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+    );
   }
 
   return value;
@@ -19,7 +35,7 @@ export const env = {
   dbUser: requireEnv("DB_USER"),
   dbPassword: requireEnv("DB_PASSWORD"),
   dbName: requireEnv("DB_NAME"),
-  jwtSecret: requireEnv("JWT_SECRET"),
+  jwtSecret: requireSecureSecret("JWT_SECRET"),
   jwtExpiresIn: requireEnv("JWT_EXPIRES_IN"),
   corsOrigin: process.env.CORS_ORIGIN ?? "http://localhost:5173",
 };

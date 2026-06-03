@@ -1,9 +1,25 @@
 import bcrypt from "bcryptjs";
 import { randomUUID } from "node:crypto";
-import jwt, { type Secret, type SignOptions } from "jsonwebtoken";
-import type { AuthUser, UserRole } from "@ito-map/shared";
+import jwt, { type SignOptions } from "jsonwebtoken";
 import { pool } from "../../db/connection.js";
+import { env } from "../../config/env.js";
 import type { CreateAdminUserInput } from "./auth.schema.js";
+
+export type UserRole =
+  | "superadmin"
+  | "admin"
+  | "servicios_escolares"
+  | "recursos_humanos"
+  | "viewer";
+
+export type AuthUser = {
+  id: string;
+  username: string;
+  full_name: string;
+  email: string;
+  role: UserRole;
+  is_active: boolean;
+};
 
 export type LoginInput = {
   usernameOrEmail: string;
@@ -15,6 +31,14 @@ export type LoginResult = {
   user: AuthUser;
 };
 
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_MINUTES = 30;
+
+// Hash de referencia para mantener tiempo constante cuando el usuario no existe
+// (previene enumeración de usuarios por diferencia de tiempo en bcrypt)
+const TIMING_DUMMY_HASH =
+  "$2b$12$oAB3aeF4Z3TqeIJmGhS/O.bEq98xSshN8jTlO.RCv4W3OKq4vcvwW";
+
 type AdminUserRow = {
   id: string;
   username: string;
@@ -23,6 +47,9 @@ type AdminUserRow = {
   password_hash: string;
   role: UserRole;
   is_active: number | boolean;
+  failed_login_attempts: number;
+  locked_until: Date | string | null;
+  token_version: number;
 };
 
 type JwtPayload = {
@@ -30,20 +57,11 @@ type JwtPayload = {
   username: string;
   email: string;
   role: UserRole;
+  tv: number; // token_version
 };
 
-function getJwtSecret(): Secret {
-  const secret = process.env.JWT_SECRET;
-
-  if (!secret) {
-    throw new Error("JWT_SECRET no está configurado en el archivo .env");
-  }
-
-  return secret;
-}
-
 function getJwtExpiresIn(): SignOptions["expiresIn"] {
-  return (process.env.JWT_EXPIRES_IN || "8h") as SignOptions["expiresIn"];
+  return env.jwtExpiresIn as SignOptions["expiresIn"];
 }
 
 function mapAdminUserToAuthUser(row: AdminUserRow): AuthUser {
@@ -57,19 +75,20 @@ function mapAdminUserToAuthUser(row: AdminUserRow): AuthUser {
   };
 }
 
-function signAuthToken(user: AuthUser): string {
+function signAuthToken(user: AuthUser, tokenVersion: number): string {
   const payload: JwtPayload = {
     sub: user.id,
     username: user.username,
     email: user.email,
     role: user.role,
+    tv: tokenVersion,
   };
 
   const options: SignOptions = {
     expiresIn: getJwtExpiresIn(),
   };
 
-  return jwt.sign(payload, getJwtSecret(), options);
+  return jwt.sign(payload, env.jwtSecret, options);
 }
 
 async function findAdminUserByUsernameOrEmail(
@@ -84,7 +103,10 @@ async function findAdminUserByUsernameOrEmail(
         email,
         password_hash,
         role,
-        is_active
+        is_active,
+        failed_login_attempts,
+        locked_until,
+        token_version
       FROM admin_users
       WHERE username = ? OR email = ?
       LIMIT 1
@@ -97,14 +119,39 @@ async function findAdminUserByUsernameOrEmail(
   return users[0] ?? null;
 }
 
-async function updateLastLoginAt(userId: string): Promise<void> {
+async function onLoginSuccess(userId: string): Promise<void> {
   await pool.query(
     `
       UPDATE admin_users
-      SET last_login_at = CURRENT_TIMESTAMP
+      SET failed_login_attempts = 0,
+          locked_until = NULL,
+          last_login_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `,
     [userId]
+  );
+}
+
+export async function invalidateAdminToken(userId: string): Promise<void> {
+  await pool.query(
+    `UPDATE admin_users SET token_version = token_version + 1 WHERE id = ?`,
+    [userId]
+  );
+}
+
+async function onLoginFailure(userId: string): Promise<void> {
+  await pool.query(
+    `
+      UPDATE admin_users
+      SET failed_login_attempts = failed_login_attempts + 1,
+          locked_until = IF(
+            failed_login_attempts + 1 >= ?,
+            DATE_ADD(NOW(), INTERVAL ? MINUTE),
+            NULL
+          )
+      WHERE id = ?
+    `,
+    [MAX_FAILED_ATTEMPTS, LOCKOUT_MINUTES, userId]
   );
 }
 
@@ -117,27 +164,32 @@ export async function loginAdmin(input: LoginInput): Promise<LoginResult> {
 
   const adminUser = await findAdminUserByUsernameOrEmail(usernameOrEmail);
 
-  if (!adminUser) {
+  // Siempre ejecutar bcrypt para evitar enumeración de usuarios por timing
+  const hashToCompare = adminUser?.password_hash ?? TIMING_DUMMY_HASH;
+  const passwordMatches = await bcrypt.compare(input.password, hashToCompare);
+
+  if (!adminUser || !Boolean(adminUser.is_active)) {
     throw new Error("Credenciales inválidas");
   }
 
-  if (!Boolean(adminUser.is_active)) {
-    throw new Error("El usuario administrador está inactivo");
+  if (adminUser.locked_until && new Date(adminUser.locked_until) > new Date()) {
+    const minutesLeft = Math.ceil(
+      (new Date(adminUser.locked_until).getTime() - Date.now()) / 60_000
+    );
+    throw new Error(
+      `Cuenta bloqueada por demasiados intentos fallidos. Intenta en ${minutesLeft} minuto${minutesLeft === 1 ? "" : "s"}.`
+    );
   }
 
-  const passwordMatches = await bcrypt.compare(
-    input.password,
-    adminUser.password_hash
-  );
-
   if (!passwordMatches) {
+    await onLoginFailure(adminUser.id);
     throw new Error("Credenciales inválidas");
   }
 
   const user = mapAdminUserToAuthUser(adminUser);
-  const token = signAuthToken(user);
+  const token = signAuthToken(user, adminUser.token_version);
 
-  await updateLastLoginAt(user.id);
+  await onLoginSuccess(user.id);
 
   return {
     token,

@@ -14,7 +14,6 @@ console.warn = (...args: unknown[]) => {
 
 configureApiClient({
   baseUrl: import.meta.env.VITE_API_URL || "/api",
-  getToken: () => localStorage.getItem("admin_token"),
 });
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

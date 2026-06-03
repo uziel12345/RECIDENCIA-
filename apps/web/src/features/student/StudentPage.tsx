@@ -22,7 +22,7 @@ import {
   InfoIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-} from "../shared/Icons";
+} from "../../components/ui/Icons";
 import { StudentTopBar } from "./components/StudentTopBar";
 import { SchedulePanel } from "./components/SchedulePanel";
 import {
@@ -143,12 +143,16 @@ export function StudentPage() {
   if (!isMobile) {
     return (
       <div
-        className={`student-page${sidebarCollapsed ? " is-sidebar-collapsed" : ""}`}
-        style={{
-          gridTemplateColumns: sidebarCollapsed
-            ? "0px minmax(0, 1fr)"
-            : "var(--desktop-sidebar-width) minmax(0, 1fr)",
-        }}
+        className={`student-page${viewMode === "map" ? " student-page--fullmap" : ""}${sidebarCollapsed ? " is-sidebar-collapsed" : ""}`}
+        style={
+          viewMode !== "map"
+            ? {
+                gridTemplateColumns: sidebarCollapsed
+                  ? "0px minmax(0, 1fr)"
+                  : "var(--desktop-sidebar-width) minmax(0, 1fr)",
+              }
+            : undefined
+        }
       >
         <aside className="student-page__sidebar" style={{ overflow: "hidden", minWidth: 0 }}>
           <div className="student-page__sidebar-header">
@@ -212,7 +216,11 @@ export function StudentPage() {
 
           {viewMode === "map" && (
             <div className="student-page__sidebar-content">
-              <BuildingSidebar isMobile={false} />
+              <BuildingSidebar
+                isMobile={false}
+                showGreeting
+                userName={user?.name || "Estudiante"}
+              />
             </div>
           )}
 

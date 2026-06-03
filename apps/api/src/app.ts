@@ -1,11 +1,13 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import path from "path";
 import { fileURLToPath } from "url";
 
 import routes from "./routes/index.js";
+import { csrfProtection } from "./shared/middlewares/csrf.middleware.js";
 import { notFoundHandler } from "./shared/middlewares/not-found.js";
 import { errorHandler } from "./shared/middlewares/error-handler.js";
 import { env } from "./config/env.js";
@@ -54,6 +56,7 @@ app.use(
   })
 );
 
+app.use(cookieParser());
 app.use(express.json());
 
 app.use(
@@ -70,7 +73,17 @@ app.use(
   })
 );
 
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.resolve(__dirname, "../../uploads")));
+
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+const CSRF_SKIP_PATHS = new Set(["/auth/login"]);
+
+app.use("/api", (req, res, next) => {
+  if (!MUTATING_METHODS.has(req.method) || CSRF_SKIP_PATHS.has(req.path)) {
+    return next();
+  }
+  return csrfProtection(req, res, next);
+});
 
 app.use("/api", routes);
 

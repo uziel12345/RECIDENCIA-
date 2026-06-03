@@ -1,15 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Request, Response } from "express";
-import { loginController, meController } from "./auth.controller.js";
-import { loginAdmin } from "../modules/auth/auth.service.js";
+import { loginController, logoutController, meController } from "./auth.controller.js";
+import { loginAdmin, invalidateAdminToken } from "../modules/auth/auth.service.js";
 import type { AuthUser } from "../modules/auth/auth.service.js";
 import type { LoginInput } from "../modules/auth/auth.schema.js";
 
 vi.mock("../modules/auth/auth.service.js", () => ({
   loginAdmin: vi.fn(),
+  invalidateAdminToken: vi.fn(),
+}));
+
+vi.mock("../shared/services/audit.service.js", () => ({
+  auditLog: vi.fn(),
 }));
 
 const mockedLoginAdmin = vi.mocked(loginAdmin);
+const mockedInvalidateAdminToken = vi.mocked(invalidateAdminToken);
 
 type MockRequestData = {
   body?: unknown;
@@ -20,11 +26,14 @@ function createMockResponse() {
   const res = {
     status: vi.fn().mockReturnThis(),
     json: vi.fn().mockReturnThis(),
+    cookie: vi.fn().mockReturnThis(),
+    clearCookie: vi.fn().mockReturnThis(),
   };
-
   return res as unknown as Response & {
     status: ReturnType<typeof vi.fn>;
     json: ReturnType<typeof vi.fn>;
+    cookie: ReturnType<typeof vi.fn>;
+    clearCookie: ReturnType<typeof vi.fn>;
   };
 }
 
@@ -32,54 +41,54 @@ function createMockRequest(data: MockRequestData): Request {
   return data as unknown as Request;
 }
 
+const testUser: AuthUser = {
+  id: "user-1",
+  username: "admin",
+  full_name: "Admin User",
+  email: "admin@example.com",
+  role: "admin",
+  is_active: true,
+};
+
 describe("auth controller", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("loginController returns 200 when login is successful", async () => {
-    mockedLoginAdmin.mockResolvedValue({
-      token: "mock-token",
-      user: {
-        id: "user-1",
-        username: "admin",
-        full_name: "Admin User",
-        email: "admin@example.com",
-        role: "admin",
-        is_active: true,
-      },
-    });
+  // ── loginController ────────────────────────────────────────────────────────
+
+  it("loginController returns 200 and sets httpOnly cookie on success", async () => {
+    mockedLoginAdmin.mockResolvedValue({ token: "mock-token", user: testUser });
 
     const req = createMockRequest({
-      body: {
-        usernameOrEmail: "admin",
-        password: "secret123",
-      },
+      body: { usernameOrEmail: "admin", password: "secret12345" },
     });
-
     const res = createMockResponse();
 
     await loginController(req as Request<{}, {}, LoginInput>, res);
 
     expect(mockedLoginAdmin).toHaveBeenCalledWith({
       usernameOrEmail: "admin",
-      password: "secret123",
+      password: "secret12345",
     });
+
+    // Token goes in httpOnly cookie, NOT in response body
+    expect(res.cookie).toHaveBeenCalledWith(
+      "admin_session",
+      "mock-token",
+      expect.objectContaining({ httpOnly: true })
+    );
+    // CSRF cookie is readable by JS (httpOnly: false)
+    expect(res.cookie).toHaveBeenCalledWith(
+      "csrf_token",
+      expect.any(String),
+      expect.objectContaining({ httpOnly: false })
+    );
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
       success: true,
-      data: {
-        token: "mock-token",
-        user: {
-          id: "user-1",
-          username: "admin",
-          full_name: "Admin User",
-          email: "admin@example.com",
-          role: "admin",
-          is_active: true,
-        },
-      },
+      data: { user: testUser },
     });
   });
 
@@ -87,12 +96,8 @@ describe("auth controller", () => {
     mockedLoginAdmin.mockRejectedValue(new Error("Credenciales inválidas"));
 
     const req = createMockRequest({
-      body: {
-        usernameOrEmail: "admin",
-        password: "wrong-password",
-      },
+      body: { usernameOrEmail: "admin", password: "wrong" },
     });
-
     const res = createMockResponse();
 
     await loginController(req as Request<{}, {}, LoginInput>, res);
@@ -102,18 +107,15 @@ describe("auth controller", () => {
       success: false,
       message: "Credenciales inválidas",
     });
+    expect(res.cookie).not.toHaveBeenCalled();
   });
 
-  it("loginController returns a default message when error is unknown", async () => {
+  it("loginController returns a generic message for unknown errors", async () => {
     mockedLoginAdmin.mockRejectedValue("unknown-error");
 
     const req = createMockRequest({
-      body: {
-        usernameOrEmail: "admin",
-        password: "wrong-password",
-      },
+      body: { usernameOrEmail: "admin", password: "wrong" },
     });
-
     const res = createMockResponse();
 
     await loginController(req as Request<{}, {}, LoginInput>, res);
@@ -125,20 +127,37 @@ describe("auth controller", () => {
     });
   });
 
-  it("meController returns authenticated user", async () => {
-    const authUser: AuthUser = {
-      id: "user-1",
-      username: "admin",
-      full_name: "Admin User",
-      email: "admin@example.com",
-      role: "admin",
-      is_active: true,
-    };
+  // ── logoutController ───────────────────────────────────────────────────────
 
-    const req = createMockRequest({
-      authUser,
-    });
+  it("logoutController invalidates token and clears cookies", async () => {
+    mockedInvalidateAdminToken.mockResolvedValue(undefined);
 
+    const req = createMockRequest({ authUser: testUser });
+    const res = createMockResponse();
+
+    await logoutController(req, res);
+
+    expect(mockedInvalidateAdminToken).toHaveBeenCalledWith("user-1");
+    expect(res.clearCookie).toHaveBeenCalledWith("admin_session", { path: "/" });
+    expect(res.clearCookie).toHaveBeenCalledWith("csrf_token", { path: "/" });
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it("logoutController clears cookies even when no auth user is present", async () => {
+    const req = createMockRequest({});
+    const res = createMockResponse();
+
+    await logoutController(req, res);
+
+    expect(mockedInvalidateAdminToken).not.toHaveBeenCalled();
+    expect(res.clearCookie).toHaveBeenCalledTimes(2);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  // ── meController ───────────────────────────────────────────────────────────
+
+  it("meController returns the authenticated user", async () => {
+    const req = createMockRequest({ authUser: testUser });
     const res = createMockResponse();
 
     await meController(req, res);
@@ -146,9 +165,7 @@ describe("auth controller", () => {
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
       success: true,
-      data: {
-        user: authUser,
-      },
+      data: { user: testUser },
     });
   });
 });

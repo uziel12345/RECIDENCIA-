@@ -7,6 +7,7 @@ import type { Building } from "../types/building";
 
 type BuildingInfoCardProps = {
   building: Building;
+  onClose?: () => void;
 };
 
 function getBuildingDescription(building: Building): string {
@@ -14,13 +15,10 @@ function getBuildingDescription(building: Building): string {
     return building.description.trim();
   }
 
-  return `Este edificio pertenece a la categorÃ­a ${building.category_name}. Puedes seleccionarlo como destino para generar una ruta dentro del campus.`;
+  return `Este edificio pertenece a la categoría ${building.category_name}. Puedes seleccionarlo como destino para generar una ruta dentro del campus.`;
 }
 
-export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
-  const setSelectedBuilding = useBuildingStore(
-    (state) => state.setSelectedBuilding
-  );
+export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
   const setRouteDestination = useBuildingStore(
     (state) => state.setRouteDestination
   );
@@ -33,7 +31,7 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
   return (
     <article
       className="ito-info-card"
-      aria-label={`InformaciÃ³n de ${building.name}`}
+      aria-label={`Información de ${building.name}`}
     >
       {coverUrl ? (
         <div className="ito-info-card__cover">
@@ -47,8 +45,8 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
           <button
             type="button"
             className="ito-info-card__close"
-            onClick={() => setSelectedBuilding(null)}
-            aria-label="Cerrar informaciÃ³n"
+            onClick={() => onClose?.()}
+            aria-label="Cerrar información"
           >
             <Icon name="close" size={16} />
           </button>
@@ -66,7 +64,7 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
 
           <div className="ito-info-card__hero-text">
             <div className="ito-info-card__code">
-              Edificio {building.code || "Sin cÃ³digo"}
+              Edificio {building.code || "Sin código"}
             </div>
             <h3 className="ito-info-card__name">{building.name}</h3>
           </div>
@@ -74,8 +72,8 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
           <button
             type="button"
             className="ito-info-card__close"
-            onClick={() => setSelectedBuilding(null)}
-            aria-label="Cerrar informaciÃ³n"
+            onClick={() => onClose?.()}
+            aria-label="Cerrar información"
           >
             <Icon name="close" size={16} />
           </button>
@@ -85,7 +83,7 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
       {coverUrl && (
         <div className="ito-info-card__cover-title">
           <div className="ito-info-card__code">
-            Edificio {building.code || "Sin cÃ³digo"}
+            Edificio {building.code || "Sin código"}
           </div>
           <h3 className="ito-info-card__name">{building.name}</h3>
         </div>
@@ -93,7 +91,7 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
 
       <div className="ito-info-card__body">
         <div className="ito-info-card__row">
-          <span className="ito-info-card__label">CategorÃ­a</span>
+          <span className="ito-info-card__label">Categoría</span>
           <CategoryBadge name={building.category_name} />
         </div>
 
@@ -105,18 +103,18 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
         )}
 
         <div className="ito-info-card__row ito-info-card__row--block">
-          <span className="ito-info-card__label">DescripciÃ³n</span>
+          <span className="ito-info-card__label">Descripción</span>
           <p className="ito-info-card__text">
             {getBuildingDescription(building)}
           </p>
         </div>
 
         <div className="ito-info-card__row ito-info-card__row--block">
-          <span className="ito-info-card__label">Referencia</span>
+          <span className="ito-info-card__label">Referencia 3D</span>
           <p className="ito-info-card__text ito-info-card__text--muted">
             {building.model_node_name
-              ? `Nodo 3D: ${building.model_node_name}`
-              : "Sin referencia de modelo 3D disponible."}
+              ? building.model_node_name
+              : "Sin referencia de modelo disponible."}
           </p>
         </div>
 
@@ -155,7 +153,7 @@ export function BuildingInfoCard({ building }: BuildingInfoCardProps) {
           <button
             type="button"
             className="ito-btn ito-btn--ghost ito-btn--block"
-            onClick={() => setSelectedBuilding(null)}
+            onClick={() => onClose?.()}
           >
             <Icon name="search" size={16} />
             <span>Seguir buscando</span>

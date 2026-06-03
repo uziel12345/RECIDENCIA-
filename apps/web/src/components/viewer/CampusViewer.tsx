@@ -6,7 +6,7 @@ import type { Building } from "../../features/buildings/types/building";
 import { useLocationStore } from "../../store/location-store";
 import { useBuildingStore } from "../../store/building-store";
 import { useAdminAuthStore } from "../../store/admin-auth-store";
-import { getBuildings } from "../../services/buildings.service";
+import { getAdminBuildings, getBuildings } from "../../services/buildings.service";
 import {
   startUserLocationTracking,
   stopUserLocationTracking,
@@ -536,7 +536,11 @@ export function CampusViewer({
   }, [canUseAdvancedTools]);
 
   useEffect(() => {
-    getBuildings().then(setBuildings);
+    const fetchBuildings = canUseAdvancedTools ? getAdminBuildings : getBuildings;
+    fetchBuildings().then(setBuildings);
+  }, [canUseAdvancedTools]);
+
+  useEffect(() => {
     startUserLocationTracking({ isMobile });
     return () => stopUserLocationTracking();
   }, [isMobile]);

@@ -1,9 +1,9 @@
 -- ============================================================
 -- MIGRACIÓN UNIFICADA — Navegación campus ITO
 -- Fecha: 2026-05-26
--- 86 nodos (80 base + 6 esquinas) | 98 aristas | 38 entradas
+-- 86 nodos (80 base + 6 esquinas) | 97 aristas | 38 entradas
 --
--- PREREQUISITO:  ya ejecutado
+-- PREREQUISITO: migration-buildings-missing-20260518.sql ya ejecutado
 -- ESTE ARCHIVO REEMPLAZA:
 --   migration-navigation-reset-20260518.sql
 --   migration-navigation-corner-nodes-20260525.sql
@@ -230,11 +230,6 @@ SELECT UUID(), n1.id, n2.id,  14.87, 1, 1, 'sidewalk', 1, NOW(), NOW() FROM navi
 -- (diagonal enie → quimica-bio eliminada; sustituida por L a través de esquina-enie-quimica)
 SELECT UUID(), n1.id, n2.id,  29.07, 1, 1, 'sidewalk', 1, NOW(), NOW() FROM navigation_nodes n1 JOIN navigation_nodes n2 ON n2.code='n-acceso-quimica-bioquimica'      WHERE n1.code='n-pasillo-quimica-bio-1' UNION ALL
 
--- ── Pasillo central norte-sur (1) ────────────────────────────
--- Une cruce-h-f (z=74) con esquina-dir-centro (z=28) — paso del corredor H hacia Biblioteca
--- Sin este edge la A* daba vuelta por zona E/F (+70 unidades innecesarias)
-SELECT UUID(), n1.id, n2.id,  46.04, 1, 1, 'sidewalk', 1, NOW(), NOW() FROM navigation_nodes n1 JOIN navigation_nodes n2 ON n2.code='n-esquina-dir-centro'             WHERE n1.code='n-cruce-h-f' UNION ALL
-
 -- ── Aristas en L — esquinas originales (8) ────────────────────
 -- Fix 1: dir-biblioteca → esquina → cruce
 SELECT UUID(), n1.id, n2.id,  42.00, 1, 1, 'sidewalk', 1, NOW(), NOW() FROM navigation_nodes n1 JOIN navigation_nodes n2 ON n2.code='n-esquina-dir-centro'             WHERE n1.code='n-pasillo-direccion-biblioteca' UNION ALL
@@ -263,7 +258,7 @@ SELECT UUID(), n1.id, n2.id,  38.00, 1, 1, 'sidewalk', 1, NOW(), NOW() FROM navi
 
 -- ============================================================
 -- BUILDING ENTRANCES: 38
--- Requiere que todos los buildings ya existan ()
+-- Requiere que todos los buildings ya existan (migration-buildings-missing-20260518.sql)
 -- ============================================================
 INSERT INTO building_entrances (id, building_id, node_id, entrance_name, entrance_type, is_primary, is_accessible)
 SELECT UUID(), b.id, n.id, NULL, 'main', 1, 1 FROM buildings b JOIN navigation_nodes n ON n.code='n-acceso-direccion'             WHERE b.slug='direccion' UNION ALL

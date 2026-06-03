@@ -1,8 +1,10 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import {
   createAdminUserController,
   listAdminUsersController,
   loginController,
+  logoutController,
   meController,
   updateAdminUserStatusController,
 } from "../controllers/auth.controller.js";
@@ -13,17 +15,30 @@ import { createAdminUserSchema, loginSchema } from "../modules/auth/auth.schema.
 import { z } from "zod";
 import { asyncHandler } from "../shared/utils/async-handler.js";
 
+const loginRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10,
+  skipSuccessfulRequests: true, // solo cuentan los intentos fallidos
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Demasiados intentos fallidos. Intenta nuevamente en 15 minutos.",
+  },
+});
+
 const router = Router();
 
 const adminUserIdSchema = z.object({
-  id: z.string().uuid("El ID del usuario debe ser un UUID vÃ¡lido"),
+  id: z.string().uuid("El ID del usuario debe ser un UUID válido"),
 });
 
 const updateAdminUserStatusSchema = z.object({
   is_active: z.boolean(),
 });
 
-router.post("/login", validateBody(loginSchema), loginController);
+router.post("/login", loginRateLimit, validateBody(loginSchema), loginController);
+router.post("/logout", authenticate, logoutController);
 router.get("/me", authenticate, meController);
 
 router.get(

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ClockIcon, NavigationIcon } from "../../shared/Icons";
+import { ClockIcon, NavigationIcon } from "../../../components/ui/Icons";
 
 interface ScheduleClass {
   id: string;

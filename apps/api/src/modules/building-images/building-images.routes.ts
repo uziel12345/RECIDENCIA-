@@ -2,7 +2,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import { Router } from "express";
-import type { Request } from "express";
+import type { Request, Response, NextFunction } from "express";
 import multer from "multer";
 import { z } from "zod";
 import {
@@ -15,6 +15,7 @@ import { authenticate } from "../auth/middlewares/authenticate.middleware.js";
 import { authorizePermission } from "../auth/middlewares/authorize.middleware.js";
 import { validateParams } from "../../shared/middlewares/validator.js";
 import { ApiError } from "../../shared/errors/api-error.js";
+import { hasValidImageSignature } from "./building-images.utils.js";
 
 type UploadedFileInfo = {
   originalname: string;
@@ -24,6 +25,35 @@ type UploadedFileInfo = {
 type DestinationCallback = (error: Error | null, destination: string) => void;
 type FilenameCallback = (error: Error | null, filename: string) => void;
 type FileFilterCallback = (error: Error | null, acceptFile?: boolean) => void;
+
+async function verifyMagicBytes(req: Request, res: Response, next: NextFunction) {
+  const file = req.file;
+
+  if (!file) return next();
+
+  try {
+    const handle = await fs.open(file.path, "r");
+    const buf = Buffer.alloc(12);
+    await handle.read(buf, 0, 12, 0);
+    await handle.close();
+
+    if (!hasValidImageSignature(buf)) {
+      await fs.unlink(file.path).catch(() => undefined);
+      return res.status(400).json({
+        success: false,
+        message: "El archivo no es una imagen válida (JPG, PNG o WEBP).",
+      });
+    }
+
+    return next();
+  } catch {
+    await fs.unlink(file.path).catch(() => undefined);
+    return res.status(400).json({
+      success: false,
+      message: "No se pudo verificar el archivo subido.",
+    });
+  }
+}
 
 const router = Router();
 
@@ -114,6 +144,7 @@ router.post(
   authorizePermission("can_edit_photos"),
   validateParams(buildingImagesParamsSchema),
   upload.single("image"),
+  verifyMagicBytes,
   uploadBuildingImage
 );
 

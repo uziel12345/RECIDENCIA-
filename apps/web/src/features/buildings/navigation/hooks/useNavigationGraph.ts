@@ -294,7 +294,7 @@ export function useNavigationGraph() {
         if (!mounted) return;
         const message =
           err instanceof Error ? err.message : "Error cargando grafo de navegacion";
-        console.error("[NavGraph] Error cargando grafo", err);
+        if (import.meta.env.DEV) console.error("[NavGraph] Error cargando grafo", err);
         setGraphState({ status: "error", message });
       });
 

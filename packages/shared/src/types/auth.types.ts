@@ -20,7 +20,6 @@ export type LoginRequest = {
 };
 
 export type LoginResponse = {
-  token: string;
   user: AuthUser;
 };
 
@@ -36,48 +35,28 @@ export type RolePermissions = {
 
 export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
   superadmin: {
-    can_view_buildings: true,
-    can_edit_buildings: true,
-    can_edit_photos: true,
-    can_edit_navigation: true,
-    can_manage_admin_users: true,
-    can_manage_users: true,
+    can_view_buildings: true, can_edit_buildings: true, can_edit_photos: true,
+    can_edit_navigation: true, can_manage_admin_users: true, can_manage_users: true,
     can_view_audit_logs: true,
   },
   admin: {
-    can_view_buildings: true,
-    can_edit_buildings: true,
-    can_edit_photos: true,
-    can_edit_navigation: true,
-    can_manage_admin_users: false,
-    can_manage_users: false,
+    can_view_buildings: true, can_edit_buildings: true, can_edit_photos: true,
+    can_edit_navigation: true, can_manage_admin_users: false, can_manage_users: false,
     can_view_audit_logs: true,
   },
   servicios_escolares: {
-    can_view_buildings: true,
-    can_edit_buildings: false,
-    can_edit_photos: false,
-    can_edit_navigation: false,
-    can_manage_admin_users: false,
-    can_manage_users: false,
+    can_view_buildings: true, can_edit_buildings: false, can_edit_photos: false,
+    can_edit_navigation: false, can_manage_admin_users: false, can_manage_users: false,
     can_view_audit_logs: false,
   },
   recursos_humanos: {
-    can_view_buildings: true,
-    can_edit_buildings: false,
-    can_edit_photos: false,
-    can_edit_navigation: false,
-    can_manage_admin_users: false,
-    can_manage_users: false,
+    can_view_buildings: true, can_edit_buildings: false, can_edit_photos: false,
+    can_edit_navigation: false, can_manage_admin_users: false, can_manage_users: false,
     can_view_audit_logs: false,
   },
   viewer: {
-    can_view_buildings: false,
-    can_edit_buildings: false,
-    can_edit_photos: false,
-    can_edit_navigation: false,
-    can_manage_admin_users: false,
-    can_manage_users: false,
+    can_view_buildings: false, can_edit_buildings: false, can_edit_photos: false,
+    can_edit_navigation: false, can_manage_admin_users: false, can_manage_users: false,
     can_view_audit_logs: false,
   },
 };

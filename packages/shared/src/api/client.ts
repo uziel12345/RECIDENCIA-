@@ -2,8 +2,20 @@ import type { ApiResponse } from "../types/api.types.js";
 
 type ApiClientConfig = {
   baseUrl: string;
-  getToken?: () => string | null;
 };
+
+function getCsrfToken(): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function mutatingHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const csrf = getCsrfToken();
+  if (csrf) headers["X-CSRF-Token"] = csrf;
+  return headers;
+}
 
 let config: ApiClientConfig = {
   baseUrl: "/api",
@@ -17,11 +29,10 @@ export function configureApiClient(nextConfig: ApiClientConfig): void {
 }
 
 export async function apiGet<T>(endpoint: string): Promise<T> {
-  const headers = buildHeaders();
-
   const response = await fetch(`${config.baseUrl}${endpoint}`, {
     method: "GET",
-    headers,
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     cache: "no-store",
   });
 
@@ -32,11 +43,10 @@ export async function apiPost<TResponse, TBody = unknown>(
   endpoint: string,
   body: TBody
 ): Promise<TResponse> {
-  const headers = buildHeaders();
-
   const response = await fetch(`${config.baseUrl}${endpoint}`, {
     method: "POST",
-    headers,
+    headers: mutatingHeaders(),
+    credentials: "include",
     body: JSON.stringify(body),
   });
 
@@ -47,11 +57,10 @@ export async function apiPut<TResponse, TBody = unknown>(
   endpoint: string,
   body: TBody
 ): Promise<TResponse> {
-  const headers = buildHeaders();
-
   const response = await fetch(`${config.baseUrl}${endpoint}`, {
     method: "PUT",
-    headers,
+    headers: mutatingHeaders(),
+    credentials: "include",
     body: JSON.stringify(body),
   });
 
@@ -62,11 +71,10 @@ export async function apiPatch<TResponse, TBody = unknown>(
   endpoint: string,
   body: TBody
 ): Promise<TResponse> {
-  const headers = buildHeaders();
-
   const response = await fetch(`${config.baseUrl}${endpoint}`, {
     method: "PATCH",
-    headers,
+    headers: mutatingHeaders(),
+    credentials: "include",
     body: JSON.stringify(body),
   });
 
@@ -76,11 +84,10 @@ export async function apiPatch<TResponse, TBody = unknown>(
 export async function apiDelete<TResponse>(
   endpoint: string
 ): Promise<TResponse> {
-  const headers = buildHeaders();
-
   const response = await fetch(`${config.baseUrl}${endpoint}`, {
     method: "DELETE",
-    headers,
+    headers: mutatingHeaders(),
+    credentials: "include",
   });
 
   return parseApiResponse<TResponse>(response);
@@ -90,34 +97,18 @@ export async function apiUpload<TResponse>(
   endpoint: string,
   formData: FormData
 ): Promise<TResponse> {
-  const headers: HeadersInit = {};
-
-  const token = config.getToken?.();
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
+  const headers: Record<string, string> = {};
+  const csrf = getCsrfToken();
+  if (csrf) headers["X-CSRF-Token"] = csrf;
 
   const response = await fetch(`${config.baseUrl}${endpoint}`, {
     method: "POST",
     headers,
+    credentials: "include",
     body: formData,
   });
 
   return parseApiResponse<TResponse>(response);
-}
-
-function buildHeaders(): HeadersInit {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-
-  const token = config.getToken?.();
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  return headers;
 }
 
 async function parseApiResponse<T>(response: Response): Promise<T> {

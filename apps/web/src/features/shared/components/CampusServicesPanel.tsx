@@ -8,7 +8,7 @@ import {
   SearchIcon,
   ShieldIcon,
   UsersIcon,
-} from "../Icons";
+} from "../../../components/ui/Icons";
 
 export type CampusService = {
   id: string;

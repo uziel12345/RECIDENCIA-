@@ -1,4 +1,4 @@
-import { SearchIcon, LogOutIcon, MapIcon } from "../../shared/Icons";
+import { SearchIcon, LogOutIcon, MapIcon } from "../../../components/ui/Icons";
 
 interface VisitorTopBarProps {
   onSearchClick: () => void;

@@ -1,4 +1,4 @@
-import { GraduationCapIcon, SearchIcon, LogOutIcon } from "../../shared/Icons";
+import { GraduationCapIcon, SearchIcon, LogOutIcon } from "../../../components/ui/Icons";
 
 interface StudentTopBarProps {
   userName: string;

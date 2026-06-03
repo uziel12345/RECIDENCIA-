@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { asyncHandler } from "../../shared/utils/async-handler.js";
 import { sendSuccess } from "../../shared/http/response.js";
 import { BuildingsService } from "./buildings.service.js";
+import { auditLog } from "../../shared/services/audit.service.js";
 
 const buildingsService = new BuildingsService();
 
@@ -84,6 +85,11 @@ export const getBuildingImages = asyncHandler(
 export const createBuilding = asyncHandler(
   async (req: Request, res: Response) => {
     const data = await buildingsService.create(req.body);
+    auditLog({
+      req, action: "CREATE_BUILDING", userId: req.authUser?.id,
+      resourceType: "building", resourceId: String(data.id),
+      details: { name: data.name, code: data.code },
+    });
     return sendSuccess(res, data, 201, "Edificio creado correctamente");
   }
 );
@@ -92,7 +98,11 @@ export const updateBuilding = asyncHandler(
   async (req: Request, res: Response) => {
     const id = getSingleParam(req.params.id);
     const data = await buildingsService.update(id, req.body);
-
+    auditLog({
+      req, action: "UPDATE_BUILDING", userId: req.authUser?.id,
+      resourceType: "building", resourceId: id,
+      details: { name: data.name },
+    });
     return sendSuccess(res, data, 200, "Edificio actualizado correctamente");
   }
 );
@@ -103,14 +113,16 @@ export const updateBuildingStatus = asyncHandler(
     const isActive = parseBoolean(req.body?.is_active);
 
     const data = await buildingsService.updateStatus(id, isActive);
-
+    auditLog({
+      req, action: "UPDATE_BUILDING_STATUS", userId: req.authUser?.id,
+      resourceType: "building", resourceId: id,
+      details: { is_active: isActive },
+    });
     return sendSuccess(
       res,
       data,
       200,
-      isActive
-        ? "Edificio activado correctamente"
-        : "Edificio desactivado correctamente"
+      isActive ? "Edificio activado correctamente" : "Edificio desactivado correctamente"
     );
   }
 );
@@ -119,7 +131,10 @@ export const deleteBuilding = asyncHandler(
   async (req: Request, res: Response) => {
     const id = getSingleParam(req.params.id);
     const data = await buildingsService.remove(id);
-
+    auditLog({
+      req, action: "DELETE_BUILDING", userId: req.authUser?.id,
+      resourceType: "building", resourceId: id,
+    });
     return sendSuccess(res, data, 200, "Edificio eliminado correctamente");
   }
 );

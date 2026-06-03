@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
-import { ROLE_PERMISSIONS } from "@ito-map/shared";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import type { Building } from "@ito-map/shared";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { ROUTES } from "../../../types/routes";
 import { BuildingForm } from "../components/BuildingForm";
@@ -12,11 +13,12 @@ import { safeText } from "../hooks/useBuildingForm";
 export function AdminBuildingsPage() {
   const { logout, user } = useAdminAuthStore();
   const navigate = useNavigate();
-  const permissions = user ? ROLE_PERMISSIONS[user.role] : null;
-  const canEditBuildings = Boolean(permissions?.can_edit_buildings);
-  const canEditPhotos = Boolean(permissions?.can_edit_photos);
-  const canEditNavigation = Boolean(permissions?.can_edit_navigation);
-  const canManageUsers = Boolean(permissions?.can_manage_users);
+  const isSuperAdmin = user?.role === "superadmin";
+  const isAdmin = user?.role === "admin" || isSuperAdmin;
+  const canEditBuildings = isAdmin;
+  const canEditPhotos = isAdmin;
+  const canEditNavigation = isAdmin;
+  const canManageUsers = isSuperAdmin;
 
   const {
     buildings,
@@ -50,9 +52,26 @@ export function AdminBuildingsPage() {
     handleDelete,
   } = useAdminBuildings();
 
+  const [confirmBuilding, setConfirmBuilding] = useState<Building | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  function handleDeleteRequest(building: Building) {
+    setConfirmBuilding(building);
+  }
+
+  async function handleConfirmDelete() {
+    if (!confirmBuilding) return;
+    setDeleting(true);
+    try {
+      await handleDelete(confirmBuilding);
+      setConfirmBuilding(null);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   function handleLogout() {
-    logout();
-    void navigate(ROUTES.ADMIN_LOGIN, { replace: true });
+    void logout().then(() => navigate(ROUTES.ADMIN_LOGIN, { replace: true }));
   }
 
   function handleOpenNavigation() {
@@ -79,15 +98,6 @@ export function AdminBuildingsPage() {
             </p>
           ) : null}
 
-          {canEditNavigation ? (
-            <button
-              type="button"
-              onClick={handleOpenNavigation}
-              style={styles.navShortcutButton}
-            >
-              Abrir mapa de navegacion
-            </button>
-          ) : null}
         </div>
 
         <div style={styles.headerActions}>
@@ -169,7 +179,7 @@ export function AdminBuildingsPage() {
           onStartEdit={handleStartEdit}
           onOpenImages={setImageModalBuilding}
           onToggleStatus={handleToggleStatus}
-          onDelete={handleDelete}
+          onDelete={handleDeleteRequest}
         />
       </section>
 
@@ -178,6 +188,39 @@ export function AdminBuildingsPage() {
           building={imageModalBuilding}
           onClose={() => setImageModalBuilding(null)}
         />
+      ) : null}
+
+      {confirmBuilding ? (
+        <div role="dialog" aria-modal="true" aria-labelledby="confirm-delete-title" style={styles.overlay}>
+          <div style={styles.dialog}>
+            <h2 id="confirm-delete-title" style={styles.dialogTitle}>
+              ¿Eliminar edificio?
+            </h2>
+            <p style={styles.dialogText}>
+              Estás a punto de eliminar{" "}
+              <strong>{safeText(confirmBuilding.name)}</strong>. Esta acción no
+              se puede deshacer.
+            </p>
+            <div style={styles.dialogActions}>
+              <button
+                type="button"
+                onClick={() => setConfirmBuilding(null)}
+                disabled={deleting}
+                style={styles.cancelButton}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleConfirmDelete()}
+                disabled={deleting}
+                style={styles.confirmDangerButton}
+              >
+                {deleting ? "Eliminando..." : "Sí, eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </main>
   );
@@ -231,17 +274,6 @@ const styles: Record<string, CSSProperties> = {
     margin: "8px 0 0",
     color: "#334155",
   },
-  navShortcutButton: {
-    marginTop: "16px",
-    border: "1px solid #1d4ed8",
-    borderRadius: "14px",
-    padding: "12px 16px",
-    background: "#2563eb",
-    color: "#ffffff",
-    fontWeight: 900,
-    cursor: "pointer",
-    boxShadow: "0 10px 22px rgba(37, 99, 235, 0.22)",
-  },
   secondaryButton: {
     border: "1px solid #cbd5e1",
     borderRadius: "14px",
@@ -277,5 +309,55 @@ const styles: Record<string, CSSProperties> = {
     border: "1px solid #bbf7d0",
     color: "#166534",
     fontWeight: 700,
+  },
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(15, 23, 42, 0.55)",
+    display: "grid",
+    placeItems: "center",
+    zIndex: 50,
+    padding: "24px",
+  },
+  dialog: {
+    width: "100%",
+    maxWidth: "420px",
+    background: "#ffffff",
+    borderRadius: "20px",
+    padding: "28px",
+    boxShadow: "0 24px 60px rgba(15, 23, 42, 0.25)",
+  },
+  dialogTitle: {
+    margin: "0 0 12px",
+    fontSize: "20px",
+    color: "#0f172a",
+  },
+  dialogText: {
+    margin: "0 0 24px",
+    color: "#475569",
+    lineHeight: 1.6,
+  },
+  dialogActions: {
+    display: "flex",
+    gap: "10px",
+    justifyContent: "flex-end",
+  },
+  cancelButton: {
+    border: "1px solid #cbd5e1",
+    borderRadius: "12px",
+    padding: "10px 18px",
+    background: "#ffffff",
+    color: "#0f172a",
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  confirmDangerButton: {
+    border: "1px solid #fca5a5",
+    borderRadius: "12px",
+    padding: "10px 18px",
+    background: "#dc2626",
+    color: "#ffffff",
+    fontWeight: 800,
+    cursor: "pointer",
   },
 };

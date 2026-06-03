@@ -2,9 +2,34 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/auth-store";
 import { ROUTES } from "../../types/routes";
 
+const ROLE_CONTENT = {
+  student: {
+    title: "Bienvenido, Alumno",
+    description:
+      "Podrás localizar tus aulas, consultar tu horario de clases y trazar rutas dentro del Instituto Tecnológico de Oaxaca.",
+  },
+  visitor: {
+    title: "Bienvenido, Visitante",
+    description:
+      "Podrás explorar el campus, localizar edificios y trazar rutas a los puntos clave del Instituto Tecnológico de Oaxaca.",
+  },
+  default: {
+    title: "Bienvenido al campus",
+    description:
+      "Podrás localizar edificios, consultar información del campus y trazar rutas dentro del Instituto Tecnológico de Oaxaca.",
+  },
+} as const;
+
 export function OnboardingPage() {
   const navigate = useNavigate();
   const { completeOnboarding, user } = useAuthStore();
+
+  const content =
+    user?.role === "student"
+      ? ROLE_CONTENT.student
+      : user?.role === "visitor"
+      ? ROLE_CONTENT.visitor
+      : ROLE_CONTENT.default;
 
   const handleContinue = () => {
     completeOnboarding();
@@ -22,76 +47,47 @@ export function OnboardingPage() {
     navigate(ROUTES.WELCOME);
   };
 
+  const handleBack = () => {
+    navigate(ROUTES.WELCOME);
+  };
+
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "grid",
-        placeItems: "center",
-        padding: "24px",
-        background: "#f8fafc",
-      }}
-    >
-      <section
-        style={{
-          width: "100%",
-          maxWidth: "520px",
-          background: "#ffffff",
-          borderRadius: "24px",
-          padding: "28px",
-          boxShadow: "0 18px 40px rgba(15, 23, 42, 0.12)",
-          border: "1px solid #e2e8f0",
-        }}
-      >
-        <p
-          style={{
-            margin: "0 0 8px",
-            color: "#2563eb",
-            fontWeight: 800,
-            fontSize: "14px",
-          }}
+    <main className="onboarding-page">
+      <section className="onboarding-card">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="onboarding-card__back"
         >
-          Mapa interactivo ITO
-        </p>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            aria-hidden="true"
+          >
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+          Volver
+        </button>
 
-        <h1
-          style={{
-            margin: 0,
-            color: "#0f172a",
-            fontSize: "28px",
-            lineHeight: 1.2,
-          }}
-        >
-          Bienvenido al recorrido del campus
-        </h1>
+        <p className="onboarding-card__label">Mapa interactivo ITO</p>
 
-        <p
-          style={{
-            margin: "14px 0 0",
-            color: "#475569",
-            lineHeight: 1.6,
-          }}
-        >
-          Podrás localizar edificios, consultar información del campus y trazar
-          rutas dentro del Instituto Tecnológico de Oaxaca.
-        </p>
+        <h1 className="onboarding-card__title">{content.title}</h1>
+
+        <p className="onboarding-card__desc">{content.description}</p>
 
         <button
           type="button"
           onClick={handleContinue}
-          style={{
-            width: "100%",
-            marginTop: "24px",
-            border: "none",
-            borderRadius: "14px",
-            padding: "12px 16px",
-            background: "#2563eb",
-            color: "#ffffff",
-            fontWeight: 800,
-            cursor: "pointer",
-          }}
+          className="onboarding-card__cta"
         >
-          Continuar
+          Explorar el campus
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
         </button>
       </section>
     </main>

@@ -3,7 +3,7 @@ import { useState, type CSSProperties } from "react";
 import { useAuthStore } from "../../store/auth-store";
 import { useAdminAuthStore } from "../../store/admin-auth-store";
 import { ROUTES } from "../../types/routes";
-import { MapIcon, GraduationCapIcon, UsersIcon, BuildingIcon } from "../shared/Icons";
+import { MapIcon, GraduationCapIcon, UsersIcon, BuildingIcon } from "../../components/ui/Icons";
 
 interface RoleCard {
   id: "student" | "visitor" | "admin-access";
@@ -95,24 +95,22 @@ export function WelcomePage() {
   return (
     <div className="welcome-page">
       <div className="welcome-page__container">
-        {/* Header */}
         <header className="welcome-page__header">
           <div className="welcome-page__logo">
             <div className="welcome-page__logo-icon">
-              <MapIcon size={28} />
+              <MapIcon size={26} />
             </div>
             <div className="welcome-page__logo-text">
               <h1>Mapa ITO</h1>
-              <p>Instituto Tecnologico de Oaxaca</p>
+              <p>Instituto Tecnológico de Oaxaca</p>
             </div>
           </div>
         </header>
 
-        {/* Main Content */}
         <main className="welcome-page__main">
           <div className="welcome-page__intro">
-            <h2>Bienvenido</h2>
-            <p>Selecciona tu tipo de usuario para comenzar a explorar el campus</p>
+            <h2>Acceso al campus</h2>
+            <p>¿Cómo deseas explorar el campus hoy?</p>
           </div>
 
           <div className="welcome-page__roles">
@@ -127,7 +125,8 @@ export function WelcomePage() {
                   "--role-border": card.borderColor,
                 } as React.CSSProperties}
               >
-                <div className="role-card__icon">{card.icon}</div>
+                <span className="role-card__accent" aria-hidden="true" />
+                <div className="role-card__icon" aria-hidden="true">{card.icon}</div>
                 <div className="role-card__content">
                   <h3 className="role-card__title">{card.title}</h3>
                   <p className="role-card__description">{card.description}</p>
@@ -135,8 +134,8 @@ export function WelcomePage() {
                 {card.action === "admin-login" && (
                   <span className="role-card__badge">Requiere acceso</span>
                 )}
-                <div className="role-card__arrow">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <div className="role-card__arrow" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M9 18l6-6-6-6" />
                   </svg>
                 </div>
@@ -145,9 +144,8 @@ export function WelcomePage() {
           </div>
         </main>
 
-        {/* Footer */}
         <footer className="welcome-page__footer">
-          <p>Mapa 3D Interactivo del Campus</p>
+          <p>Mapa 3D interactivo · ITO Campus</p>
         </footer>
       </div>
 

@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { asyncHandler } from "../../shared/utils/async-handler.js";
 import { sendSuccess } from "../../shared/http/response.js";
 import { BuildingImagesService } from "./building-images.service.js";
+import { auditLog } from "../../shared/services/audit.service.js";
 
 const buildingImagesService = new BuildingImagesService();
 
@@ -61,6 +62,12 @@ export const uploadBuildingImage = asyncHandler(
       sort_order: req.body?.sort_order,
     });
 
+    auditLog({
+      req, action: "UPLOAD_BUILDING_IMAGE", userId: req.authUser?.id,
+      resourceType: "building_image", resourceId: String(data.id),
+      details: { building_id: buildingId, filename: req.file?.filename },
+    });
+
     return sendSuccess(res, data, 201, "Imagen subida correctamente");
   }
 );
@@ -70,18 +77,17 @@ export const updateBuildingImageStatus = asyncHandler(
     const imageId = getSingleParam(req.params.imageId);
     const isActive = parseBoolean(req.body?.is_active);
 
-    const data = await buildingImagesService.updateImageStatus(
-      imageId,
-      isActive
-    );
+    const data = await buildingImagesService.updateImageStatus(imageId, isActive);
+
+    auditLog({
+      req, action: "UPDATE_BUILDING_IMAGE_STATUS", userId: req.authUser?.id,
+      resourceType: "building_image", resourceId: imageId,
+      details: { is_active: isActive },
+    });
 
     return sendSuccess(
-      res,
-      data,
-      200,
-      isActive
-        ? "Imagen activada correctamente"
-        : "Imagen desactivada correctamente"
+      res, data, 200,
+      isActive ? "Imagen activada correctamente" : "Imagen desactivada correctamente"
     );
   }
 );
@@ -91,6 +97,11 @@ export const deleteBuildingImage = asyncHandler(
     const imageId = getSingleParam(req.params.imageId);
 
     const data = await buildingImagesService.removeImage(imageId);
+
+    auditLog({
+      req, action: "DELETE_BUILDING_IMAGE", userId: req.authUser?.id,
+      resourceType: "building_image", resourceId: imageId,
+    });
 
     return sendSuccess(res, data, 200, "Imagen eliminada correctamente");
   }
