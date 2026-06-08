@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import type { Building, EdgePathType } from "@ito-map/shared";
 import type { DraftEditorControls } from "./NavigationDraftEditorLayer";
@@ -121,6 +121,20 @@ export function NavigationEditorModal({ controls, buildings, onClose }: Props) {
   const hasAnything =
     completedPaths.length > 0 || activePath !== null || entranceNodes.length > 0;
 
+  const connectedNodeIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const edge of availableEdges) {
+      ids.add(edge.from_node_id);
+      ids.add(edge.to_node_id);
+    }
+    return ids;
+  }, [availableEdges]);
+
+  const isolatedCount = useMemo(
+    () => availableNodes.filter((n) => !connectedNodeIds.has(n.id)).length,
+    [availableNodes, connectedNodeIds]
+  );
+
   const tabs = [
     { id: "path" as const, label: "Caminos" },
     { id: "connect" as const, label: "Conectar" },
@@ -189,6 +203,20 @@ export function NavigationEditorModal({ controls, buildings, onClose }: Props) {
             </div>
             <div style={{ color: "#475569", fontSize: 11, marginTop: 2 }}>
               {availableNodes.length} nodos &middot; {availableEdges.length} aristas
+              {isolatedCount > 0 && (
+                <span
+                  style={{
+                    marginLeft: 6,
+                    color: "#f97316",
+                    fontWeight: 700,
+                    background: "rgba(249,115,22,0.15)",
+                    padding: "1px 6px",
+                    borderRadius: 4,
+                  }}
+                >
+                  {isolatedCount} sin conexión
+                </span>
+              )}
             </div>
           </div>
           <button
@@ -473,6 +501,11 @@ export function NavigationEditorModal({ controls, buildings, onClose }: Props) {
                   {!editSelNode ? (
                     <div style={S.info()}>
                       {availableNodes.length} nodos disponibles. Haz clic en uno para seleccionarlo.
+                      {isolatedCount > 0 && (
+                        <span style={{ display: "block", marginTop: 6, color: "#f97316", fontWeight: 600 }}>
+                          ⚠ {isolatedCount} nodo{isolatedCount !== 1 ? "s" : ""} sin conexiones (naranja en el mapa).
+                        </span>
+                      )}
                     </div>
                   ) : (
                     <div

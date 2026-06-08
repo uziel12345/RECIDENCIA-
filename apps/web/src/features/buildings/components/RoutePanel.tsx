@@ -181,6 +181,18 @@ export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelPr
               </div>
             )}
           </div>
+          {routeDestination && (
+            <button
+              type="button"
+              className="ito-btn ito-btn--ghost"
+              style={{ fontSize: 12, padding: "5px 10px", marginTop: 4, alignSelf: "flex-start" }}
+              onClick={clearRoute}
+              title="Cambiar destino"
+            >
+              <Icon name="search" size={13} />
+              <span>Cambiar</span>
+            </button>
+          )}
         </div>
       </div>
 

@@ -33,7 +33,7 @@ function nodeColor(node: NavigationNode, entrances: BuildingEntrance[]): string 
   const isEntrance = entrances.some((entrance) => entrance.node_id === node.id);
 
   if (isEntrance) return "#ef4444";
-  if (node.node_type === "intersection") return "#f59e0b";
+  if (node.node_type === "intersection") return "#2563eb";
   if (node.node_type === "building_access") return "#ef4444";
   if (node.node_type === "poi") return "#8b5cf6";
 
@@ -193,14 +193,31 @@ export function NavigationDebugLayer({
     return ids;
   }, [debugEdges]);
 
+  const connectedNodeIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const edge of edges) {
+      ids.add(edge.from_node_id);
+      ids.add(edge.to_node_id);
+    }
+    return ids;
+  }, [edges]);
+
+  const isolatedNodeIds = useMemo(
+    () => new Set(nodes.filter((n) => !connectedNodeIds.has(n.id)).map((n) => n.id)),
+    [nodes, connectedNodeIds]
+  );
+
   const visibleNodes = useMemo(
     () =>
       showOnlyIssues
         ? nodes.filter(
-            (node) => issueNodeIds.has(node.id) || routeNodeSet.has(node.id)
+            (node) =>
+              issueNodeIds.has(node.id) ||
+              isolatedNodeIds.has(node.id) ||
+              routeNodeSet.has(node.id)
           )
         : nodes,
-    [issueNodeIds, nodes, routeNodeSet, showOnlyIssues]
+    [issueNodeIds, isolatedNodeIds, nodes, routeNodeSet, showOnlyIssues]
   );
 
   return (
@@ -257,12 +274,21 @@ export function NavigationDebugLayer({
         })}
 
       {visibleNodes.map((node) => {
-        const color = nodeColor(node, entrances);
+        const isIsolated = isolatedNodeIds.has(node.id);
         const isRouteNode = routeNodeSet.has(node.id);
         const isHovered = hoveredNodeId === node.id;
         const entrance = entrances.find(
           (item) => item.node_id === node.id && item.is_primary
         );
+
+        const color = isIsolated
+          ? "#f97316"
+          : isRouteNode
+            ? "#22c55e"
+            : nodeColor(node, entrances);
+
+        const radius = isIsolated ? 1.4 : isRouteNode ? 1.55 : 1.05;
+        const showLabel = isHovered || isRouteNode || isIsolated;
 
         return (
           <group key={node.id} position={[Number(node.x), DEBUG_NODE_Y, Number(node.z)]}>
@@ -273,15 +299,23 @@ export function NavigationDebugLayer({
               }}
               onPointerOut={() => setHoveredNodeId(null)}
             >
-              <sphereGeometry args={[isRouteNode ? 1.55 : 1.05, 16, 16]} />
-              <meshBasicMaterial color={isRouteNode ? "#22c55e" : color} />
+              <sphereGeometry args={[radius, 16, 16]} />
+              <meshBasicMaterial color={color} />
             </mesh>
 
-            {(isHovered || isRouteNode) && (
-              <Html position={[0, 3.4, 0]} center>
-                <div className="ito-nav-debug-label">
-                  <strong>{node.code || node.id}</strong>
-                  <span>{entrance?.building_name ?? node.name ?? node.node_type}</span>
+            {showLabel && (
+              <Html position={[0, 3.8, 0]} center>
+                <div
+                  className={`ito-nav-debug-label${
+                    isIsolated ? " ito-nav-debug-label--issue" : ""
+                  }`}
+                >
+                  <strong>{node.code || node.id.slice(0, 8)}</strong>
+                  <span>
+                    {isIsolated
+                      ? "Sin conexiones"
+                      : (entrance?.building_name ?? node.name ?? node.node_type)}
+                  </span>
                 </div>
               </Html>
             )}

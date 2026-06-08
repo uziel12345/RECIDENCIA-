@@ -1,6 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { NextFunction, Request, Response } from "express";
-import { csrfProtection } from "./csrf.middleware.js";
+import { createCsrfToken, csrfProtection } from "./csrf.middleware.js";
+
+const TEST_SECRET = "test-csrf-secret-that-is-long-enough-for-hmac-123";
 
 function createMockReq(opts: {
   cookie?: string;
@@ -24,8 +26,17 @@ function createMockRes() {
 }
 
 describe("csrfProtection middleware", () => {
-  it("calls next when cookie and header tokens match", () => {
-    const req = createMockReq({ cookie: "abc123", header: "abc123" });
+  beforeEach(() => {
+    vi.stubEnv("JWT_SECRET", TEST_SECRET);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("calls next when cookie and header carry a valid signed token", () => {
+    const validToken = createCsrfToken(TEST_SECRET);
+    const req = createMockReq({ cookie: validToken, header: validToken });
     const res = createMockRes();
     const next = vi.fn() as unknown as NextFunction;
 
@@ -37,7 +48,8 @@ describe("csrfProtection middleware", () => {
   });
 
   it("returns 403 when X-CSRF-Token header is missing", () => {
-    const req = createMockReq({ cookie: "abc123" }); // no header
+    const validToken = createCsrfToken(TEST_SECRET);
+    const req = createMockReq({ cookie: validToken }); // no header
     const res = createMockRes();
     const next = vi.fn() as unknown as NextFunction;
 
@@ -52,7 +64,8 @@ describe("csrfProtection middleware", () => {
   });
 
   it("returns 403 when csrf_token cookie is missing", () => {
-    const req = createMockReq({ header: "abc123" }); // no cookie
+    const validToken = createCsrfToken(TEST_SECRET);
+    const req = createMockReq({ header: validToken }); // no cookie
     const res = createMockRes();
     const next = vi.fn() as unknown as NextFunction;
 
@@ -67,7 +80,9 @@ describe("csrfProtection middleware", () => {
   });
 
   it("returns 403 when cookie and header tokens do not match", () => {
-    const req = createMockReq({ cookie: "token-A", header: "token-B" });
+    const tokenA = createCsrfToken(TEST_SECRET);
+    const tokenB = createCsrfToken(TEST_SECRET); // different nonce → different token
+    const req = createMockReq({ cookie: tokenA, header: tokenB });
     const res = createMockRes();
     const next = vi.fn() as unknown as NextFunction;
 
@@ -90,6 +105,20 @@ describe("csrfProtection middleware", () => {
 
   it("returns 403 when tokens are empty strings", () => {
     const req = createMockReq({ cookie: "", header: "" });
+    const res = createMockRes();
+    const next = vi.fn() as unknown as NextFunction;
+
+    csrfProtection(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when token has correct format but wrong HMAC signature", () => {
+    const validToken = createCsrfToken(TEST_SECRET);
+    const [nonce] = validToken.split(".");
+    const tamperedToken = `${nonce}.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`;
+    const req = createMockReq({ cookie: tamperedToken, header: tamperedToken });
     const res = createMockRes();
     const next = vi.fn() as unknown as NextFunction;
 

@@ -487,14 +487,23 @@ function CategoryLegend({ buildings }: CategoryLegendProps) {
   );
 }
 
-function ViewerLoading() {
+function ViewerLoading({ isExiting = false }: { isExiting?: boolean }) {
   return (
-    <div className="ito-viewer-loading" aria-live="polite" aria-busy="true">
+    <div
+      className={`ito-viewer-loading${isExiting ? " is-exiting" : ""}`}
+      aria-live="polite"
+      aria-busy="true"
+    >
       <div className="ito-viewer-loading__inner">
         <div className="ito-viewer-loading__spinner" aria-hidden="true" />
-        <div className="ito-viewer-loading__title">Cargando campus 3Dâ€¦</div>
+        <div className="ito-viewer-loading__title">Cargando campus 3D…</div>
         <div className="ito-viewer-loading__subtitle">
           Preparando tu mapa interactivo
+        </div>
+        <div className="ito-viewer-loading__dots" aria-hidden="true">
+          <span className="ito-viewer-loading__dot" />
+          <span className="ito-viewer-loading__dot" />
+          <span className="ito-viewer-loading__dot" />
         </div>
       </div>
     </div>
@@ -524,6 +533,7 @@ export function CampusViewer({
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [focus, setFocus] = useState<FocusPoint | null>(null);
   const [isModelLoading, setIsModelLoading] = useState(true);
+  const [isLoadingExiting, setIsLoadingExiting] = useState(false);
   const [navigationDebugMode, setNavigationDebugMode] =
     useState<NavigationDebugMode>("hidden");
   const [draftEditorActive, setDraftEditorActive] = useState(false);
@@ -531,6 +541,7 @@ export function CampusViewer({
 
   useEffect(() => {
     if (canUseAdvancedTools) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNavigationDebugMode("hidden");
     setDraftEditorActive(false);
   }, [canUseAdvancedTools]);
@@ -604,9 +615,12 @@ export function CampusViewer({
 
   useEffect(() => {
     if (buildings.length > 0) {
-      const timeoutId = setTimeout(() => setIsModelLoading(false), 300);
-
-      return () => clearTimeout(timeoutId);
+      const exitTimer = setTimeout(() => setIsLoadingExiting(true), 300);
+      const removeTimer = setTimeout(() => setIsModelLoading(false), 680);
+      return () => {
+        clearTimeout(exitTimer);
+        clearTimeout(removeTimer);
+      };
     }
   }, [buildings.length]);
 
@@ -688,7 +702,7 @@ export function CampusViewer({
         <CategoryLegend buildings={buildings} />
       )}
 
-      {isModelLoading && <ViewerLoading />}
+      {isModelLoading && <ViewerLoading isExiting={isLoadingExiting} />}
 
       {canUseAdvancedTools && draftEditorActive && (
         <NavigationEditorModal
@@ -732,7 +746,7 @@ export function CampusViewer({
         <Suspense fallback={null}>
           <group rotation={[0, CAMPUS_ROTATION_Y, 0]}>
             <CampusModel />
-            {canUseAdvancedTools && showNavigationDebug && (
+            {canUseAdvancedTools && showNavigationDebug && !draftEditorActive && (
               <NavigationDebugLayer
                 showOnlyIssues={navigationDebugMode === "issues"}
               />

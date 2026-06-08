@@ -117,7 +117,7 @@ function getObstaclePenalty(
   to: NavigationNode,
   obstacles: BuildingObstacle[]
 ): number {
-  return edgeCrossesBuilding(from, to, obstacles) ? 50 : 1;
+  return edgeCrossesBuilding(from, to, obstacles) ? 4 : 1;
 }
 
 function buildAdjacency(
@@ -304,13 +304,15 @@ export function useNavigationGraph() {
   }, []);
 
   const findPath = useCallback(
-    (from: THREE.Vector3, to: THREE.Vector3): THREE.Vector3[] => {
+    (from: THREE.Vector3, to: THREE.Vector3, goalNodeId?: string): THREE.Vector3[] => {
       if (graphState.status !== "ready") return [];
 
       const { nodes, nodeById, adjacency } = graphState;
 
       const startNode = snapToNearest(from.x, from.z, nodes);
-      const goalNode = snapToNearest(to.x, to.z, nodes);
+      const goalNode = goalNodeId
+        ? (nodeById.get(goalNodeId) ?? snapToNearest(to.x, to.z, nodes))
+        : snapToNearest(to.x, to.z, nodes);
 
       if (!startNode || !goalNode) return [];
 

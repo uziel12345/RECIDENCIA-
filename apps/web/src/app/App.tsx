@@ -33,6 +33,20 @@ const AdminUsersPage = lazy(async () => {
   return { default: AdminUsersPage };
 });
 
+const AdminStudentLocationPage = lazy(async () => {
+  const { AdminStudentLocationPage } = await import(
+    "../features/admin/pages/AdminStudentLocationPage"
+  );
+  return { default: AdminStudentLocationPage };
+});
+
+const AdminProfessorLocationPage = lazy(async () => {
+  const { AdminProfessorLocationPage } = await import(
+    "../features/admin/pages/AdminProfessorLocationPage"
+  );
+  return { default: AdminProfessorLocationPage };
+});
+
 function MapLoadingFallback() {
   return (
     <div
@@ -162,6 +176,26 @@ export default function App() {
             <AdminProtectedRoute permission="can_manage_admin_users">
               <Suspense fallback={null}>
                 <AdminUsersPage />
+              </Suspense>
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_STUDENT_LOCATION}
+          element={
+            <AdminProtectedRoute permission="can_view_student_location">
+              <Suspense fallback={null}>
+                <AdminStudentLocationPage />
+              </Suspense>
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_PROFESSOR_LOCATION}
+          element={
+            <AdminProtectedRoute permission="can_view_professor_location">
+              <Suspense fallback={null}>
+                <AdminProfessorLocationPage />
               </Suspense>
             </AdminProtectedRoute>
           }

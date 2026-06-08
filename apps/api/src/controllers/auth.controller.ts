@@ -1,5 +1,5 @@
-import { randomBytes } from "crypto";
 import type { Request, Response } from "express";
+import { createCsrfToken } from "../shared/middlewares/csrf.middleware.js";
 import {
   createAdminUser,
   invalidateAdminToken,
@@ -26,7 +26,7 @@ export async function loginController(req: Request<{}, {}, LoginInput>, res: Res
     const { usernameOrEmail, password } = req.body;
 
     const result = await loginAdmin({ usernameOrEmail, password });
-    const csrfToken = randomBytes(32).toString("hex");
+    const csrfToken = createCsrfToken(process.env.JWT_SECRET ?? "");
 
     res.cookie(SESSION_COOKIE, result.token, { ...cookieBase, httpOnly: true });
     res.cookie(CSRF_COOKIE, csrfToken, { ...cookieBase, httpOnly: false });

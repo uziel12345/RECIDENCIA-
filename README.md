@@ -1,70 +1,88 @@
-# Mapa 3D Interactivo del Instituto Tecnológico de Oaxaca
+# Mapa 3D Interactivo — Instituto Tecnológico de Oaxaca
 
-Sistema web para visualizar y administrar un mapa 3D interactivo del Instituto Tecnológico de Oaxaca. El proyecto permite consultar edificios, ver información relevante del campus, navegar por rutas internas y administrar datos desde un panel protegido.
+Sistema web para visualizar y administrar un mapa 3D interactivo del campus del ITO. Permite consultar edificios, buscar aulas y trámites, navegar por rutas internas, y gestionar datos académicos desde un panel administrativo protegido por roles.
 
-## Objetivo del proyecto
+## Alcance actual
 
-El objetivo es desarrollar una plataforma digital para alumnos, visitantes y personal administrativo del Instituto Tecnológico de Oaxaca.
+### Funcionalidades públicas
 
-El sistema contempla:
+- Mapa 3D interactivo del campus (Three.js / React Three Fiber)
+- Búsqueda unificada de edificios, aulas, trámites y servicios
+- Tarjeta de detalle con requisitos de trámites
+- Navegación con cálculo de rutas dentro del campus
+- Vista de horario público por aula (`GET /classrooms/:id/schedule`)
 
-- Página web interactiva.
-- Mapa 3D del campus.
-- Búsqueda de edificios.
-- Visualización de información por edificio.
-- Cálculo de rutas de navegación.
-- Panel administrativo.
-- Gestión de edificios.
-- Gestión de imágenes de edificios.
-- Autenticación y autorización por roles.
-- Base para una futura app móvil iOS y Android.
+### Panel administrativo (autenticado)
 
-## Tecnologías principales
+- Autenticación por rol con JWT en cookie `httpOnly` + Double Submit CSRF
+- Gestión de edificios e imágenes
+- Gestión de usuarios administrativos
+- Consulta de ubicación de alumnos por número de control (rol: Servicios Escolares)
+- Consulta de ubicación de profesores por número de empleado (rol: Recursos Humanos)
+- Gestión de alumnos, profesores y horarios académicos
 
-### Frontend web
+### Módulos API
 
-- React
-- TypeScript
-- Vite
-- React Router
+| Módulo | Ruta base | Descripción |
+|---|---|---|
+| Auth | `/auth` | Login, logout, perfil |
+| Buildings | `/buildings` | CRUD de edificios |
+| Classrooms | `/classrooms` | CRUD de aulas + horario público |
+| Categories | `/categories` | Categorías de edificios |
+| Procedures | `/procedures` | Trámites y servicios |
+| Search | `/search` | Búsqueda unificada full-text |
+| Users | `/users` | Gestión de usuarios admin |
+| Students | `/students` | CRUD de alumnos + ubicación académica |
+| Professors | `/professors` | CRUD de profesores + ubicación académica |
+| Schedules | `/schedules` | Horarios con inscripción de alumnos |
+| Navigation | `/navigation` | Rutas campus (grafo A\*) |
+| Audit | `/audit` | Registro de acciones (superadmin) |
+
+## Stack tecnológico
+
+### Frontend (`apps/web`)
+
+- React 19 + TypeScript + Vite
+- React Router v7
 - Zustand
-- Three.js
-- React Three Fiber
-- Drei
-- Tailwind CSS
+- Three.js + React Three Fiber + Drei
+- Tailwind CSS v4 (`@tailwindcss/vite`)
+- Sistema de diseño propio con tokens CSS (`src/styles/index.css`)
 
-### Backend API
+### Backend (`apps/api`)
 
-- Node.js
-- Express
-- TypeScript
-- MySQL
-- JWT
-- bcryptjs
-- Zod
-- Multer
-- Helmet
-- CORS
-- Express Rate Limit
+- Node.js + Express + TypeScript
+- MySQL 8 con `mysql2/promise` (pool lazy)
+- JWT en cookie `httpOnly` + CSRF Double Submit
+- Zod (validación de esquemas)
+- Multer (upload de imágenes)
+- Helmet + CORS + Express Rate Limit
+- Vitest (374 tests, 26 suites)
 
-### Monorepo
+### Paquete compartido (`packages/shared`)
 
-- pnpm workspaces
-- Paquete compartido `packages/shared`
+- Tipos TypeScript compartidos (auth, edificios, académico, etc.)
+- Funciones de API (`fetch` wrappers tipados)
+- Utilidades comunes
 
 ## Estructura del proyecto
 
-```txt
+```
 RECIDENCIA-/
 ├── apps/
 │   ├── api/
 │   │   ├── src/
-│   │   │   ├── config/
-│   │   │   ├── controllers/
-│   │   │   ├── db/
-│   │   │   ├── modules/
+│   │   │   ├── modules/          # Módulos de dominio
+│   │   │   │   ├── auth/
+│   │   │   │   ├── buildings/
+│   │   │   │   ├── classrooms/
+│   │   │   │   ├── procedures/
+│   │   │   │   ├── students/
+│   │   │   │   ├── professors/
+│   │   │   │   ├── schedules/
+│   │   │   │   └── ...
+│   │   │   ├── shared/           # Middlewares, helpers, servicios
 │   │   │   ├── routes/
-│   │   │   ├── shared/
 │   │   │   ├── app.ts
 │   │   │   └── server.ts
 │   │   └── .env.example
@@ -72,22 +90,111 @@ RECIDENCIA-/
 │   └── web/
 │       ├── src/
 │       │   ├── app/
-│       │   ├── components/
-│       │   ├── features/
-│       │   ├── services/
+│       │   ├── components/ui/    # Componentes reutilizables
+│       │   ├── features/         # Módulos de UI por dominio
+│       │   │   ├── admin/
+│       │   │   ├── buildings/
+│       │   │   ├── search/
+│       │   │   └── ...
 │       │   ├── store/
-│       │   ├── styles/
+│       │   ├── styles/           # Sistema de diseño (tokens CSS + .ito-* clases)
 │       │   └── types/
 │       └── .env.example
 │
 ├── packages/
 │   └── shared/
 │       └── src/
-│           ├── api/
-│           ├── types/
+│           ├── api/              # Wrappers de API tipados
+│           ├── types/            # Tipos compartidos
 │           └── utils/
 │
+├── docs/
+│   ├── schema.sql                # DDL completo (16 tablas)
+│   └── seed.sql                  # Datos de prueba mínimos
+│
 ├── package.json
-├── pnpm-workspace.yaml
-└── README.md
+└── pnpm-workspace.yaml
+```
 
+## Base de datos
+
+El esquema completo se encuentra en [`docs/schema.sql`](docs/schema.sql).  
+Los datos de prueba (seed mínimo) se encuentran en [`docs/seed.sql`](docs/seed.sql).
+
+### Tablas principales
+
+| # | Tabla | Descripción |
+|---|---|---|
+| 1 | `users` | Usuarios administrativos |
+| 2 | `categories` | Categorías de edificios |
+| 3 | `buildings` | Edificios del campus |
+| 4 | `building_images` | Imágenes de edificios |
+| 5 | `classrooms` | Aulas dentro de edificios |
+| 6 | `procedure_categories` | Categorías de trámites |
+| 7 | `procedures` | Trámites y servicios |
+| 8 | `procedure_requirements` | Requisitos por trámite |
+| 9 | `procedure_classrooms` | Relación trámite↔aula |
+| 10 | `navigation_nodes` | Nodos del grafo de rutas |
+| 11 | `navigation_edges` | Aristas del grafo de rutas |
+| 12 | `audit_logs` | Registro de auditoría |
+| 13 | `students` | Alumnos (soft delete) |
+| 14 | `professors` | Profesores (soft delete) |
+| 15 | `schedules` | Horarios académicos |
+| 16 | `student_schedules` | Inscripción alumno↔horario |
+
+## Control de acceso (RBAC)
+
+| Permiso | viewer | servicios_escolares | recursos_humanos | admin | superadmin |
+|---|:---:|:---:|:---:|:---:|:---:|
+| `can_view_buildings` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `can_manage_buildings` | — | — | — | ✓ | ✓ |
+| `can_manage_users` | — | — | — | ✓ | ✓ |
+| `can_view_audit_log` | — | — | — | — | ✓ |
+| `can_manage_procedures` | — | — | — | ✓ | ✓ |
+| `can_manage_navigation` | — | — | — | ✓ | ✓ |
+| `can_view_student_location` | — | ✓ | — | ✓ | ✓ |
+| `can_manage_students` | — | ✓ | — | ✓ | ✓ |
+| `can_view_professor_location` | — | — | ✓ | ✓ | ✓ |
+| `can_manage_professors` | — | — | ✓ | ✓ | ✓ |
+
+## Desarrollo local
+
+### Requisitos
+
+- Node.js ≥ 20
+- pnpm ≥ 9
+- MySQL 8
+
+### Configuración
+
+```bash
+# 1. Instalar dependencias
+pnpm install
+
+# 2. Crear base de datos
+mysql -u root -p -e "CREATE DATABASE mapa_ito CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p mapa_ito < docs/schema.sql
+mysql -u root -p mapa_ito < docs/seed.sql
+
+# 3. Variables de entorno
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
+# Editar ambos archivos con tus credenciales
+
+# 4. Arrancar en desarrollo
+pnpm --filter api dev
+pnpm --filter web dev
+```
+
+### Verificación
+
+```bash
+# Typecheck completo del monorepo
+pnpm -r typecheck
+
+# Tests de la API
+pnpm --filter api test
+
+# Lint del frontend
+pnpm --filter web lint
+```

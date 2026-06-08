@@ -47,8 +47,7 @@ export function VisitorPage() {
   const setSearchTerm = useBuildingStore((state) => state.setSearchTerm);
 
   const [requestedSheetState, setSheetState] = useState<SheetState>("closed");
-  const sheetState: SheetState =
-    isMobile && !!routeDestination ? "closed" : requestedSheetState;
+  const sheetState: SheetState = requestedSheetState;
   const [totalBuildings, setTotalBuildings] = useState(0);
   const [showQuickDest, setShowQuickDest] = useState(false);
   const [showServices, setShowServices] = useState(false);
@@ -199,7 +198,7 @@ export function VisitorPage() {
           </nav>
 
           {viewMode === "map" && (
-            <div className="visitor-page__sidebar-content">
+            <div key="side-map" className="visitor-page__sidebar-content ito-tab-panel">
               <BuildingSidebar
                 isMobile={false}
                 showGreeting
@@ -208,7 +207,7 @@ export function VisitorPage() {
           )}
 
           {viewMode === "destinations" && (
-            <div className="visitor-page__panel">
+            <div key="side-dest" className="visitor-page__panel ito-tab-panel">
               <div className="visitor-page__panel-heading">
                 <div className="visitor-page__panel-icon">
                   <BuildingIcon size={20} />
@@ -224,7 +223,7 @@ export function VisitorPage() {
           )}
 
           {viewMode === "services" && (
-            <div className="visitor-page__panel visitor-page__panel--flush">
+            <div key="side-svc" className="visitor-page__panel visitor-page__panel--flush ito-tab-panel">
               <CampusServicesPanel
                 compact
                 onSelectService={handleSelectService}

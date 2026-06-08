@@ -260,6 +260,7 @@ export function RouteLine() {
   useEffect(() => {
     let cancelled = false;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRouteData(null);
 
     if (loading || !routeDestination) {
@@ -313,7 +314,7 @@ export function RouteLine() {
     const from = new THREE.Vector3(mapPosition.x, 0, mapPosition.z);
     const to   = new THREE.Vector3(dx, dy, dz);
 
-    const rawPath = findPath(from, to);
+    const rawPath = findPath(from, to, destinationEntrance.node_id);
     if (cancelled) return;
 
     if (rawPath.length < 2) {

@@ -19,6 +19,8 @@ export const ROUTES = {
   ADMIN_BUILDINGS: "/admin/buildings",
   ADMIN_NAVIGATION: "/admin/navigation",
   ADMIN_USERS: "/admin/users",
+  ADMIN_STUDENT_LOCATION: "/admin/alumnos/ubicacion",
+  ADMIN_PROFESSOR_LOCATION: "/admin/profesores/ubicacion",
   
   // Map is the main campus view
   MAP: "/map",

@@ -9,7 +9,9 @@ import { BuildingInfoCard } from "./BuildingInfoCard";
 import { CategoryBadge } from "../../../components/ui/CategoryBadge";
 import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
+import { SearchResultCard } from "../../search/SearchResultCard";
 import type { Building } from "../types/building";
+import type { SearchResult } from "@ito-map/shared";
 
 function normalizeSearchText(value: string | null | undefined): string {
   return value
@@ -92,6 +94,8 @@ export function BuildingSidebar({
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showAllBuildings, setShowAllBuildings] = useState(false);
+  const [selectedSearchResult, setSelectedSearchResult] =
+    useState<SearchResult | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -203,6 +207,14 @@ export function BuildingSidebar({
     onClearSelection?.();
   }
 
+  function handleSelectSearchResult(result: SearchResult) {
+    if (result.kind === "building") {
+      setSelectedSearchResult(null);
+    } else {
+      setSelectedSearchResult(result);
+    }
+  }
+
   return (
     <aside
       className={
@@ -286,8 +298,20 @@ export function BuildingSidebar({
       )}
 
       <div className="ito-sidebar__section">
-        <BuildingSearch />
+        <BuildingSearch
+          buildings={buildings}
+          onSelectResult={handleSelectSearchResult}
+        />
       </div>
+
+      {selectedSearchResult && (
+        <div className="ito-sidebar__section ito-sidebar__section--card">
+          <SearchResultCard
+            result={selectedSearchResult}
+            onClose={() => setSelectedSearchResult(null)}
+          />
+        </div>
+      )}
 
       {!isMobile && categories.length > 0 && (
         <div className="ito-sidebar__section">

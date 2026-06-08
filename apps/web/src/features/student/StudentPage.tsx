@@ -46,8 +46,7 @@ export function StudentPage() {
   const setSearchTerm = useBuildingStore((state) => state.setSearchTerm);
 
   const [requestedSheetState, setSheetState] = useState<SheetState>("closed");
-  const sheetState: SheetState =
-    isMobile && !!routeDestination ? "closed" : requestedSheetState;
+  const sheetState: SheetState = requestedSheetState;
   const [totalBuildings, setTotalBuildings] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("map");
   const [showSchedule, setShowSchedule] = useState(false);
@@ -215,7 +214,7 @@ export function StudentPage() {
           </nav>
 
           {viewMode === "map" && (
-            <div className="student-page__sidebar-content">
+            <div key="side-map" className="student-page__sidebar-content ito-tab-panel">
               <BuildingSidebar
                 isMobile={false}
                 showGreeting
@@ -225,13 +224,13 @@ export function StudentPage() {
           )}
 
           {viewMode === "schedule" && (
-            <div className="student-page__sidebar-content">
+            <div key="side-schedule" className="student-page__sidebar-content ito-tab-panel">
               <SchedulePanel onNavigateToClass={handleNavigateFromSchedule} />
             </div>
           )}
 
           {viewMode === "services" && (
-            <div className="student-page__sidebar-content">
+            <div key="side-services" className="student-page__sidebar-content ito-tab-panel">
               <CampusServicesPanel
                 compact
                 onSelectService={handleSelectService}
@@ -256,13 +255,13 @@ export function StudentPage() {
           )}
 
           {viewMode === "schedule" && (
-            <div className="student-page__schedule-full">
+            <div key="main-schedule" className="student-page__schedule-full ito-tab-main">
               <SchedulePanel expanded />
             </div>
           )}
 
           {viewMode === "services" && (
-            <div className="student-page__schedule-full">
+            <div key="main-services" className="student-page__schedule-full ito-tab-main">
               <CampusServicesPanel onSelectService={handleSelectService} />
             </div>
           )}
