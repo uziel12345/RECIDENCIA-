@@ -83,71 +83,71 @@ const WEATHER_PRESETS: Record<WeatherMode, WeatherPreset> = {
     label: "Soleado",
     shortLabel: "Sol",
     icon: "Sol",
-    sky: "#eaf6ff",
-    fog: "#eaf6ff",
-    fogNear: 320,
-    fogFar: 620,
-    ambient: 1.28,
-    hemisphere: 0.68,
-    directional: 1.75,
-    gridPrimary: "#cbd5e1",
-    gridSecondary: "#e2e8f0",
+    sky: "#e6f3ff",
+    fog: "#e6f3ff",
+    fogNear: 360,
+    fogFar: 700,
+    ambient: 1.4,
+    hemisphere: 0.75,
+    directional: 2.1,
+    gridPrimary: "#b8cce0",
+    gridSecondary: "#d0e3f0",
   },
   cloudy: {
     label: "Nublado",
     shortLabel: "Nubes",
     icon: "Nub",
-    sky: "#dfe8f2",
-    fog: "#d8e2ec",
-    fogNear: 240,
-    fogFar: 520,
-    ambient: 1.05,
-    hemisphere: 0.55,
-    directional: 1.2,
-    gridPrimary: "#b8c4d1",
-    gridSecondary: "#d4dde7",
+    sky: "#d4dfe9",
+    fog: "#c8d4e0",
+    fogNear: 220,
+    fogFar: 480,
+    ambient: 0.95,
+    hemisphere: 0.52,
+    directional: 1.1,
+    gridPrimary: "#a8b8c8",
+    gridSecondary: "#bfccd8",
   },
   rain: {
     label: "Lluvia",
     shortLabel: "Lluvia",
     icon: "Llu",
-    sky: "#cdd8e5",
-    fog: "#c4cfdd",
-    fogNear: 190,
-    fogFar: 440,
-    ambient: 0.9,
-    hemisphere: 0.5,
-    directional: 0.95,
-    gridPrimary: "#a9b7c7",
-    gridSecondary: "#c6d0dc",
+    sky: "#b8c8d8",
+    fog: "#a0b0c4",
+    fogNear: 160,
+    fogFar: 360,
+    ambient: 0.72,
+    hemisphere: 0.38,
+    directional: 0.72,
+    gridPrimary: "#8fa4b8",
+    gridSecondary: "#a8bac8",
   },
   storm: {
     label: "Tormenta",
     shortLabel: "Tormenta",
     icon: "Tor",
-    sky: "#aeb9c8",
-    fog: "#aab5c4",
-    fogNear: 150,
-    fogFar: 390,
-    ambient: 0.72,
-    hemisphere: 0.42,
-    directional: 0.72,
-    gridPrimary: "#94a3b8",
-    gridSecondary: "#b6c1cf",
+    sky: "#4a5568",
+    fog: "#3d4a5c",
+    fogNear: 100,
+    fogFar: 280,
+    ambient: 0.38,
+    hemisphere: 0.28,
+    directional: 0.32,
+    gridPrimary: "#64748b",
+    gridSecondary: "#8898a8",
   },
   fog: {
     label: "Niebla",
     shortLabel: "Niebla",
     icon: "Nie",
-    sky: "#edf2f7",
-    fog: "#e5ebf1",
-    fogNear: 80,
-    fogFar: 310,
-    ambient: 1.08,
-    hemisphere: 0.62,
-    directional: 0.88,
-    gridPrimary: "#c8d1dc",
-    gridSecondary: "#dce3eb",
+    sky: "#d8e2ec",
+    fog: "#b8c8d8",
+    fogNear: 35,
+    fogFar: 160,
+    ambient: 0.88,
+    hemisphere: 0.48,
+    directional: 0.65,
+    gridPrimary: "#a8b8c8",
+    gridSecondary: "#bfccd8",
   },
 };
 
@@ -444,10 +444,11 @@ function CampusModel() {
 function WeatherParticles({ mode, isMobile = false }: { mode: WeatherMode; isMobile?: boolean }) {
   const rainRef = useRef<LineSegments<BufferGeometry, LineBasicMaterial>>(null);
   const isRain = mode === "rain" || mode === "storm";
-  const count = isMobile ? 320 : 560;
-  const range = isMobile ? 360 : 520;
-  const height = 145;
-  const streakLength = mode === "storm" ? 18 : 12;
+  const count = isMobile ? 480 : 1400;
+  const range = isMobile ? 400 : 560;
+  const height = 160;
+  const streakBase = mode === "storm" ? 22 : 15;
+  const slant = mode === "storm" ? 8.5 : 3.5;
 
   const positions = useMemo(() => {
     const values = new Float32Array(count * 2 * 3);
@@ -457,18 +458,18 @@ function WeatherParticles({ mode, isMobile = false }: { mode: WeatherMode; isMob
       const x = (Math.random() - 0.5) * range;
       const y = Math.random() * height + 18;
       const z = (Math.random() - 0.5) * range;
-      const slant = mode === "storm" ? 4.5 : 2.2;
+      const streak = streakBase * (0.55 + Math.random() * 1.0);
 
       values[base] = x;
       values[base + 1] = y;
       values[base + 2] = z;
       values[base + 3] = x + slant;
-      values[base + 4] = y - streakLength;
+      values[base + 4] = y - streak;
       values[base + 5] = z - slant * 0.5;
     }
 
     return values;
-  }, [count, height, mode, range, streakLength]);
+  }, [count, height, mode, range, streakBase, slant]);
 
   useFrame((_, delta) => {
     const rain = rainRef.current;
@@ -476,8 +477,8 @@ function WeatherParticles({ mode, isMobile = false }: { mode: WeatherMode; isMob
 
     const attr = rain.geometry.attributes.position;
     const values = attr.array as Float32Array;
-    const speed = mode === "storm" ? 118 : 82;
-    const drift = mode === "storm" ? 24 : 10;
+    const speed = mode === "storm" ? 145 : 96;
+    const drift = mode === "storm" ? 34 : 15;
 
     for (let i = 0; i < count; i += 1) {
       const base = i * 6;
@@ -493,13 +494,13 @@ function WeatherParticles({ mode, isMobile = false }: { mode: WeatherMode; isMob
         const x = (Math.random() - 0.5) * range;
         const y = height + 18;
         const z = (Math.random() - 0.5) * range;
-        const slant = mode === "storm" ? 4.5 : 2.2;
+        const streak = streakBase * (0.55 + Math.random() * 1.0);
 
         values[base] = x;
         values[base + 1] = y;
         values[base + 2] = z;
         values[base + 3] = x + slant;
-        values[base + 4] = y - streakLength;
+        values[base + 4] = y - streak;
         values[base + 5] = z - slant * 0.5;
       }
     }
@@ -515,9 +516,9 @@ function WeatherParticles({ mode, isMobile = false }: { mode: WeatherMode; isMob
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
       <lineBasicMaterial
-        color="#dbeafe"
+        color={mode === "storm" ? "#93c5fd" : "#bfdbfe"}
         transparent
-        opacity={mode === "storm" ? 0.52 : 0.42}
+        opacity={mode === "storm" ? 0.82 : 0.68}
         depthWrite={false}
         blending={AdditiveBlending}
       />
@@ -538,17 +539,59 @@ function StormFlash({ active }: { active: boolean }) {
       return;
     }
 
-    const cycle = elapsedRef.current % 5.5;
+    const cycle = elapsedRef.current % 4.5;
     lightRef.current.intensity =
-      cycle > 0.18 && cycle < 0.32 ? 4.2 : cycle > 0.36 && cycle < 0.44 ? 2.6 : 0;
+      cycle > 0.08 && cycle < 0.18
+        ? 18
+        : cycle > 0.22 && cycle < 0.30
+          ? 10
+          : cycle > 0.34 && cycle < 0.40
+            ? 4.5
+            : 0;
   });
 
-  return <pointLight ref={lightRef} position={[0, 170, 40]} color="#dbeafe" distance={520} intensity={0} />;
+  return <pointLight ref={lightRef} position={[0, 170, 40]} color="#e0eeff" distance={600} intensity={0} />;
+}
+
+const WEATHER_ICONS: Record<WeatherMode, string> = {
+  clear:  "☀️",
+  cloudy: "☁️",
+  rain:   "🌧️",
+  storm:  "⛈️",
+  fog:    "🌫️",
+};
+
+function WeatherControl({
+  current,
+  onChange,
+}: {
+  current: WeatherMode;
+  onChange: (mode: WeatherMode) => void;
+}) {
+  const modes = Object.keys(WEATHER_PRESETS) as WeatherMode[];
+
+  return (
+    <div className="ito-weather-control" role="group" aria-label="Simulación de clima">
+      {modes.map((mode) => (
+        <button
+          key={mode}
+          type="button"
+          title={WEATHER_PRESETS[mode].label}
+          className={`ito-weather-control__btn${current === mode ? " ito-weather-control__btn--active" : ""}`}
+          onClick={() => onChange(mode)}
+        >
+          <span className="ito-weather-control__icon">{WEATHER_ICONS[mode]}</span>
+          <span className="ito-weather-control__label">{WEATHER_PRESETS[mode].shortLabel}</span>
+        </button>
+      ))}
+    </div>
+  );
 }
 
 function WeatherAtmosphere({ mode }: { mode: WeatherMode }) {
   return (
     <div className={`ito-weather-atmosphere ito-weather-atmosphere--${mode}`} aria-hidden="true">
+      <div className="ito-weather-atmosphere__sun" />
       <div className="ito-weather-atmosphere__clouds" />
       <div className="ito-weather-atmosphere__rain" />
       <div className="ito-weather-atmosphere__mist" />
@@ -1093,6 +1136,10 @@ export function CampusViewer({
       </Canvas>
 
       <WeatherAtmosphere mode={weatherMode} />
+
+      {canUseAdvancedTools && (
+        <WeatherControl current={weatherMode} onChange={setWeatherMode} />
+      )}
     </div>
   );
 }
