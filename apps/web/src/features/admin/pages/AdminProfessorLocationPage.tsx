@@ -1,7 +1,7 @@
+import type { CSSProperties } from "react";
 import { useState } from "react";
-import { getProfessorLocationApi } from "@ito-map/shared";
-import type { ProfessorLocation } from "@ito-map/shared";
-import { Icon } from "../../../components/ui/Icons";
+import { getProfessorLocationApi, type ProfessorLocation } from "@ito-map/shared";
+import { AdminLayout } from "../components/AdminLayout";
 
 export function AdminProfessorLocationPage() {
   const [employeeNumber, setEmployeeNumber] = useState("");
@@ -25,35 +25,45 @@ export function AdminProfessorLocationPage() {
       });
       setResult(data);
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Error al consultar la ubicación";
-      setError(msg);
+      setError(err instanceof Error ? err.message : "Error al consultar la ubicación");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="ito-loc-page">
-      <div className="ito-loc-page__inner">
-        <div className="mb-7">
-          <h1 className="ito-loc-page__title">Ubicación de Profesores</h1>
-          <p className="ito-loc-page__subtitle">
-            Consulta en qué aula imparte clase un profesor según su horario registrado.
-          </p>
-          <div className="ito-notice ito-notice--green">
-            <strong>Frontera de seguridad:</strong> los datos personales de profesores
-            solo se sirven tras autenticación de servidor con el rol{" "}
-            <em>Recursos Humanos</em> o superior. El acceso sin sesión activa
-            devuelve 401.
+    <AdminLayout>
+      <div style={s.page}>
+        <header style={s.header}>
+          <div style={s.headerIcon}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" />
+              <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" />
+            </svg>
           </div>
+          <div>
+            <p style={s.overline}>Consulta académica</p>
+            <h1 style={s.title}>Ubicación de Profesores</h1>
+            <p style={s.subtitle}>
+              Consulta en qué aula imparte clase un profesor según su horario.
+            </p>
+          </div>
+        </header>
+
+        <div style={s.notice}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2" style={{ flexShrink: 0 }}>
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          <span>
+            Requiere sesión activa con rol <strong style={{ color: "#6ee7b7" }}>Recursos Humanos</strong> o superior. Acceso sin sesión devuelve 401.
+          </span>
         </div>
 
-        <div className="ito-form-card">
+        <div style={s.formCard}>
           <form onSubmit={handleSearch}>
-            <div className="grid gap-3.5">
-              <div>
-                <label htmlFor="employee-number" className="ito-form-label">
+            <div style={s.formBody}>
+              <div style={s.fieldGroup}>
+                <label htmlFor="employee-number" style={s.label}>
                   Número de empleado *
                 </label>
                 <input
@@ -63,36 +73,31 @@ export function AdminProfessorLocationPage() {
                   onChange={(e) => setEmployeeNumber(e.target.value)}
                   placeholder="EMP001"
                   required
-                  className="ito-form-input"
+                  style={s.input}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <label htmlFor="period" className="ito-form-label">
-                    Periodo (opcional)
-                  </label>
+              <div style={s.rowGrid}>
+                <div style={s.fieldGroup}>
+                  <label htmlFor="period" style={s.label}>Periodo (opcional)</label>
                   <input
                     id="period"
                     type="text"
                     value={period}
                     onChange={(e) => setPeriod(e.target.value)}
                     placeholder="2026-1"
-                    className="ito-form-input"
+                    style={s.input}
                   />
                 </div>
-
-                <div>
-                  <label htmlFor="at-time" className="ito-form-label">
-                    Hora (opcional, HH:MM)
-                  </label>
+                <div style={s.fieldGroup}>
+                  <label htmlFor="at-time" style={s.label}>Hora (opcional, HH:MM)</label>
                   <input
                     id="at-time"
                     type="text"
                     value={at}
                     onChange={(e) => setAt(e.target.value)}
                     placeholder="10:00"
-                    className="ito-form-input"
+                    style={s.input}
                   />
                 </div>
               </div>
@@ -100,16 +105,21 @@ export function AdminProfessorLocationPage() {
               <button
                 type="submit"
                 disabled={loading || !employeeNumber.trim()}
-                className="ito-submit-btn ito-submit-btn--green"
+                style={{
+                  ...s.btnSearch,
+                  ...(loading || !employeeNumber.trim() ? s.btnDisabled : {}),
+                }}
               >
                 {loading ? (
                   <>
-                    <span className="ito-btn-spinner" aria-hidden="true" />
-                    Consultando…
+                    <span style={s.spinner} />
+                    Consultando...
                   </>
                 ) : (
                   <>
-                    <Icon name="search" size={14} aria-hidden="true" />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
                     Buscar ubicación
                   </>
                 )}
@@ -118,91 +128,102 @@ export function AdminProfessorLocationPage() {
           </form>
         </div>
 
-        {error && (
-          <div className="ito-alert ito-alert--error" role="alert">
-            <span className="ito-alert__icon">
-              <Icon name="alert" size={15} aria-hidden="true" />
-            </span>
-            <span>{error}</span>
+        {error ? (
+          <div role="alert" style={s.alertError}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}>
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            {error}
           </div>
-        )}
+        ) : null}
 
-        {result && (
-          <div className="ito-result-card">
-            <div className="ito-result-card__header">
-              <div className="ito-result-card__icon ito-result-card__icon--green">
-                <Icon name="list" size={18} aria-hidden="true" />
+        {result ? (
+          <div style={s.resultCard}>
+            <div style={s.resultHeader}>
+              <div style={s.resultAvatar}>
+                {result.professor.full_name[0]?.toUpperCase() ?? "P"}
               </div>
               <div>
-                <div className="ito-result-card__name">
-                  {result.professor.full_name}
-                </div>
-                <div className="ito-result-card__meta">
+                <p style={s.resultName}>{result.professor.full_name}</p>
+                <p style={s.resultMeta}>
                   {result.professor.employee_number} · {result.professor.department}
-                </div>
+                </p>
               </div>
             </div>
 
-            <div className="ito-result-card__body">
-              {result.in_class ? (
-                <>
-                  <div className="ito-status-pill ito-status-pill--active">
-                    <span className="ito-status-pill__dot" aria-hidden="true" />
-                    <span className="ito-status-pill__label">Impartiendo clase</span>
-                  </div>
-                  <div className="grid gap-2">
-                    <LocationRow label="Materia" value={result.schedule!.subject} />
-                    <LocationRow
-                      label="Horario"
-                      value={`${result.schedule!.start_time} – ${result.schedule!.end_time}`}
-                    />
-                    <LocationRow label="Periodo" value={result.schedule!.period} />
-                    <LocationRow
-                      label="Aula"
-                      value={`${result.classroom!.code} — ${result.classroom!.name}${
-                        result.classroom!.floor !== 0
-                          ? `, Piso ${result.classroom!.floor}`
-                          : ""
-                      }`}
-                    />
-                    <LocationRow label="Edificio" value={result.building!.name} highlight />
-                  </div>
-                </>
-              ) : (
-                <div className="ito-loc-empty">
-                  <Icon name="alert" size={15} aria-hidden="true" />
-                  <span>No se encontró clase activa en el horario consultado.</span>
+            <div style={s.resultDivider} />
+
+            {result.in_class ? (
+              <>
+                <div style={s.statusPill}>
+                  <span style={s.pillDot} />
+                  Impartiendo clase
                 </div>
-              )}
-            </div>
+                <div style={s.dataGrid}>
+                  <DataRow label="Materia" value={result.schedule!.subject} />
+                  <DataRow label="Horario" value={`${result.schedule!.start_time} – ${result.schedule!.end_time}`} />
+                  <DataRow label="Periodo" value={result.schedule!.period} />
+                  <DataRow label="Aula" value={`${result.classroom!.code} — ${result.classroom!.name}${result.classroom!.floor !== 0 ? `, Piso ${result.classroom!.floor}` : ""}`} />
+                  <DataRow label="Edificio" value={result.building!.name} highlight />
+                </div>
+              </>
+            ) : (
+              <div style={s.noClass}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                No se encontró clase activa en el horario consultado.
+              </div>
+            )}
           </div>
-        )}
+        ) : null}
       </div>
+    </AdminLayout>
+  );
+}
+
+function DataRow({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div style={sd.row}>
+      <span style={sd.label}>{label}</span>
+      <span style={highlight ? sd.valueHighlight : sd.value}>{value}</span>
     </div>
   );
 }
 
-function LocationRow({
-  label,
-  value,
-  highlight = false,
-}: {
-  label: string;
-  value: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div className="ito-loc-row">
-      <span className="ito-loc-row__label">{label}</span>
-      <span
-        className={
-          highlight
-            ? "ito-loc-row__value ito-loc-row__value--green"
-            : "ito-loc-row__value"
-        }
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
+const s: Record<string, CSSProperties> = {
+  page: { padding: "28px 32px", minHeight: "100%", maxWidth: 680 },
+  header: { display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 20 },
+  headerIcon: { width: 44, height: 44, borderRadius: 12, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 4 },
+  overline: { margin: "0 0 5px", fontSize: 11, fontWeight: 700, color: "#10b981", textTransform: "uppercase", letterSpacing: "0.08em" },
+  title: { margin: "0 0 5px", fontSize: 26, fontWeight: 700, color: "#f1f5f9", lineHeight: 1.1 },
+  subtitle: { margin: 0, fontSize: 14, color: "#64748b" },
+  notice: { display: "flex", alignItems: "flex-start", gap: 9, padding: "11px 14px", background: "rgba(16,185,129,0.07)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 10, fontSize: 13, color: "#94a3b8", lineHeight: 1.5, marginBottom: 22 },
+  formCard: { background: "#1e293b", border: "1px solid #334155", borderRadius: 16, padding: "22px 24px", marginBottom: 20 },
+  formBody: { display: "flex", flexDirection: "column", gap: 14 },
+  fieldGroup: { display: "flex", flexDirection: "column", gap: 6 },
+  rowGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
+  label: { fontSize: 11.5, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" },
+  input: { border: "1px solid #334155", borderRadius: 10, padding: "10px 13px", fontSize: 14, background: "#0f172a", color: "#f1f5f9", outline: "none", width: "100%", boxSizing: "border-box" },
+  btnSearch: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, border: "none", borderRadius: 10, padding: "11px 20px", background: "#10b981", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14 },
+  btnDisabled: { background: "#134e4a", color: "#475569", cursor: "not-allowed" },
+  spinner: { width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", display: "inline-block", animation: "spin 0.8s linear infinite" },
+  alertError: { display: "flex", alignItems: "center", gap: 9, marginBottom: 18, padding: "12px 15px", borderRadius: 10, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#fca5a5", fontSize: 13.5 },
+  resultCard: { background: "#1e293b", border: "1px solid #334155", borderRadius: 16, padding: "22px 24px" },
+  resultHeader: { display: "flex", alignItems: "center", gap: 13 },
+  resultAvatar: { width: 40, height: 40, borderRadius: 10, background: "linear-gradient(135deg, #10b981, #047857)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#fff", flexShrink: 0 },
+  resultName: { margin: 0, fontSize: 15, fontWeight: 700, color: "#f1f5f9" },
+  resultMeta: { margin: "3px 0 0", fontSize: 12.5, color: "#64748b" },
+  resultDivider: { height: 1, background: "#334155", margin: "16px 0" },
+  statusPill: { display: "inline-flex", alignItems: "center", gap: 7, padding: "5px 12px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 99, fontSize: 12.5, fontWeight: 600, color: "#6ee7b7", marginBottom: 16 },
+  pillDot: { width: 6, height: 6, borderRadius: "50%", background: "#10b981" },
+  dataGrid: { display: "flex", flexDirection: "column", gap: 6 },
+  noClass: { display: "flex", alignItems: "center", gap: 8, padding: "16px", background: "#161f2e", borderRadius: 10, fontSize: 13.5, color: "#475569" },
+};
+
+const sd: Record<string, CSSProperties> = {
+  row: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "#161f2e", borderRadius: 8 },
+  label: { fontSize: 12.5, color: "#64748b" },
+  value: { fontSize: 13, color: "#cbd5e1", fontWeight: 500 },
+  valueHighlight: { fontSize: 13, color: "#34d399", fontWeight: 700 },
+};

@@ -1,24 +1,21 @@
 import type { CSSProperties } from "react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import type { Building } from "@ito-map/shared";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
-import { ROUTES } from "../../../types/routes";
 import { BuildingForm } from "../components/BuildingForm";
 import { BuildingImagesModal } from "../components/BuildingImagesModal";
 import { BuildingTable } from "../components/BuildingTable";
+import { AdminLayout } from "../components/AdminLayout";
 import { useAdminBuildings } from "../hooks/useAdminBuildings";
 import { safeText } from "../hooks/useBuildingForm";
 
 export function AdminBuildingsPage() {
-  const { logout, user } = useAdminAuthStore();
-  const navigate = useNavigate();
+  const { user } = useAdminAuthStore();
   const isSuperAdmin = user?.role === "superadmin";
   const isAdmin = user?.role === "admin" || isSuperAdmin;
   const canEditBuildings = isAdmin;
   const canEditPhotos = isAdmin;
   const canEditNavigation = isAdmin;
-  const canManageUsers = isSuperAdmin;
 
   const {
     buildings,
@@ -70,118 +67,88 @@ export function AdminBuildingsPage() {
     }
   }
 
-  function handleLogout() {
-    void logout().then(() => navigate(ROUTES.ADMIN_LOGIN, { replace: true }));
-  }
-
-  function handleOpenNavigation() {
-    void navigate(ROUTES.ADMIN_NAVIGATION);
-  }
-
   return (
-    <main style={styles.page}>
-      <header style={styles.header}>
-        <div>
-          <p style={styles.overline}>Panel administrativo</p>
-          <h1 style={styles.pageTitle}>Edificios</h1>
-          <p style={styles.text}>
-            Administra los edificios visibles y ocultos del mapa interactivo del
-            ITO.
-          </p>
+    <AdminLayout>
+      <div style={s.page}>
+        <header style={s.header}>
+          <div>
+            <p style={s.overline}>Gestión de campus</p>
+            <h1 style={s.title}>Edificios</h1>
+            <p style={s.subtitle}>
+              Administra los edificios del mapa interactivo del ITO.
+            </p>
+          </div>
 
           {user ? (
-            <p style={styles.userText}>
-              Sesión activa:{" "}
-              <strong>
-                {user.full_name || user.username || "Administrador"}
-              </strong>
-            </p>
+            <div style={s.sessionBadge}>
+              <span style={s.sessionDot} />
+              <span style={s.sessionText}>
+                {user.full_name || user.username}
+              </span>
+            </div>
           ) : null}
+        </header>
 
-        </div>
-
-        <div style={styles.headerActions}>
-          {canManageUsers ? (
-            <button
-              type="button"
-              onClick={() => navigate(ROUTES.ADMIN_USERS)}
-              style={styles.secondaryButton}
-            >
-              Usuarios
-            </button>
-          ) : null}
-
-          {canEditNavigation ? (
-            <button
-              type="button"
-              onClick={handleOpenNavigation}
-              style={styles.primaryButton}
-            >
-              Navegacion
-            </button>
-          ) : null}
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            style={styles.secondaryButton}
-          >
-            Cerrar sesión
-          </button>
-        </div>
-      </header>
-
-      {error ? (
-        <div role="alert" style={styles.errorBox}>
-          {error}
-        </div>
-      ) : null}
-
-      {message ? <div style={styles.successBox}>{message}</div> : null}
-
-      <section
-        style={
-          canEditBuildings && isEditing ? styles.layout : styles.readOnlyLayout
-        }
-      >
-        {canEditBuildings && isEditing ? (
-          <BuildingForm
-            form={form}
-            categories={categories}
-            isEditing
-            editingBuildingName={safeText(editingBuilding?.name)}
-            saving={saving}
-            onSubmit={handleSubmitBuilding}
-            onCancelEdit={handleCancelEdit}
-            onNameChange={handleNameChange}
-            onUpdateFormField={updateFormField}
-          />
+        {error ? (
+          <div role="alert" style={s.alertError}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}>
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            {error}
+          </div>
         ) : null}
 
-        <BuildingTable
-          buildings={buildings}
-          filteredBuildings={filteredBuildings}
-          editingBuilding={editingBuilding}
-          searchTerm={searchTerm}
-          statusFilter={statusFilter}
-          loadingBuildings={loadingBuildings}
-          actionLoadingId={actionLoadingId}
-          page={page}
-          totalPages={totalPages}
-          totalRecords={totalRecords}
-          canEditBuildings={canEditBuildings}
-          canEditPhotos={canEditPhotos}
-          canEditNavigation={canEditNavigation}
-          onSearchTermChange={setSearchTerm}
-          onStatusFilterChange={setStatusFilter}
-          onPageChange={setPage}
-          onRefresh={loadBuildings}
-          onStartEdit={handleStartEdit}
-          onOpenImages={setImageModalBuilding}
-          onToggleStatus={handleToggleStatus}
-          onDelete={handleDeleteRequest}
-        />
-      </section>
+        {message ? (
+          <div style={s.alertSuccess}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}>
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            {message}
+          </div>
+        ) : null}
+
+        <section style={canEditBuildings && isEditing ? s.layout : s.layoutFull}>
+          {canEditBuildings && isEditing ? (
+            <div style={s.formWrap}>
+              <BuildingForm
+                form={form}
+                categories={categories}
+                isEditing
+                editingBuildingName={safeText(editingBuilding?.name)}
+                saving={saving}
+                onSubmit={handleSubmitBuilding}
+                onCancelEdit={handleCancelEdit}
+                onNameChange={handleNameChange}
+                onUpdateFormField={updateFormField}
+              />
+            </div>
+          ) : null}
+
+          <BuildingTable
+            buildings={buildings}
+            filteredBuildings={filteredBuildings}
+            editingBuilding={editingBuilding}
+            searchTerm={searchTerm}
+            statusFilter={statusFilter}
+            loadingBuildings={loadingBuildings}
+            actionLoadingId={actionLoadingId}
+            page={page}
+            totalPages={totalPages}
+            totalRecords={totalRecords}
+            canEditBuildings={canEditBuildings}
+            canEditPhotos={canEditPhotos}
+            canEditNavigation={canEditNavigation}
+            onSearchTermChange={setSearchTerm}
+            onStatusFilterChange={setStatusFilter}
+            onPageChange={setPage}
+            onRefresh={loadBuildings}
+            onStartEdit={handleStartEdit}
+            onOpenImages={setImageModalBuilding}
+            onToggleStatus={handleToggleStatus}
+            onDelete={handleDeleteRequest}
+          />
+        </section>
+      </div>
 
       {canEditPhotos && imageModalBuilding ? (
         <BuildingImagesModal
@@ -191,22 +158,30 @@ export function AdminBuildingsPage() {
       ) : null}
 
       {confirmBuilding ? (
-        <div role="dialog" aria-modal="true" aria-labelledby="confirm-delete-title" style={styles.overlay}>
-          <div style={styles.dialog}>
-            <h2 id="confirm-delete-title" style={styles.dialogTitle}>
+        <div role="dialog" aria-modal="true" aria-labelledby="confirm-delete-title" style={s.overlay}>
+          <div style={s.dialog}>
+            <div style={s.dialogIcon}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                <path d="M10 11v6M14 11v6" />
+                <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
+              </svg>
+            </div>
+            <h2 id="confirm-delete-title" style={s.dialogTitle}>
               ¿Eliminar edificio?
             </h2>
-            <p style={styles.dialogText}>
+            <p style={s.dialogText}>
               Estás a punto de eliminar{" "}
-              <strong>{safeText(confirmBuilding.name)}</strong>. Esta acción no
-              se puede deshacer.
+              <strong style={{ color: "#f1f5f9" }}>{safeText(confirmBuilding.name)}</strong>.
+              Esta acción no se puede deshacer.
             </p>
-            <div style={styles.dialogActions}>
+            <div style={s.dialogActions}>
               <button
                 type="button"
                 onClick={() => setConfirmBuilding(null)}
                 disabled={deleting}
-                style={styles.cancelButton}
+                style={s.btnCancel}
               >
                 Cancelar
               </button>
@@ -214,7 +189,7 @@ export function AdminBuildingsPage() {
                 type="button"
                 onClick={() => void handleConfirmDelete()}
                 disabled={deleting}
-                style={styles.confirmDangerButton}
+                style={s.btnDanger}
               >
                 {deleting ? "Eliminando..." : "Sí, eliminar"}
               </button>
@@ -222,142 +197,167 @@ export function AdminBuildingsPage() {
           </div>
         </div>
       ) : null}
-    </main>
+    </AdminLayout>
   );
 }
 
-const styles: Record<string, CSSProperties> = {
+const s: Record<string, CSSProperties> = {
   page: {
-    minHeight: "100vh",
-    background: "#f8fafc",
-    padding: "28px",
-    color: "#0f172a",
+    padding: "28px 32px",
+    minHeight: "100%",
   },
   header: {
     display: "flex",
     justifyContent: "space-between",
-    gap: "20px",
     alignItems: "flex-start",
-    marginBottom: "22px",
+    marginBottom: 28,
+    gap: 20,
   },
-  headerActions: {
+  overline: {
+    margin: "0 0 6px",
+    fontSize: 11,
+    fontWeight: 700,
+    color: "#3b82f6",
+    textTransform: "uppercase",
+    letterSpacing: "0.08em",
+  },
+  title: {
+    margin: "0 0 6px",
+    fontSize: 28,
+    fontWeight: 700,
+    color: "#f1f5f9",
+    lineHeight: 1.1,
+  },
+  subtitle: {
+    margin: 0,
+    fontSize: 14,
+    color: "#64748b",
+  },
+  sessionBadge: {
     display: "flex",
-    gap: "10px",
     alignItems: "center",
+    gap: 7,
+    padding: "8px 14px",
+    background: "#1e293b",
+    border: "1px solid #334155",
+    borderRadius: 99,
+    flexShrink: 0,
+  },
+  sessionDot: {
+    width: 7,
+    height: 7,
+    borderRadius: "50%",
+    background: "#22c55e",
+  },
+  sessionText: {
+    fontSize: 12.5,
+    fontWeight: 600,
+    color: "#cbd5e1",
+  },
+  alertError: {
+    display: "flex",
+    alignItems: "center",
+    gap: 9,
+    marginBottom: 18,
+    padding: "12px 15px",
+    borderRadius: 10,
+    background: "rgba(239,68,68,0.1)",
+    border: "1px solid rgba(239,68,68,0.25)",
+    color: "#fca5a5",
+    fontSize: 13.5,
+    fontWeight: 500,
+  },
+  alertSuccess: {
+    display: "flex",
+    alignItems: "center",
+    gap: 9,
+    marginBottom: 18,
+    padding: "12px 15px",
+    borderRadius: 10,
+    background: "rgba(34,197,94,0.1)",
+    border: "1px solid rgba(34,197,94,0.2)",
+    color: "#86efac",
+    fontSize: 13.5,
+    fontWeight: 500,
   },
   layout: {
     display: "grid",
-    gridTemplateColumns: "minmax(320px, 440px) 1fr",
-    gap: "22px",
+    gridTemplateColumns: "minmax(320px, 420px) 1fr",
+    gap: 22,
     alignItems: "start",
   },
-  readOnlyLayout: {
+  layoutFull: {
     display: "block",
   },
-  pageTitle: {
-    margin: 0,
-    fontSize: "32px",
-    lineHeight: 1.15,
-  },
-  overline: {
-    margin: "0 0 8px",
-    color: "#2563eb",
-    fontWeight: 800,
-    fontSize: "14px",
-  },
-  text: {
-    margin: "0 0 8px",
-    color: "#64748b",
-    lineHeight: 1.5,
-  },
-  userText: {
-    margin: "8px 0 0",
-    color: "#334155",
-  },
-  secondaryButton: {
-    border: "1px solid #cbd5e1",
-    borderRadius: "14px",
-    padding: "10px 14px",
-    background: "#ffffff",
-    color: "#0f172a",
-    fontWeight: 800,
-    cursor: "pointer",
-  },
-  primaryButton: {
-    border: "1px solid #1d4ed8",
-    borderRadius: "14px",
-    padding: "10px 14px",
-    background: "#2563eb",
-    color: "#ffffff",
-    fontWeight: 800,
-    cursor: "pointer",
-  },
-  errorBox: {
-    marginBottom: "16px",
-    padding: "13px 15px",
-    borderRadius: "14px",
-    background: "#fee2e2",
-    border: "1px solid #fecaca",
-    color: "#991b1b",
-    fontWeight: 700,
-  },
-  successBox: {
-    marginBottom: "16px",
-    padding: "13px 15px",
-    borderRadius: "14px",
-    background: "#dcfce7",
-    border: "1px solid #bbf7d0",
-    color: "#166534",
-    fontWeight: 700,
+  formWrap: {
+    position: "sticky",
+    top: 0,
   },
   overlay: {
     position: "fixed",
     inset: 0,
-    background: "rgba(15, 23, 42, 0.55)",
+    background: "rgba(0,0,0,0.65)",
+    backdropFilter: "blur(4px)",
     display: "grid",
     placeItems: "center",
     zIndex: 50,
-    padding: "24px",
+    padding: 24,
   },
   dialog: {
     width: "100%",
-    maxWidth: "420px",
-    background: "#ffffff",
-    borderRadius: "20px",
-    padding: "28px",
-    boxShadow: "0 24px 60px rgba(15, 23, 42, 0.25)",
+    maxWidth: 400,
+    background: "#1e293b",
+    border: "1px solid #334155",
+    borderRadius: 18,
+    padding: 28,
+    boxShadow: "0 24px 60px rgba(0,0,0,0.5)",
+  },
+  dialogIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    background: "rgba(239,68,68,0.1)",
+    border: "1px solid rgba(239,68,68,0.2)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
   },
   dialogTitle: {
-    margin: "0 0 12px",
-    fontSize: "20px",
-    color: "#0f172a",
+    margin: "0 0 10px",
+    fontSize: 18,
+    fontWeight: 700,
+    color: "#f1f5f9",
   },
   dialogText: {
-    margin: "0 0 24px",
-    color: "#475569",
+    margin: "0 0 22px",
+    color: "#94a3b8",
     lineHeight: 1.6,
+    fontSize: 14,
   },
   dialogActions: {
     display: "flex",
-    gap: "10px",
+    gap: 10,
     justifyContent: "flex-end",
   },
-  cancelButton: {
-    border: "1px solid #cbd5e1",
-    borderRadius: "12px",
-    padding: "10px 18px",
-    background: "#ffffff",
-    color: "#0f172a",
+  btnCancel: {
+    border: "1px solid #334155",
+    borderRadius: 10,
+    padding: "9px 18px",
+    background: "transparent",
+    color: "#94a3b8",
+    fontWeight: 600,
+    cursor: "pointer",
+    fontSize: 13.5,
+  },
+  btnDanger: {
+    border: "1px solid rgba(239,68,68,0.4)",
+    borderRadius: 10,
+    padding: "9px 18px",
+    background: "#dc2626",
+    color: "#fff",
     fontWeight: 700,
     cursor: "pointer",
-  },
-  confirmDangerButton: {
-    border: "1px solid #fca5a5",
-    borderRadius: "12px",
-    padding: "10px 18px",
-    background: "#dc2626",
-    color: "#ffffff",
-    fontWeight: 800,
-    cursor: "pointer",
+    fontSize: 13.5,
   },
 };

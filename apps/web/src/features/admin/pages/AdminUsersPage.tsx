@@ -1,4 +1,5 @@
-import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
+import type { CSSProperties, FormEvent } from "react";
+import { useEffect, useState } from "react";
 import {
   ROLE_PERMISSIONS,
   createAdminUserApi,
@@ -7,16 +8,23 @@ import {
   type AuthUser,
   type UserRole,
 } from "@ito-map/shared";
-import { useNavigate } from "react-router-dom";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
-import { ROUTES } from "../../../types/routes";
+import { AdminLayout } from "../components/AdminLayout";
 
-const adminRoles: UserRole[] = [
+const ADMIN_ROLES: UserRole[] = [
   "superadmin",
   "admin",
   "servicios_escolares",
   "recursos_humanos",
 ];
+
+const ROLE_LABELS: Record<UserRole, string> = {
+  superadmin: "Super Admin",
+  admin: "Admin",
+  servicios_escolares: "Servicios Escolares",
+  recursos_humanos: "Recursos Humanos",
+  viewer: "Visor",
+};
 
 const emptyForm = {
   username: "",
@@ -28,14 +36,14 @@ const emptyForm = {
 };
 
 export function AdminUsersPage() {
-  const { logout, user } = useAdminAuthStore();
-  const navigate = useNavigate();
+  const { user } = useAdminAuthStore();
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const canManageUsers = Boolean(
     user && ROLE_PERMISSIONS[user.role]?.can_manage_admin_users
   );
@@ -43,7 +51,6 @@ export function AdminUsersPage() {
   async function loadUsers() {
     setLoading(true);
     setError(null);
-
     try {
       setUsers(await getAdminUsersApi());
     } catch (err) {
@@ -53,15 +60,16 @@ export function AdminUsersPage() {
     }
   }
 
-  async function handleToggle(user: AuthUser) {
-    setActionId(user.id);
+  async function handleToggle(target: AuthUser) {
+    setActionId(target.id);
     setError(null);
-
     try {
-      const updated = await updateAdminUserStatusApi(user.id, !user.is_active);
+      const updated = await updateAdminUserStatusApi(target.id, !target.is_active);
       setUsers((current) =>
         current.map((item) => (item.id === updated.id ? updated : item))
       );
+      setSuccess(`Usuario ${updated.is_active ? "activado" : "desactivado"} correctamente.`);
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo actualizar usuario");
     } finally {
@@ -73,10 +81,11 @@ export function AdminUsersPage() {
     event.preventDefault();
     setCreating(true);
     setError(null);
-
     try {
       await createAdminUserApi(form);
       setForm(emptyForm);
+      setSuccess("Usuario creado correctamente.");
+      setTimeout(() => setSuccess(null), 3000);
       await loadUsers();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo crear usuario");
@@ -85,299 +94,237 @@ export function AdminUsersPage() {
     }
   }
 
-  function handleLogout() {
-    logout();
-    void navigate(ROUTES.ADMIN_LOGIN, { replace: true });
-  }
-
   useEffect(() => {
     void loadUsers();
   }, []);
 
   return (
-    <main style={styles.page}>
-      <header style={styles.header}>
-        <div>
-          <p style={styles.overline}>Panel administrativo</p>
-          <h1 style={styles.pageTitle}>Usuarios</h1>
-        </div>
-
-        <div style={styles.headerActions}>
-          <button type="button" onClick={() => navigate(ROUTES.ADMIN_BUILDINGS)} style={styles.secondaryButton}>
-            Edificios
-          </button>
-          <button type="button" onClick={handleLogout} style={styles.secondaryButton}>
-            Cerrar sesion
-          </button>
-        </div>
-      </header>
-
-      {error ? <div role="alert" style={styles.errorBox}>{error}</div> : null}
-
-      {canManageUsers ? (
-        <form onSubmit={handleCreate} style={styles.formCard}>
-          <h2 style={styles.sectionTitle}>Crear administrador</h2>
-          <div style={styles.formGrid}>
-            <label style={styles.label}>
-              Usuario
-              <input
-                required
-                minLength={3}
-                value={form.username}
-                onChange={(event) => setForm({ ...form, username: event.target.value })}
-                style={styles.input}
-              />
-            </label>
-            <label style={styles.label}>
-              Nombre completo
-              <input
-                required
-                minLength={3}
-                value={form.full_name}
-                onChange={(event) => setForm({ ...form, full_name: event.target.value })}
-                style={styles.input}
-              />
-            </label>
-            <label style={styles.label}>
-              Correo
-              <input
-                required
-                type="email"
-                value={form.email}
-                onChange={(event) => setForm({ ...form, email: event.target.value })}
-                style={styles.input}
-              />
-            </label>
-            <label style={styles.label}>
-              Contraseña
-              <input
-                required
-                minLength={6}
-                type="password"
-                value={form.password}
-                onChange={(event) => setForm({ ...form, password: event.target.value })}
-                style={styles.input}
-              />
-            </label>
-            <label style={styles.label}>
-              Rol
-              <select
-                value={form.role}
-                onChange={(event) =>
-                  setForm({ ...form, role: event.target.value as UserRole })
-                }
-                style={styles.input}
-              >
-                {adminRoles.map((role) => (
-                  <option key={role} value={role}>{role}</option>
-                ))}
-              </select>
-            </label>
-            <label style={styles.checkboxLabel}>
-              <input
-                type="checkbox"
-                checked={form.is_active}
-                onChange={(event) => setForm({ ...form, is_active: event.target.checked })}
-              />
-              Usuario activo
-            </label>
+    <AdminLayout>
+      <div style={s.page}>
+        <header style={s.header}>
+          <div>
+            <p style={s.overline}>Administración</p>
+            <h1 style={s.title}>Usuarios</h1>
+            <p style={s.subtitle}>Gestiona los administradores del sistema.</p>
           </div>
-          <button type="submit" disabled={creating} style={styles.primaryButton}>
-            {creating ? "Creando..." : "Crear usuario"}
-          </button>
-        </form>
-      ) : null}
+        </header>
 
-      <section style={styles.tableCard}>
-        <div style={styles.tableHeader}>
-          <h2 style={styles.sectionTitle}>Administradores</h2>
-          <button type="button" onClick={loadUsers} disabled={loading} style={styles.secondaryButton}>
-            {loading ? "Cargando..." : "Recargar"}
-          </button>
-        </div>
+        {error ? (
+          <div role="alert" style={s.alertError}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}>
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            {error}
+          </div>
+        ) : null}
 
-        <div style={styles.tableWrapper}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>Usuario</th>
-                <th style={styles.th}>Nombre</th>
-                <th style={styles.th}>Correo</th>
-                <th style={styles.th}>Rol</th>
-                <th style={styles.th}>Estado</th>
-                <th style={styles.th}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td style={styles.td}>{user.username}</td>
-                  <td style={styles.td}>{user.full_name}</td>
-                  <td style={styles.td}>{user.email}</td>
-                  <td style={styles.td}>{user.role}</td>
-                  <td style={styles.td}>{user.is_active ? "Activo" : "Inactivo"}</td>
-                  <td style={styles.td}>
-                    <button
-                      type="button"
-                      onClick={() => handleToggle(user)}
-                      disabled={actionId === user.id}
-                      style={styles.secondaryButton}
-                    >
-                      {user.is_active ? "Desactivar" : "Activar"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {users.length === 0 ? (
+        {success ? (
+          <div style={s.alertSuccess}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}>
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            {success}
+          </div>
+        ) : null}
+
+        {canManageUsers ? (
+          <form onSubmit={handleCreate} style={s.formCard}>
+            <h2 style={s.cardTitle}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
+              </svg>
+              Crear administrador
+            </h2>
+            <div style={s.formGrid}>
+              <Field label="Usuario">
+                <input
+                  required
+                  minLength={3}
+                  value={form.username}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                  placeholder="usuario123"
+                  style={s.input}
+                />
+              </Field>
+              <Field label="Nombre completo">
+                <input
+                  required
+                  minLength={3}
+                  value={form.full_name}
+                  onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                  placeholder="Nombre Apellido"
+                  style={s.input}
+                />
+              </Field>
+              <Field label="Correo electrónico">
+                <input
+                  required
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="correo@ito.edu.mx"
+                  style={s.input}
+                />
+              </Field>
+              <Field label="Contraseña (mín. 12 chars)">
+                <input
+                  required
+                  minLength={12}
+                  type="password"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  placeholder="Contraseña segura"
+                  style={s.input}
+                />
+              </Field>
+              <Field label="Rol">
+                <select
+                  value={form.role}
+                  onChange={(e) => setForm({ ...form, role: e.target.value as UserRole })}
+                  style={s.input}
+                >
+                  {ADMIN_ROLES.map((role) => (
+                    <option key={role} value={role}>{ROLE_LABELS[role]}</option>
+                  ))}
+                </select>
+              </Field>
+              <div style={s.checkboxField}>
+                <label style={s.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    checked={form.is_active}
+                    onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+                    style={s.checkbox}
+                  />
+                  <span>Usuario activo al crear</span>
+                </label>
+              </div>
+            </div>
+            <button type="submit" disabled={creating} style={s.btnPrimary}>
+              {creating ? "Creando..." : "Crear usuario"}
+            </button>
+          </form>
+        ) : null}
+
+        <div style={s.tableCard}>
+          <div style={s.tableHeader}>
+            <h2 style={s.cardTitle}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+              </svg>
+              Administradores
+            </h2>
+            <button type="button" onClick={loadUsers} disabled={loading} style={s.btnSecondary}>
+              {loading ? "Cargando..." : "Actualizar"}
+            </button>
+          </div>
+
+          <div style={s.tableWrap}>
+            <table style={s.table}>
+              <thead>
                 <tr>
-                  <td style={styles.emptyTd} colSpan={6}>
-                    No hay usuarios para mostrar.
-                  </td>
+                  {["Usuario", "Nombre", "Correo", "Rol", "Estado", ""].map((h) => (
+                    <th key={h} style={s.th}>{h}</th>
+                  ))}
                 </tr>
-              ) : null}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id} style={s.tr}>
+                    <td style={s.td}>
+                      <span style={s.userChip}>{u.username[0]?.toUpperCase()}</span>
+                      {u.username}
+                    </td>
+                    <td style={s.td}>{u.full_name}</td>
+                    <td style={{ ...s.td, color: "#64748b" }}>{u.email}</td>
+                    <td style={s.td}>
+                      <span style={s.roleBadge}>{ROLE_LABELS[u.role] ?? u.role}</span>
+                    </td>
+                    <td style={s.td}>
+                      <span style={u.is_active ? s.statusActive : s.statusInactive}>
+                        <span style={u.is_active ? s.dotActive : s.dotInactive} />
+                        {u.is_active ? "Activo" : "Inactivo"}
+                      </span>
+                    </td>
+                    <td style={s.tdAction}>
+                      <button
+                        type="button"
+                        onClick={() => void handleToggle(u)}
+                        disabled={actionId === u.id}
+                        style={u.is_active ? s.btnDeactivate : s.btnActivate}
+                      >
+                        {actionId === u.id
+                          ? "..."
+                          : u.is_active
+                          ? "Desactivar"
+                          : "Activar"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {users.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={s.emptyTd}>
+                      {loading ? "Cargando..." : "No hay usuarios registrados."}
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </section>
-    </main>
+      </div>
+    </AdminLayout>
   );
 }
 
-const styles: Record<string, CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    background: "#f8fafc",
-    padding: "28px",
-    color: "#0f172a",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: "20px",
-    alignItems: "flex-start",
-    marginBottom: "22px",
-  },
-  headerActions: {
-    display: "flex",
-    gap: "10px",
-    alignItems: "center",
-  },
-  overline: {
-    margin: "0 0 8px",
-    color: "#2563eb",
-    fontWeight: 800,
-    fontSize: "14px",
-  },
-  pageTitle: {
-    margin: 0,
-    fontSize: "32px",
-    lineHeight: 1.15,
-  },
-  tableCard: {
-    background: "#ffffff",
-    border: "1px solid #e2e8f0",
-    borderRadius: "22px",
-    padding: "22px",
-    boxShadow: "0 14px 35px rgba(15, 23, 42, 0.08)",
-  },
-  formCard: {
-    background: "#ffffff",
-    border: "1px solid #e2e8f0",
-    borderRadius: "18px",
-    padding: "20px",
-    marginBottom: "18px",
-    boxShadow: "0 10px 26px rgba(15, 23, 42, 0.06)",
-  },
-  formGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: "14px",
-    margin: "16px 0",
-  },
-  label: {
-    display: "grid",
-    gap: "6px",
-    color: "#334155",
-    fontSize: "13px",
-    fontWeight: 800,
-  },
-  checkboxLabel: {
-    display: "flex",
-    gap: "8px",
-    alignItems: "center",
-    color: "#334155",
-    fontSize: "13px",
-    fontWeight: 800,
-  },
-  input: {
-    border: "1px solid #cbd5e1",
-    borderRadius: "12px",
-    padding: "10px 12px",
-    fontSize: "14px",
-  },
-  tableHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "16px",
-  },
-  sectionTitle: {
-    margin: 0,
-    fontSize: "20px",
-  },
-  tableWrapper: {
-    overflowX: "auto",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    minWidth: "820px",
-  },
-  th: {
-    textAlign: "left",
-    padding: "12px",
-    borderBottom: "1px solid #e2e8f0",
-    color: "#475569",
-    fontSize: "13px",
-    background: "#f8fafc",
-  },
-  td: {
-    padding: "12px",
-    borderBottom: "1px solid #e2e8f0",
-    color: "#0f172a",
-    fontSize: "14px",
-  },
-  emptyTd: {
-    padding: "20px",
-    textAlign: "center",
-    color: "#64748b",
-    borderBottom: "1px solid #e2e8f0",
-  },
-  secondaryButton: {
-    border: "1px solid #cbd5e1",
-    borderRadius: "14px",
-    padding: "10px 14px",
-    background: "#ffffff",
-    color: "#0f172a",
-    fontWeight: 800,
-    cursor: "pointer",
-  },
-  primaryButton: {
-    border: "1px solid #1d4ed8",
-    borderRadius: "14px",
-    padding: "10px 14px",
-    background: "#2563eb",
-    color: "#ffffff",
-    fontWeight: 800,
-    cursor: "pointer",
-  },
-  errorBox: {
-    marginBottom: "16px",
-    padding: "13px 15px",
-    borderRadius: "14px",
-    background: "#fee2e2",
-    border: "1px solid #fecaca",
-    color: "#991b1b",
-    fontWeight: 700,
-  },
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label style={sf.field}>
+      <span style={sf.label}>{label}</span>
+      {children}
+    </label>
+  );
+}
+
+const s: Record<string, CSSProperties> = {
+  page: { padding: "28px 32px", minHeight: "100%" },
+  header: { marginBottom: 28 },
+  overline: { margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: "#3b82f6", textTransform: "uppercase", letterSpacing: "0.08em" },
+  title: { margin: "0 0 6px", fontSize: 28, fontWeight: 700, color: "#f1f5f9", lineHeight: 1.1 },
+  subtitle: { margin: 0, fontSize: 14, color: "#64748b" },
+  alertError: { display: "flex", alignItems: "center", gap: 9, marginBottom: 18, padding: "12px 15px", borderRadius: 10, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#fca5a5", fontSize: 13.5, fontWeight: 500 },
+  alertSuccess: { display: "flex", alignItems: "center", gap: 9, marginBottom: 18, padding: "12px 15px", borderRadius: 10, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#86efac", fontSize: 13.5, fontWeight: 500 },
+  formCard: { background: "#1e293b", border: "1px solid #334155", borderRadius: 16, padding: "22px 24px", marginBottom: 22 },
+  tableCard: { background: "#1e293b", border: "1px solid #334155", borderRadius: 16, padding: "22px 24px" },
+  cardTitle: { margin: 0, fontSize: 15, fontWeight: 700, color: "#f1f5f9", display: "flex", alignItems: "center", gap: 8 },
+  formGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, margin: "18px 0" },
+  input: { width: "100%", boxSizing: "border-box", border: "1px solid #334155", borderRadius: 10, padding: "9px 12px", fontSize: 13.5, background: "#0f172a", color: "#f1f5f9", outline: "none" },
+  checkboxField: { display: "flex", alignItems: "flex-end", paddingBottom: 2 },
+  checkboxLabel: { display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, color: "#94a3b8", cursor: "pointer" },
+  checkbox: { width: 16, height: 16, accentColor: "#3b82f6" },
+  tableHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 },
+  tableWrap: { overflowX: "auto" },
+  table: { width: "100%", borderCollapse: "collapse", minWidth: 720 },
+  th: { textAlign: "left", padding: "10px 14px", borderBottom: "1px solid #334155", color: "#475569", fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", background: "#161f2e" },
+  tr: { borderBottom: "1px solid #243147" },
+  td: { padding: "12px 14px", fontSize: 13.5, color: "#cbd5e1", display: undefined },
+  tdAction: { padding: "12px 14px", textAlign: "right" },
+  emptyTd: { padding: "28px", textAlign: "center", color: "#475569", fontSize: 14 },
+  userChip: { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 24, height: 24, borderRadius: 6, background: "rgba(59,130,246,0.15)", color: "#60a5fa", fontSize: 11, fontWeight: 700, marginRight: 8 },
+  roleBadge: { display: "inline-block", padding: "3px 9px", borderRadius: 99, background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.2)", color: "#93c5fd", fontSize: 11.5, fontWeight: 600 },
+  statusActive: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "#86efac", fontWeight: 600 },
+  statusInactive: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "#94a3b8", fontWeight: 500 },
+  dotActive: { width: 6, height: 6, borderRadius: "50%", background: "#22c55e" },
+  dotInactive: { width: 6, height: 6, borderRadius: "50%", background: "#475569" },
+  btnPrimary: { border: "none", borderRadius: 10, padding: "10px 20px", background: "#3b82f6", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13.5 },
+  btnSecondary: { border: "1px solid #334155", borderRadius: 10, padding: "8px 16px", background: "transparent", color: "#94a3b8", fontWeight: 600, cursor: "pointer", fontSize: 13 },
+  btnActivate: { border: "1px solid rgba(34,197,94,0.3)", borderRadius: 8, padding: "6px 12px", background: "rgba(34,197,94,0.08)", color: "#86efac", fontWeight: 600, cursor: "pointer", fontSize: 12.5 },
+  btnDeactivate: { border: "1px solid #334155", borderRadius: 8, padding: "6px 12px", background: "transparent", color: "#94a3b8", fontWeight: 600, cursor: "pointer", fontSize: 12.5 },
+};
+
+const sf: Record<string, CSSProperties> = {
+  field: { display: "grid", gap: 6 },
+  label: { fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" },
 };

@@ -1,15 +1,17 @@
 import type { CSSProperties } from "react";
-import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   getAdminBuildingsApi,
   getNavigationNodesApi,
   getNavigationEdgesApi,
   getBuildingEntrancesApi,
+  type Building,
 } from "@ito-map/shared";
 import { CampusViewer } from "../../../components/viewer/CampusViewer";
-import { useAdminAuthStore } from "../../../store/admin-auth-store";
-import { ROUTES } from "../../../types/routes";
+import { AdminLayout } from "../components/AdminLayout";
+import { getCategoryAccent } from "../../../components/ui/categoryAccent";
+
+const PANEL_WIDTH = 268;
 
 type NavHealth = {
   totalNodes: number;
@@ -20,21 +22,25 @@ type NavHealth = {
   totalActiveBuildings: number;
 };
 
+type CategoryStat = { name: string; color: string; count: number };
+
 export function AdminNavigationPage() {
-  const { logout, user } = useAdminAuthStore();
-  const navigate = useNavigate();
   const [health, setHealth] = useState<NavHealth | null>(null);
   const [loadingHealth, setLoadingHealth] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(true);
+  const [buildings, setBuildings] = useState<Building[]>([]);
 
   const loadHealth = useCallback(async () => {
     setLoadingHealth(true);
     try {
-      const [buildings, nodes, edges, entrances] = await Promise.all([
+      const [allBuildings, nodes, edges, entrances] = await Promise.all([
         getAdminBuildingsApi(),
         getNavigationNodesApi(),
         getNavigationEdgesApi(),
         getBuildingEntrancesApi(),
       ]);
+
+      setBuildings(allBuildings);
 
       const connectedIds = new Set<string>();
       for (const edge of edges) {
@@ -43,7 +49,7 @@ export function AdminNavigationPage() {
       }
 
       const buildingsWithEntrance = new Set(entrances.map((e) => e.building_id));
-      const activeBuildings = buildings.filter((b) => b.is_active);
+      const activeBuildings = allBuildings.filter((b) => b.is_active);
 
       setHealth({
         totalNodes: nodes.length,
@@ -66,293 +72,332 @@ export function AdminNavigationPage() {
     void loadHealth();
   }, [loadHealth]);
 
-  function handleLogout() {
-    void logout().then(() => navigate(ROUTES.ADMIN_LOGIN, { replace: true }));
-  }
+  const categories = useMemo<CategoryStat[]>(() => {
+    const seen = new Map<string, CategoryStat>();
+    for (const b of buildings) {
+      if (!b.is_active) continue;
+      const name = b.category_name || "Otro";
+      const accent = getCategoryAccent(b.category_name);
+      const color = b.category_color || accent.fg;
+      const existing = seen.get(name);
+      if (existing) existing.count++;
+      else seen.set(name, { name, color, count: 1 });
+    }
+    return Array.from(seen.values()).sort((a, b) => b.count - a.count);
+  }, [buildings]);
 
   return (
-    <main style={styles.page}>
-      <header style={styles.header}>
-        <div>
-          <p style={styles.overline}>Panel administrativo</p>
-          <h1 style={styles.title}>Navegacion del campus</h1>
-          <p style={styles.text}>
-            Revisa nodos, aristas y caminos sobre el mapa completo antes de
-            aplicar cambios en base de datos.
-          </p>
-        </div>
+    <AdminLayout contentStyle={s.contentFull}>
+      <div style={s.workspace}>
 
-        <div style={styles.headerActions}>
-          <span style={styles.userBadge}>
-            {user?.full_name || user?.username || "Administrador"}
-          </span>
-
+        {/* Botón para reabrir el panel cuando está cerrado */}
+        {!panelOpen && (
           <button
             type="button"
-            onClick={() => navigate(ROUTES.ADMIN_BUILDINGS)}
-            style={styles.secondaryButton}
+            onClick={() => setPanelOpen(true)}
+            title="Mostrar panel"
+            style={s.openPanelBtn}
           >
-            Edificios
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+            <span style={s.openPanelLabel}>Panel</span>
           </button>
+        )}
 
-          <button type="button" onClick={handleLogout} style={styles.secondaryButton}>
-            Cerrar sesion
-          </button>
-        </div>
-      </header>
-
-      <section style={styles.workspace}>
-        <aside style={styles.sidePanel}>
-          <strong style={styles.panelTitle}>Herramientas</strong>
-          <p style={styles.panelText}>
-            Usa el boton de capas para mostrar todos los nodos y caminos. El
-            modo de problemas ayuda a detectar conexiones largas o raras.
-          </p>
-          <p style={styles.panelText}>
-            Usa el boton de edicion para dibujar caminos nuevos o entradas a
-            edificios. Ahora puedes guardar el borrador directo en base de datos
-            o desactivar nodos y aristas existentes.
-          </p>
-          <div style={styles.statusBox}>
-            <strong>Estado</strong>
-            <span>Visualizacion, borradores y guardado habilitados.</span>
-            <span>Las eliminaciones desactivan datos para conservar historial.</span>
+        {/* Panel lateral */}
+        <aside
+          style={{
+            ...s.panel,
+            width: panelOpen ? PANEL_WIDTH : 0,
+            minWidth: panelOpen ? PANEL_WIDTH : 0,
+            padding: panelOpen ? "12px 12px 14px" : 0,
+            transition: "width 0.22s ease, min-width 0.22s ease, padding 0.22s ease",
+          }}
+        >
+          {/* Cabecera compacta */}
+          <div style={s.panelHeader}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <circle cx="12" cy="12" r="10" />
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+            </svg>
+            <span style={s.panelTitle}>Editor de grafo</span>
+            <button
+              type="button"
+              onClick={() => setPanelOpen(false)}
+              title="Ocultar panel"
+              style={s.closePanelBtn}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
           </div>
 
-          <div style={styles.healthBox}>
-            <div style={styles.healthHeader}>
-              <strong style={styles.panelTitle}>Salud del grafo</strong>
+          <div style={s.divider} />
+
+          {/* Herramientas */}
+          <div style={s.section}>
+            <p style={s.sectionLabel}>Herramientas</p>
+            <div style={s.infoCard}>
+              <p style={s.infoText}>
+                <strong style={s.chip}>Capas</strong> muestra nodos y caminos.{" "}
+                <strong style={s.chip}>Problemas</strong> detecta conexiones inusuales.{" "}
+                <strong style={s.chip}>Edición</strong> dibuja caminos y entradas.
+              </p>
+            </div>
+          </div>
+
+          {/* Categorías (antes flotante sobre el mapa) */}
+          {categories.length > 0 && (
+            <>
+              <div style={s.divider} />
+              <div style={s.section}>
+                <p style={s.sectionLabel}>Categorías</p>
+                <div style={s.catList}>
+                  {categories.map((cat) => (
+                    <div key={cat.name} style={s.catRow}>
+                      <span style={{ ...s.catDot, background: cat.color }} />
+                      <span style={s.catName}>{cat.name}</span>
+                      <span style={s.catCount}>{cat.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          <div style={s.divider} />
+
+          {/* Salud del grafo */}
+          <div style={s.section}>
+            <div style={s.sectionRow}>
+              <p style={s.sectionLabel}>Salud del grafo</p>
               <button
                 type="button"
                 onClick={() => void loadHealth()}
                 disabled={loadingHealth}
-                style={styles.refreshBtn}
+                style={s.refreshBtn}
+                title="Actualizar"
               >
-                {loadingHealth ? "..." : "↻"}
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={loadingHealth ? { animation: "spin 1s linear infinite" } : undefined}
+                >
+                  <polyline points="23 4 23 10 17 10" />
+                  <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
+                </svg>
               </button>
             </div>
 
             {health === null ? (
-              <p style={{ ...styles.panelText, color: "#64748b" }}>
-                {loadingHealth ? "Cargando..." : "Sin datos"}
-              </p>
+              <p style={s.emptyText}>{loadingHealth ? "Cargando..." : "Sin datos"}</p>
             ) : (
               <>
-                <div style={styles.statRow}>
-                  <span style={styles.statLabel}>Nodos</span>
-                  <span style={styles.statValue}>{health.totalNodes}</span>
+                <div style={s.statsGroup}>
+                  <StatCard label="Nodos" value={health.totalNodes} />
+                  <StatCard label="Aristas" value={health.totalEdges} />
+                  <StatCard label="Entradas" value={health.totalEntrances} />
                 </div>
-                <div style={styles.statRow}>
-                  <span style={styles.statLabel}>Aristas</span>
-                  <span style={styles.statValue}>{health.totalEdges}</span>
-                </div>
-                <div style={styles.statRow}>
-                  <span style={styles.statLabel}>Entradas</span>
-                  <span style={styles.statValue}>{health.totalEntrances}</span>
-                </div>
-
-                <div style={styles.divider} />
-
-                <div style={styles.statRow}>
-                  <span style={styles.statLabel}>Nodos aislados</span>
-                  <span
-                    style={
-                      health.isolatedNodes > 0
-                        ? styles.warnValue
-                        : styles.okValue
-                    }
-                  >
-                    {health.isolatedNodes > 0
-                      ? `⚠ ${health.isolatedNodes}`
-                      : "✓ 0"}
-                  </span>
-                </div>
-
-                <div style={styles.statRow}>
-                  <span style={styles.statLabel}>Edificios sin entrada</span>
-                  <span
-                    style={
-                      health.buildingsWithoutEntrance > 0
-                        ? styles.warnValue
-                        : styles.okValue
-                    }
-                  >
-                    {health.buildingsWithoutEntrance > 0
-                      ? `⚠ ${health.buildingsWithoutEntrance}/${health.totalActiveBuildings}`
-                      : `✓ 0/${health.totalActiveBuildings}`}
-                  </span>
+                <div style={s.alertGroup}>
+                  <AlertRow label="Nodos aislados" value={health.isolatedNodes} warn={health.isolatedNodes > 0} />
+                  <AlertRow label="Sin entrada" value={health.buildingsWithoutEntrance} total={health.totalActiveBuildings} warn={health.buildingsWithoutEntrance > 0} />
                 </div>
               </>
             )}
           </div>
+
+          {/* Estado */}
+          <div style={s.statusBadge}>
+            <span style={s.statusDot} />
+            <span style={s.statusText}>Guardado y borradores habilitados</span>
+          </div>
         </aside>
 
-        <div style={styles.mapShell}>
+        {/* Mapa 3D */}
+        <div style={s.mapShell}>
           <CampusViewer
             isMobile={false}
             mobilePanelOpen={false}
             enableAdminTools
+            hideCategoryLegend
           />
         </div>
-      </section>
-    </main>
+      </div>
+    </AdminLayout>
   );
 }
 
-const styles: Record<string, CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    background: "#eaf1f8",
-    color: "#0f172a",
-    display: "grid",
-    gridTemplateRows: "auto 1fr",
-  },
-  header: {
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div style={sc.card}>
+      <span style={sc.value}>{value}</span>
+      <span style={sc.label}>{label}</span>
+    </div>
+  );
+}
+
+function AlertRow({ label, value, total, warn }: { label: string; value: number; total?: number; warn: boolean }) {
+  return (
+    <div style={sa.row}>
+      <span style={sa.label}>{label}</span>
+      <span style={warn ? sa.warn : sa.ok}>
+        {warn ? "⚠ " : "✓ "}
+        {total !== undefined ? `${value}/${total}` : value}
+      </span>
+    </div>
+  );
+}
+
+const s: Record<string, CSSProperties> = {
+  contentFull: { overflow: "hidden", padding: 0, height: "100%" },
+  workspace: { display: "flex", height: "100%", overflow: "hidden", position: "relative" },
+
+  /* Panel */
+  panel: {
+    background: "#131e2e",
+    borderRight: "1px solid #1e3050",
     display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: 20,
-    padding: "18px 22px",
-    background: "#ffffff",
-    borderBottom: "1px solid #dbe3ef",
-    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
-    zIndex: 2,
+    flexDirection: "column",
+    overflowY: "auto",
+    overflowX: "hidden",
+    height: "100%",
+    flexShrink: 0,
+    boxSizing: "border-box",
   },
-  headerActions: {
+  panelHeader: {
     display: "flex",
     alignItems: "center",
-    gap: 10,
-    flexWrap: "wrap",
-    justifyContent: "flex-end",
-  },
-  overline: {
-    margin: "0 0 5px",
-    color: "#2563eb",
-    fontSize: 13,
-    fontWeight: 900,
-  },
-  title: {
-    margin: 0,
-    fontSize: 28,
-    lineHeight: 1.1,
-  },
-  text: {
-    margin: "7px 0 0",
-    color: "#64748b",
-    lineHeight: 1.45,
-    maxWidth: 720,
-  },
-  userBadge: {
-    border: "1px solid #dbe3ef",
-    borderRadius: 999,
-    padding: "9px 12px",
-    background: "#f8fafc",
-    color: "#334155",
-    fontWeight: 800,
-    fontSize: 13,
-  },
-  secondaryButton: {
-    border: "1px solid #cbd5e1",
-    borderRadius: 12,
-    padding: "10px 13px",
-    background: "#ffffff",
-    color: "#0f172a",
-    fontWeight: 850,
-    cursor: "pointer",
-  },
-  workspace: {
-    minHeight: 0,
-    display: "grid",
-    gridTemplateColumns: "320px minmax(0, 1fr)",
-    gap: 14,
-    padding: 14,
-  },
-  sidePanel: {
-    background: "#ffffff",
-    border: "1px solid #dbe3ef",
-    borderRadius: 16,
-    padding: 18,
-    boxShadow: "0 12px 28px rgba(15, 23, 42, 0.08)",
-    alignSelf: "start",
+    gap: 7,
   },
   panelTitle: {
-    display: "block",
-    marginBottom: 10,
-    fontSize: 16,
-  },
-  panelText: {
-    margin: "0 0 12px",
-    color: "#475569",
-    lineHeight: 1.5,
-    fontSize: 14,
-  },
-  statusBox: {
-    display: "grid",
-    gap: 7,
-    marginTop: 14,
-    padding: 13,
-    borderRadius: 14,
-    background: "#eff6ff",
-    border: "1px solid #bfdbfe",
-    color: "#1e3a8a",
-    fontSize: 13,
-    lineHeight: 1.35,
-  },
-  mapShell: {
-    minHeight: 0,
-    height: "calc(100vh - 112px)",
+    flex: 1,
+    fontSize: 12.5,
+    fontWeight: 700,
+    color: "#f1f5f9",
+    whiteSpace: "nowrap",
     overflow: "hidden",
-    border: "1px solid #cbd5e1",
-    borderRadius: 18,
-    background: "#eef4fb",
-    boxShadow: "0 18px 42px rgba(15, 23, 42, 0.12)",
+    textOverflow: "ellipsis",
   },
-  healthBox: {
-    marginTop: 16,
-    padding: 13,
-    borderRadius: 14,
-    background: "#f8fafc",
-    border: "1px solid #e2e8f0",
-  },
-  healthHeader: {
+
+  /* Botón cerrar panel — visible, con fondo sutil */
+  closePanelBtn: {
     display: "flex",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10,
-  },
-  refreshBtn: {
-    background: "none",
-    border: "1px solid #cbd5e1",
-    borderRadius: 8,
-    padding: "3px 8px",
+    justifyContent: "center",
+    width: 24,
+    height: 24,
+    border: "1px solid #3b82f6",
+    borderRadius: 6,
+    background: "rgba(59,130,246,0.12)",
+    color: "#60a5fa",
     cursor: "pointer",
-    fontSize: 14,
-    color: "#475569",
+    flexShrink: 0,
   },
-  statRow: {
+
+  /* Botón abrir panel — tab visible pegado al borde del mapa */
+  openPanelBtn: {
+    position: "absolute",
+    top: "50%",
+    left: 0,
+    transform: "translateY(-50%)",
+    zIndex: 10,
     display: "flex",
-    justifyContent: "space-between",
+    flexDirection: "column",
     alignItems: "center",
-    padding: "4px 0",
-    fontSize: 13,
+    justifyContent: "center",
+    gap: 4,
+    width: 28,
+    paddingTop: 10,
+    paddingBottom: 10,
+    border: "1px solid #3b82f6",
+    borderLeft: "none",
+    borderRadius: "0 8px 8px 0",
+    background: "rgba(59,130,246,0.18)",
+    backdropFilter: "blur(4px)",
+    color: "#93c5fd",
+    cursor: "pointer",
+    boxShadow: "3px 0 12px rgba(59,130,246,0.25)",
   },
-  statLabel: {
-    color: "#64748b",
-  },
-  statValue: {
+  openPanelLabel: {
+    fontSize: 9,
     fontWeight: 700,
-    color: "#0f172a",
+    color: "#60a5fa",
+    textTransform: "uppercase",
+    letterSpacing: "0.08em",
+    writingMode: "vertical-rl",
   },
-  okValue: {
+
+  divider: { height: 1, background: "#1e3050", margin: "9px 0" },
+
+  section: { display: "flex", flexDirection: "column", gap: 8 },
+  sectionLabel: { margin: 0, fontSize: 10, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.08em" },
+  sectionRow: { display: "flex", alignItems: "center", justifyContent: "space-between" },
+
+  infoCard: {
+    background: "rgba(59,130,246,0.06)",
+    border: "1px solid rgba(59,130,246,0.12)",
+    borderRadius: 9,
+    padding: "9px 11px",
+  },
+  infoText: { margin: 0, fontSize: 12, color: "#94a3b8", lineHeight: 1.6 },
+  chip: {
+    display: "inline-block",
+    padding: "0px 5px",
+    borderRadius: 4,
+    background: "rgba(59,130,246,0.15)",
+    color: "#93c5fd",
     fontWeight: 700,
-    color: "#16a34a",
+    fontSize: 11,
   },
-  warnValue: {
-    fontWeight: 700,
-    color: "#d97706",
+
+  /* Categorías */
+  catList: { display: "flex", flexDirection: "column", gap: 4 },
+  catRow: { display: "flex", alignItems: "center", gap: 8, padding: "4px 8px", borderRadius: 7, background: "#1a2a40" },
+  catDot: { width: 8, height: 8, borderRadius: "50%", flexShrink: 0 },
+  catName: { flex: 1, fontSize: 12, color: "#cbd5e1", fontWeight: 500 },
+  catCount: { fontSize: 11, fontWeight: 700, color: "#64748b" },
+
+  refreshBtn: {
+    display: "flex", alignItems: "center", justifyContent: "center",
+    width: 24, height: 24,
+    border: "1px solid #334155", borderRadius: 6,
+    background: "transparent", color: "#64748b", cursor: "pointer",
   },
-  divider: {
-    borderTop: "1px solid #e2e8f0",
-    margin: "8px 0",
+  statsGroup: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 },
+  alertGroup: { display: "flex", flexDirection: "column", gap: 5 },
+  emptyText: { margin: 0, fontSize: 12, color: "#475569" },
+
+  statusBadge: {
+    display: "flex", alignItems: "center", gap: 6,
+    padding: "7px 10px",
+    background: "rgba(34,197,94,0.07)",
+    border: "1px solid rgba(34,197,94,0.14)",
+    borderRadius: 8,
+    marginTop: "auto",
   },
+  statusDot: { width: 6, height: 6, borderRadius: "50%", background: "#22c55e", flexShrink: 0 },
+  statusText: { fontSize: 11, color: "#86efac", fontWeight: 500 },
+
+  mapShell: { flex: 1, height: "100%", minHeight: 0, minWidth: 0, overflow: "hidden", position: "relative" },
+};
+
+const sc: Record<string, CSSProperties> = {
+  card: { background: "#1a2a40", border: "1px solid #1e3050", borderRadius: 9, padding: "9px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 },
+  value: { fontSize: 19, fontWeight: 700, color: "#f1f5f9", lineHeight: 1 },
+  label: { fontSize: 10, color: "#64748b", fontWeight: 500 },
+};
+
+const sa: Record<string, CSSProperties> = {
+  row: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 9px", background: "#1a2a40", borderRadius: 7, border: "1px solid #1e3050" },
+  label: { fontSize: 11.5, color: "#94a3b8" },
+  ok: { fontSize: 11.5, fontWeight: 700, color: "#22c55e" },
+  warn: { fontSize: 11.5, fontWeight: 700, color: "#f59e0b" },
 };

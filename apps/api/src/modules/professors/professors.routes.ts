@@ -1,5 +1,5 @@
 import { Router } from "express";
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { authenticate } from "../auth/middlewares/authenticate.middleware.js";
 import { authorizePermission } from "../auth/middlewares/authorize.middleware.js";
 import {
@@ -13,7 +13,8 @@ const locationRateLimit = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => `loc-prof:${req.authUser?.id ?? req.ip ?? "anon"}`,
+  keyGenerator: (req) =>
+    `loc-prof:${req.authUser?.id ?? ipKeyGenerator(req.ip ?? "unknown")}`,
   message: {
     success: false,
     message: "Límite de consultas de ubicación alcanzado. Intenta en 15 minutos.",

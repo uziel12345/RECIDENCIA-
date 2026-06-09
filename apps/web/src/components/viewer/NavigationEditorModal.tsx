@@ -165,7 +165,7 @@ export function NavigationEditorModal({ controls, buildings, onClose }: Props) {
   return (
     <div
       style={{
-        position: "fixed",
+        position: "absolute",
         inset: 0,
         zIndex: 50,
         display: "flex",

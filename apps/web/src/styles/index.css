@@ -5702,3 +5702,1003 @@ svg {
 .ito-sidebar-toggle:hover {
   background: rgba(255, 255, 255, 0.97);
 }
+
+/* ============================ STUDENT / VISITOR GLASS EFFECTS ============================ */
+
+:root {
+  --glass-surface: rgba(255, 255, 255, 0.76);
+  --glass-surface-strong: rgba(255, 255, 255, 0.88);
+  --glass-surface-soft: rgba(248, 250, 252, 0.68);
+  --glass-border: rgba(226, 232, 240, 0.72);
+  --glass-shadow: 0 22px 52px rgba(15, 23, 42, 0.16);
+  --glass-shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.1);
+  --glass-blur: blur(18px) saturate(1.45);
+}
+
+.student-page--fullmap .student-page__sidebar,
+.visitor-page--fullmap .visitor-page__sidebar,
+.student-page__sidebar,
+.visitor-page__sidebar {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(248, 250, 252, 0.72)),
+    var(--glass-surface);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.student-page__sidebar-header,
+.visitor-page__sidebar-header,
+.student-page__nav,
+.visitor-page__nav {
+  background: var(--glass-surface-soft);
+  border-color: var(--glass-border);
+  backdrop-filter: blur(16px) saturate(1.35);
+  -webkit-backdrop-filter: blur(16px) saturate(1.35);
+}
+
+.student-page__nav-item,
+.visitor-page__nav-item,
+.student-page__logout,
+.visitor-page__logout,
+.student-top-bar__btn,
+.visitor-top-bar__button {
+  background: rgba(255, 255, 255, 0.62);
+  border-color: rgba(226, 232, 240, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.student-page__nav-item:hover,
+.visitor-page__nav-item:hover,
+.student-top-bar__btn:hover,
+.visitor-top-bar__button:hover {
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.student-page__sidebar-content .ito-sidebar,
+.visitor-page__sidebar-content .ito-sidebar,
+.student-page__panel,
+.visitor-page__panel,
+.student-page__schedule-full {
+  background: rgba(248, 250, 252, 0.52);
+}
+
+.visitor-page__panel-heading,
+.quick-destination,
+.ito-sidebar--public .ito-list-item,
+.schedule-class,
+.ito-route-panel,
+.ito-info-card,
+.ito-search__input,
+.schedule-panel__day,
+.student-mobile__schedule-modal,
+.visitor-mobile__dest-modal,
+.ito-sheet,
+.ito-mobile-bar__inner,
+.ito-quick-card {
+  background: var(--glass-surface-strong);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-shadow-soft);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.ito-search__input {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58);
+}
+
+.student-top-bar,
+.visitor-top-bar {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 252, 0.7)),
+    var(--glass-surface);
+  border-color: var(--glass-border);
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.16);
+  backdrop-filter: blur(20px) saturate(1.55);
+  -webkit-backdrop-filter: blur(20px) saturate(1.55);
+}
+
+.ito-sheet {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.78)),
+    var(--glass-surface);
+}
+
+.ito-sheet__head,
+.student-mobile__schedule-header,
+.visitor-mobile__dest-header {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: var(--glass-border);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+}
+
+.student-mobile__schedule-body,
+.visitor-mobile__dest-body,
+.ito-sheet__body {
+  background: rgba(248, 250, 252, 0.36);
+}
+
+.student-mobile__schedule-overlay,
+.visitor-mobile__dest-overlay,
+.ito-sheet-backdrop {
+  background: rgba(15, 23, 42, 0.34);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+
+.ito-mobile-bar__inner {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 252, 0.72)),
+    var(--glass-surface);
+}
+
+.ito-mobile-bar__btn {
+  background: rgba(255, 255, 255, 0.46);
+}
+
+.ito-mobile-bar__btn:hover:not(:disabled),
+.ito-mobile-bar__btn.is-active {
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.student-page__schedule-full .schedule-panel,
+.student-page__schedule-full > section {
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  box-shadow: var(--glass-shadow-soft);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.student-page__schedule-full > section {
+  padding: 18px;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .student-page__sidebar,
+  .visitor-page__sidebar,
+  .student-top-bar,
+  .visitor-top-bar,
+  .ito-sheet,
+  .ito-mobile-bar__inner,
+  .student-mobile__schedule-modal,
+  .visitor-mobile__dest-modal {
+    background: rgba(255, 255, 255, 0.94);
+  }
+}
+
+/* ============================ DEEPER GLASS WINDOWS ============================ */
+
+.student-page,
+.visitor-page,
+.ito-campus--mobile {
+  background: transparent;
+}
+
+.student-page__sidebar,
+.visitor-page__sidebar {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(241, 245, 249, 0.48)),
+    rgba(255, 255, 255, 0.54);
+}
+
+.student-page__sidebar-content,
+.visitor-page__sidebar-content,
+.visitor-page__panel,
+.student-page__schedule-full {
+  background: rgba(241, 245, 249, 0.28);
+  backdrop-filter: blur(12px) saturate(1.25);
+  -webkit-backdrop-filter: blur(12px) saturate(1.25);
+}
+
+.student-page__sidebar-content .ito-sidebar,
+.visitor-page__sidebar-content .ito-sidebar,
+.ito-sidebar--mobile {
+  background: rgba(255, 255, 255, 0.36);
+  border-color: rgba(226, 232, 240, 0.5);
+  backdrop-filter: blur(14px) saturate(1.25);
+  -webkit-backdrop-filter: blur(14px) saturate(1.25);
+}
+
+.student-page__sidebar-content .ito-sidebar__section,
+.visitor-page__sidebar-content .ito-sidebar__section,
+.ito-sidebar--mobile .ito-sidebar__section {
+  background: transparent;
+}
+
+.student-page__sidebar-content .ito-list-item,
+.visitor-page__sidebar-content .ito-list-item,
+.ito-sidebar--mobile .ito-list-item,
+.schedule-class,
+.quick-destination,
+.ito-info-card,
+.ito-route-panel,
+.ito-calibration,
+.visitor-page__panel-heading,
+.ito-quick-card {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(248, 250, 252, 0.46)),
+    rgba(255, 255, 255, 0.42);
+  border-color: rgba(226, 232, 240, 0.62);
+}
+
+.student-page__sidebar-content .ito-list-item:hover,
+.visitor-page__sidebar-content .ito-list-item:hover,
+.ito-sidebar--mobile .ito-list-item:hover,
+.quick-destination:hover,
+.schedule-class:hover {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 252, 0.68)),
+    rgba(255, 255, 255, 0.72);
+}
+
+.student-page__schedule-full .schedule-panel,
+.student-page__schedule-full > section,
+.student-page__sidebar-content section[style],
+.visitor-page__sidebar-content section[style],
+.visitor-page__panel section[style],
+.student-mobile__schedule-body section[style],
+.visitor-mobile__dest-body section[style] {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.74), rgba(248, 250, 252, 0.48)) !important;
+  border-color: rgba(226, 232, 240, 0.58) !important;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12) !important;
+  backdrop-filter: blur(18px) saturate(1.35);
+  -webkit-backdrop-filter: blur(18px) saturate(1.35);
+}
+
+.student-page__sidebar-content button[style],
+.visitor-page__sidebar-content button[style],
+.visitor-page__panel button[style],
+.student-mobile__schedule-body button[style],
+.visitor-mobile__dest-body button[style] {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.64), rgba(248, 250, 252, 0.42)) !important;
+  border-color: rgba(226, 232, 240, 0.58) !important;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08) !important;
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+}
+
+.student-page__sidebar-content button[style]:hover,
+.visitor-page__sidebar-content button[style]:hover,
+.visitor-page__panel button[style]:hover,
+.student-mobile__schedule-body button[style]:hover,
+.visitor-mobile__dest-body button[style]:hover {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 252, 0.64)) !important;
+  transform: translateY(-1px);
+}
+
+.student-mobile__schedule-modal,
+.visitor-mobile__dest-modal,
+.ito-sheet {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(241, 245, 249, 0.62)),
+    rgba(255, 255, 255, 0.56);
+  border: 1px solid rgba(226, 232, 240, 0.64);
+}
+
+.student-mobile__schedule-header,
+.visitor-mobile__dest-header,
+.ito-sheet__head {
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.student-mobile__schedule-body,
+.visitor-mobile__dest-body,
+.ito-sheet__body {
+  background: rgba(248, 250, 252, 0.18);
+}
+
+.student-top-bar,
+.visitor-top-bar,
+.ito-mobile-bar__inner {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.74), rgba(248, 250, 252, 0.5)),
+    rgba(255, 255, 255, 0.48);
+  border-color: rgba(226, 232, 240, 0.6);
+}
+
+.ito-toolbar,
+.ito-legend,
+.ito-viewer-loading__inner {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.76), rgba(248, 250, 252, 0.56)),
+    rgba(255, 255, 255, 0.5);
+  border-color: rgba(226, 232, 240, 0.62);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14);
+  backdrop-filter: blur(16px) saturate(1.35);
+  -webkit-backdrop-filter: blur(16px) saturate(1.35);
+}
+
+.ito-toolbar__btn {
+  background: rgba(255, 255, 255, 0.52);
+  border-color: rgba(226, 232, 240, 0.62);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.ito-info-card__body,
+.ito-route-step,
+.schedule-class__time,
+.schedule-class__building-code,
+.ito-info-card__mini-item {
+  background: rgba(248, 250, 252, 0.48);
+  border-color: rgba(226, 232, 240, 0.56);
+}
+
+/* ============================ LIQUID GLASS FINISH ============================ */
+
+@keyframes ito-liquid-glass-flow {
+  0% {
+    background-position: 0% 0%, 100% 0%, 50% 100%;
+  }
+
+  50% {
+    background-position: 100% 30%, 0% 70%, 50% 0%;
+  }
+
+  100% {
+    background-position: 0% 0%, 100% 0%, 50% 100%;
+  }
+}
+
+@keyframes ito-liquid-glass-sheen {
+  0% {
+    transform: translateX(-120%) skewX(-14deg);
+    opacity: 0;
+  }
+
+  18% {
+    opacity: 0.6;
+  }
+
+  42% {
+    opacity: 0.18;
+  }
+
+  100% {
+    transform: translateX(135%) skewX(-14deg);
+    opacity: 0;
+  }
+}
+
+.student-page__sidebar,
+.visitor-page__sidebar,
+.student-top-bar,
+.visitor-top-bar,
+.ito-sheet,
+.ito-mobile-bar__inner,
+.student-mobile__schedule-modal,
+.visitor-mobile__dest-modal,
+.ito-quick-card,
+.ito-toolbar,
+.ito-legend,
+.visitor-page__panel-heading,
+.ito-info-card,
+.ito-route-panel,
+.quick-destination,
+.schedule-class {
+  position: relative;
+  overflow: hidden;
+  background-image:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.24) 42%, rgba(226, 232, 240, 0.32)),
+    linear-gradient(115deg, rgba(255, 255, 255, 0.34), rgba(148, 163, 184, 0.08) 45%, rgba(255, 255, 255, 0.28)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(241, 245, 249, 0.34));
+  background-size: 180% 180%, 220% 220%, 100% 100%;
+  animation: ito-liquid-glass-flow 12s ease-in-out infinite;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    inset 0 -1px 0 rgba(148, 163, 184, 0.18),
+    0 18px 42px rgba(15, 23, 42, 0.14);
+}
+
+.student-page__sidebar::before,
+.visitor-page__sidebar::before,
+.student-top-bar::before,
+.visitor-top-bar::before,
+.ito-sheet::before,
+.ito-mobile-bar__inner::before,
+.student-mobile__schedule-modal::before,
+.visitor-mobile__dest-modal::before,
+.ito-quick-card::before,
+.ito-toolbar::before,
+.ito-legend::before,
+.visitor-page__panel-heading::before,
+.ito-info-card::before,
+.ito-route-panel::before,
+.quick-destination::before,
+.schedule-class::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.46) 38%, rgba(255, 255, 255, 0.12) 52%, transparent 70%);
+  mix-blend-mode: screen;
+  transform: translateX(-120%) skewX(-14deg);
+  animation: ito-liquid-glass-sheen 7.5s ease-in-out infinite;
+}
+
+.student-page__sidebar::after,
+.visitor-page__sidebar::after,
+.student-top-bar::after,
+.visitor-top-bar::after,
+.ito-sheet::after,
+.ito-mobile-bar__inner::after,
+.student-mobile__schedule-modal::after,
+.visitor-mobile__dest-modal::after,
+.ito-quick-card::after,
+.ito-toolbar::after,
+.ito-legend::after,
+.visitor-page__panel-heading::after,
+.ito-info-card::after,
+.ito-route-panel::after,
+.quick-destination::after,
+.schedule-class::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  pointer-events: none;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  box-shadow:
+    inset 0 0 18px rgba(255, 255, 255, 0.26),
+    inset 0 -18px 34px rgba(148, 163, 184, 0.08);
+}
+
+.student-page__sidebar > *,
+.visitor-page__sidebar > *,
+.student-top-bar > *,
+.visitor-top-bar > *,
+.ito-sheet > *,
+.ito-mobile-bar__inner > *,
+.student-mobile__schedule-modal > *,
+.visitor-mobile__dest-modal > *,
+.ito-quick-card > *,
+.ito-toolbar > *,
+.ito-legend > *,
+.visitor-page__panel-heading > *,
+.ito-info-card > *,
+.ito-route-panel > *,
+.quick-destination > *,
+.schedule-class > * {
+  position: relative;
+  z-index: 1;
+}
+
+.student-page__nav,
+.visitor-page__nav,
+.ito-sheet__head,
+.student-mobile__schedule-header,
+.visitor-mobile__dest-header {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.48), rgba(248, 250, 252, 0.22)),
+    rgba(255, 255, 255, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    0 1px 0 rgba(226, 232, 240, 0.42);
+}
+
+.student-page__nav-item.is-active,
+.visitor-page__nav-item.is-active,
+.ito-mobile-bar__btn.is-active,
+.ito-mobile-bar__btn--primary {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -10px 18px rgba(15, 23, 42, 0.1),
+    0 10px 24px rgba(37, 99, 235, 0.24);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .student-page__sidebar,
+  .visitor-page__sidebar,
+  .student-top-bar,
+  .visitor-top-bar,
+  .ito-sheet,
+  .ito-mobile-bar__inner,
+  .student-mobile__schedule-modal,
+  .visitor-mobile__dest-modal,
+  .ito-quick-card,
+  .ito-toolbar,
+  .ito-legend,
+  .visitor-page__panel-heading,
+  .ito-info-card,
+  .ito-route-panel,
+  .quick-destination,
+  .schedule-class,
+  .student-page__sidebar::before,
+  .visitor-page__sidebar::before,
+  .student-top-bar::before,
+  .visitor-top-bar::before,
+  .ito-sheet::before,
+  .ito-mobile-bar__inner::before,
+  .student-mobile__schedule-modal::before,
+  .visitor-mobile__dest-modal::before,
+  .ito-quick-card::before,
+  .ito-toolbar::before,
+  .ito-legend::before,
+  .visitor-page__panel-heading::before,
+  .ito-info-card::before,
+  .ito-route-panel::before,
+  .quick-destination::before,
+  .schedule-class::before {
+    animation: none;
+  }
+}
+
+/* ============================ READABLE GLASS REDESIGN ============================ */
+
+.student-page__sidebar,
+.visitor-page__sidebar {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.82)),
+    rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(203, 213, 225, 0.76);
+  box-shadow: 0 24px 58px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+}
+
+.student-page__sidebar::before,
+.student-page__sidebar::after,
+.visitor-page__sidebar::before,
+.visitor-page__sidebar::after,
+.student-top-bar::before,
+.student-top-bar::after,
+.visitor-top-bar::before,
+.visitor-top-bar::after,
+.ito-toolbar::before,
+.ito-toolbar::after,
+.ito-mobile-bar__inner::before,
+.ito-mobile-bar__inner::after,
+.quick-destination::before,
+.quick-destination::after,
+.schedule-class::before,
+.schedule-class::after,
+.ito-info-card::before,
+.ito-info-card::after,
+.ito-route-panel::before,
+.ito-route-panel::after {
+  content: none;
+  display: none;
+}
+
+.student-page__sidebar,
+.visitor-page__sidebar,
+.student-top-bar,
+.visitor-top-bar,
+.ito-sheet,
+.ito-mobile-bar__inner,
+.student-mobile__schedule-modal,
+.visitor-mobile__dest-modal,
+.ito-quick-card,
+.ito-toolbar,
+.ito-legend,
+.visitor-page__panel-heading,
+.ito-info-card,
+.ito-route-panel,
+.quick-destination,
+.schedule-class {
+  animation: none;
+  overflow: visible;
+}
+
+.student-page__sidebar,
+.visitor-page__sidebar,
+.student-page__nav,
+.visitor-page__nav,
+.student-page__sidebar-header,
+.visitor-page__sidebar-header {
+  overflow: hidden;
+}
+
+.student-page__sidebar-header,
+.visitor-page__sidebar-header {
+  background: rgba(255, 255, 255, 0.82);
+  border-bottom: 1px solid rgba(203, 213, 225, 0.72);
+}
+
+.student-page__nav,
+.visitor-page__nav {
+  background: rgba(248, 250, 252, 0.78);
+  border-bottom: 1px solid rgba(203, 213, 225, 0.68);
+  box-shadow: none;
+}
+
+.student-page__nav-item,
+.visitor-page__nav-item {
+  position: relative;
+  z-index: 2;
+  min-height: 48px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(203, 213, 225, 0.86);
+  color: #334155;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.76),
+    0 4px 12px rgba(15, 23, 42, 0.06);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.student-page__nav-item:hover,
+.visitor-page__nav-item:hover {
+  background: #ffffff;
+  border-color: rgba(148, 163, 184, 0.85);
+  color: #0f172a;
+}
+
+.student-page__nav-item.is-active,
+.visitor-page__nav-item.is-active {
+  color: #ffffff;
+  border-color: transparent;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.26);
+}
+
+.visitor-page__nav-item.is-active {
+  background: linear-gradient(135deg, #059669, #047857);
+  box-shadow: 0 10px 22px rgba(5, 150, 105, 0.24);
+}
+
+.student-page__sidebar-content,
+.visitor-page__sidebar-content,
+.visitor-page__panel,
+.student-page__schedule-full {
+  background: rgba(248, 250, 252, 0.44);
+}
+
+.student-page__sidebar-content .ito-sidebar,
+.visitor-page__sidebar-content .ito-sidebar,
+.ito-sidebar--mobile {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.student-page__sidebar-content .ito-list-item,
+.visitor-page__sidebar-content .ito-list-item,
+.ito-sidebar--mobile .ito-list-item,
+.quick-destination,
+.schedule-class,
+.ito-info-card,
+.ito-route-panel,
+.visitor-page__panel-heading,
+.ito-quick-card {
+  position: relative;
+  z-index: 1;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.86));
+  border: 1px solid rgba(203, 213, 225, 0.82);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.student-page__sidebar-content .ito-list-item:hover,
+.visitor-page__sidebar-content .ito-list-item:hover,
+.ito-sidebar--mobile .ito-list-item:hover,
+.quick-destination:hover,
+.schedule-class:hover {
+  background: #ffffff;
+  border-color: rgba(96, 165, 250, 0.42);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
+}
+
+.ito-list-item__chevron,
+.schedule-class__navigate,
+.student-page__logout,
+.visitor-page__logout,
+.student-top-bar__btn,
+.visitor-top-bar__button,
+.ito-toolbar__btn,
+.ito-sheet__icon-btn,
+.ito-quick-card__close,
+.student-mobile__schedule-header button,
+.visitor-mobile__dest-header button {
+  position: relative;
+  z-index: 3;
+  background: #ffffff;
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  color: #1e293b;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 5px 14px rgba(15, 23, 42, 0.08);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.ito-list-item__chevron,
+.schedule-class__navigate {
+  color: #2563eb;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.student-page__logout:hover,
+.visitor-page__logout:hover,
+.student-top-bar__btn--logout:hover,
+.visitor-top-bar__button--logout:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.ito-toolbar {
+  position: absolute;
+  display: inline-flex;
+  width: auto;
+  max-width: max-content;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(203, 213, 225, 0.86);
+  border-radius: 999px;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+}
+
+.ito-toolbar__group {
+  background: rgba(241, 245, 249, 0.72);
+  border-color: rgba(203, 213, 225, 0.7);
+}
+
+.student-top-bar,
+.visitor-top-bar,
+.ito-mobile-bar__inner,
+.ito-sheet,
+.student-mobile__schedule-modal,
+.visitor-mobile__dest-modal {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.82)),
+    rgba(255, 255, 255, 0.86);
+  border-color: rgba(203, 213, 225, 0.76);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.16);
+}
+
+.ito-mobile-bar__btn {
+  position: relative;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.82);
+  color: #475569;
+}
+
+.ito-mobile-bar__btn.is-active,
+.ito-mobile-bar__btn--primary,
+.ito-mobile-bar__btn--primary.is-active {
+  color: #ffffff;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.student-page__sidebar-content section[style],
+.visitor-page__sidebar-content section[style],
+.visitor-page__panel section[style],
+.student-mobile__schedule-body section[style],
+.visitor-mobile__dest-body section[style] {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(203, 213, 225, 0.78) !important;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1) !important;
+}
+
+.student-page__sidebar-content button[style],
+.visitor-page__sidebar-content button[style],
+.visitor-page__panel button[style],
+.student-mobile__schedule-body button[style],
+.visitor-mobile__dest-body button[style] {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-color: rgba(203, 213, 225, 0.78) !important;
+  color: #0f172a !important;
+}
+
+.student-page__sidebar-content button[style]:hover,
+.visitor-page__sidebar-content button[style]:hover,
+.visitor-page__panel button[style]:hover,
+.student-mobile__schedule-body button[style]:hover,
+.visitor-mobile__dest-body button[style]:hover {
+  background: #ffffff !important;
+}
+
+/* ============================ MAP CONTROLS CLEARANCE ============================ */
+
+.student-page--fullmap .ito-toolbar:not(.ito-toolbar--mobile),
+.visitor-page--fullmap .ito-toolbar:not(.ito-toolbar--mobile) {
+  top: 18px;
+  right: auto;
+  left: calc(16px + var(--desktop-sidebar-width) + 18px);
+  z-index: 180;
+  width: auto;
+  max-width: calc(100vw - var(--desktop-sidebar-width) - 58px);
+  min-width: 0;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 7px;
+  border-radius: 999px;
+  pointer-events: auto;
+}
+
+.student-page--fullmap.is-sidebar-collapsed .ito-toolbar:not(.ito-toolbar--mobile),
+.visitor-page--fullmap.is-sidebar-collapsed .ito-toolbar:not(.ito-toolbar--mobile) {
+  left: 58px;
+  max-width: calc(100vw - 88px);
+}
+
+.student-page--fullmap .ito-sidebar-toggle,
+.visitor-page--fullmap .ito-sidebar-toggle {
+  z-index: 190;
+}
+
+.student-page--fullmap .ito-toolbar__btn,
+.visitor-page--fullmap .ito-toolbar__btn,
+.student-page--fullmap .ito-toolbar__group,
+.visitor-page--fullmap .ito-toolbar__group {
+  position: relative;
+  z-index: 181;
+  flex-shrink: 0;
+}
+
+.student-page--fullmap .student-page__sidebar,
+.visitor-page--fullmap .visitor-page__sidebar {
+  z-index: 160;
+}
+
+@media (max-width: 1180px) and (min-width: 769px) {
+  .student-page--fullmap .ito-toolbar:not(.ito-toolbar--mobile),
+  .visitor-page--fullmap .ito-toolbar:not(.ito-toolbar--mobile) {
+    left: calc(16px + var(--desktop-sidebar-width) + 12px);
+    max-width: calc(100vw - var(--desktop-sidebar-width) - 48px);
+  }
+}
+
+/* ============================ WEATHER MAP EFFECTS ============================ */
+
+/* ============================ SMOOTH WEATHER ATMOSPHERE ============================ */
+
+.ito-weather-atmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+
+.ito-weather-atmosphere__clouds,
+.ito-weather-atmosphere__rain,
+.ito-weather-atmosphere__mist,
+.ito-weather-atmosphere__flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ito-weather-atmosphere--cloudy,
+.ito-weather-atmosphere--rain,
+.ito-weather-atmosphere--storm,
+.ito-weather-atmosphere--fog {
+  opacity: 1;
+}
+
+.ito-weather-atmosphere__clouds {
+  opacity: 0;
+  background:
+    radial-gradient(ellipse at 20% 8%, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.28) 18%, transparent 42%),
+    radial-gradient(ellipse at 52% 2%, rgba(255, 255, 255, 0.52) 0%, rgba(255, 255, 255, 0.22) 22%, transparent 48%),
+    radial-gradient(ellipse at 82% 12%, rgba(226, 232, 240, 0.54) 0%, rgba(226, 232, 240, 0.24) 25%, transparent 52%),
+    linear-gradient(180deg, rgba(148, 163, 184, 0.1), transparent 44%);
+  filter: blur(10px);
+  transform: scale(1.05);
+  animation: ito-weather-cloud-drift 28s ease-in-out infinite alternate;
+}
+
+.ito-weather-atmosphere__mist {
+  opacity: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 24%),
+    radial-gradient(ellipse at 45% 78%, rgba(255, 255, 255, 0.52), transparent 52%),
+    radial-gradient(ellipse at 75% 84%, rgba(203, 213, 225, 0.34), transparent 50%),
+    radial-gradient(ellipse at 18% 88%, rgba(226, 232, 240, 0.36), transparent 48%);
+  filter: blur(16px);
+}
+
+.ito-weather-atmosphere__rain {
+  opacity: 0;
+  background-image:
+    linear-gradient(115deg, transparent 0%, transparent 42%, rgba(219, 234, 254, 0.58) 43%, rgba(219, 234, 254, 0.58) 45%, transparent 46%, transparent 100%);
+  background-size: 28px 72px;
+  animation: ito-weather-rain-fall 0.42s linear infinite;
+}
+
+.ito-weather-atmosphere__flash {
+  opacity: 0;
+  background: rgba(219, 234, 254, 0.7);
+  mix-blend-mode: screen;
+}
+
+.ito-weather-atmosphere--cloudy .ito-weather-atmosphere__clouds {
+  opacity: 0.74;
+}
+
+.ito-weather-atmosphere--rain .ito-weather-atmosphere__clouds,
+.ito-weather-atmosphere--storm .ito-weather-atmosphere__clouds {
+  opacity: 0.86;
+}
+
+.ito-weather-atmosphere--fog .ito-weather-atmosphere__clouds {
+  opacity: 0.56;
+}
+
+.ito-weather-atmosphere--rain .ito-weather-atmosphere__rain {
+  opacity: 0.36;
+}
+
+.ito-weather-atmosphere--storm .ito-weather-atmosphere__rain {
+  opacity: 0.52;
+  background-size: 22px 66px;
+  animation-duration: 0.28s;
+}
+
+.ito-weather-atmosphere--fog .ito-weather-atmosphere__mist {
+  opacity: 0.8;
+}
+
+.ito-weather-atmosphere--rain .ito-weather-atmosphere__mist,
+.ito-weather-atmosphere--storm .ito-weather-atmosphere__mist,
+.ito-weather-atmosphere--cloudy .ito-weather-atmosphere__mist {
+  opacity: 0.34;
+}
+
+.ito-weather-atmosphere--storm .ito-weather-atmosphere__flash {
+  animation: ito-weather-lightning 5.5s linear infinite;
+}
+
+@keyframes ito-weather-cloud-drift {
+  from {
+    transform: translateX(-2%) scale(1.05);
+  }
+
+  to {
+    transform: translateX(2%) scale(1.08);
+  }
+}
+
+@keyframes ito-weather-rain-fall {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: -28px 72px;
+  }
+}
+
+@keyframes ito-weather-lightning {
+  0%, 8%, 100% {
+    opacity: 0;
+  }
+
+  3% {
+    opacity: 0.28;
+  }
+
+  4% {
+    opacity: 0;
+  }
+
+  6% {
+    opacity: 0.18;
+  }
+}
+
+@media (max-width: 768px) {
+  .ito-weather-atmosphere {
+    z-index: 3;
+  }
+}
