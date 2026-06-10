@@ -23,6 +23,11 @@ const AdminBuildingsPage = lazy(async () => {
   return { default: AdminBuildingsPage };
 });
 
+const AdminCategoriesPage = lazy(async () => {
+  const { AdminCategoriesPage } = await import("../features/admin/pages/AdminCategoriesPage");
+  return { default: AdminCategoriesPage };
+});
+
 const AdminNavigationPage = lazy(async () => {
   const { AdminNavigationPage } = await import("../features/admin/pages/AdminNavigationPage");
   return { default: AdminNavigationPage };
@@ -156,6 +161,16 @@ export default function App() {
             <AdminProtectedRoute permission="can_view_buildings">
               <Suspense fallback={null}>
                 <AdminBuildingsPage />
+              </Suspense>
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_CATEGORIES}
+          element={
+            <AdminProtectedRoute permission="can_view_buildings">
+              <Suspense fallback={null}>
+                <AdminCategoriesPage />
               </Suspense>
             </AdminProtectedRoute>
           }

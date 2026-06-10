@@ -1,8 +1,11 @@
+import { useState, useEffect } from "react";
 import { useBuildingStore } from "../../../store/building-store";
 import { CategoryBadge } from "../../../components/ui/CategoryBadge";
 import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
 import { resolveApiAssetUrl } from "../../../utils/resolve-api-asset-url";
+import { getBuildingImagesApi } from "@ito-map/shared";
+import type { BuildingImage } from "@ito-map/shared";
 import type { Building } from "../types/building";
 
 type BuildingInfoCardProps = {
@@ -24,6 +27,20 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
   );
   const routeError = useBuildingStore((state) => state.routeError);
   const routeDestination = useBuildingStore((state) => state.routeDestination);
+
+  const [galleryImages, setGalleryImages] = useState<BuildingImage[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getBuildingImagesApi(building.id)
+      .then((imgs) => {
+        if (!cancelled) {
+          setGalleryImages(imgs.filter((img) => img.is_active && !img.is_cover));
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [building.id]);
 
   const accent = getCategoryAccent(building.category_name);
   const coverUrl = resolveApiAssetUrl(building.cover_image_url);
@@ -137,6 +154,39 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
           >
             <Icon name="alert" size={13} />
             <span>{routeError}</span>
+          </div>
+        )}
+
+        {galleryImages.length > 0 && (
+          <div className="ito-info-card__row ito-info-card__row--block">
+            <span className="ito-info-card__label">Imágenes</span>
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                overflowX: "auto",
+                paddingBottom: 4,
+                scrollbarWidth: "none",
+              }}
+              aria-label="Galería de imágenes del edificio"
+            >
+              {galleryImages.slice(0, 6).map((img) => (
+                <img
+                  key={img.id}
+                  src={resolveApiAssetUrl(img.image_url) ?? undefined}
+                  alt={img.title ?? building.name}
+                  loading="lazy"
+                  style={{
+                    width: 80,
+                    height: 60,
+                    objectFit: "cover",
+                    borderRadius: 8,
+                    flexShrink: 0,
+                    border: "1px solid rgba(148,163,184,0.15)",
+                  }}
+                />
+              ))}
+            </div>
           </div>
         )}
 

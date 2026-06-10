@@ -92,6 +92,7 @@ export function BuildingSidebar({
 
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showAllBuildings, setShowAllBuildings] = useState(false);
   const [selectedSearchResult, setSelectedSearchResult] =
@@ -109,6 +110,9 @@ export function BuildingSidebar({
         }
       } catch (error) {
         console.error("Error cargando edificios:", error);
+        if (mounted) {
+          setLoadError("No se pudo conectar al servidor. Verifica tu conexión e intenta de nuevo.");
+        }
       } finally {
         if (mounted) {
           setLoading(false);
@@ -470,6 +474,12 @@ export function BuildingSidebar({
               <div className="ito-empty">
                 <div className="ito-empty__spinner" aria-hidden="true" />
                 <p>Cargando edificios…</p>
+              </div>
+            ) : loadError ? (
+              <div className="ito-empty" role="alert">
+                <Icon name="alert" size={28} />
+                <p>Sin conexión al servidor</p>
+                <span>{loadError}</span>
               </div>
             ) : filteredBuildings.length === 0 ? (
               <div className="ito-empty">

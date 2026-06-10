@@ -29,6 +29,15 @@ const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
+    label: "Categorías",
+    route: ROUTES.ADMIN_CATEGORIES,
+    icon: (
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+      </svg>
+    ),
+  },
+  {
     label: "Navegación",
     route: ROUTES.ADMIN_NAVIGATION,
     permission: "can_edit_navigation",

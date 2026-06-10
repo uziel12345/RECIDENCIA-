@@ -31,6 +31,7 @@ import {
 import { NavigationEditorModal } from "./NavigationEditorModal";
 import { NavigationDebugLayer } from "./NavigationDebugLayer";
 import { DestinationBuildingHighlight } from "./DestinationBuildingHighlight";
+import { resolveGlbName } from "./glb-utils";
 
 const MODEL_PATH = "/models/campus.glb";
 
@@ -300,131 +301,324 @@ function getBuildingMarkerIcon(building: Building): IconName {
   }
 }
 
+function BuildingLabel({
+  building,
+  isSelected,
+  accentColor,
+  isMobile,
+  iconSize,
+  labelMaxWidth,
+  onClick,
+}: {
+  building: Building;
+  isSelected: boolean;
+  accentColor: string;
+  isMobile: boolean;
+  iconSize: number;
+  labelMaxWidth: number;
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const showFullName = !isMobile || isSelected;
+
+  const active = isSelected || hovered;
+
+  const bg = isSelected
+    ? accentColor
+    : hovered
+    ? "rgba(8,14,28,0.94)"
+    : "rgba(8,14,28,0.78)";
+
+  const borderColor = isSelected
+    ? "rgba(255,255,255,0.28)"
+    : hovered
+    ? "rgba(255,255,255,0.20)"
+    : "rgba(255,255,255,0.10)";
+
+  const shadow = isSelected
+    ? `0 4px 18px ${accentColor}55, 0 2px 8px rgba(0,0,0,0.25)`
+    : hovered
+    ? "0 4px 20px rgba(0,0,0,0.35), 0 8px 24px rgba(0,0,0,0.18)"
+    : "0 2px 10px rgba(0,0,0,0.28), 0 4px 14px rgba(0,0,0,0.14)";
+
+  const scale = isSelected ? 1.07 : hovered ? 1.04 : 1;
+
+  return (
+    /* Pin wrapper: bottom-center anchored to the 3D position */
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        pointerEvents: "none",
+        transform: "translateX(-50%) translateY(-100%)",
+        gap: 0,
+      }}
+    >
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
+        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: showFullName ? (isMobile ? 5 : 7) : 5,
+          padding: showFullName
+            ? isMobile
+              ? "4px 10px 4px 4px"
+              : "5px 13px 5px 5px"
+            : "3px 9px",
+          borderRadius: 999,
+          border: `1.5px solid ${borderColor}`,
+          background: bg,
+          color: "#f1f5f9",
+          fontSize: showFullName ? (isMobile ? 11 : 12) : isMobile ? 10 : 11,
+          fontWeight: 700,
+          lineHeight: 1.2,
+          whiteSpace: "nowrap",
+          cursor: "pointer",
+          boxShadow: shadow,
+          fontFamily: "Inter, sans-serif",
+          letterSpacing: "0.02em",
+          userSelect: "none",
+          transform: `scale(${scale})`,
+          pointerEvents: "auto",
+          touchAction: "manipulation",
+          transition: "all 160ms cubic-bezier(0.22, 1, 0.36, 1)",
+          outline: "none",
+          WebkitFontSmoothing: "antialiased",
+        } as React.CSSProperties}
+      >
+        {showFullName ? (
+          <>
+            <span
+              aria-hidden="true"
+              style={{
+                width: iconSize,
+                height: iconSize,
+                borderRadius: 999,
+                background: isSelected ? "rgba(255,255,255,0.22)" : accentColor,
+                color: "#ffffff",
+                display: "inline-grid",
+                placeItems: "center",
+                flexShrink: 0,
+                boxShadow: isSelected ? "none" : `0 1px 4px ${accentColor}66`,
+              }}
+            >
+              <Icon
+                name={getBuildingMarkerIcon(building)}
+                size={isMobile ? 10 : 11}
+              />
+            </span>
+            <span
+              style={{
+                maxWidth: labelMaxWidth,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                opacity: active ? 1 : 0.88,
+                transition: "opacity 160ms",
+              }}
+            >
+              {building.name}
+            </span>
+          </>
+        ) : (
+          <>
+            <span
+              aria-hidden="true"
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: 999,
+                background: accentColor,
+                flexShrink: 0,
+                boxShadow: `0 0 5px ${accentColor}99`,
+              }}
+            />
+            <span style={{ opacity: 0.85, letterSpacing: "0.03em" }}>
+              {building.code}
+            </span>
+          </>
+        )}
+      </button>
+
+      {/* Stem + anchor dot — only on desktop full labels */}
+      {showFullName && (
+        <>
+          <div
+            style={{
+              width: 1.5,
+              height: 8,
+              background: isSelected
+                ? `${accentColor}cc`
+                : "rgba(255,255,255,0.22)",
+              borderRadius: 1,
+              transition: "background 160ms",
+            }}
+          />
+          <div
+            style={{
+              width: active ? 7 : 5,
+              height: active ? 7 : 5,
+              borderRadius: "50%",
+              background: accentColor,
+              boxShadow: `0 0 ${active ? 9 : 5}px ${accentColor}${active ? "dd" : "88"}, 0 0 2px ${accentColor}`,
+              transition: "all 160ms cubic-bezier(0.22,1,0.36,1)",
+            }}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
 function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const setSelectedBuilding = useBuildingStore(
     (state) => state.setSelectedBuilding
   );
+  const { scene } = useGLTF(MODEL_PATH);
 
-  const labelMaxWidth = isMobile ? 120 : 180;
-  const compactFontSize = isMobile ? 10 : 12;
-  const compactPadding = isMobile ? "3px 7px" : "6px 12px 6px 8px";
-  const expandedPadding = isMobile ? "5px 10px 5px 5px" : "6px 12px 6px 8px";
-  const labelGap = isMobile ? 5 : 8;
-  const iconSize = isMobile ? 14 : 20;
+  // Map: GLB mesh name → scene-local position (removes parent group rotation).
+  const meshPositions = useMemo(() => {
+    const map = new Map<string, Vector3>();
+    scene.updateMatrixWorld(true);
+    scene.traverse((child) => {
+      if (!child.name) return;
+      const worldPos = new Vector3();
+      child.getWorldPosition(worldPos);
+      map.set(child.name, scene.worldToLocal(worldPos).clone());
+    });
+    return map;
+  }, [scene]);
+
+  // GLB mesh names already accounted for by DB buildings.
+  const coveredGlbNames = useMemo(() => {
+    const set = new Set<string>();
+    for (const b of buildings) {
+      if (b.model_node_name) set.add(resolveGlbName(b.model_node_name));
+    }
+    return set;
+  }, [buildings]);
+
+  // Named meshes in the GLB that have no DB building associated — shown as
+  // read-only informational labels so every building in the model is labeled.
+  const uncoveredMeshes = useMemo(() => {
+    const list: Array<{ name: string; pos: Vector3 }> = [];
+    scene.traverse((child) => {
+      if (!(child as { isMesh?: boolean }).isMesh) return;
+      if (!child.name || child.name.startsWith("NavMesh")) return;
+      if (coveredGlbNames.has(child.name)) return;
+      const pos = meshPositions.get(child.name);
+      if (!pos) return;
+      list.push({ name: child.name, pos });
+    });
+    return list;
+  }, [scene, coveredGlbNames, meshPositions]);
+
+  const labelMaxWidth = isMobile ? 120 : 176;
+  const iconSize = isMobile ? 14 : 18;
 
   return (
     <>
+      {/* ── Edificios registrados en la BD ── */}
       {buildings.map((building) => {
-        if (building.x == null || building.z == null) {
-          return null;
-        }
+        const glbName = building.model_node_name
+          ? resolveGlbName(building.model_node_name)
+          : null;
+        const glbPos = glbName ? meshPositions.get(glbName) : null;
 
-        const y = (building.y ?? 0) + 12;
+        // Skip only if there's no position at all (no GLB mesh AND no DB coords).
+        if (!glbPos && building.x == null && building.z == null) return null;
+
+        const px = glbPos ? glbPos.x : building.x!;
+        const pz = glbPos ? glbPos.z : building.z!;
+        const y = (glbPos ? glbPos.y : (building.y ?? 0)) + 5;
+
         const isSelected = selectedBuilding?.id === building.id;
         const accent = getCategoryAccent(building.category_name);
         const accentColor = building.category_color || accent.fg;
-        const showFullName = !isMobile || isSelected;
-        const padding = showFullName ? expandedPadding : compactPadding;
 
         return (
           <Html
             key={building.id}
-            position={[building.x, y, building.z]}
-            center
+            position={[px, y, pz]}
             zIndexRange={[isSelected ? 110 : 100, 0]}
             occlude={false}
           >
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                setSelectedBuilding(building);
-              }}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: showFullName ? labelGap : 4,
-                padding,
-                borderRadius: 999,
-                border: `1px solid ${
-                  isSelected ? accentColor : "rgba(15,23,42,0.12)"
-                }`,
-                background: isSelected
-                  ? accentColor
-                  : "rgba(255,255,255,0.97)",
-                color: isSelected ? "#ffffff" : "#0f172a",
-                fontSize: showFullName
-                  ? isMobile
-                    ? 11
-                    : 12
-                  : compactFontSize,
-                fontWeight: 700,
-                lineHeight: 1.2,
-                whiteSpace: "nowrap",
-                cursor: "pointer",
-                boxShadow: isSelected
-                  ? "0 8px 18px rgba(15,23,42,0.25)"
-                  : "0 4px 10px rgba(15,23,42,0.18)",
-                fontFamily: "Inter, sans-serif",
-                letterSpacing: "0.01em",
-                userSelect: "none",
-                transform: "translateZ(0)",
-                pointerEvents: "auto",
-                touchAction: "manipulation",
-                transition: "all 200ms cubic-bezier(0.22, 1, 0.36, 1)",
-              }}
-            >
-              {showFullName ? (
-                <>
-                  <span
-                    aria-hidden="true"
-                    style={{
-                      width: iconSize,
-                      height: iconSize,
-                      borderRadius: 999,
-                      background: isSelected ? "#ffffff" : accentColor,
-                      color: isSelected ? accentColor : "#ffffff",
-                      display: "inline-grid",
-                      placeItems: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Icon
-                      name={getBuildingMarkerIcon(building)}
-                      size={isMobile ? 11 : 12}
-                    />
-                  </span>
-
-                  <span
-                    style={{
-                      maxWidth: labelMaxWidth,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {building.name}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span
-                    aria-hidden="true"
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: 999,
-                      background: accentColor,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <span>{building.code}</span>
-                </>
-              )}
-            </button>
+            <BuildingLabel
+              building={building}
+              isSelected={isSelected}
+              accentColor={accentColor}
+              isMobile={isMobile}
+              iconSize={iconSize}
+              labelMaxWidth={labelMaxWidth}
+              onClick={() => setSelectedBuilding(building)}
+            />
           </Html>
         );
       })}
+
+      {/* ── Meshes del GLB sin registro en la BD ── */}
+      {uncoveredMeshes.map(({ name, pos }) => (
+        <Html
+          key={`glb-${name}`}
+          position={[pos.x, pos.y + 5, pos.z]}
+          zIndexRange={[90, 0]}
+          occlude={false}
+        >
+          <div
+            style={{
+              transform: "translateX(-50%) translateY(-100%)",
+              display: "inline-flex",
+              flexDirection: "column",
+              alignItems: "center",
+              pointerEvents: "none",
+            }}
+          >
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                padding: isMobile ? "3px 8px" : "4px 11px",
+                borderRadius: 999,
+                background: "rgba(8,14,28,0.68)",
+                border: "1px dashed rgba(255,255,255,0.16)",
+                color: "rgba(226,232,240,0.70)",
+                fontSize: isMobile ? 10 : 11,
+                fontWeight: 600,
+                whiteSpace: "nowrap" as const,
+                fontFamily: "Inter, sans-serif",
+                letterSpacing: "0.02em",
+                userSelect: "none" as const,
+              }}
+            >
+              {name.replace(/_/g, " ")}
+            </div>
+            <div
+              style={{
+                width: 1.5,
+                height: 7,
+                background: "rgba(255,255,255,0.15)",
+                borderRadius: 1,
+              }}
+            />
+            <div
+              style={{
+                width: 4,
+                height: 4,
+                borderRadius: "50%",
+                background: "rgba(148,163,184,0.7)",
+                boxShadow: "0 0 4px rgba(148,163,184,0.5)",
+              }}
+            />
+          </div>
+        </Html>
+      ))}
     </>
   );
 }

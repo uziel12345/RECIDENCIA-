@@ -17,6 +17,7 @@ export const ROUTES = {
   // Real admin views
   ADMIN_LOGIN: "/admin/login",
   ADMIN_BUILDINGS: "/admin/buildings",
+  ADMIN_CATEGORIES: "/admin/categories",
   ADMIN_NAVIGATION: "/admin/navigation",
   ADMIN_USERS: "/admin/users",
   ADMIN_STUDENT_LOCATION: "/admin/alumnos/ubicacion",
