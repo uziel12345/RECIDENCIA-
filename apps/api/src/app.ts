@@ -13,6 +13,7 @@ import { errorHandler } from "./shared/middlewares/error-handler.js";
 import { env } from "./config/env.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const apiPackageDir = path.resolve(__dirname, "..");
 const webDist = path.resolve(__dirname, "../../web/dist");
 
 const app = express();
@@ -73,7 +74,7 @@ app.use(
   })
 );
 
-app.use("/uploads", express.static(path.resolve(__dirname, "../../uploads")));
+app.use("/uploads", express.static(path.resolve(apiPackageDir, "uploads")));
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const CSRF_SKIP_PATHS = new Set(["/auth/login"]);

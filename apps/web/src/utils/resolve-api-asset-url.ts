@@ -5,9 +5,22 @@ export function resolveApiAssetUrl(url: string | null | undefined): string | nul
     return url;
   }
 
-  const apiBaseUrl = import.meta.env.VITE_API_URL || "/api";
-  const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, "");
-  const prefix = apiOrigin === "" ? "" : apiOrigin;
+  if (!url.startsWith("/uploads")) {
+    return url;
+  }
 
-  return `${prefix}${url.startsWith("/") ? "" : "/"}${url}`;
+  const configuredApiBaseUrl = import.meta.env.VITE_API_URL;
+  const apiBaseUrl =
+    configuredApiBaseUrl && configuredApiBaseUrl.startsWith("http")
+      ? configuredApiBaseUrl
+      : "http://localhost:3001";
+  const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, "").replace(/\/$/, "");
+
+  return `${apiOrigin}${url}`;
+}
+
+export function resolveBuildingImageUrl(
+  url: string | null | undefined
+): string | null {
+  return resolveApiAssetUrl(url);
 }

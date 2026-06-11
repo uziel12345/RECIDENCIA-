@@ -3,7 +3,7 @@ import { useBuildingStore } from "../../../store/building-store";
 import { useLocationStore } from "../../../store/location-store";
 import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
-import { resolveApiAssetUrl } from "../../../utils/resolve-api-asset-url";
+import { resolveBuildingImageUrl } from "../../../utils/resolve-api-asset-url";
 import type { Building } from "../types/building";
 
 type BuildingQuickCardProps = {
@@ -24,7 +24,7 @@ export function BuildingQuickCard({
   const accentColor = building.category_color || accent.fg;
 
   const canRoute = permission === "granted" && mapPosition !== null;
-  const coverUrl = resolveApiAssetUrl(building.cover_image_url);
+  const coverUrl = resolveBuildingImageUrl(building.cover_image_url);
 
   return (
     <motion.div

@@ -8,7 +8,7 @@ import {
   type Building,
   type BuildingImage,
 } from "@ito-map/shared";
-import { resolveApiAssetUrl } from "../../../utils/resolve-api-asset-url";
+import { resolveBuildingImageUrl } from "../../../utils/resolve-api-asset-url";
 
 type ImageFormState = {
   file: File | null;
@@ -330,7 +330,7 @@ export function BuildingImagesModal({
           <div style={styles.imageGrid}>
             {images.map((image) => {
               const isImageActive = Boolean(image.is_active);
-              const imageSrc = resolveApiAssetUrl(safeText(image.image_url)) ?? "";
+              const imageSrc = resolveBuildingImageUrl(safeText(image.image_url)) ?? "";
 
               return (
                 <article

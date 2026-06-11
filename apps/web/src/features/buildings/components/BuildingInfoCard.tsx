@@ -3,7 +3,7 @@ import { useBuildingStore } from "../../../store/building-store";
 import { CategoryBadge } from "../../../components/ui/CategoryBadge";
 import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
-import { resolveApiAssetUrl } from "../../../utils/resolve-api-asset-url";
+import { resolveBuildingImageUrl } from "../../../utils/resolve-api-asset-url";
 import { getBuildingImagesApi } from "@ito-map/shared";
 import type { BuildingImage } from "@ito-map/shared";
 import type { Building } from "../types/building";
@@ -43,7 +43,7 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
   }, [building.id]);
 
   const accent = getCategoryAccent(building.category_name);
-  const coverUrl = resolveApiAssetUrl(building.cover_image_url);
+  const coverUrl = resolveBuildingImageUrl(building.cover_image_url);
 
   return (
     <article
@@ -173,7 +173,7 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
               {galleryImages.slice(0, 6).map((img) => (
                 <img
                   key={img.id}
-                  src={resolveApiAssetUrl(img.image_url) ?? undefined}
+                  src={resolveBuildingImageUrl(img.image_url) ?? undefined}
                   alt={img.title ?? building.name}
                   loading="lazy"
                   style={{
