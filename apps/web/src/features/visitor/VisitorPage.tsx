@@ -16,7 +16,6 @@ import { MobileQuickActions } from "../campus/components/MobileQuickActions";
 import { ROUTES } from "../../types/routes";
 import {
   BuildingIcon,
-  UsersIcon,
   LogOutIcon,
   CompassIcon,
   InfoIcon,
@@ -63,22 +62,34 @@ export function VisitorPage() {
       .catch(() => setTotalBuildings(0));
   }, []);
 
+  // Cuando se establece un destino de ruta en móvil, abre el sheet a "peek"
+  // para que el usuario vea el estado de la ruta (errores, distancia, Cambiar)
+  useEffect(() => {
+    if (isMobile && routeDestination) {
+      setSheetState((s) => (s === "closed" ? "peek" : s));
+    }
+  }, [routeDestination, isMobile]);
+
   const handleLogout = () => {
     logout();
     navigate(ROUTES.WELCOME);
   };
 
+  const closeMobilePanels = () => {
+    setShowQuickDest(false);
+    setShowServices(false);
+    setSheetState("closed");
+  };
+
   const handleSelectService = (service: CampusService) => {
     setSearchTerm(service.searchTerm);
     setViewMode("map");
-    setShowServices(false);
-    setShowQuickDest(false);
+    closeMobilePanels();
     setSheetState("full");
   };
 
   const openBuildingSearch = () => {
-    setShowQuickDest(false);
-    setShowServices(false);
+    closeMobilePanels();
     setSheetState("full");
     window.setTimeout(() => {
       document.getElementById("building-search")?.focus();
@@ -86,20 +97,17 @@ export function VisitorPage() {
   };
 
   const openQuickDestinations = () => {
-    setShowServices(false);
-    setSheetState("closed");
+    closeMobilePanels();
     setShowQuickDest(true);
   };
 
   const openServices = () => {
-    setShowQuickDest(false);
-    setSheetState("closed");
+    closeMobilePanels();
     setShowServices(true);
   };
 
   const openBuildings = () => {
-    setShowQuickDest(false);
-    setShowServices(false);
+    closeMobilePanels();
     setSheetState("full");
   };
 
@@ -141,7 +149,7 @@ export function VisitorPage() {
           <div className="visitor-page__sidebar-header">
             <div className="visitor-page__user">
               <div className="visitor-page__user-avatar">
-                <UsersIcon size={20} />
+                <img src="/ICONO-TEC.jpeg" alt="" className="visitor-page__user-logo" />
               </div>
 
               <div className="visitor-page__user-info">

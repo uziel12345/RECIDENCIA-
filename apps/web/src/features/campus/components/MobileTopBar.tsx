@@ -20,7 +20,7 @@ export function MobileTopBar({
         aria-label="Abrir búsqueda"
       >
         <span className="ito-mobile-top__mark" aria-hidden="true">
-          <Icon name="map" size={18} />
+          <img src="/ICONO-TEC.jpeg" alt="" className="ito-mobile-top__logo" />
         </span>
         <span className="ito-mobile-top__text">
           <span className="ito-mobile-top__title">Campus ITO</span>

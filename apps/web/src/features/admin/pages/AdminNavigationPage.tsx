@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+﻿import type { CSSProperties } from "react";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   getAdminBuildingsApi,
@@ -117,7 +117,7 @@ export function AdminNavigationPage() {
         >
           {/* Cabecera compacta */}
           <div style={s.panelHeader}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <circle cx="12" cy="12" r="10" />
               <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
             </svg>
@@ -294,9 +294,9 @@ const s: Record<string, CSSProperties> = {
     justifyContent: "center",
     width: 24,
     height: 24,
-    border: "1px solid #3b82f6",
+    border: "1px solid #f97316",
     borderRadius: 6,
-    background: "rgba(59,130,246,0.12)",
+    background: "rgba(234,88,12,0.12)",
     color: "#60a5fa",
     cursor: "pointer",
     flexShrink: 0,
@@ -317,14 +317,14 @@ const s: Record<string, CSSProperties> = {
     width: 28,
     paddingTop: 10,
     paddingBottom: 10,
-    border: "1px solid #3b82f6",
+    border: "1px solid #f97316",
     borderLeft: "none",
     borderRadius: "0 8px 8px 0",
-    background: "rgba(59,130,246,0.18)",
+    background: "rgba(234,88,12,0.18)",
     backdropFilter: "blur(4px)",
-    color: "#93c5fd",
+    color: "#fdba74",
     cursor: "pointer",
-    boxShadow: "3px 0 12px rgba(59,130,246,0.25)",
+    boxShadow: "3px 0 12px rgba(234,88,12,0.25)",
   },
   openPanelLabel: {
     fontSize: 9,
@@ -342,8 +342,8 @@ const s: Record<string, CSSProperties> = {
   sectionRow: { display: "flex", alignItems: "center", justifyContent: "space-between" },
 
   infoCard: {
-    background: "rgba(59,130,246,0.06)",
-    border: "1px solid rgba(59,130,246,0.12)",
+    background: "rgba(234,88,12,0.06)",
+    border: "1px solid rgba(234,88,12,0.12)",
     borderRadius: 9,
     padding: "9px 11px",
   },
@@ -352,8 +352,8 @@ const s: Record<string, CSSProperties> = {
     display: "inline-block",
     padding: "0px 5px",
     borderRadius: 4,
-    background: "rgba(59,130,246,0.15)",
-    color: "#93c5fd",
+    background: "rgba(234,88,12,0.15)",
+    color: "#fdba74",
     fontWeight: 700,
     fontSize: 11,
   },
@@ -401,3 +401,5 @@ const sa: Record<string, CSSProperties> = {
   ok: { fontSize: 11.5, fontWeight: 700, color: "#22c55e" },
   warn: { fontSize: 11.5, fontWeight: 700, color: "#f59e0b" },
 };
+
+

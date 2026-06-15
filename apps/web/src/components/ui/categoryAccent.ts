@@ -8,7 +8,7 @@ export type CategoryAccent = {
 const KEYWORD_PALETTE: Array<{ keywords: string[]; accent: CategoryAccent }> = [
   {
     keywords: ["academ", "aula", "edif"],
-    accent: { fg: "#1d4ed8", fgDark: "#1e3a8a", bg: "#dbeafe", border: "#bfdbfe" },
+    accent: { fg: "#ea580c", fgDark: "#c2410c", bg: "#ffedd5", border: "#fed7aa" },
   },
   {
     keywords: ["lab"],
@@ -41,10 +41,10 @@ const KEYWORD_PALETTE: Array<{ keywords: string[]; accent: CategoryAccent }> = [
 ];
 
 const FALLBACK_ACCENT: CategoryAccent = {
-  fg: "#475569",
-  fgDark: "#1e293b",
-  bg: "#e2e8f0",
-  border: "#cbd5e1",
+  fg: "#ea580c",
+  fgDark: "#c2410c",
+  bg: "#ffedd5",
+  border: "#fed7aa",
 };
 
 export function getCategoryAccent(name?: string | null): CategoryAccent {

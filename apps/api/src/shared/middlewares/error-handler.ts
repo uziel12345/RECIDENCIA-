@@ -20,7 +20,7 @@ export function errorHandler(
     if (error.code === "LIMIT_FILE_SIZE") {
       return res.status(413).json({
         success: false,
-        message: "El archivo excede el tamaño máximo permitido (2 MB)",
+        message: "El archivo excede el tamaño máximo permitido (30 MB)",
         code: "FILE_TOO_LARGE",
       });
     }

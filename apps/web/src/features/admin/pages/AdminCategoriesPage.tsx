@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+﻿import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { getCategoriesApi } from "@ito-map/shared";
 import type { BuildingCategory } from "@ito-map/shared";
@@ -109,7 +109,6 @@ export function AdminCategoriesPage() {
                             }}
                             title={cat.color_hex}
                           />
-                          <span style={s.colorHex}>{cat.color_hex}</span>
                         </div>
                       ) : (
                         <span style={s.noValue}>Sin color</span>
@@ -158,7 +157,7 @@ const s: Record<string, CSSProperties> = {
     margin: "0 0 6px",
     fontSize: 11,
     fontWeight: 700,
-    color: "#3b82f6",
+    color: "#f97316",
     textTransform: "uppercase",
     letterSpacing: "0.08em",
   },
@@ -247,7 +246,6 @@ const s: Record<string, CSSProperties> = {
     border: "1px solid rgba(255,255,255,0.1)",
     flexShrink: 0,
   },
-  colorHex: { fontSize: 12, color: "#94a3b8", fontFamily: "monospace" },
   descText: { fontSize: 13, color: "#94a3b8" },
   noValue: { color: "#475569", fontStyle: "italic" as const, fontSize: 13 },
   badgeActive: {
@@ -283,7 +281,7 @@ const s: Record<string, CSSProperties> = {
     height: 32,
     borderRadius: "50%",
     border: "3px solid rgba(255,255,255,0.08)",
-    borderTopColor: "#3b82f6",
+    borderTopColor: "#f97316",
     animation: "spin 0.8s linear infinite",
   },
   hint: {
@@ -293,3 +291,4 @@ const s: Record<string, CSSProperties> = {
     lineHeight: 1.6,
   },
 };
+

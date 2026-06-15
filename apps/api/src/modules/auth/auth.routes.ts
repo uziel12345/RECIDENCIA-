@@ -7,13 +7,13 @@ import {
   logoutController,
   meController,
   updateAdminUserStatusController,
-} from "../controllers/auth.controller.js";
-import { authenticate } from "../modules/auth/middlewares/authenticate.middleware.js";
-import { authorizePermission } from "../modules/auth/middlewares/authorize.middleware.js";
-import { validateBody, validateParams } from "../shared/middlewares/validator.js";
-import { createAdminUserSchema, loginSchema } from "../modules/auth/auth.schema.js";
+} from "./auth.controller.js";
+import { authenticate } from "./middlewares/authenticate.middleware.js";
+import { authorizePermission } from "./middlewares/authorize.middleware.js";
+import { validateBody, validateParams } from "../../shared/middlewares/validator.js";
+import { createAdminUserSchema, loginSchema } from "./auth.schema.js";
 import { z } from "zod";
-import { asyncHandler } from "../shared/utils/async-handler.js";
+import { asyncHandler } from "../../shared/utils/async-handler.js";
 
 const loginRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos

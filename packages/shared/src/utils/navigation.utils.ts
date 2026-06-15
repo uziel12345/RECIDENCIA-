@@ -29,6 +29,16 @@ export function formatDuration(seconds: number): string {
   return `${hours} h ${remainingMinutes} min`;
 }
 
+export function formatPositiveDistance(meters: number): string {
+  if (!Number.isFinite(meters) || meters <= 0) return "";
+  return formatDistance(meters);
+}
+
+export function formatPositiveDuration(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "";
+  return formatDuration(seconds);
+}
+
 export function distanceBetweenNodes(
   a: NavigationNode,
   b: NavigationNode

@@ -1,13 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type UserRole = "student" | "visitor";
+export type PublicRole = "student" | "visitor";
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: PublicRole;
   studentId?: string;
   department?: string;
 }
@@ -20,7 +20,7 @@ interface AuthState {
   // Actions
   setUser: (user: User | null) => void;
   logout: () => void;
-  selectRole: (role: UserRole, userData?: Partial<User>) => void;
+  selectRole: (role: PublicRole, userData?: Partial<User>) => void;
   completeOnboarding: () => void;
 }
 
@@ -41,9 +41,10 @@ export const useAuthStore = create<AuthState>()(
         set({
           user: null,
           isAuthenticated: false,
+          hasCompletedOnboarding: false,
         }),
 
-      selectRole: (role: UserRole, userData?: Partial<User>) => {
+      selectRole: (role: PublicRole, userData?: Partial<User>) => {
         const user: User = {
           id: crypto.randomUUID(),
           name: userData?.name || (role === "student" ? "Estudiante" : "Visitante"),

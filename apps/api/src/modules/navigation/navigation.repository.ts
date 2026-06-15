@@ -198,6 +198,35 @@ export class NavigationRepository {
     );
   }
 
+  async deactivateOrphanAccessNodes(): Promise<number> {
+    const [orphans] = await this.db.query<IdRow[]>(`
+      SELECT id FROM navigation_nodes
+      WHERE node_type IN ('building_access', 'entrance')
+        AND is_active = TRUE
+        AND NOT EXISTS (
+          SELECT 1 FROM navigation_edges ne
+          WHERE ne.is_active = TRUE
+            AND (ne.from_node_id = navigation_nodes.id OR ne.to_node_id = navigation_nodes.id)
+        )
+    `);
+
+    if (orphans.length === 0) return 0;
+
+    const ids = orphans.map((r) => r.id);
+    const placeholders = ids.map(() => "?").join(", ");
+
+    await this.db.query(
+      `UPDATE building_entrances SET is_accessible = FALSE WHERE node_id IN (${placeholders})`,
+      ids
+    );
+    await this.db.query(
+      `UPDATE navigation_nodes SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
+      ids
+    );
+
+    return ids.length;
+  }
+
   // ── Edges ──────────────────────────────────────────────────────────────────
 
   async findEdgeById(id: string): Promise<EdgeRow | null> {

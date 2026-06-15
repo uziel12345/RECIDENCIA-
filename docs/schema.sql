@@ -111,7 +111,24 @@ CREATE TABLE IF NOT EXISTS building_images (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- 5. navigation_nodes
+-- 5. building_services
+-- ============================================================
+CREATE TABLE IF NOT EXISTS building_services (
+  id           VARCHAR(36)   NOT NULL,
+  building_id  VARCHAR(36)   NOT NULL,
+  name         VARCHAR(255)  NOT NULL,
+  description  VARCHAR(500)  NULL,
+  created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (id),
+  KEY idx_building_services_building (building_id),
+  CONSTRAINT fk_building_services_building
+    FOREIGN KEY (building_id) REFERENCES buildings (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 6. navigation_nodes
 -- ============================================================
 CREATE TABLE IF NOT EXISTS navigation_nodes (
   id          VARCHAR(36)   NOT NULL,

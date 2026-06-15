@@ -1,28 +1,17 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Suspense, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Canvas } from "@react-three/fiber";
 import { Html, OrbitControls, useGLTF } from "@react-three/drei";
-import {
-  AdditiveBlending,
-  Vector3,
-  type BufferGeometry,
-  type LineBasicMaterial,
-  type LineSegments,
-  type Mesh,
-  type MeshBasicMaterial,
-  type PointLight,
-  type RingGeometry,
-} from "three";
+import { Box3, Vector3 } from "three";
 import type { Building } from "../../features/buildings/types/building";
 import { useLocationStore } from "../../store/location-store";
 import { useBuildingStore } from "../../store/building-store";
 import { useAdminAuthStore } from "../../store/admin-auth-store";
-import { getAdminBuildings, getBuildings } from "../../services/buildings.service";
+import { useBuildings } from "../../hooks/useBuildings";
 import {
   startUserLocationTracking,
   stopUserLocationTracking,
 } from "../../features/location/services/geolocation";
 import { RouteLine } from "../../features/buildings/components/RouteLine";
-import { Icon, type IconName } from "../ui/Icons";
 import { getCategoryAccent } from "../ui/categoryAccent";
 import {
   NavigationDraftEditorLayer,
@@ -32,17 +21,22 @@ import { NavigationEditorModal } from "./NavigationEditorModal";
 import { NavigationDebugLayer } from "./NavigationDebugLayer";
 import { DestinationBuildingHighlight } from "./DestinationBuildingHighlight";
 import { resolveGlbName } from "./glb-utils";
-
-const MODEL_PATH = "/models/campus.glb";
+import { CameraAnimator, type CameraAnim } from "./CameraAnimator";
+import { CampusModel, MODEL_PATH } from "./CampusModel";
+import { CategoryLegend } from "./CategoryLegend";
+import { UserLocationMarker } from "./UserLocationMarker";
+import { ViewerLoading } from "./ViewerLoading";
+import { ViewerToolbar, type NavigationDebugMode } from "./ViewerToolbar";
+import { useWeather } from "./weather/useWeather";
+import { WeatherLayer, WeatherOverlay } from "./weather/WeatherLayer";
+import { WeatherControls } from "./weather/WeatherControls";
+import { WEATHER_DEFS, ITO_LAT, ITO_LON } from "./weather/weatherConfig";
 
 const CAMPUS_ROTATION_Y = Math.PI / 2;
 const CAMPUS_POSITION_X = 0;
 const CAMPUS_POSITION_Z = 0;
 
-type FocusPoint = {
-  x: number;
-  z: number;
-};
+type FocusPoint = { x: number; z: number };
 
 type CampusViewerProps = {
   isMobile?: boolean;
@@ -51,999 +45,146 @@ type CampusViewerProps = {
   hideCategoryLegend?: boolean;
 };
 
-type NavigationDebugMode = "hidden" | "all" | "issues";
-type WeatherMode = "clear" | "cloudy" | "rain" | "storm" | "fog";
-
-type OpenMeteoCurrentWeather = {
-  current?: {
-    weather_code?: number;
-    precipitation?: number;
-    rain?: number;
-    showers?: number;
-    cloud_cover?: number;
-  };
-};
-
-type WeatherPreset = {
-  label: string;
-  shortLabel: string;
-  icon: string;
-  sky: string;
-  fog: string;
-  fogNear: number;
-  fogFar: number;
-  ambient: number;
-  hemisphere: number;
-  directional: number;
-  gridPrimary: string;
-  gridSecondary: string;
-};
-
-const WEATHER_PRESETS: Record<WeatherMode, WeatherPreset> = {
-  clear: {
-    label: "Soleado",
-    shortLabel: "Sol",
-    icon: "Sol",
-    sky: "#e6f3ff",
-    fog: "#e6f3ff",
-    fogNear: 360,
-    fogFar: 700,
-    ambient: 1.4,
-    hemisphere: 0.75,
-    directional: 2.1,
-    gridPrimary: "#b8cce0",
-    gridSecondary: "#d0e3f0",
-  },
-  cloudy: {
-    label: "Nublado",
-    shortLabel: "Nubes",
-    icon: "Nub",
-    sky: "#d4dfe9",
-    fog: "#c8d4e0",
-    fogNear: 220,
-    fogFar: 480,
-    ambient: 0.95,
-    hemisphere: 0.52,
-    directional: 1.1,
-    gridPrimary: "#a8b8c8",
-    gridSecondary: "#bfccd8",
-  },
-  rain: {
-    label: "Lluvia",
-    shortLabel: "Lluvia",
-    icon: "Llu",
-    sky: "#b8c8d8",
-    fog: "#a0b0c4",
-    fogNear: 160,
-    fogFar: 360,
-    ambient: 0.72,
-    hemisphere: 0.38,
-    directional: 0.72,
-    gridPrimary: "#8fa4b8",
-    gridSecondary: "#a8bac8",
-  },
-  storm: {
-    label: "Tormenta",
-    shortLabel: "Tormenta",
-    icon: "Tor",
-    sky: "#4a5568",
-    fog: "#3d4a5c",
-    fogNear: 100,
-    fogFar: 280,
-    ambient: 0.38,
-    hemisphere: 0.28,
-    directional: 0.32,
-    gridPrimary: "#64748b",
-    gridSecondary: "#8898a8",
-  },
-  fog: {
-    label: "Niebla",
-    shortLabel: "Niebla",
-    icon: "Nie",
-    sky: "#d8e2ec",
-    fog: "#b8c8d8",
-    fogNear: 35,
-    fogFar: 160,
-    ambient: 0.88,
-    hemisphere: 0.48,
-    directional: 0.65,
-    gridPrimary: "#a8b8c8",
-    gridSecondary: "#bfccd8",
-  },
-};
-
-const OAXACA_WEATHER_URL =
-  "https://api.open-meteo.com/v1/forecast?latitude=17.0732&longitude=-96.7266&current=weather_code,precipitation,rain,showers,cloud_cover&timezone=America%2FMexico_City";
-
-function weatherCodeToMode(current: OpenMeteoCurrentWeather["current"]): WeatherMode {
-  const code = current?.weather_code ?? 0;
-  const precipitation =
-    (current?.precipitation ?? 0) + (current?.rain ?? 0) + (current?.showers ?? 0);
-  const cloudCover = current?.cloud_cover ?? 0;
-
-  if ([95, 96, 99].includes(code)) return "storm";
-  if (code === 45 || code === 48) return "fog";
-  if (
-    precipitation > 0 ||
-    (code >= 51 && code <= 67) ||
-    (code >= 80 && code <= 82)
-  ) {
-    return "rain";
-  }
-  if (code >= 71 && code <= 77) return "fog";
-  if (code === 2 || code === 3 || cloudCover >= 58) return "cloudy";
-
-  return "clear";
-}
-
 function campusLocalToWorld(x: number, z: number) {
   const cos = Math.cos(CAMPUS_ROTATION_Y);
   const sin = Math.sin(CAMPUS_ROTATION_Y);
-
   return {
     x: x * cos + z * sin + CAMPUS_POSITION_X,
     z: -x * sin + z * cos + CAMPUS_POSITION_Z,
   };
 }
 
-function UserLocationMarker() {
-  const mapPosition = useLocationStore((state) => state.mapPosition);
-  const isLowAccuracy = useLocationStore((state) => state.isLowAccuracy);
-  const ringRef = useRef<Mesh<RingGeometry, MeshBasicMaterial>>(null);
-  const elapsedRef = useRef(0);
-
-  useFrame((_, delta) => {
-    if (!ringRef.current) return;
-    elapsedRef.current += delta;
-
-    const t = (elapsedRef.current % 1.6) / 1.6;
-    const scale = 1 + t * 1.4;
-
-    ringRef.current.scale.set(scale, scale, scale);
-    ringRef.current.material.opacity = (1 - t) * (isLowAccuracy ? 0.22 : 0.55);
-  });
-
-  if (!mapPosition) return null;
-
-  const markerColor = isLowAccuracy ? "#94a3b8" : "#2563eb";
-  const markerEmissive = isLowAccuracy ? "#64748b" : "#1d4ed8";
-
-  return (
-    <group position={[mapPosition.x, 4, mapPosition.z]}>
-      {isLowAccuracy && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
-          <circleGeometry args={[18, 64]} />
-          <meshBasicMaterial color="#94a3b8" transparent opacity={0.12} />
-        </mesh>
-      )}
-
-      <mesh
-        ref={ringRef}
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, 0.1, 0]}
-      >
-        <ringGeometry args={[5.5, 7, 48]} />
-        <meshBasicMaterial color={markerColor} transparent opacity={0.55} />
-      </mesh>
-
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.2, 0]}>
-        <circleGeometry args={[5, 48]} />
-        <meshBasicMaterial
-          color={markerColor}
-          transparent
-          opacity={isLowAccuracy ? 0.1 : 0.18}
-        />
-      </mesh>
-
-      <mesh position={[0, 8, 0]}>
-        <sphereGeometry args={[2.6, 32, 32]} />
-        <meshStandardMaterial
-          color={markerColor}
-          emissive={markerEmissive}
-          emissiveIntensity={isLowAccuracy ? 0.18 : 0.35}
-        />
-      </mesh>
-
-      <mesh position={[0, 8, 0]}>
-        <sphereGeometry args={[1.1, 24, 24]} />
-        <meshStandardMaterial color="#ffffff" />
-      </mesh>
-
-      {isLowAccuracy && (
-        <Html position={[0, 13, 0]} center>
-          <div
-            style={{
-              padding: "5px 9px",
-              borderRadius: 999,
-              background: "rgba(255, 255, 255, 0.95)",
-              border: "1px solid #cbd5e1",
-              color: "#475569",
-              fontSize: 11,
-              fontWeight: 800,
-              whiteSpace: "nowrap",
-              boxShadow: "0 4px 10px rgba(15, 23, 42, 0.16)",
-            }}
-          >
-            UbicaciÃ³n aproximada
-          </div>
-        </Html>
-      )}
-    </group>
-  );
-}
-
-type BuildingLabelsProps = {
-  buildings: Building[];
-  isMobile?: boolean;
-};
-
-function getBuildingMarkerIcon(building: Building): IconName {
-  const category = building.category_code?.toLowerCase?.() ?? "";
-
-  switch (category) {
-    case "biblioteca":
-      return "map";
-
-    case "aulas":
-      return "graduation";
-
-    case "laboratorio":
-      return "layers";
-
-    case "administrativo":
-      return "building";
-
-    case "servicio":
-      return "flag";
-
-    default:
-      return "map-pin";
-  }
-}
-
-function BuildingLabel({
-  building,
-  isSelected,
-  accentColor,
-  isMobile,
-  iconSize,
-  labelMaxWidth,
-  onClick,
-}: {
-  building: Building;
-  isSelected: boolean;
+type BuildingLabelEntry = {
+  buildingId: string;
+  name: string;
   accentColor: string;
-  isMobile: boolean;
-  iconSize: number;
-  labelMaxWidth: number;
-  onClick: () => void;
-}) {
-  const [hovered, setHovered] = useState(false);
-  const showFullName = !isMobile || isSelected;
-
-  const active = isSelected || hovered;
-
-  const bg = isSelected
-    ? accentColor
-    : hovered
-    ? "rgba(8,14,28,0.94)"
-    : "rgba(8,14,28,0.78)";
-
-  const borderColor = isSelected
-    ? "rgba(255,255,255,0.28)"
-    : hovered
-    ? "rgba(255,255,255,0.20)"
-    : "rgba(255,255,255,0.10)";
-
-  const shadow = isSelected
-    ? `0 4px 18px ${accentColor}55, 0 2px 8px rgba(0,0,0,0.25)`
-    : hovered
-    ? "0 4px 20px rgba(0,0,0,0.35), 0 8px 24px rgba(0,0,0,0.18)"
-    : "0 2px 10px rgba(0,0,0,0.28), 0 4px 14px rgba(0,0,0,0.14)";
-
-  const scale = isSelected ? 1.07 : hovered ? 1.04 : 1;
-
-  return (
-    /* Pin wrapper: bottom-center anchored to the 3D position */
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        pointerEvents: "none",
-        transform: "translateX(-50%) translateY(-100%)",
-        gap: 0,
-      }}
-    >
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClick();
-        }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: showFullName ? (isMobile ? 5 : 7) : 5,
-          padding: showFullName
-            ? isMobile
-              ? "4px 10px 4px 4px"
-              : "5px 13px 5px 5px"
-            : "3px 9px",
-          borderRadius: 999,
-          border: `1.5px solid ${borderColor}`,
-          background: bg,
-          color: "#f1f5f9",
-          fontSize: showFullName ? (isMobile ? 11 : 12) : isMobile ? 10 : 11,
-          fontWeight: 700,
-          lineHeight: 1.2,
-          whiteSpace: "nowrap",
-          cursor: "pointer",
-          boxShadow: shadow,
-          fontFamily: "Inter, sans-serif",
-          letterSpacing: "0.02em",
-          userSelect: "none",
-          transform: `scale(${scale})`,
-          pointerEvents: "auto",
-          touchAction: "manipulation",
-          transition: "all 160ms cubic-bezier(0.22, 1, 0.36, 1)",
-          outline: "none",
-          WebkitFontSmoothing: "antialiased",
-        } as React.CSSProperties}
-      >
-        {showFullName ? (
-          <>
-            <span
-              aria-hidden="true"
-              style={{
-                width: iconSize,
-                height: iconSize,
-                borderRadius: 999,
-                background: isSelected ? "rgba(255,255,255,0.22)" : accentColor,
-                color: "#ffffff",
-                display: "inline-grid",
-                placeItems: "center",
-                flexShrink: 0,
-                boxShadow: isSelected ? "none" : `0 1px 4px ${accentColor}66`,
-              }}
-            >
-              <Icon
-                name={getBuildingMarkerIcon(building)}
-                size={isMobile ? 10 : 11}
-              />
-            </span>
-            <span
-              style={{
-                maxWidth: labelMaxWidth,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                opacity: active ? 1 : 0.88,
-                transition: "opacity 160ms",
-              }}
-            >
-              {building.name}
-            </span>
-          </>
-        ) : (
-          <>
-            <span
-              aria-hidden="true"
-              style={{
-                width: 7,
-                height: 7,
-                borderRadius: 999,
-                background: accentColor,
-                flexShrink: 0,
-                boxShadow: `0 0 5px ${accentColor}99`,
-              }}
-            />
-            <span style={{ opacity: 0.85, letterSpacing: "0.03em" }}>
-              {building.code}
-            </span>
-          </>
-        )}
-      </button>
-
-      {/* Stem + anchor dot — only on desktop full labels */}
-      {showFullName && (
-        <>
-          <div
-            style={{
-              width: 1.5,
-              height: 8,
-              background: isSelected
-                ? `${accentColor}cc`
-                : "rgba(255,255,255,0.22)",
-              borderRadius: 1,
-              transition: "background 160ms",
-            }}
-          />
-          <div
-            style={{
-              width: active ? 7 : 5,
-              height: active ? 7 : 5,
-              borderRadius: "50%",
-              background: accentColor,
-              boxShadow: `0 0 ${active ? 9 : 5}px ${accentColor}${active ? "dd" : "88"}, 0 0 2px ${accentColor}`,
-              transition: "all 160ms cubic-bezier(0.22,1,0.36,1)",
-            }}
-          />
-        </>
-      )}
-    </div>
-  );
-}
-
-function BuildingLabels({ buildings, isMobile = false }: BuildingLabelsProps) {
-  const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
-  const setSelectedBuilding = useBuildingStore(
-    (state) => state.setSelectedBuilding
-  );
-  const { scene } = useGLTF(MODEL_PATH);
-
-  // Map: GLB mesh name → scene-local position (removes parent group rotation).
-  const meshPositions = useMemo(() => {
-    const map = new Map<string, Vector3>();
-    scene.updateMatrixWorld(true);
-    scene.traverse((child) => {
-      if (!child.name) return;
-      const worldPos = new Vector3();
-      child.getWorldPosition(worldPos);
-      map.set(child.name, scene.worldToLocal(worldPos).clone());
-    });
-    return map;
-  }, [scene]);
-
-  // GLB mesh names already accounted for by DB buildings.
-  const coveredGlbNames = useMemo(() => {
-    const set = new Set<string>();
-    for (const b of buildings) {
-      if (b.model_node_name) set.add(resolveGlbName(b.model_node_name));
-    }
-    return set;
-  }, [buildings]);
-
-  // Named meshes in the GLB that have no DB building associated — shown as
-  // read-only informational labels so every building in the model is labeled.
-  const uncoveredMeshes = useMemo(() => {
-    const list: Array<{ name: string; pos: Vector3 }> = [];
-    scene.traverse((child) => {
-      if (!(child as { isMesh?: boolean }).isMesh) return;
-      if (!child.name || child.name.startsWith("NavMesh")) return;
-      if (coveredGlbNames.has(child.name)) return;
-      const pos = meshPositions.get(child.name);
-      if (!pos) return;
-      list.push({ name: child.name, pos });
-    });
-    return list;
-  }, [scene, coveredGlbNames, meshPositions]);
-
-  const labelMaxWidth = isMobile ? 120 : 176;
-  const iconSize = isMobile ? 14 : 18;
-
-  return (
-    <>
-      {/* ── Edificios registrados en la BD ── */}
-      {buildings.map((building) => {
-        const glbName = building.model_node_name
-          ? resolveGlbName(building.model_node_name)
-          : null;
-        const glbPos = glbName ? meshPositions.get(glbName) : null;
-
-        // Skip only if there's no position at all (no GLB mesh AND no DB coords).
-        if (!glbPos && building.x == null && building.z == null) return null;
-
-        const px = glbPos ? glbPos.x : building.x!;
-        const pz = glbPos ? glbPos.z : building.z!;
-        const y = (glbPos ? glbPos.y : (building.y ?? 0)) + 5;
-
-        const isSelected = selectedBuilding?.id === building.id;
-        const accent = getCategoryAccent(building.category_name);
-        const accentColor = building.category_color || accent.fg;
-
-        return (
-          <Html
-            key={building.id}
-            position={[px, y, pz]}
-            zIndexRange={[isSelected ? 110 : 100, 0]}
-            occlude={false}
-          >
-            <BuildingLabel
-              building={building}
-              isSelected={isSelected}
-              accentColor={accentColor}
-              isMobile={isMobile}
-              iconSize={iconSize}
-              labelMaxWidth={labelMaxWidth}
-              onClick={() => setSelectedBuilding(building)}
-            />
-          </Html>
-        );
-      })}
-
-      {/* ── Meshes del GLB sin registro en la BD ── */}
-      {uncoveredMeshes.map(({ name, pos }) => (
-        <Html
-          key={`glb-${name}`}
-          position={[pos.x, pos.y + 5, pos.z]}
-          zIndexRange={[90, 0]}
-          occlude={false}
-        >
-          <div
-            style={{
-              transform: "translateX(-50%) translateY(-100%)",
-              display: "inline-flex",
-              flexDirection: "column",
-              alignItems: "center",
-              pointerEvents: "none",
-            }}
-          >
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                padding: isMobile ? "3px 8px" : "4px 11px",
-                borderRadius: 999,
-                background: "rgba(8,14,28,0.68)",
-                border: "1px dashed rgba(255,255,255,0.16)",
-                color: "rgba(226,232,240,0.70)",
-                fontSize: isMobile ? 10 : 11,
-                fontWeight: 600,
-                whiteSpace: "nowrap" as const,
-                fontFamily: "Inter, sans-serif",
-                letterSpacing: "0.02em",
-                userSelect: "none" as const,
-              }}
-            >
-              {name.replace(/_/g, " ")}
-            </div>
-            <div
-              style={{
-                width: 1.5,
-                height: 7,
-                background: "rgba(255,255,255,0.15)",
-                borderRadius: 1,
-              }}
-            />
-            <div
-              style={{
-                width: 4,
-                height: 4,
-                borderRadius: "50%",
-                background: "rgba(148,163,184,0.7)",
-                boxShadow: "0 0 4px rgba(148,163,184,0.5)",
-              }}
-            />
-          </div>
-        </Html>
-      ))}
-    </>
-  );
-}
-
-function CampusModel() {
-  const { scene } = useGLTF(MODEL_PATH);
-
-  useMemo(() => {
-    scene.traverse((child) => {
-      if (child.name.startsWith("NavMesh")) child.visible = false;
-    });
-  }, [scene]);
-
-  return <primitive object={scene} />;
-}
-
-function WeatherParticles({ mode, isMobile = false }: { mode: WeatherMode; isMobile?: boolean }) {
-  const rainRef = useRef<LineSegments<BufferGeometry, LineBasicMaterial>>(null);
-  const isRain = mode === "rain" || mode === "storm";
-  const count = isMobile ? 480 : 1400;
-  const range = isMobile ? 400 : 560;
-  const height = 160;
-  const streakBase = mode === "storm" ? 22 : 15;
-  const slant = mode === "storm" ? 8.5 : 3.5;
-
-  const positions = useMemo(() => {
-    const values = new Float32Array(count * 2 * 3);
-
-    for (let i = 0; i < count; i += 1) {
-      const base = i * 6;
-      const x = (Math.random() - 0.5) * range;
-      const y = Math.random() * height + 18;
-      const z = (Math.random() - 0.5) * range;
-      const streak = streakBase * (0.55 + Math.random() * 1.0);
-
-      values[base] = x;
-      values[base + 1] = y;
-      values[base + 2] = z;
-      values[base + 3] = x + slant;
-      values[base + 4] = y - streak;
-      values[base + 5] = z - slant * 0.5;
-    }
-
-    return values;
-  }, [count, height, mode, range, streakBase, slant]);
-
-  useFrame((_, delta) => {
-    const rain = rainRef.current;
-    if (!rain) return;
-
-    const attr = rain.geometry.attributes.position;
-    const values = attr.array as Float32Array;
-    const speed = mode === "storm" ? 145 : 96;
-    const drift = mode === "storm" ? 34 : 15;
-
-    for (let i = 0; i < count; i += 1) {
-      const base = i * 6;
-
-      values[base] += drift * delta;
-      values[base + 1] -= speed * delta;
-      values[base + 2] -= drift * 0.25 * delta;
-      values[base + 3] += drift * delta;
-      values[base + 4] -= speed * delta;
-      values[base + 5] -= drift * 0.25 * delta;
-
-      if (values[base + 1] < 2) {
-        const x = (Math.random() - 0.5) * range;
-        const y = height + 18;
-        const z = (Math.random() - 0.5) * range;
-        const streak = streakBase * (0.55 + Math.random() * 1.0);
-
-        values[base] = x;
-        values[base + 1] = y;
-        values[base + 2] = z;
-        values[base + 3] = x + slant;
-        values[base + 4] = y - streak;
-        values[base + 5] = z - slant * 0.5;
-      }
-    }
-
-    attr.needsUpdate = true;
-  });
-
-  if (!isRain) return null;
-
-  return (
-    <lineSegments ref={rainRef}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-      </bufferGeometry>
-      <lineBasicMaterial
-        color={mode === "storm" ? "#93c5fd" : "#bfdbfe"}
-        transparent
-        opacity={mode === "storm" ? 0.82 : 0.68}
-        depthWrite={false}
-        blending={AdditiveBlending}
-      />
-    </lineSegments>
-  );
-}
-
-function StormFlash({ active }: { active: boolean }) {
-  const lightRef = useRef<PointLight>(null);
-  const elapsedRef = useRef(0);
-
-  useFrame((_, delta) => {
-    if (!lightRef.current) return;
-    elapsedRef.current += delta;
-
-    if (!active) {
-      lightRef.current.intensity = 0;
-      return;
-    }
-
-    const cycle = elapsedRef.current % 4.5;
-    lightRef.current.intensity =
-      cycle > 0.08 && cycle < 0.18
-        ? 18
-        : cycle > 0.22 && cycle < 0.30
-          ? 10
-          : cycle > 0.34 && cycle < 0.40
-            ? 4.5
-            : 0;
-  });
-
-  return <pointLight ref={lightRef} position={[0, 170, 40]} color="#e0eeff" distance={600} intensity={0} />;
-}
-
-const WEATHER_ICONS: Record<WeatherMode, string> = {
-  clear:  "☀️",
-  cloudy: "☁️",
-  rain:   "🌧️",
-  storm:  "⛈️",
-  fog:    "🌫️",
+  x: number;
+  y: number;
+  z: number;
 };
 
-function WeatherControl({
-  current,
-  onChange,
-}: {
-  current: WeatherMode;
-  onChange: (mode: WeatherMode) => void;
-}) {
-  const modes = Object.keys(WEATHER_PRESETS) as WeatherMode[];
-
-  return (
-    <div className="ito-weather-control" role="group" aria-label="Simulación de clima">
-      {modes.map((mode) => (
-        <button
-          key={mode}
-          type="button"
-          title={WEATHER_PRESETS[mode].label}
-          className={`ito-weather-control__btn${current === mode ? " ito-weather-control__btn--active" : ""}`}
-          onClick={() => onChange(mode)}
-        >
-          <span className="ito-weather-control__icon">{WEATHER_ICONS[mode]}</span>
-          <span className="ito-weather-control__label">{WEATHER_PRESETS[mode].shortLabel}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function WeatherAtmosphere({ mode }: { mode: WeatherMode }) {
-  return (
-    <div className={`ito-weather-atmosphere ito-weather-atmosphere--${mode}`} aria-hidden="true">
-      <div className="ito-weather-atmosphere__sun" />
-      <div className="ito-weather-atmosphere__clouds" />
-      <div className="ito-weather-atmosphere__rain" />
-      <div className="ito-weather-atmosphere__mist" />
-      <div className="ito-weather-atmosphere__flash" />
-    </div>
-  );
-}
-
-type ViewerToolbarProps = {
-  hasLocation: boolean;
-  navigationDebugMode: NavigationDebugMode;
-  draftEditorActive: boolean;
-  onFocusUser: () => void;
-  onResetView: () => void;
-  onZoom: (delta: number) => void;
-  onToggleNavigationDebug: () => void;
-  onToggleDraftEditor: () => void;
-  canUseAdvancedTools?: boolean;
-  isMobile?: boolean;
-};
-
-function ViewerToolbar({
-  hasLocation,
-  navigationDebugMode,
-  draftEditorActive,
-  onFocusUser,
-  onResetView,
-  onZoom,
-  onToggleNavigationDebug,
-  onToggleDraftEditor,
-  canUseAdvancedTools = false,
+const BuildingLabels = memo(function BuildingLabels({
+  buildings,
   isMobile = false,
-}: ViewerToolbarProps) {
-  const showNavigationDebug = navigationDebugMode !== "hidden";
-  const debugTitle =
-    navigationDebugMode === "hidden"
-      ? "Depurar rutas"
-      : navigationDebugMode === "all"
-        ? "Ver solo problemas"
-        : "Ocultar depuraciÃ³n";
-
-  return (
-    <div
-      className={`ito-toolbar ${isMobile ? "ito-toolbar--mobile" : ""}`}
-      role="toolbar"
-      aria-label="Controles del mapa"
-    >
-      <button
-        type="button"
-        className={`ito-toolbar__btn ${
-          hasLocation ? "ito-toolbar__btn--accent" : ""
-        }`}
-        onClick={onFocusUser}
-        aria-label="Centrar en mi ubicaciÃ³n"
-        title={hasLocation ? "Centrar en mi ubicaciÃ³n" : "Esperando ubicaciÃ³nâ€¦"}
-        disabled={!hasLocation}
-      >
-        <Icon name="crosshair" size={18} />
-      </button>
-
-      <div className="ito-toolbar__group" role="group" aria-label="Zoom">
-        <button
-          type="button"
-          className="ito-toolbar__btn"
-          onClick={() => onZoom(-1)}
-          aria-label="Acercar"
-          title="Acercar"
-        >
-          <Icon name="plus" size={18} />
-        </button>
-
-        <span className="ito-toolbar__divider" aria-hidden="true" />
-
-        <button
-          type="button"
-          className="ito-toolbar__btn"
-          onClick={() => onZoom(1)}
-          aria-label="Alejar"
-          title="Alejar"
-        >
-          <Icon name="minus" size={18} />
-        </button>
-      </div>
-
-      <button
-        type="button"
-        className="ito-toolbar__btn"
-        onClick={onResetView}
-        aria-label="Vista general del campus"
-        title="Vista general"
-      >
-        <Icon name="home" size={18} />
-      </button>
-
-      {canUseAdvancedTools && (
-        <>
-          <button
-            type="button"
-            className={`ito-toolbar__btn ${showNavigationDebug ? "is-active" : ""}`}
-            onClick={onToggleNavigationDebug}
-            aria-label="Mostrar nodos y rutas de depuracion"
-            aria-pressed={showNavigationDebug}
-            title={debugTitle}
-          >
-            <Icon name="layers" size={18} />
-          </button>
-
-          <button
-            type="button"
-            className={`ito-toolbar__btn ${draftEditorActive ? "is-active" : ""}`}
-            onClick={onToggleDraftEditor}
-            aria-label="Dibujar ruta temporal"
-            aria-pressed={draftEditorActive}
-            title={draftEditorActive ? "Salir del editor temporal" : "Dibujar ruta"}
-          >
-            <Icon name="edit" size={17} />
-          </button>
-        </>
-      )}
-    </div>
-  );
-}
-
-type CategoryLegendProps = {
+  hidden = false,
+}: {
   buildings: Building[];
-};
+  isMobile?: boolean;
+  hidden?: boolean;
+}) {
+  const selectedBuilding = useBuildingStore((s) => s.selectedBuilding);
+  const setSelectedBuilding = useBuildingStore((s) => s.setSelectedBuilding);
+  const { scene } = useGLTF(MODEL_PATH);
 
-function CategoryLegend({ buildings }: CategoryLegendProps) {
-  const items = useMemo(() => {
-    const seen = new Map<
-      string,
-      { name: string; color: string; count: number }
-    >();
+  const labels = useMemo<BuildingLabelEntry[]>(() => {
+    scene.updateMatrixWorld(true);
+    const result: BuildingLabelEntry[] = [];
 
     for (const building of buildings) {
       if (!building.is_active) continue;
 
-      const accent = getCategoryAccent(building.category_name);
-      const color = building.category_color || accent.fg;
-      const key = building.category_name;
-      const existing = seen.get(key);
+      let local: Vector3 | null = null;
 
-      if (existing) {
-        existing.count += 1;
-      } else {
-        seen.set(key, {
-          name: building.category_name,
-          color,
-          count: 1,
-        });
+      if (building.model_node_name) {
+        const glbName = resolveGlbName(building.model_node_name);
+        const node = scene.getObjectByName(glbName);
+
+        if (node) {
+          const box = new Box3().setFromObject(node);
+
+          if (!box.isEmpty()) {
+            const topWorld = new Vector3(
+              (box.min.x + box.max.x) / 2,
+              box.max.y,
+              (box.min.z + box.max.z) / 2,
+            );
+            local = scene.worldToLocal(topWorld);
+          }
+        }
       }
+
+      if (!local) continue;
+
+      const accent = getCategoryAccent(building.category_name);
+      result.push({
+        buildingId: building.id,
+        name: building.name,
+        accentColor: building.category_color || accent.fg,
+        x: local.x,
+        y: local.y + 3,
+        z: local.z,
+      });
     }
 
-    return Array.from(seen.values())
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 6);
-  }, [buildings]);
+    return result;
+  }, [scene, buildings]);
 
-  if (items.length === 0) return null;
+  const handleSelect = useCallback(
+    (buildingId: string) => {
+      const b = buildings.find((bl) => bl.id === buildingId);
+      if (b) setSelectedBuilding(b);
+    },
+    [buildings, setSelectedBuilding],
+  );
+
+  if (hidden) return null;
 
   return (
-    <div className="ito-legend anim-fade-in" aria-label="Leyenda de categorÃ­as">
-      <div className="ito-legend__title">CategorÃ­as</div>
-
-      <div className="ito-legend__items">
-        {items.map((item) => (
-          <div key={item.name} className="ito-legend__item">
-            <span
-              className="ito-legend__swatch"
-              style={{ background: item.color }}
-              aria-hidden="true"
-            />
-            <span style={{ flex: 1 }}>{item.name}</span>
-            <span
+    <>
+      {labels.map((label) => {
+        const isSelected = selectedBuilding?.id === label.buildingId;
+        return (
+          <Html
+            key={label.buildingId}
+            position={[label.x, label.y, label.z]}
+            occlude
+            zIndexRange={[isSelected ? 35 : 25, 0]}
+          >
+            <button
+              type="button"
+              onClick={() => handleSelect(label.buildingId)}
               style={{
-                color: "var(--color-text-muted)",
-                fontWeight: 600,
+                transform: "translateX(-50%) translateY(-100%)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                padding: isMobile ? "3px 8px" : "4px 10px 4px 6px",
+                borderRadius: 999,
+                border: `1.5px solid ${isSelected ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.14)"}`,
+                background: isSelected ? label.accentColor : "rgba(8,14,28,0.80)",
+                color: "#f1f5f9",
+                fontSize: isMobile ? 10 : 11,
+                fontWeight: 700,
+                whiteSpace: "nowrap",
+                cursor: "pointer",
+                boxShadow: isSelected
+                  ? `0 4px 16px ${label.accentColor}55`
+                  : "0 2px 8px rgba(0,0,0,0.32)",
+                fontFamily: "Inter, system-ui, sans-serif",
+                letterSpacing: "0.01em",
+                userSelect: "none",
+                pointerEvents: "auto",
+                touchAction: "manipulation",
+                outline: "none",
               }}
             >
-              {item.count}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
+              <span
+                style={{
+                  width: isMobile ? 6 : 7,
+                  height: isMobile ? 6 : 7,
+                  borderRadius: "50%",
+                  background: isSelected ? "rgba(255,255,255,0.5)" : label.accentColor,
+                  flexShrink: 0,
+                }}
+              />
+              {label.name}
+            </button>
+          </Html>
+        );
+      })}
+    </>
   );
-}
-
-function ViewerLoading({ isExiting = false }: { isExiting?: boolean }) {
-  return (
-    <div
-      className={`ito-viewer-loading${isExiting ? " is-exiting" : ""}`}
-      aria-live="polite"
-      aria-busy="true"
-    >
-      <div className="ito-viewer-loading__inner">
-        <div className="ito-viewer-loading__spinner" aria-hidden="true" />
-        <div className="ito-viewer-loading__title">Cargando campus 3D…</div>
-        <div className="ito-viewer-loading__subtitle">
-          Preparando tu mapa interactivo
-        </div>
-        <div className="ito-viewer-loading__dots" aria-hidden="true">
-          <span className="ito-viewer-loading__dot" />
-          <span className="ito-viewer-loading__dot" />
-          <span className="ito-viewer-loading__dot" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-type CameraAnim = { pos: Vector3; look: Vector3 };
-
-function CameraAnimator({
-  animRef,
-  controlsRef,
-}: {
-  animRef: { current: CameraAnim | null };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  controlsRef: { current: any };
-}) {
-  useFrame((_, delta) => {
-    const anim = animRef.current;
-    const ctrl = controlsRef.current;
-
-    if (!anim || !ctrl) {
-      // Restore user interaction when no animation is active
-      if (ctrl && !ctrl.enabled) ctrl.enabled = true;
-      return;
-    }
-
-    // Suppress drei's automatic OrbitControls.update() (priority -1).
-    // drei checks `controls.enabled` before calling update(), so setting it
-    // false here (we run at -2, before drei at -1) prevents OrbitControls
-    // from overwriting our lerped positions each frame.
-    ctrl.enabled = false;
-
-    // Frame-rate independent lerp — 97 % of the way in ~0.5 s
-    const alpha = 1 - Math.pow(0.001, delta);
-    ctrl.object.position.lerp(anim.pos, alpha);
-    ctrl.target.lerp(anim.look, alpha);
-    // Manual update syncs OrbitControls' internal spherical state and
-    // rotates the camera to face ctrl.target
-    ctrl.update();
-
-    if (
-      ctrl.object.position.distanceTo(anim.pos) < 0.5 &&
-      ctrl.target.distanceTo(anim.look) < 0.5
-    ) {
-      ctrl.object.position.copy(anim.pos);
-      ctrl.target.copy(anim.look);
-      ctrl.update();
-      ctrl.enabled = true;  // hand control back to the user
-      animRef.current = null;
-    }
-  }, -2); // priority -2: runs before drei OrbitControls (priority -1)
-  return null;
-}
+});
 
 export function CampusViewer({
   isMobile = false,
@@ -1051,32 +192,42 @@ export function CampusViewer({
   enableAdminTools = false,
   hideCategoryLegend = false,
 }: CampusViewerProps) {
-  // OrbitControls ref type from @react-three/drei uses three-stdlib internals
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const controlsRef = useRef<any>(null);
   const cameraAnimRef = useRef<CameraAnim | null>(null);
+
   const mapPosition = useLocationStore((state) => state.mapPosition);
+  const geoPosition = useLocationStore((state) => state.geoPosition);
+
+  // Round to ~1 km to avoid re-fetching on minor GPS jitter
+  const weatherLat = geoPosition
+    ? Math.round(geoPosition.latitude  * 100) / 100
+    : ITO_LAT;
+  const weatherLon = geoPosition
+    ? Math.round(geoPosition.longitude * 100) / 100
+    : ITO_LON;
+
+  const { mode: weatherMode, control: weatherControl, setControl: setWeatherControl } =
+    useWeather(weatherLat, weatherLon);
+
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const routeDestination = useBuildingStore((state) => state.routeDestination);
-  // Tracks the last route destination to avoid re-triggering on GPS updates
   const prevRouteRef = useRef<typeof routeDestination | undefined>(undefined);
+
   const adminUser = useAdminAuthStore((state) => state.user);
-  const isAdminAuthenticated = useAdminAuthStore(
-    (state) => state.isAuthenticated
-  );
+  const isAdminAuthenticated = useAdminAuthStore((state) => state.isAuthenticated);
   const canUseAdvancedTools =
     isAdminAuthenticated &&
     (adminUser?.role === "superadmin" ||
       (enableAdminTools && adminUser?.role === "admin"));
 
-  const [buildings, setBuildings] = useState<Building[]>([]);
+  const { buildings } = useBuildings({ admin: canUseAdvancedTools });
   const [focus, setFocus] = useState<FocusPoint | null>(null);
   const [isModelLoading, setIsModelLoading] = useState(true);
   const [isLoadingExiting, setIsLoadingExiting] = useState(false);
   const [navigationDebugMode, setNavigationDebugMode] =
     useState<NavigationDebugMode>("hidden");
   const [draftEditorActive, setDraftEditorActive] = useState(false);
-  const [weatherMode, setWeatherMode] = useState<WeatherMode>("cloudy");
   const draftEditor = useDraftEditor();
 
   useEffect(() => {
@@ -1087,51 +238,13 @@ export function CampusViewer({
   }, [canUseAdvancedTools]);
 
   useEffect(() => {
-    const fetchBuildings = canUseAdvancedTools ? getAdminBuildings : getBuildings;
-    fetchBuildings().then(setBuildings);
-  }, [canUseAdvancedTools]);
-
-  useEffect(() => {
     startUserLocationTracking({ isMobile });
     return () => stopUserLocationTracking();
   }, [isMobile]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function syncWeather() {
-      try {
-        const response = await fetch(OAXACA_WEATHER_URL, {
-          cache: "no-store",
-        });
-
-        if (!response.ok) return;
-
-        const data = (await response.json()) as OpenMeteoCurrentWeather;
-        const nextMode = weatherCodeToMode(data.current);
-
-        if (!cancelled) {
-          setWeatherMode(nextMode);
-        }
-      } catch {
-        // Keep the current fallback mode if the weather service is unavailable.
-      }
-    }
-
-    void syncWeather();
-    const interval = window.setInterval(syncWeather, 10 * 60_000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-    };
-  }, []);
-
-  useEffect(() => {
     if (!controlsRef.current) return;
-
     const controls = controlsRef.current;
-
     if (isMobile) {
       controls.target.set(0, 0, 30);
       controls.object.position.set(0, 130, 200);
@@ -1139,7 +252,6 @@ export function CampusViewer({
       controls.target.set(0, 0, 0);
       controls.object.position.set(0, 180, 0);
     }
-
     controls.update();
   }, [isMobile]);
 
@@ -1162,24 +274,37 @@ export function CampusViewer({
     ) {
       return;
     }
-
+    if (routeDestination) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setFocus({
-      x: selectedBuilding.x,
-      z: selectedBuilding.z,
-    });
-  }, [selectedBuilding]);
+    setFocus({ x: selectedBuilding.x, z: selectedBuilding.z });
+  }, [selectedBuilding, routeDestination]);
 
   useEffect(() => {
-    if (!routeDestination || !mapPosition || !controlsRef.current) return;
-    // Only animate when the destination itself changes, not on every GPS update
+    if (!routeDestination || !mapPosition) return;
     if (routeDestination === prevRouteRef.current) return;
     prevRouteRef.current = routeDestination;
+
+    const userWorld = campusLocalToWorld(mapPosition.x, mapPosition.z);
+    const destWorld =
+      routeDestination.x != null && routeDestination.z != null
+        ? campusLocalToWorld(routeDestination.x, routeDestination.z)
+        : userWorld;
+
+    const midX = (userWorld.x + destWorld.x) / 2;
+    const midZ = (userWorld.z + destWorld.z) / 2;
+
+    const span = Math.sqrt(
+      Math.pow(destWorld.x - userWorld.x, 2) +
+        Math.pow(destWorld.z - userWorld.z, 2),
+    );
+    const camHeight = Math.min(Math.max(span * 0.85 + 50, 70), 210);
+    const pullZ = isMobile ? 35 : 12;
+
     cameraAnimRef.current = {
-      pos: new Vector3().copy(controlsRef.current.object.position),
-      look: new Vector3(mapPosition.x, 0, mapPosition.z),
+      pos: new Vector3(midX, camHeight, midZ + pullZ),
+      look: new Vector3(midX, 0, midZ),
     };
-  }, [routeDestination, mapPosition]);
+  }, [routeDestination, mapPosition, isMobile]);
 
   useEffect(() => {
     if (buildings.length > 0) {
@@ -1194,11 +319,7 @@ export function CampusViewer({
 
   const handleFocusUser = () => {
     if (!mapPosition) return;
-
-    setFocus({
-      x: mapPosition.x,
-      z: mapPosition.z,
-    });
+    setFocus({ x: mapPosition.x, z: mapPosition.z });
   };
 
   const handleResetView = () => {
@@ -1211,29 +332,30 @@ export function CampusViewer({
 
   const handleZoom = (delta: number) => {
     if (!controlsRef.current) return;
-
     const controls = controlsRef.current;
     const offset = controls.object.position.clone().sub(controls.target);
     const factor = delta > 0 ? 1.18 : 0.82;
-
     offset.multiplyScalar(factor);
-
     const length = offset.length();
-
     if (length < (controls.minDistance ?? 20)) return;
     if (length > (controls.maxDistance ?? 350)) return;
-
     controls.object.position.copy(controls.target).add(offset);
     controls.update();
   };
 
   const hasLocation = mapPosition !== null;
   const showNavigationDebug = navigationDebugMode !== "hidden";
-  const hideBuildingLabels = showNavigationDebug || draftEditorActive;
-  const weather = WEATHER_PRESETS[weatherMode];
+  const scene = WEATHER_DEFS[weatherMode].scene;
 
   return (
-    <div style={{ width: "100%", height: "100%", position: "relative", cursor: draftEditorActive ? "crosshair" : undefined }}>
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        position: "relative",
+        cursor: draftEditorActive ? "crosshair" : undefined,
+      }}
+    >
       {!mobilePanelOpen && (
         <ViewerToolbar
           hasLocation={hasLocation}
@@ -1249,9 +371,7 @@ export function CampusViewer({
               return "hidden";
             })
           }
-          onToggleDraftEditor={() =>
-            setDraftEditorActive((current) => !current)
-          }
+          onToggleDraftEditor={() => setDraftEditorActive((current) => !current)}
           canUseAdvancedTools={canUseAdvancedTools}
           isMobile={isMobile}
         />
@@ -1275,22 +395,21 @@ export function CampusViewer({
         dpr={[1, 2]}
         camera={{
           position: isMobile ? [0, 130, 200] : [0, 180, 0],
-          fov: isMobile ? 45 : 45,
+          fov: 45,
         }}
       >
-        <color attach="background" args={[weather.sky]} />
-        <fog attach="fog" args={[weather.fog, weather.fogNear, weather.fogFar]} />
-        <ambientLight intensity={weather.ambient} />
-        <hemisphereLight args={["#dbeafe", "#94a3b8", weather.hemisphere]} />
+        <color attach="background" args={[scene.sky]} />
+        <fog attach="fog" args={[scene.fog, scene.fogNear, scene.fogFar]} />
+        <ambientLight intensity={scene.ambient} />
+        <hemisphereLight args={["#ffedd5", "#94a3b8", scene.hemisphere]} />
         <directionalLight
           position={[60, 90, 30]}
-          intensity={weather.directional}
+          intensity={scene.directional}
           castShadow={false}
         />
-        <StormFlash active={weatherMode === "storm"} />
 
         <gridHelper
-          args={[500, 50, weather.gridPrimary, weather.gridSecondary]}
+          args={[500, 50, scene.gridPrimary, scene.gridSecondary]}
           position={[0, -0.4, 0]}
         />
 
@@ -1307,10 +426,13 @@ export function CampusViewer({
         <Suspense fallback={null}>
           <group rotation={[0, CAMPUS_ROTATION_Y, 0]}>
             <CampusModel />
+            <BuildingLabels
+              buildings={buildings}
+              isMobile={isMobile}
+              hidden={mobilePanelOpen}
+            />
             {canUseAdvancedTools && showNavigationDebug && !draftEditorActive && (
-              <NavigationDebugLayer
-                showOnlyIssues={navigationDebugMode === "issues"}
-              />
+              <NavigationDebugLayer showOnlyIssues={navigationDebugMode === "issues"} />
             )}
             {canUseAdvancedTools && (
               <NavigationDraftEditorLayer
@@ -1321,23 +443,22 @@ export function CampusViewer({
             <RouteLine />
             <DestinationBuildingHighlight />
             <UserLocationMarker />
-            <WeatherParticles mode={weatherMode} isMobile={isMobile} />
-            {!hideBuildingLabels && (
-              <BuildingLabels buildings={buildings} isMobile={isMobile} />
-            )}
+            <WeatherLayer mode={weatherMode} isMobile={isMobile} />
           </group>
         </Suspense>
       </Canvas>
 
-      <WeatherAtmosphere mode={weatherMode} />
+      <WeatherOverlay mode={weatherMode} />
 
       {canUseAdvancedTools && (
-        <WeatherControl current={weatherMode} onChange={setWeatherMode} />
+        <WeatherControls
+          mode={weatherMode}
+          control={weatherControl}
+          onControlChange={setWeatherControl}
+        />
       )}
     </div>
   );
 }
 
 useGLTF.preload(MODEL_PATH);
-
-

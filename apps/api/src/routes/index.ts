@@ -1,9 +1,9 @@
 import { Router } from "express";
-import healthRoutes from "./health.routes.js";
-import authRoutes from "./auth.routes.js";
+import healthRoutes from "../modules/health/health.routes.js";
+import authRoutes from "../modules/auth/auth.routes.js";
 import buildingsRoutes from "../modules/buildings/buildings.routes.js";
 import buildingImagesRoutes from "../modules/building-images/building-images.routes.js";
-import navigationRoutes from "./navigation.routes.js";
+import navigationRoutes from "../modules/navigation/navigation.routes.js";
 import classroomsRoutes from "../modules/classrooms/classrooms.routes.js";
 import {
   buildingProceduresRouter,

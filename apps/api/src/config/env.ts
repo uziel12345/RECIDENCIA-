@@ -36,6 +36,11 @@ export const env = {
   dbPassword: requireEnv("DB_PASSWORD"),
   dbName: requireEnv("DB_NAME"),
   jwtSecret: requireSecureSecret("JWT_SECRET"),
+  // Separate secret for CSRF so a JWT_SECRET leak doesn't also compromise CSRF tokens.
+  // Falls back to JWT_SECRET for backward-compat with existing deployments.
+  csrfSecret: process.env.CSRF_SECRET
+    ? requireSecureSecret("CSRF_SECRET")
+    : requireSecureSecret("JWT_SECRET"),
   jwtExpiresIn: requireEnv("JWT_EXPIRES_IN"),
   corsOrigin: process.env.CORS_ORIGIN ?? "http://localhost:5173",
 };

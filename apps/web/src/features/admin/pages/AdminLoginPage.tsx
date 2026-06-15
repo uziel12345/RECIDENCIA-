@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
@@ -46,7 +46,7 @@ export function AdminLoginPage() {
         placeItems: "center",
         padding: "24px",
         background:
-          "linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #2563eb 100%)",
+          "linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #ea580c 100%)",
       }}
     >
       <section
@@ -61,10 +61,32 @@ export function AdminLoginPage() {
         }}
       >
         <header style={{ marginBottom: "24px" }}>
+          <div
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: "18px",
+              background: "#ffffff",
+              border: "1px solid #fed7aa",
+              display: "grid",
+              placeItems: "center",
+              boxShadow: "0 10px 24px rgba(234, 88, 12, 0.18)",
+              marginBottom: "16px",
+              overflow: "hidden",
+            }}
+            aria-hidden="true"
+          >
+            <img
+              src="/ICONO-TEC.jpeg"
+              alt=""
+              style={{ width: 66, height: 66, objectFit: "contain", display: "block" }}
+            />
+          </div>
+
           <p
             style={{
               margin: "0 0 8px",
-              color: "#2563eb",
+              color: "#ea580c",
               fontWeight: 700,
               fontSize: "14px",
             }}
@@ -216,7 +238,7 @@ export function AdminLoginPage() {
               border: "none",
               borderRadius: "14px",
               padding: "13px 16px",
-              background: loading ? "#94a3b8" : "#2563eb",
+              background: loading ? "#94a3b8" : "#ea580c",
               color: "#ffffff",
               fontWeight: 800,
               fontSize: "15px",
@@ -230,3 +252,4 @@ export function AdminLoginPage() {
     </main>
   );
 }
+

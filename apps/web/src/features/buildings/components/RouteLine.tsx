@@ -2,13 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { Html, Line } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { distanceToEstimatedSeconds } from "@ito-map/shared";
+import { distanceToEstimatedSeconds, type BuildingEntrance } from "@ito-map/shared";
 
 import { useBuildingStore } from "../../../store/building-store";
 import { useLocationStore } from "../../../store/location-store";
 import {
   getBuildingEntrances,
-  type BuildingEntrance,
 } from "../../../services/navigation.service";
 import { useNavigationGraph } from "../navigation/hooks/useNavigationGraph";
 
@@ -24,10 +23,74 @@ type RouteRenderData = {
   estimatedSeconds: number;
 };
 
+type RouteDestination = NonNullable<
+  ReturnType<typeof useBuildingStore.getState>["routeDestination"]
+>;
+
 function calcTotalDistance(path: THREE.Vector3[]): number {
   let d = 0;
   for (let i = 0; i < path.length - 1; i++) d += path[i].distanceTo(path[i + 1]);
   return d;
+}
+
+function normalizeRouteKey(value: string | null | undefined): string {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function expectedEntranceNodeCodes(destination: RouteDestination): Set<string> {
+  const code = normalizeRouteKey(destination.code);
+  const slug = normalizeRouteKey(destination.slug);
+  const name = normalizeRouteKey(destination.name);
+  const candidates = new Set<string>();
+
+  if (slug) candidates.add(`n-acceso-${slug}`);
+
+  if (
+    code === "lab-qui" ||
+    code === "lab-q" ||
+    slug === "lab-quimica" ||
+    name.includes("laboratorio-de-quimica") ||
+    name.includes("lab-ingenieria-quimica")
+  ) {
+    candidates.add("n-acceso-lab-quimica");
+  }
+
+  return candidates;
+}
+
+function findDestinationEntrance(
+  entrances: BuildingEntrance[],
+  destination: RouteDestination
+): BuildingEntrance | null {
+  const byBuildingId = entrances.filter((e) => e.building_id === destination.id);
+  const primaryById = byBuildingId.find((e) => e.is_primary);
+  if (primaryById) return primaryById;
+  if (byBuildingId[0]) return byBuildingId[0];
+
+  const destinationCode = normalizeRouteKey(destination.code);
+  const destinationSlug = normalizeRouteKey(destination.slug);
+  const nodeCodes = expectedEntranceNodeCodes(destination);
+
+  const byCode = entrances.filter(
+    (e) => normalizeRouteKey(e.building_code) === destinationCode
+  );
+  const primaryByCode = byCode.find((e) => e.is_primary);
+  if (primaryByCode) return primaryByCode;
+  if (byCode[0]) return byCode[0];
+
+  if (destinationSlug || nodeCodes.size > 0) {
+    return (
+      entrances.find((e) => nodeCodes.has(normalizeRouteKey(e.node_code))) ??
+      null
+    );
+  }
+
+  return null;
 }
 
 // Devuelve puntos equiespaciados a lo largo del path para las flechas
@@ -143,31 +206,6 @@ function AnimatedRouteLine({ points }: { points: THREE.Vector3[] }) {
 
 // ── Conector punteado usuario → primer nodo ────────────────────────────────────
 
-function UserConnector({
-  userPoint,
-  routeStart,
-}: {
-  userPoint: THREE.Vector3;
-  routeStart: THREE.Vector3;
-}) {
-  if (userPoint.distanceTo(routeStart) < 2) return null;
-
-  return (
-    <Line
-      points={[userPoint, routeStart]}
-      color="#94a3b8"
-      lineWidth={3}
-      dashed
-      dashSize={2.5}
-      gapSize={1.8}
-      transparent
-      opacity={0.65}
-      depthTest={false}
-      renderOrder={19}
-    />
-  );
-}
-
 // ── Marcador de destino ────────────────────────────────────────────────────────
 
 function DestinationMarker({
@@ -177,50 +215,120 @@ function DestinationMarker({
   point: THREE.Vector3;
   name: string;
 }) {
-  const ringRef = useRef<THREE.Mesh>(null);
+  const ring1Ref = useRef<THREE.Mesh>(null);
+  const ring2Ref = useRef<THREE.Mesh>(null);
+  const ring3Ref = useRef<THREE.Mesh>(null);
+  const beamRef = useRef<THREE.Mesh>(null);
 
   useFrame(({ clock }) => {
-    if (!ringRef.current) return;
-    const t = (Math.sin(clock.getElapsedTime() * 2.2) + 1) / 2;
-    ringRef.current.scale.set(1 + t * 0.4, 1 + t * 0.4, 1);
-    (ringRef.current.material as THREE.MeshBasicMaterial).opacity = 0.6 - t * 0.3;
+    const t = clock.getElapsedTime();
+
+    const animateRing = (
+      ref: { current: THREE.Mesh | null },
+      offset: number,
+    ) => {
+      if (!ref.current) return;
+      const progress = ((t + offset) % 2.2) / 2.2;
+      ref.current.scale.set(1 + progress * 4, 1 + progress * 4, 1);
+      (ref.current.material as THREE.MeshBasicMaterial).opacity =
+        (1 - progress) * 0.55;
+    };
+
+    animateRing(ring1Ref, 0);
+    animateRing(ring2Ref, 0.73);
+    animateRing(ring3Ref, 1.47);
+
+    if (beamRef.current) {
+      const pulse = (Math.sin(t * 2.8) + 1) / 2;
+      (beamRef.current.material as THREE.MeshBasicMaterial).opacity =
+        0.06 + pulse * 0.1;
+    }
   });
 
-  const groundPos = new THREE.Vector3(point.x, 0.5, point.z);
+  const gx = point.x;
+  const gz = point.z;
 
   return (
     <>
-      {/* Esfera destino */}
+      {/* Disco de glow en el suelo */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[gx, 0.1, gz]}>
+        <circleGeometry args={[5, 40]} />
+        <meshBasicMaterial color="#ef4444" transparent opacity={0.16} />
+      </mesh>
+
+      {/* 3 anillos expansivos en ola */}
+      <mesh ref={ring1Ref} rotation={[-Math.PI / 2, 0, 0]} position={[gx, 0.25, gz]}>
+        <ringGeometry args={[3.5, 5, 40]} />
+        <meshBasicMaterial color="#ef4444" transparent opacity={0.55} />
+      </mesh>
+      <mesh ref={ring2Ref} rotation={[-Math.PI / 2, 0, 0]} position={[gx, 0.35, gz]}>
+        <ringGeometry args={[3.5, 5, 40]} />
+        <meshBasicMaterial color="#ef4444" transparent opacity={0.55} />
+      </mesh>
+      <mesh ref={ring3Ref} rotation={[-Math.PI / 2, 0, 0]} position={[gx, 0.45, gz]}>
+        <ringGeometry args={[3.5, 5, 40]} />
+        <meshBasicMaterial color="#ef4444" transparent opacity={0.55} />
+      </mesh>
+
+      {/* Polo que conecta el suelo con la esfera */}
+      <mesh position={[gx, point.y / 2, gz]}>
+        <cylinderGeometry args={[0.25, 0.25, point.y, 6]} />
+        <meshStandardMaterial color="#b91c1c" emissive="#b91c1c" emissiveIntensity={0.6} />
+      </mesh>
+
+      {/* Esfera (cabeza del pin) en el extremo de la ruta */}
       <mesh position={point}>
-        <sphereGeometry args={[1.3, 20, 20]} />
-        <meshStandardMaterial color="#ef4444" emissive="#b91c1c" emissiveIntensity={0.7} />
+        <sphereGeometry args={[2.2, 32, 32]} />
+        <meshStandardMaterial color="#ef4444" emissive="#b91c1c" emissiveIntensity={0.9} />
       </mesh>
 
-      {/* Ring pulsante en el suelo */}
-      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={groundPos}>
-        <ringGeometry args={[4.5, 6.5, 32]} />
-        <meshBasicMaterial color="#ef4444" transparent opacity={0.5} side={THREE.DoubleSide} />
+      {/* Punto blanco interior */}
+      <mesh position={point}>
+        <sphereGeometry args={[0.9, 20, 20]} />
+        <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.45} />
       </mesh>
 
-      {/* Label destino */}
-      <Html
-        position={[point.x, point.y + 4, point.z]}
-        center
-      >
+      {/* Beacon beam — haz de luz vertical sobre el pin */}
+      <mesh ref={beamRef} position={[gx, point.y + 20, gz]}>
+        <cylinderGeometry args={[0.5, 1.8, 40, 8, 1, true]} />
+        <meshBasicMaterial
+          color="#ef4444"
+          transparent
+          opacity={0.08}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Label */}
+      <Html position={[gx, point.y + 5.5, gz]} center>
         <div
           style={{
-            background: "rgba(239,68,68,0.94)",
+            background: "rgba(239,68,68,0.95)",
             color: "#fff",
-            padding: "6px 12px",
+            padding: "5px 12px 5px 8px",
             borderRadius: 999,
             fontSize: 11,
             fontWeight: 700,
             whiteSpace: "nowrap",
-            boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
+            boxShadow: "0 6px 20px rgba(0,0,0,0.28)",
             pointerEvents: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            letterSpacing: "0.015em",
           }}
         >
-          Destino — {name}
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.8)",
+              display: "inline-block",
+              flexShrink: 0,
+            }}
+          />
+          {name}
         </div>
       </Html>
     </>
@@ -289,10 +397,10 @@ export function RouteLine() {
       return;
     }
 
-    const destinationEntrance =
-      entrances.find((e) => e.building_id === routeDestination.id && e.is_primary) ??
-      entrances.find((e) => e.building_id === routeDestination.id) ??
-      null;
+    const destinationEntrance = findDestinationEntrance(
+      entrances,
+      routeDestination
+    );
 
     if (!destinationEntrance) {
       setCurrentRouteNodeIds([]);
@@ -325,16 +433,30 @@ export function RouteLine() {
       return;
     }
 
-    const totalDistance = calcTotalDistance(rawPath);
-    const estimatedSeconds = distanceToEstimatedSeconds(totalDistance);
-
-    // Elevar puntos a ROUTE_HEIGHT para visibilidad
-    const routePoints = rawPath.map(
-      (p) => new THREE.Vector3(p.x, p.y + ROUTE_HEIGHT, p.z)
-    );
     const userStartPoint = new THREE.Vector3(
       mapPosition.x, mapPosition.y + ROUTE_HEIGHT, mapPosition.z
     );
+    const navigationPoints = rawPath.map(
+      (p) => new THREE.Vector3(p.x, p.y + ROUTE_HEIGHT, p.z)
+    );
+    const routePoints =
+      navigationPoints[0] && userStartPoint.distanceTo(navigationPoints[0]) > 1
+        ? [userStartPoint, ...navigationPoints]
+        : navigationPoints;
+
+    // Override the last waypoint with the building's actual GLB position (same
+    // coordinates as the orange beacon), so the route and destination marker
+    // always land on the building regardless of entrance-node coordinate accuracy.
+    const buildingX = Number(routeDestination.x);
+    const buildingZ = Number(routeDestination.z);
+    if (Number.isFinite(buildingX) && Number.isFinite(buildingZ)) {
+      routePoints[routePoints.length - 1] = new THREE.Vector3(
+        buildingX, ROUTE_HEIGHT, buildingZ
+      );
+    }
+
+    const totalDistance = calcTotalDistance(routePoints);
+    const estimatedSeconds = distanceToEstimatedSeconds(totalDistance);
     const endPoint = routePoints[routePoints.length - 1]!;
 
     setCurrentRouteNodeIds([]);
@@ -357,7 +479,7 @@ export function RouteLine() {
 
   if (!routeData) return null;
 
-  const { routePoints, userStartPoint, endPoint, destinationName } = routeData;
+  const { routePoints, endPoint, destinationName } = routeData;
 
   // Puntos de la ruta en el plano XZ (para calcular flechas)
   const arrowData = sampleArrowPoints(routePoints, ARROW_SPACING);
@@ -365,8 +487,6 @@ export function RouteLine() {
   return (
     <>
       {/* Conector punteado: posición GPS → inicio de ruta */}
-      <UserConnector userPoint={userStartPoint} routeStart={routePoints[0]!} />
-
       {/* Línea principal animada */}
       <AnimatedRouteLine points={routePoints} />
 
@@ -379,37 +499,6 @@ export function RouteLine() {
           index={i}
         />
       ))}
-
-      {/* Marcador inicio */}
-      <mesh position={routePoints[0] ?? userStartPoint}>
-        <sphereGeometry args={[1.1, 20, 20]} />
-        <meshStandardMaterial color="#22c55e" emissive="#166534" emissiveIntensity={0.4} />
-      </mesh>
-
-      <Html
-        position={[
-          userStartPoint.x,
-          userStartPoint.y + 3.5,
-          userStartPoint.z,
-        ]}
-        center
-      >
-        <div
-          style={{
-            background: "rgba(34,197,94,0.94)",
-            color: "#fff",
-            padding: "6px 12px",
-            borderRadius: 999,
-            fontSize: 11,
-            fontWeight: 700,
-            whiteSpace: "nowrap",
-            boxShadow: "0 8px 18px rgba(0,0,0,0.22)",
-            pointerEvents: "none",
-          }}
-        >
-          Tu ubicacion
-        </div>
-      </Html>
 
       {/* Marcador destino */}
       <DestinationMarker point={endPoint} name={destinationName} />

@@ -30,14 +30,14 @@ type MobileSnapZone = {
 const MOBILE_SNAP_ZONES: MobileSnapZone[] = [
   {
     buildingName: "Centro de Cómputo",
-    centerX: 0.7661,
-    centerZ: -126.9385,
-    radius: 140,
+    centerX: 0,
+    centerZ: -112,
+    radius: 50,
     bounds: {
-      minX: -20,
-      maxX: 95,
-      minZ: -185,
-      maxZ: -75,
+      minX: -18,
+      maxX: 32,
+      minZ: -145,
+      maxZ: -82,
     },
   },
 ];

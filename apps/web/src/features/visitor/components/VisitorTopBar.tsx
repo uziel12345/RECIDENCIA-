@@ -1,4 +1,4 @@
-import { SearchIcon, LogOutIcon, MapIcon } from "../../../components/ui/Icons";
+import { SearchIcon, LogOutIcon } from "../../../components/ui/Icons";
 
 interface VisitorTopBarProps {
   onSearchClick: () => void;
@@ -10,7 +10,7 @@ export function VisitorTopBar({ onSearchClick, onLogout }: VisitorTopBarProps) {
     <header className="visitor-top-bar">
       <div className="visitor-top-bar__brand">
         <div className="visitor-top-bar__brand-icon">
-          <MapIcon size={20} />
+          <img src="/ICONO-TEC.jpeg" alt="" className="visitor-top-bar__logo-img" />
         </div>
 
         <div className="visitor-top-bar__brand-text">

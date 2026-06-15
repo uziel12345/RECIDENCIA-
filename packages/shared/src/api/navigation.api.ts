@@ -24,6 +24,7 @@ export function getBuildingEntrancesApi(): Promise<BuildingEntrance[]> {
   );
 }
 
+// No usado actualmente. El frontend usa A* client-side. Ver useNavigationGraph.ts
 export function getNavigationRouteApi(
   fromNodeId: string,
   toNodeId: string
@@ -69,6 +70,10 @@ export function deleteNavigationNodeApi(id: string): Promise<{ id: string }> {
 
 export function deleteNavigationEdgeApi(id: string): Promise<{ id: string }> {
   return apiDelete<{ id: string }>(`/navigation/edges/${encodeURIComponent(id)}`);
+}
+
+export function deleteOrphanAccessNodesApi(): Promise<{ count: number }> {
+  return apiDelete<{ count: number }>("/navigation/nodes/orphan-accesses");
 }
 
 export function resetAllNavigationApi(): Promise<void> {

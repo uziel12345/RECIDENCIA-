@@ -6,23 +6,24 @@ import {
   createNavigationNode,
   deleteNavigationEdge,
   deleteNavigationNode,
+  deleteOrphanAccessNodesController,
   getBuildingEntrances,
   getNavigationEdges,
   getNavigationNodes,
   getNavigationRoute,
   invalidateNavigationCacheController,
   resetAllNavigationController,
-} from "../controllers/navigation.controller.js";
+} from "./navigation.controller.js";
 import {
   createBuildingEntranceSchema,
   createNavigationEdgeSchema,
   createNavigationNodeSchema,
   navigationIdSchema,
-} from "../controllers/navigation.schema.js";
-import { authenticate } from "../modules/auth/middlewares/authenticate.middleware.js";
-import { authorizePermission } from "../modules/auth/middlewares/authorize.middleware.js";
-import { validateBody, validateParams } from "../shared/middlewares/validator.js";
-import { asyncHandler } from "../shared/utils/async-handler.js";
+} from "./navigation.schema.js";
+import { authenticate } from "../auth/middlewares/authenticate.middleware.js";
+import { authorizePermission } from "../auth/middlewares/authorize.middleware.js";
+import { validateBody, validateParams } from "../../shared/middlewares/validator.js";
+import { asyncHandler } from "../../shared/utils/async-handler.js";
 
 // Límite específico para los endpoints públicos del grafo (previene scraping masivo)
 const navigationReadLimit = rateLimit({
@@ -68,6 +69,13 @@ router.post(
 );
 
 router.delete(
+  "/nodes/orphan-accesses",
+  authenticate,
+  authorizePermission("can_edit_navigation"),
+  asyncHandler(deleteOrphanAccessNodesController)
+);
+
+router.delete(
   "/nodes/:id",
   authenticate,
   authorizePermission("can_edit_navigation"),
@@ -93,7 +101,7 @@ router.post(
 router.delete(
   "/all",
   authenticate,
-  authorizePermission("can_manage_admin_users"),
+  authorizePermission("can_edit_navigation"),
   asyncHandler(resetAllNavigationController)
 );
 

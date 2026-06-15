@@ -46,6 +46,7 @@ export function BuildingSearch({
   buildings = [],
   onSelectResult,
 }: BuildingSearchProps) {
+  const searchTerm = useBuildingStore((state) => state.searchTerm);
   const setSearchTerm = useBuildingStore((state) => state.setSearchTerm);
   const setSelectedBuilding = useBuildingStore((state) => state.setSelectedBuilding);
   const setRouteDestination = useBuildingStore((state) => state.setRouteDestination);
@@ -68,6 +69,12 @@ export function BuildingSearch({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (searchTerm !== inputValue) {
+      setInputValue(searchTerm);
+    }
+  }, [inputValue, searchTerm]);
 
   useEffect(() => {
     const term = inputValue.trim();

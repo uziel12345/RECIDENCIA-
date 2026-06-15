@@ -1,18 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { Html, Line } from "@react-three/drei";
 import { useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
-import type { Building, EdgePathType, NavigationNode } from "@ito-map/shared";
+import type { Building, EdgePathType, NavigationEdge, NavigationNode } from "@ito-map/shared";
 import {
   createBuildingEntrance,
   createNavigationEdge,
   createNavigationNode,
   deleteNavigationEdge,
   deleteNavigationNode,
+  deleteOrphanAccessNodes as deleteOrphanAccessNodesService,
   getNavigationEdges,
   getNavigationNodes,
   resetAllNavigation as resetAllNavigationService,
-  type NavigationEdge,
 } from "../../services/navigation.service";
 
 // â"€â"€â"€ Types â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
@@ -91,6 +91,7 @@ export type DraftEditorControls = {
   setAddNodeType: (type: "intersection" | "building_access") => void;
   addNodeToDatabase: (x: number, z: number) => Promise<void>;
   resetAllNavigation: () => Promise<void>;
+  deleteOrphanAccessNodes: () => Promise<void>;
   draftEntranceLinks: DraftEntranceLink[];
   addEntranceLink: (node: NavigationNode) => void;
   removeEntranceLink: (id: number) => void;
@@ -712,6 +713,25 @@ export function useDraftEditor(): DraftEditorControls {
     setEditSubModeState("select");
   }
 
+  async function deleteOrphanAccessNodes() {
+    setSaving(true);
+    setSaveError(null);
+    setSaveMessage(null);
+    try {
+      const { count } = await deleteOrphanAccessNodesService();
+      setRefreshKey((v) => v + 1);
+      setSaveMessage(
+        count > 0
+          ? `${count} acceso${count !== 1 ? "s" : ""} sin conexión eliminado${count !== 1 ? "s" : ""}.`
+          : "No hay accesos sin conexión."
+      );
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "No se pudo limpiar accesos");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function resetAllNavigation() {
     setSaving(true);
     setSaveError(null);
@@ -774,6 +794,7 @@ export function useDraftEditor(): DraftEditorControls {
     setAddNodeType,
     addNodeToDatabase,
     resetAllNavigation,
+    deleteOrphanAccessNodes,
     draftEntranceLinks,
     addEntranceLink,
     removeEntranceLink,
@@ -900,7 +921,7 @@ export function NavigationDraftEditorLayer({
               }}
             >
               <sphereGeometry args={[1.2, 10, 10]} />
-              <meshBasicMaterial color="#2563eb" transparent opacity={0.55} />
+              <meshBasicMaterial color="#ea580c" transparent opacity={0.55} />
             </mesh>
           </group>
         ))}
@@ -1031,7 +1052,7 @@ export function NavigationDraftEditorLayer({
               ? "#22d3ee"
               : node.node_type === "building_access"
                 ? "#f43f5e"
-                : "#2563eb";
+                : "#ea580c";
           return (
             <group key={node.id} position={[Number(node.x), DRAFT_Y + 0.15, Number(node.z)]}>
               <mesh
@@ -1580,4 +1601,5 @@ export function NavigationDraftEditorPanel({
     </div>
   );
 }
+
 

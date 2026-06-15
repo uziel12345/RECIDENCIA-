@@ -14,11 +14,15 @@ const BEACON_HEIGHT = 28;
 function useBuildingGlow(modelNodeName: string | null | undefined, scene: THREE.Group) {
   const meshRef = useRef<THREE.Mesh | null>(null);
   const originalRef = useRef<THREE.Material | null>(null);
+  const clonedRef = useRef<THREE.MeshStandardMaterial | null>(null);
   const elapsed = useRef(0);
 
   useEffect(() => {
+    // Cleanup previous highlight before applying the new one
     if (meshRef.current && originalRef.current) {
       meshRef.current.material = originalRef.current;
+      clonedRef.current?.dispose();
+      clonedRef.current = null;
       meshRef.current = null;
       originalRef.current = null;
     }
@@ -38,12 +42,19 @@ function useBuildingGlow(modelNodeName: string | null | undefined, scene: THREE.
         : (child.material as THREE.Material);
       originalRef.current = src;
       const cloned = src.clone() as THREE.MeshStandardMaterial;
+      // Cambiar color base a naranja para que sea visualmente obvio
+      cloned.color.set(PULSE_COLOR);
+      cloned.emissive.set(PULSE_COLOR);
+      cloned.emissiveIntensity = 0.4;
+      clonedRef.current = cloned;
       child.material = cloned;
     });
 
     return () => {
       if (meshRef.current && originalRef.current) {
         meshRef.current.material = originalRef.current;
+        clonedRef.current?.dispose();
+        clonedRef.current = null;
         meshRef.current = null;
         originalRef.current = null;
       }
@@ -56,8 +67,7 @@ function useBuildingGlow(modelNodeName: string | null | undefined, scene: THREE.
     const pulse = (Math.sin(elapsed.current * 2.8) + 1) / 2;
     const mat = meshRef.current.material as THREE.MeshStandardMaterial;
     if (mat.emissive) {
-      mat.emissive.copy(PULSE_COLOR);
-      mat.emissiveIntensity = 0.2 + pulse * 0.6;
+      mat.emissiveIntensity = 0.3 + pulse * 0.7;
     }
   });
 }
@@ -119,7 +129,7 @@ function DestinationBeacon({
       </mesh>
 
       {/* Label flotante */}
-      <Html position={[0, coneY + 6, 0]} center distanceFactor={90}>
+      <Html position={[0, coneY + 6, 0]} center distanceFactor={90} occlude zIndexRange={[35, 0]}>
         <div
           style={{
             background: "#f97316",

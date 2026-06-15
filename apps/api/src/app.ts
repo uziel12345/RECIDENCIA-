@@ -13,7 +13,6 @@ import { errorHandler } from "./shared/middlewares/error-handler.js";
 import { env } from "./config/env.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const apiPackageDir = path.resolve(__dirname, "..");
 const webDist = path.resolve(__dirname, "../../web/dist");
 
 const app = express();
@@ -30,6 +29,7 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         "script-src": ["'self'", "'wasm-unsafe-eval'"],
+        "connect-src": ["'self'", "https://api.open-meteo.com"],
       },
     },
     crossOriginResourcePolicy: {
@@ -58,7 +58,7 @@ app.use(
 );
 
 app.use(cookieParser());
-app.use(express.json());
+app.use(express.json({ limit: "2mb" }));
 
 app.use(
   "/api",
@@ -74,7 +74,7 @@ app.use(
   })
 );
 
-app.use("/uploads", express.static(path.resolve(apiPackageDir, "uploads")));
+app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const CSRF_SKIP_PATHS = new Set(["/auth/login"]);

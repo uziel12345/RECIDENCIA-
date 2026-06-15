@@ -15,7 +15,6 @@ import {
 import { MobileQuickActions } from "../campus/components/MobileQuickActions";
 import { ROUTES } from "../../types/routes";
 import {
-  GraduationCapIcon,
   CalendarIcon,
   LogOutIcon,
   MapIcon,
@@ -62,6 +61,14 @@ export function StudentPage() {
       .catch(() => setTotalBuildings(0));
   }, []);
 
+  // Cuando se establece un destino de ruta en móvil, abre el sheet a "peek"
+  // para que el usuario vea el estado de la ruta (errores, distancia, Cambiar)
+  useEffect(() => {
+    if (isMobile && routeDestination) {
+      setSheetState((s) => (s === "closed" ? "peek" : s));
+    }
+  }, [routeDestination, isMobile]);
+
   const handleLogout = () => {
     logout();
     navigate(ROUTES.WELCOME);
@@ -74,16 +81,21 @@ export function StudentPage() {
     setSheetState("closed");
   };
 
+  const closeMobilePanels = () => {
+    setShowSchedule(false);
+    setShowServices(false);
+    setSheetState("closed");
+  };
+
   const handleSelectService = (service: CampusService) => {
     setSearchTerm(service.searchTerm);
-    setShowServices(false);
+    closeMobilePanels();
     setViewMode("map");
     setSheetState("full");
   };
 
   const openBuildingSearch = () => {
-    setShowSchedule(false);
-    setShowServices(false);
+    closeMobilePanels();
     setViewMode("map");
     setSheetState("full");
     window.setTimeout(() => {
@@ -92,20 +104,17 @@ export function StudentPage() {
   };
 
   const openSchedule = () => {
-    setShowServices(false);
-    setSheetState("closed");
+    closeMobilePanels();
     setShowSchedule(true);
   };
 
   const openServices = () => {
-    setShowSchedule(false);
-    setSheetState("closed");
+    closeMobilePanels();
     setShowServices(true);
   };
 
   const openBuildings = () => {
-    setShowSchedule(false);
-    setShowServices(false);
+    closeMobilePanels();
     setViewMode("map");
     setSheetState("full");
   };
@@ -157,7 +166,7 @@ export function StudentPage() {
           <div className="student-page__sidebar-header">
             <div className="student-page__user">
               <div className="student-page__user-avatar">
-                <GraduationCapIcon size={20} />
+                <img src="/ICONO-TEC.jpeg" alt="" className="student-page__user-logo" />
               </div>
 
               <div className="student-page__user-info">

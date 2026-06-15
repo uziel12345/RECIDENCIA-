@@ -3,7 +3,7 @@ import { useBuildingStore } from "../../../store/building-store";
 import { CategoryBadge } from "../../../components/ui/CategoryBadge";
 import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
-import { resolveBuildingImageUrl } from "../../../utils/resolve-api-asset-url";
+import { resolveApiAssetUrl } from "../../../utils/resolve-api-asset-url";
 import { getBuildingImagesApi } from "@ito-map/shared";
 import type { BuildingImage } from "@ito-map/shared";
 import type { Building } from "../types/building";
@@ -13,12 +13,11 @@ type BuildingInfoCardProps = {
   onClose?: () => void;
 };
 
-function getBuildingDescription(building: Building): string {
+function getBuildingDescription(building: Building): string | null {
   if (building.description && building.description.trim() !== "") {
     return building.description.trim();
   }
-
-  return `Este edificio pertenece a la categoría ${building.category_name}. Puedes seleccionarlo como destino para generar una ruta dentro del campus.`;
+  return null;
 }
 
 export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
@@ -29,9 +28,11 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
   const routeDestination = useBuildingStore((state) => state.routeDestination);
 
   const [galleryImages, setGalleryImages] = useState<BuildingImage[]>([]);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
+    setFailedImages(new Set());
     getBuildingImagesApi(building.id)
       .then((imgs) => {
         if (!cancelled) {
@@ -42,8 +43,11 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
     return () => { cancelled = true; };
   }, [building.id]);
 
+  const visibleImages = galleryImages.filter((img) => !failedImages.has(img.id));
+
   const accent = getCategoryAccent(building.category_name);
-  const coverUrl = resolveBuildingImageUrl(building.cover_image_url);
+  const coverUrl = resolveApiAssetUrl(building.cover_image_url);
+  const description = getBuildingDescription(building);
 
   return (
     <article
@@ -119,21 +123,12 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
           </div>
         )}
 
-        <div className="ito-info-card__row ito-info-card__row--block">
-          <span className="ito-info-card__label">Descripción</span>
-          <p className="ito-info-card__text">
-            {getBuildingDescription(building)}
-          </p>
-        </div>
-
-        <div className="ito-info-card__row ito-info-card__row--block">
-          <span className="ito-info-card__label">Referencia 3D</span>
-          <p className="ito-info-card__text ito-info-card__text--muted">
-            {building.model_node_name
-              ? building.model_node_name
-              : "Sin referencia de modelo disponible."}
-          </p>
-        </div>
+        {description && (
+          <div className="ito-info-card__row ito-info-card__row--block">
+            <span className="ito-info-card__label">Descripción</span>
+            <p className="ito-info-card__text">{description}</p>
+          </div>
+        )}
 
         {routeError && routeDestination?.id === building.id && (
           <div
@@ -157,7 +152,7 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
           </div>
         )}
 
-        {galleryImages.length > 0 && (
+        {visibleImages.length > 0 && (
           <div className="ito-info-card__row ito-info-card__row--block">
             <span className="ito-info-card__label">Imágenes</span>
             <div
@@ -170,12 +165,15 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
               }}
               aria-label="Galería de imágenes del edificio"
             >
-              {galleryImages.slice(0, 6).map((img) => (
+              {visibleImages.slice(0, 6).map((img) => (
                 <img
                   key={img.id}
-                  src={resolveBuildingImageUrl(img.image_url) ?? undefined}
+                  src={resolveApiAssetUrl(img.image_url) ?? undefined}
                   alt={img.title ?? building.name}
                   loading="lazy"
+                  onError={() =>
+                    setFailedImages((prev) => new Set([...prev, img.id]))
+                  }
                   style={{
                     width: 80,
                     height: 60,

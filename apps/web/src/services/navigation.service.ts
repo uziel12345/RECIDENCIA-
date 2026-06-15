@@ -4,6 +4,7 @@ import {
   createNavigationNodeApi,
   deleteNavigationEdgeApi,
   deleteNavigationNodeApi,
+  deleteOrphanAccessNodesApi,
   getBuildingEntrancesApi,
   getNavigationEdgesApi,
   getNavigationNodesApi,
@@ -14,15 +15,6 @@ import {
   type CreateNavigationNodeInput,
   type NavigationEdge,
   type NavigationNode,
-} from "@ito-map/shared";
-
-export type {
-  BuildingEntrance,
-  CreateBuildingEntranceInput,
-  CreateNavigationEdgeInput,
-  CreateNavigationNodeInput,
-  NavigationEdge,
-  NavigationNode,
 } from "@ito-map/shared";
 
 export async function getNavigationNodes(): Promise<NavigationNode[]> {
@@ -61,6 +53,10 @@ export async function deleteNavigationNode(id: string): Promise<{ id: string }> 
 
 export async function deleteNavigationEdge(id: string): Promise<{ id: string }> {
   return deleteNavigationEdgeApi(id);
+}
+
+export async function deleteOrphanAccessNodes(): Promise<{ count: number }> {
+  return deleteOrphanAccessNodesApi();
 }
 
 export async function resetAllNavigation(): Promise<void> {

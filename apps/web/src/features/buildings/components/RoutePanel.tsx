@@ -1,6 +1,7 @@
 import { useBuildingStore } from "../../../store/building-store";
 import { useLocationStore } from "../../../store/location-store";
 import { Icon } from "../../../components/ui/Icons";
+import { formatPositiveDistance, formatPositiveDuration } from "@ito-map/shared";
 import {
   applyManualCalibration,
   clearManualCalibration,
@@ -18,27 +19,11 @@ type RoutePanelProps = {
   canUseDemo?: boolean;
 };
 
-// Devuelve "" para ocultar el label cuando no hay distancia válida (distinto de shared formatDistance)
-function formatRouteDistance(meters: number): string {
-  if (!Number.isFinite(meters) || meters <= 0) return "";
-  if (meters < 1000) return `${Math.round(meters)} m`;
-  return `${(meters / 1000).toFixed(1)} km`;
-}
-
-function formatDuration(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds <= 0) return "";
-  if (seconds < 60) return `${Math.round(seconds)} seg`;
-  const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  const rem = minutes % 60;
-  return `${hours} h ${rem} min`;
-}
-
 export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelProps) {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const routeDestination = useBuildingStore((state) => state.routeDestination);
   const setRouteDestination = useBuildingStore((state) => state.setRouteDestination);
+  const setSelectedBuilding = useBuildingStore((state) => state.setSelectedBuilding);
   const clearRoute = useBuildingStore((state) => state.clearRoute);
   const routeStats = useBuildingStore((state) => state.routeStats);
   const routeError = useBuildingStore((state) => state.routeError);
@@ -50,10 +35,11 @@ export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelPr
 
   const hasValidLocation = permission === "granted" && mapPosition !== null;
   const isSimulated = !!manualCalibration;
-  const canGenerate = !!selectedBuilding && hasValidLocation;
+  // Habilitado siempre que haya edificio seleccionado; el error de GPS lo muestra RouteLine
+  const canGenerate = !!selectedBuilding;
 
-  const distanceLabel = routeStats ? formatRouteDistance(routeStats.totalDistance) : null;
-  const durationLabel = routeStats ? formatDuration(routeStats.estimatedSeconds) : null;
+  const distanceLabel = routeStats ? formatPositiveDistance(routeStats.totalDistance) : null;
+  const durationLabel = routeStats ? formatPositiveDuration(routeStats.estimatedSeconds) : null;
 
   const statusInfo = (() => {
     if (permission === "granted") {
@@ -88,6 +74,11 @@ export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelPr
   })();
 
   const destinationName = routeDestination?.name ?? selectedBuilding?.name ?? null;
+
+  function handleClearAll() {
+    clearRoute();
+    setSelectedBuilding(null);
+  }
 
   return (
     <section
@@ -175,10 +166,14 @@ export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelPr
             <div className="ito-route-step__value">
               {destinationName ?? "Selecciona un edificio de la lista"}
             </div>
-            {routeDestination && (
-              <div className="ito-route-step__hint">
-                Ruta activa hacia este edificio
-              </div>
+            {selectedBuilding && !routeDestination && (
+              <div className="ito-route-step__hint">Listo para trazar ruta</div>
+            )}
+            {routeDestination && !routeStats && !routeError && (
+              <div className="ito-route-step__hint">Calculando ruta…</div>
+            )}
+            {routeDestination && routeStats && (
+              <div className="ito-route-step__hint">Ruta activa</div>
             )}
           </div>
           {routeDestination && (
@@ -186,7 +181,7 @@ export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelPr
               type="button"
               className="ito-btn ito-btn--ghost"
               style={{ fontSize: 12, padding: "5px 10px", marginTop: 4, alignSelf: "flex-start" }}
-              onClick={clearRoute}
+              onClick={handleClearAll}
               title="Cambiar destino"
             >
               <Icon name="search" size={13} />
@@ -226,7 +221,7 @@ export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelPr
           type="button"
           className="ito-btn ito-btn--primary"
           onClick={() => {
-            if (selectedBuilding && hasValidLocation) {
+            if (selectedBuilding) {
               setRouteDestination(selectedBuilding);
             }
           }}
@@ -240,8 +235,8 @@ export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelPr
         <button
           type="button"
           className="ito-btn ito-btn--ghost"
-          onClick={clearRoute}
-          disabled={!routeDestination}
+          onClick={handleClearAll}
+          disabled={!selectedBuilding && !routeDestination}
         >
           <Icon name="trash" size={16} />
           <span>Limpiar</span>

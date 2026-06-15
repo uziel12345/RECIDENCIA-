@@ -143,3 +143,40 @@ export const getCategories = asyncHandler(async (_req: Request, res: Response) =
   const data = await buildingsService.getCategories();
   return sendSuccess(res, data);
 });
+
+// ── Building services ─────────────────────────────────────────────────────────
+
+export const getBuildingServices = asyncHandler(
+  async (req: Request, res: Response) => {
+    const id = getSingleParam(req.params.id);
+    const data = await buildingsService.getServices(id);
+    return sendSuccess(res, data);
+  }
+);
+
+export const addBuildingService = asyncHandler(
+  async (req: Request, res: Response) => {
+    const id = getSingleParam(req.params.id);
+    const name = String(req.body.name ?? "").trim();
+    const description = req.body.description ? String(req.body.description).trim() : null;
+    const service = await buildingsService.addService(id, name, description);
+    auditLog({
+      req, action: "ADD_BUILDING_SERVICE", userId: req.authUser?.id,
+      resourceType: "building_service", resourceId: service?.id,
+      details: { building_id: id, name },
+    });
+    return sendSuccess(res, service, 201, "Servicio agregado correctamente");
+  }
+);
+
+export const deleteBuildingService = asyncHandler(
+  async (req: Request, res: Response) => {
+    const serviceId = getSingleParam(req.params.serviceId);
+    await buildingsService.removeService(serviceId);
+    auditLog({
+      req, action: "DELETE_BUILDING_SERVICE", userId: req.authUser?.id,
+      resourceType: "building_service", resourceId: serviceId,
+    });
+    return sendSuccess(res, { id: serviceId }, 200, "Servicio eliminado correctamente");
+  }
+);

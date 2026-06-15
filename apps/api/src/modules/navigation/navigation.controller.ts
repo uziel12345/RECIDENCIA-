@@ -1,12 +1,12 @@
 import type { Request, Response } from "express";
-import { ApiError } from "../shared/errors/api-error.js";
-import { sendSuccess } from "../shared/http/response.js";
-import { auditLog } from "../shared/services/audit.service.js";
+import { ApiError } from "../../shared/errors/api-error.js";
+import { sendSuccess } from "../../shared/http/response.js";
+import { auditLog } from "../../shared/services/audit.service.js";
 import {
   calculateNavigationRoute,
   invalidateNavigationCache,
-} from "../modules/navigation/navigation.service.js";
-import { NavigationRepository } from "../modules/navigation/navigation.repository.js";
+} from "./navigation.service.js";
+import { NavigationRepository } from "./navigation.repository.js";
 
 const repo = new NavigationRepository();
 
@@ -140,6 +140,22 @@ export async function deleteNavigationEdge(req: Request, res: Response) {
     resourceType: "navigation_edge", resourceId: id,
   });
   return sendSuccess(res, { id }, 200, "Arista desactivada correctamente");
+}
+
+export async function deleteOrphanAccessNodesController(req: Request, res: Response) {
+  const count = await repo.deactivateOrphanAccessNodes();
+
+  invalidateNavigationCache();
+  auditLog({
+    req, action: "DELETE_ORPHAN_ACCESS_NODES", userId: req.authUser?.id,
+    details: { count },
+  });
+  return sendSuccess(
+    res,
+    { count },
+    200,
+    `${count} acceso${count !== 1 ? "s" : ""} sin conexión eliminado${count !== 1 ? "s" : ""}`
+  );
 }
 
 // ── Route / cache ─────────────────────────────────────────────────────────────

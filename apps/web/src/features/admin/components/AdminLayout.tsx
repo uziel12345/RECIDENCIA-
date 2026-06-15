@@ -1,8 +1,9 @@
-import type { CSSProperties, ReactNode } from "react";
+﻿import type { CSSProperties, ReactNode } from "react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ROLE_PERMISSIONS } from "@ito-map/shared";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
+import { AppFooter } from "../../../components/ui/AppFooter";
 import { ROUTES } from "../../../types/routes";
 
 interface AdminLayoutProps {
@@ -131,9 +132,7 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
         {/* Cabecera / brand */}
         <div style={collapsed ? s.brandMini : s.brand}>
           <div style={s.brandIcon}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5">
-              <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
-            </svg>
+            <img src="/ICONO-TEC.jpeg" alt="ITO" style={{ width: 30, height: 30, objectFit: "contain" }} />
           </div>
           {!collapsed && (
             <div style={s.brandText}>
@@ -247,9 +246,17 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
             </button>
           </div>
         )}
+
+        <AppFooter variant="dark" />
       </aside>
 
-      <main style={{ ...s.content, ...contentStyle }}>{children}</main>
+      <main style={{ ...s.content, ...contentStyle }}>
+        <div style={s.contentBrand} aria-hidden="true">
+          <img src="/ICONO-TEC.jpeg" alt="" style={s.contentBrandIcon} />
+          <span style={s.contentBrandText}>Panel Admin ITO</span>
+        </div>
+        {children}
+      </main>
     </div>
   );
 }
@@ -284,15 +291,16 @@ const s: Record<string, CSSProperties> = {
     padding: "0 0 8px",
   },
   brandIcon: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     borderRadius: 9,
-    background: "rgba(59,130,246,0.12)",
-    border: "1px solid rgba(59,130,246,0.22)",
+    background: "#ffffff",
+    border: "1px solid rgba(234,88,12,0.22)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
+    overflow: "hidden",
   },
   brandText: {
     overflow: "hidden",
@@ -323,7 +331,7 @@ const s: Record<string, CSSProperties> = {
     background: "none",
     border: "none",
     cursor: "pointer",
-    color: "#3b82f6",
+    color: "#f97316",
     width: "100%",
     height: 22,
   },
@@ -336,7 +344,7 @@ const s: Record<string, CSSProperties> = {
     background: "none",
     border: "none",
     cursor: "pointer",
-    color: "#3b82f6",
+    color: "#f97316",
     width: "100%",
     height: 22,
   },
@@ -392,7 +400,7 @@ const s: Record<string, CSSProperties> = {
     color: "#cbd5e1",
   },
   navItemActive: {
-    background: "rgba(59,130,246,0.13)",
+    background: "rgba(234,88,12,0.13)",
     color: "#f8fafc",
     fontWeight: 600,
   },
@@ -403,7 +411,7 @@ const s: Record<string, CSSProperties> = {
     flexShrink: 0,
   },
   navIconActive: {
-    color: "#3b82f6",
+    color: "#f97316",
   },
   navLabel: {
     flex: 1,
@@ -413,7 +421,7 @@ const s: Record<string, CSSProperties> = {
     width: 6,
     height: 6,
     borderRadius: "50%",
-    background: "#3b82f6",
+    background: "#f97316",
     flexShrink: 0,
   },
   spacer: {
@@ -436,7 +444,7 @@ const s: Record<string, CSSProperties> = {
     width: 30,
     height: 30,
     borderRadius: 8,
-    background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+    background: "linear-gradient(135deg, #f97316 0%, #c2410c 100%)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -496,6 +504,35 @@ const s: Record<string, CSSProperties> = {
     height: "100%",
     overflowY: "auto",
     background: "#0f172a",
+    position: "relative",
+  },
+  contentBrand: {
+    position: "absolute",
+    top: 18,
+    right: 24,
+    zIndex: 8,
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "6px 10px 6px 6px",
+    borderRadius: 999,
+    background: "rgba(255,255,255,0.94)",
+    border: "1px solid rgba(254,215,170,0.9)",
+    boxShadow: "0 10px 24px rgba(15,23,42,0.18)",
+    pointerEvents: "none",
+  },
+  contentBrandIcon: {
+    width: 28,
+    height: 28,
+    objectFit: "contain",
+    display: "block",
+  },
+  contentBrandText: {
+    color: "#7c2d12",
+    fontSize: 11,
+    fontWeight: 800,
+    letterSpacing: "0.02em",
+    whiteSpace: "nowrap",
   },
   tooltip: {
     position: "fixed",

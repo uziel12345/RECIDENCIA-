@@ -1,4 +1,4 @@
-import { GraduationCapIcon, SearchIcon, LogOutIcon } from "../../../components/ui/Icons";
+import { SearchIcon, LogOutIcon } from "../../../components/ui/Icons";
 
 interface StudentTopBarProps {
   userName: string;
@@ -11,7 +11,7 @@ export function StudentTopBar({ userName, onSearchClick, onLogout }: StudentTopB
     <header className="student-top-bar">
       <div className="student-top-bar__left">
         <div className="student-top-bar__avatar">
-          <GraduationCapIcon size={18} />
+          <img src="/ICONO-TEC.jpeg" alt="" className="student-top-bar__logo" />
         </div>
         <div className="student-top-bar__info">
           <span className="student-top-bar__greeting">Hola,</span>

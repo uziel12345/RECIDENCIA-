@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import type { Building, EdgePathType } from "@ito-map/shared";
 import type { DraftEditorControls } from "./NavigationDraftEditorLayer";
@@ -32,7 +32,7 @@ const S = {
     cursor: "pointer",
     background:
       variant === "primary"
-        ? "#2563eb"
+        ? "#ea580c"
         : variant === "danger"
           ? "#dc2626"
           : "#1e293b",
@@ -46,8 +46,8 @@ const S = {
     padding: "5px 6px",
     fontSize: 11,
     background: active ? "#1e3a5f" : "#1e293b",
-    color: active ? "#93c5fd" : "#64748b",
-    border: active ? "1px solid #2563eb" : "1px solid #334155",
+    color: active ? "#fdba74" : "#64748b",
+    border: active ? "1px solid #ea580c" : "1px solid #334155",
     cursor: "pointer",
     borderRadius: 4,
     fontWeight: active ? 700 : 400,
@@ -111,12 +111,14 @@ export function NavigationEditorModal({ controls, buildings, onClose }: Props) {
     setAddNodeType,
     deleteExistingEdge,
     resetAllNavigation,
+    deleteOrphanAccessNodes,
     draftEntranceLinks,
     removeEntranceLink,
     saveEntranceLinks,
   } = controls;
 
   const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmOrphan, setConfirmOrphan] = useState(false);
 
   const hasAnything =
     completedPaths.length > 0 || activePath !== null || entranceNodes.length > 0;
@@ -148,10 +150,10 @@ export function NavigationEditorModal({ controls, buildings, onClose }: Props) {
     fontSize: 11,
     fontWeight: active ? 700 : 400,
     background: active ? "#1e3a5f" : "transparent",
-    color: active ? "#93c5fd" : "#64748b",
+    color: active ? "#fdba74" : "#64748b",
     border: "none",
     cursor: "pointer",
-    borderBottom: active ? "2px solid #3b82f6" : "2px solid transparent",
+    borderBottom: active ? "2px solid #f97316" : "2px solid transparent",
     transition: "all 0.12s",
     letterSpacing: "0.02em",
   });
@@ -813,8 +815,71 @@ export function NavigationEditorModal({ controls, buildings, onClose }: Props) {
             padding: "12px 16px",
             borderTop: "1px solid #1a2d4a",
             flexShrink: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
           }}
         >
+          {/* Limpiar accesos sin conexión */}
+          {!confirmOrphan ? (
+            <button
+              type="button"
+              onClick={() => setConfirmOrphan(true)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                background: "transparent",
+                border: "1px solid #78350f",
+                color: "#fbbf24",
+                fontSize: 12,
+                borderRadius: 6,
+                cursor: "pointer",
+                fontWeight: 600,
+              }}
+            >
+              Limpiar accesos sin conexión
+            </button>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <div
+                style={{
+                  color: "#fbbf24",
+                  fontSize: 11,
+                  textAlign: "center",
+                  padding: "4px 0",
+                }}
+              >
+                ¿Eliminar todos los accesos sin aristas?
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button
+                  type="button"
+                  style={{ ...S.btn(), flex: 1 }}
+                  onClick={() => setConfirmOrphan(false)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    ...S.btn("danger"),
+                    flex: 1,
+                    opacity: saving ? 0.5 : 1,
+                    background: "#78350f",
+                    borderColor: "#78350f",
+                  }}
+                  disabled={saving}
+                  onClick={async () => {
+                    await deleteOrphanAccessNodes();
+                    setConfirmOrphan(false);
+                  }}
+                >
+                  {saving ? "..." : "Sí, limpiar"}
+                </button>
+              </div>
+            </div>
+          )}
+
           {!confirmReset ? (
             <button
               type="button"
@@ -893,3 +958,4 @@ export function NavigationEditorModal({ controls, buildings, onClose }: Props) {
     </div>
   );
 }
+

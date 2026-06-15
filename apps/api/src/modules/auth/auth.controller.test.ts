@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Request, Response } from "express";
 import { loginController, logoutController, meController } from "./auth.controller.js";
-import { loginAdmin, invalidateAdminToken } from "../modules/auth/auth.service.js";
-import type { AuthUser } from "../modules/auth/auth.service.js";
-import type { LoginInput } from "../modules/auth/auth.schema.js";
+import { loginAdmin, invalidateAdminToken } from "./auth.service.js";
+import type { AuthUser } from "./auth.service.js";
+import type { LoginInput } from "./auth.schema.js";
 
-vi.mock("../modules/auth/auth.service.js", () => ({
+vi.mock("./auth.service.js", () => ({
   loginAdmin: vi.fn(),
   invalidateAdminToken: vi.fn(),
 }));
 
-vi.mock("../shared/services/audit.service.js", () => ({
+vi.mock("../../shared/services/audit.service.js", () => ({
   auditLog: vi.fn(),
 }));
 

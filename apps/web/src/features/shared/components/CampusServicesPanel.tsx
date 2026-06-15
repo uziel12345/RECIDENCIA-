@@ -9,6 +9,7 @@ import {
   ShieldIcon,
   UsersIcon,
 } from "../../../components/ui/Icons";
+import { useBuildingStore } from "../../../store/building-store";
 
 export type CampusService = {
   id: string;
@@ -121,7 +122,7 @@ const CATEGORY_LABELS: Record<CampusService["category"], string> = {
 const CATEGORY_STYLES: Record<CampusService["category"], CSSProperties> = {
   administrative: {
     background: "#eff6ff",
-    color: "#1d4ed8",
+    color: "#c2410c",
   },
   student: {
     background: "#ecfdf5",
@@ -155,7 +156,13 @@ export function CampusServicesPanel({
   compact = false,
   onSelectService,
 }: CampusServicesPanelProps) {
+  const setSearchTerm = useBuildingStore((state) => state.setSearchTerm);
   const visibleServices = compact ? SERVICES.slice(0, 6) : SERVICES;
+
+  function handleSelectService(service: CampusService) {
+    setSearchTerm(service.searchTerm);
+    onSelectService?.(service);
+  }
 
   return (
     <section style={compact ? styles.compactPanel : styles.panel}>
@@ -181,7 +188,7 @@ export function CampusServicesPanel({
             key={service.id}
             type="button"
             style={compact ? styles.compactCard : styles.card}
-            onClick={() => onSelectService?.(service)}
+            onClick={() => handleSelectService(service)}
           >
             <span style={styles.iconBox}>
               <ServiceIcon name={service.icon} />
@@ -237,7 +244,7 @@ const styles: Record<string, CSSProperties> = {
   },
   overline: {
     margin: "0 0 4px",
-    color: "#2563eb",
+    color: "#ea580c",
     fontSize: "11px",
     fontWeight: 900,
     textTransform: "uppercase",
@@ -261,7 +268,7 @@ const styles: Record<string, CSSProperties> = {
     height: "34px",
     borderRadius: "999px",
     background: "#eff6ff",
-    color: "#1d4ed8",
+    color: "#c2410c",
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
@@ -310,13 +317,13 @@ const styles: Record<string, CSSProperties> = {
     width: "42px",
     height: "42px",
     borderRadius: "15px",
-    background: "#dbeafe",
-    color: "#1d4ed8",
+    background: "#ffedd5",
+    color: "#c2410c",
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
-    boxShadow: "inset 0 0 0 1px rgba(37, 99, 235, 0.08)",
+    boxShadow: "inset 0 0 0 1px rgba(234, 88, 12, 0.08)",
   },
   cardContent: {
     minWidth: 0,
@@ -367,7 +374,7 @@ const styles: Record<string, CSSProperties> = {
   },
   actionText: {
     flexShrink: 0,
-    color: "#2563eb",
+    color: "#ea580c",
     fontSize: "11px",
     fontWeight: 900,
     textTransform: "uppercase",

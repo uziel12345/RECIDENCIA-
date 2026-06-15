@@ -1,15 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useBuildingStore } from "../../../store/building-store";
 import { useLocationStore } from "../../../store/location-store";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { RoutePanel } from "./RoutePanel";
-import { getBuildings } from "../../../services/buildings.service";
+import { useBuildings } from "../../../hooks/useBuildings";
 import { BuildingSearch } from "./BuildingSearch";
 import { BuildingInfoCard } from "./BuildingInfoCard";
 import { CategoryBadge } from "../../../components/ui/CategoryBadge";
 import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
 import { SearchResultCard } from "../../search/SearchResultCard";
+import { AppFooter } from "../../../components/ui/AppFooter";
 import type { Building } from "../types/building";
 import type { SearchResult } from "@ito-map/shared";
 
@@ -90,42 +91,11 @@ export function BuildingSidebar({
   const canUseDemo = canUseRoutes && import.meta.env.DEV;
   const isPublicDesktop = !isMobile && !canUseRoutes;
 
-  const [buildings, setBuildings] = useState<Building[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const { buildings, loading, error: loadError } = useBuildings();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showAllBuildings, setShowAllBuildings] = useState(false);
   const [selectedSearchResult, setSelectedSearchResult] =
     useState<SearchResult | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function loadBuildings() {
-      try {
-        const data = await getBuildings();
-
-        if (mounted) {
-          setBuildings(data);
-        }
-      } catch (error) {
-        console.error("Error cargando edificios:", error);
-        if (mounted) {
-          setLoadError("No se pudo conectar al servidor. Verifica tu conexión e intenta de nuevo.");
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    loadBuildings();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   const categories = useMemo(() => {
     const map = new Map<string, number>();
@@ -227,10 +197,10 @@ export function BuildingSidebar({
           : `ito-sidebar${isPublicDesktop ? " ito-sidebar--public" : ""}`
       }
     >
-      {!isMobile && canUseRoutes && (
+      {(canUseRoutes || isMobile) && (
         <header className="ito-brand">
           <div className="ito-brand__mark" aria-hidden="true">
-            <Icon name="map" size={22} />
+            <img src="/ICONO-TEC.jpeg" alt="ITO" className="ito-brand__logo-img" />
           </div>
 
           <div className="ito-brand__text">
@@ -274,7 +244,7 @@ export function BuildingSidebar({
         </div>
       )}
 
-      {!isMobile && canUseRoutes && (
+      {(canUseRoutes || isMobile) && (
         <div className="ito-quick-stats" role="list">
           <div className="ito-quick-stat" role="listitem">
             <span className="ito-quick-stat__value">{totalActive}</span>
@@ -317,7 +287,7 @@ export function BuildingSidebar({
         </div>
       )}
 
-      {!isMobile && categories.length > 0 && (
+      {categories.length > 0 && (
         <div className="ito-sidebar__section">
           <div
             className="ito-chip-row"
@@ -538,11 +508,7 @@ export function BuildingSidebar({
         </div>
       )}
 
-      {!isMobile && (
-        <footer className="ito-sidebar__footer">
-          <span>Instituto Tecnológico de Oaxaca</span>
-        </footer>
-      )}
+      <AppFooter variant="light" />
     </aside>
   );
 }

@@ -1,4 +1,4 @@
-import { useBuildingStore } from "../../../store/building-store";
+﻿import { useBuildingStore } from "../../../store/building-store";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { getBuildings } from "../../../services/buildings.service";
 import { useEffect, useRef, useState } from "react";
@@ -29,7 +29,7 @@ const quickDestinations: QuickDestination[] = [
     description: "Informes y tramites de ingreso",
     icon: <GraduationCapIcon size={20} />,
     buildingCodes: ["ASE", "DIR"],
-    color: "#2563eb",
+    color: "#ea580c",
     bgColor: "#eff6ff",
   },
   {
@@ -152,3 +152,4 @@ export function QuickDestinations({ compact = false, onSelect }: QuickDestinatio
     </div>
   );
 }
+

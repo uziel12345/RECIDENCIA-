@@ -132,6 +132,9 @@ export function invalidateNavigationCache(): void {
   navigationGraphCache = null;
 }
 
+// Endpoint /navigation/route — actualmente no usado por el frontend.
+// El cliente descarga el grafo completo y ejecuta A* localmente.
+// Ver useNavigationGraph.ts en apps/web.
 export async function calculateNavigationRoute(
   fromNodeId: string,
   toNodeId: string

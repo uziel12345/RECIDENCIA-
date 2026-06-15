@@ -24,7 +24,8 @@ function verifyCsrfSignature(token: string, secret: string): boolean {
 export function csrfProtection(req: Request, res: Response, next: NextFunction) {
   const tokenFromHeader = req.headers["x-csrf-token"] as string | undefined;
   const tokenFromCookie = req.cookies?.csrf_token as string | undefined;
-  const secret = process.env.JWT_SECRET ?? "";
+  // Prefer dedicated CSRF_SECRET; fall back to JWT_SECRET for backward compatibility.
+  const secret = process.env.CSRF_SECRET ?? process.env.JWT_SECRET ?? "";
 
   if (
     !tokenFromCookie ||

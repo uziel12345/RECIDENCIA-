@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense, useState, useEffect } from "react";
 import { WelcomePage } from "../features/welcome/WelcomePage";
 import { OnboardingPage } from "../features/onboarding/OnboardingPage";
@@ -7,6 +7,7 @@ import { useAuthStore } from "../store/auth-store";
 import { useAdminAuthStore } from "../store/admin-auth-store";
 import { ROUTES } from "../types/routes";
 import { ROLE_PERMISSIONS, type RolePermissions } from "@ito-map/shared";
+import { ErrorBoundary } from "../components/ui/ErrorBoundary";
 
 const StudentPage = lazy(async () => {
   const { StudentPage } = await import("../features/student/StudentPage");
@@ -60,7 +61,7 @@ function MapLoadingFallback() {
         inset: 0,
         display: "grid",
         placeItems: "center",
-        background: "linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #1e3a8a 100%)",
+        background: "linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #7c2d12 100%)",
       }}
     >
       <div style={{ textAlign: "center" }}>
@@ -71,7 +72,7 @@ function MapLoadingFallback() {
             height: 44,
             borderRadius: "50%",
             border: "3px solid rgba(255,255,255,0.12)",
-            borderTopColor: "#3b82f6",
+            borderTopColor: "#f97316",
             margin: "0 auto 20px",
           }}
         />
@@ -87,6 +88,79 @@ function MapLoadingFallback() {
           Cargando mapa 3D…
         </p>
       </div>
+    </div>
+  );
+}
+
+function AdminLoadingFallback() {
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#0f172a",
+        display: "flex",
+        alignItems: "flex-start",
+        padding: "32px 24px",
+        gap: 0,
+      }}
+    >
+      {/* Sidebar skeleton */}
+      <div
+        style={{
+          width: 220,
+          minHeight: "calc(100vh - 64px)",
+          background: "rgba(255,255,255,0.04)",
+          borderRadius: 12,
+          flexShrink: 0,
+          marginRight: 24,
+          padding: "16px 12px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+        }}
+      >
+        {[80, 60, 60, 60, 60, 60].map((w, i) => (
+          <div
+            key={i}
+            style={{
+              height: 36,
+              borderRadius: 8,
+              background: "rgba(255,255,255,0.06)",
+              width: `${w}%`,
+              animation: "pulse 1.5s ease-in-out infinite",
+            }}
+          />
+        ))}
+      </div>
+      {/* Content skeleton */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
+        <div
+          style={{
+            height: 48,
+            borderRadius: 10,
+            background: "rgba(255,255,255,0.06)",
+            width: "40%",
+            animation: "pulse 1.5s ease-in-out infinite",
+          }}
+        />
+        <div
+          style={{
+            height: 280,
+            borderRadius: 12,
+            background: "rgba(255,255,255,0.04)",
+            animation: "pulse 1.5s ease-in-out infinite",
+          }}
+        />
+        <div
+          style={{
+            height: 180,
+            borderRadius: 12,
+            background: "rgba(255,255,255,0.04)",
+            animation: "pulse 1.5s ease-in-out infinite",
+          }}
+        />
+      </div>
+      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
     </div>
   );
 }
@@ -118,7 +192,7 @@ function AdminProtectedRoute({
       <Navigate
         to={
           permission === "can_view_buildings"
-            ? ROUTES.ADMIN_LOGIN
+            ? ROUTES.WELCOME
             : ROUTES.ADMIN_BUILDINGS
         }
         replace
@@ -159,9 +233,11 @@ export default function App() {
           path={ROUTES.ADMIN_BUILDINGS}
           element={
             <AdminProtectedRoute permission="can_view_buildings">
-              <Suspense fallback={null}>
-                <AdminBuildingsPage />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<AdminLoadingFallback />}>
+                  <AdminBuildingsPage />
+                </Suspense>
+              </ErrorBoundary>
             </AdminProtectedRoute>
           }
         />
@@ -169,9 +245,11 @@ export default function App() {
           path={ROUTES.ADMIN_CATEGORIES}
           element={
             <AdminProtectedRoute permission="can_view_buildings">
-              <Suspense fallback={null}>
-                <AdminCategoriesPage />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<AdminLoadingFallback />}>
+                  <AdminCategoriesPage />
+                </Suspense>
+              </ErrorBoundary>
             </AdminProtectedRoute>
           }
         />
@@ -179,9 +257,11 @@ export default function App() {
           path={ROUTES.ADMIN_NAVIGATION}
           element={
             <AdminProtectedRoute permission="can_edit_navigation">
-              <Suspense fallback={<MapLoadingFallback />}>
-                <AdminNavigationPage />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<MapLoadingFallback />}>
+                  <AdminNavigationPage />
+                </Suspense>
+              </ErrorBoundary>
             </AdminProtectedRoute>
           }
         />
@@ -189,9 +269,11 @@ export default function App() {
           path={ROUTES.ADMIN_USERS}
           element={
             <AdminProtectedRoute permission="can_manage_admin_users">
-              <Suspense fallback={null}>
-                <AdminUsersPage />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<AdminLoadingFallback />}>
+                  <AdminUsersPage />
+                </Suspense>
+              </ErrorBoundary>
             </AdminProtectedRoute>
           }
         />
@@ -199,9 +281,11 @@ export default function App() {
           path={ROUTES.ADMIN_STUDENT_LOCATION}
           element={
             <AdminProtectedRoute permission="can_view_student_location">
-              <Suspense fallback={null}>
-                <AdminStudentLocationPage />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<AdminLoadingFallback />}>
+                  <AdminStudentLocationPage />
+                </Suspense>
+              </ErrorBoundary>
             </AdminProtectedRoute>
           }
         />
@@ -209,9 +293,11 @@ export default function App() {
           path={ROUTES.ADMIN_PROFESSOR_LOCATION}
           element={
             <AdminProtectedRoute permission="can_view_professor_location">
-              <Suspense fallback={null}>
-                <AdminProfessorLocationPage />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<AdminLoadingFallback />}>
+                  <AdminProfessorLocationPage />
+                </Suspense>
+              </ErrorBoundary>
             </AdminProtectedRoute>
           }
         />
@@ -221,9 +307,11 @@ export default function App() {
           path={ROUTES.STUDENT}
           element={
             <PublicRoute requiresRole="student">
-              <Suspense fallback={<MapLoadingFallback />}>
-                <StudentPage />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<MapLoadingFallback />}>
+                  <StudentPage />
+                </Suspense>
+              </ErrorBoundary>
             </PublicRoute>
           }
         />
@@ -233,9 +321,11 @@ export default function App() {
           path={ROUTES.VISITOR}
           element={
             <PublicRoute requiresRole="visitor">
-              <Suspense fallback={<MapLoadingFallback />}>
-                <VisitorPage />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<MapLoadingFallback />}>
+                  <VisitorPage />
+                </Suspense>
+              </ErrorBoundary>
             </PublicRoute>
           }
         />
@@ -266,3 +356,4 @@ function MapRedirect() {
       return <Navigate to={ROUTES.WELCOME} replace />;
   }
 }
+

@@ -1,14 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Html, Line } from "@react-three/drei";
 import * as THREE from "three";
+import type { BuildingEntrance, NavigationEdge, NavigationNode } from "@ito-map/shared";
 import { useBuildingStore } from "../../store/building-store";
 import {
   getBuildingEntrances,
   getNavigationEdges,
   getNavigationNodes,
-  type BuildingEntrance,
-  type NavigationEdge,
-  type NavigationNode,
 } from "../../services/navigation.service";
 
 const DEBUG_NODE_Y = 3.2;
@@ -18,7 +16,7 @@ const MIN_DIAGONAL_EDGE_DISTANCE = 30;
 const LONG_EDGE_DISTANCE = 90;
 
 const EDGE_COLORS: Record<string, string> = {
-  walkway: "#2563eb",
+  walkway: "#ea580c",
   hallway: "#16a34a",
   outdoor: "#f59e0b",
   ramp: "#8b5cf6",
@@ -33,11 +31,11 @@ function nodeColor(node: NavigationNode, entrances: BuildingEntrance[]): string 
   const isEntrance = entrances.some((entrance) => entrance.node_id === node.id);
 
   if (isEntrance) return "#ef4444";
-  if (node.node_type === "intersection") return "#2563eb";
+  if (node.node_type === "intersection") return "#ea580c";
   if (node.node_type === "building_access") return "#ef4444";
   if (node.node_type === "poi") return "#8b5cf6";
 
-  return "#2563eb";
+  return "#ea580c";
 }
 
 type DebugEdge = {
@@ -288,7 +286,7 @@ export function NavigationDebugLayer({
             : nodeColor(node, entrances);
 
         const radius = isIsolated ? 1.4 : isRouteNode ? 1.55 : 1.05;
-        const showLabel = isHovered || isRouteNode || isIsolated;
+        const showLabel = isHovered || isRouteNode;
 
         return (
           <group key={node.id} position={[Number(node.x), DEBUG_NODE_Y, Number(node.z)]}>

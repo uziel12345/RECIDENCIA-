@@ -73,6 +73,10 @@ export function OnboardingPage() {
           Volver
         </button>
 
+        <div className="onboarding-card__logo" aria-hidden="true">
+          <img src="/ICONO-TEC.jpeg" alt="" className="onboarding-card__logo-img" />
+        </div>
+
         <p className="onboarding-card__label">Mapa interactivo ITO</p>
 
         <h1 className="onboarding-card__title">{content.title}</h1>

@@ -1,11 +1,3 @@
-import type { UserRole } from "../store/auth-store";
-
-export interface RouteConfig {
-  path: string;
-  allowedRoles?: UserRole[];
-  requiresAuth?: boolean;
-}
-
 export const ROUTES = {
   WELCOME: "/",
   ONBOARDING: "/onboarding",

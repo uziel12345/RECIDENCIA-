@@ -1,9 +1,9 @@
-import { useNavigate } from "react-router-dom";
+﻿import { useNavigate } from "react-router-dom";
 import { useState, type CSSProperties } from "react";
 import { useAuthStore } from "../../store/auth-store";
 import { useAdminAuthStore } from "../../store/admin-auth-store";
 import { ROUTES } from "../../types/routes";
-import { MapIcon, GraduationCapIcon, UsersIcon, BuildingIcon } from "../../components/ui/Icons";
+import { GraduationCapIcon, UsersIcon, BuildingIcon } from "../../components/ui/Icons";
 
 interface RoleCard {
   id: "student" | "visitor" | "admin-access";
@@ -98,7 +98,7 @@ export function WelcomePage() {
         <header className="welcome-page__header">
           <div className="welcome-page__logo">
             <div className="welcome-page__logo-icon">
-              <MapIcon size={26} />
+              <img src="/ICONO-TEC.jpeg" alt="ITO" className="welcome-page__logo-img" />
             </div>
             <div className="welcome-page__logo-text">
               <h1>Mapa ITO</h1>
@@ -208,10 +208,10 @@ const styles: Record<string, CSSProperties> = {
     flexWrap: "wrap",
   },
   primaryButton: {
-    border: "1px solid #1d4ed8",
+    border: "1px solid #c2410c",
     borderRadius: "12px",
     padding: "10px 14px",
-    background: "#2563eb",
+    background: "#ea580c",
     color: "#ffffff",
     fontWeight: 800,
     cursor: "pointer",
@@ -226,3 +226,4 @@ const styles: Record<string, CSSProperties> = {
     cursor: "pointer",
   },
 };
+

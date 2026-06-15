@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+﻿import type { CSSProperties } from "react";
 import { useState } from "react";
 import type { Building } from "@ito-map/shared";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
@@ -116,6 +116,7 @@ export function AdminBuildingsPage() {
                 isEditing
                 editingBuildingName={safeText(editingBuilding?.name)}
                 saving={saving}
+                buildingId={editingBuilding?.id}
                 onSubmit={handleSubmitBuilding}
                 onCancelEdit={handleCancelEdit}
                 onNameChange={handleNameChange}
@@ -217,7 +218,7 @@ const s: Record<string, CSSProperties> = {
     margin: "0 0 6px",
     fontSize: 11,
     fontWeight: 700,
-    color: "#3b82f6",
+    color: "#f97316",
     textTransform: "uppercase",
     letterSpacing: "0.08em",
   },
@@ -361,3 +362,4 @@ const s: Record<string, CSSProperties> = {
     fontSize: 13.5,
   },
 };
+
