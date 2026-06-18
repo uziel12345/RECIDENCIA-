@@ -5,6 +5,7 @@ export const createProfessorSchema = z.object({
     .string({ required_error: "El número de empleado es obligatorio" })
     .min(1, "El número de empleado no puede estar vacío")
     .max(20),
+  rfc: z.string().min(1).max(13).nullable().optional(),
   full_name: z
     .string({ required_error: "El nombre completo es obligatorio" })
     .min(1, "El nombre no puede estar vacío")
@@ -31,6 +32,25 @@ export const professorStatusSchema = z.object({
 
 export const professorEmployeeNumberSchema = z.object({
   employeeNumber: z.string().min(1).max(20),
+});
+
+export const professorSearchQuerySchema = z.object({
+  q: z.string().min(1).max(255),
+  period: z
+    .string()
+    .regex(/^\d{4}-[1-4]$/, "El periodo debe tener formato YYYY-N con N entre 1 y 4 (ej. 2026-1)")
+    .optional(),
+  at: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/, "El parametro 'at' debe tener formato HH:MM")
+    .refine(
+      (val) => {
+        const [h, m] = val.split(":").map(Number);
+        return h >= 0 && h <= 23 && m >= 0 && m <= 59;
+      },
+      { message: "La hora debe estar entre 00:00 y 23:59" }
+    )
+    .optional(),
 });
 
 export type CreateProfessorInput = z.infer<typeof createProfessorSchema>;

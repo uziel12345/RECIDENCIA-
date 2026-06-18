@@ -1,5 +1,10 @@
-import { apiGet } from "./client.js";
-import type { StudentLocation, ProfessorLocation } from "../types/academic.types.js";
+import { apiGet, apiUpload } from "./client.js";
+import type {
+  StudentLocation,
+  ProfessorLocation,
+  ProfessorLocationSearch,
+  ProfessorScheduleImportResult,
+} from "../types/academic.types.js";
 
 export function getStudentLocationApi(
   controlNumber: string,
@@ -25,4 +30,21 @@ export function getProfessorLocationApi(
   return apiGet<ProfessorLocation>(
     `/professors/${encodeURIComponent(employeeNumber)}/location${qs ? `?${qs}` : ""}`
   );
+}
+
+export function searchProfessorLocationApi(
+  q: string,
+  opts?: { period?: string; at?: string }
+): Promise<ProfessorLocationSearch> {
+  const params = new URLSearchParams();
+  params.set("q", q);
+  if (opts?.period) params.set("period", opts.period);
+  if (opts?.at) params.set("at", opts.at);
+  return apiGet<ProfessorLocationSearch>(`/professors/location/search?${params.toString()}`);
+}
+
+export function importProfessorSchedulesApi(file: File): Promise<ProfessorScheduleImportResult> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiUpload<ProfessorScheduleImportResult>("/professors/import-schedules", formData);
 }
