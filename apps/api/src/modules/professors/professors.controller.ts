@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { asyncHandler } from "../../shared/utils/async-handler.js";
 import { sendSuccess } from "../../shared/http/response.js";
 import { auditLog } from "../../shared/services/audit.service.js";
+import { ApiError } from "../../shared/errors/api-error.js";
 import { ProfessorsService } from "./professors.service.js";
 
 const service = new ProfessorsService();
@@ -39,6 +40,46 @@ export const getProfessorLocation = asyncHandler(async (req: Request, res: Respo
   });
 
   return sendSuccess(res, data);
+});
+
+export const searchProfessorLocation = asyncHandler(async (req: Request, res: Response) => {
+  const q = typeof req.query.q === "string" ? req.query.q : "";
+  const period = typeof req.query.period === "string" ? req.query.period : undefined;
+  const at = typeof req.query.at === "string" ? req.query.at : undefined;
+
+  const data = await service.searchLocation(q, period, at);
+
+  auditLog({
+    req,
+    action: "SEARCH_PROFESSOR_LOCATION",
+    userId: req.authUser?.id,
+    resourceType: "professor",
+    details: { q, period, at },
+  });
+
+  return sendSuccess(res, data);
+});
+
+export const importProfessorSchedules = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.file?.buffer) {
+    throw new ApiError(400, "El archivo Excel es obligatorio.");
+  }
+
+  const data = await service.importSchedules(req.file.buffer);
+
+  auditLog({
+    req,
+    action: "IMPORT_PROFESSOR_SCHEDULES",
+    userId: req.authUser?.id,
+    resourceType: "professor",
+    details: {
+      rows_read: data.rows_read,
+      schedules_created: data.schedules_created,
+      warnings: data.warnings.length,
+    },
+  });
+
+  return sendSuccess(res, data, 201);
 });
 
 export const createProfessor = asyncHandler(async (req: Request, res: Response) => {

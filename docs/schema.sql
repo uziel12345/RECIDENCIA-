@@ -331,6 +331,7 @@ CREATE TABLE IF NOT EXISTS students (
 CREATE TABLE IF NOT EXISTS professors (
   id              VARCHAR(36)   NOT NULL,
   employee_number VARCHAR(20)   NOT NULL,
+  rfc             VARCHAR(13)   NULL,
   full_name       VARCHAR(255)  NOT NULL,
   email           VARCHAR(255)  NULL,
   department      VARCHAR(255)  NOT NULL,
@@ -341,6 +342,7 @@ CREATE TABLE IF NOT EXISTS professors (
 
   PRIMARY KEY (id),
   UNIQUE KEY uk_professors_employee_number (employee_number),
+  KEY idx_professors_rfc        (rfc),
   KEY idx_professors_is_active  (is_active),
   KEY idx_professors_deleted_at (deleted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -352,12 +354,17 @@ CREATE TABLE IF NOT EXISTS professors (
 CREATE TABLE IF NOT EXISTS schedules (
   id           VARCHAR(36)   NOT NULL,
   subject      VARCHAR(255)  NOT NULL,
+  subject_code VARCHAR(50)   NULL,
+  subject_name VARCHAR(255)  NULL,
   professor_id VARCHAR(36)   NOT NULL,
   classroom_id VARCHAR(36)   NOT NULL,
   day_of_week  TINYINT UNSIGNED NOT NULL COMMENT '1=Lunes…7=Domingo (ISO)',
   start_time   TIME          NOT NULL,
   end_time     TIME          NOT NULL,
   period       VARCHAR(10)   NOT NULL COMMENT 'Ej: 2026-1',
+  group_code   VARCHAR(50)   NULL,
+  career_code  VARCHAR(50)   NULL,
+  career_name  VARCHAR(255)  NULL,
   created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
