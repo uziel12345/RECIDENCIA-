@@ -28,3 +28,4 @@ export function resolveApiAssetUrl(url: string | null | undefined): string | nul
     ? `${window.location.origin}${normalizedUrl}`
     : normalizedUrl;
 }
+export const resolveBuildingImageUrl = resolveApiAssetUrl;
