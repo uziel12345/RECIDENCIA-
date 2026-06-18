@@ -221,14 +221,6 @@ export function useAdminBuildings() {
   }
 
   async function handleDelete(building: Building) {
-    const confirmed = window.confirm(
-      `¿Seguro que deseas eliminar "${safeText(
-        building.name
-      )}"? Se hará soft delete.`
-    );
-
-    if (!confirmed) return;
-
     setActionLoadingId(building.id);
     setError(null);
     setMessage(null);

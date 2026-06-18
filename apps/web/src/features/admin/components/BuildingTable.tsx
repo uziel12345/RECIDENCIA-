@@ -1,4 +1,4 @@
-﻿import type { CSSProperties, Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import type { Building } from "@ito-map/shared";
 import type { AdminBuildingStatusFilter } from "../hooks/useAdminBuildings";
 import { safeText } from "../hooks/useBuildingForm";
@@ -27,6 +27,13 @@ type BuildingTableProps = {
   onDelete: (building: Building) => void | Promise<void>;
 };
 
+const fieldCls =
+  "min-h-11 w-full rounded-[10px] border border-[#334155] bg-[#0f172a] px-3.5 text-[13.5px] text-[#e2e8f0] outline-none transition-[border-color,box-shadow] duration-[180ms] focus:border-[#ea580c] focus:ring-2 focus:ring-[rgba(234,88,12,0.35)]";
+const ghostBtn =
+  "inline-flex min-h-11 items-center justify-center rounded-[10px] border border-[#334155] bg-transparent px-3.5 text-[13px] font-semibold text-[#94a3b8] transition-[background-color,color,transform] duration-[180ms] hover:-translate-y-px hover:bg-[#0f172a] hover:text-[#e2e8f0] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.35)]";
+const rowBtn =
+  "inline-flex items-center justify-center rounded-lg px-2.5 py-1.5 text-[12.5px] font-semibold transition-[background-color,transform] duration-[180ms] hover:-translate-y-px active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.35)]";
+
 export function BuildingTable({
   buildings,
   filteredBuildings,
@@ -50,20 +57,27 @@ export function BuildingTable({
   onToggleStatus,
   onDelete,
 }: BuildingTableProps) {
+  const showActions = canEditBuildings || canEditPhotos;
+
   return (
-    <section style={styles.tableCard}>
-      <div style={styles.tableHeader}>
+    <section className="overflow-hidden rounded-[18px] border border-[#334155] bg-[#1e293b] p-[22px] shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
+      <div className="mb-4 flex items-start justify-between gap-4">
         <div>
-          <h2 style={styles.sectionTitle}>Listado</h2>
-          <p style={styles.text}>
+          <h2 className="m-0 mb-1 text-[18px] font-bold text-[#f1f5f9]">
+            Listado
+          </h2>
+          <p className="m-0 text-[13px] leading-relaxed text-[#64748b]">
             Mostrando {buildings.length} de {totalRecords} edificios.
           </p>
         </div>
 
-        <div style={styles.tableHeaderActions}>
+        <div className="flex flex-wrap items-center justify-end gap-2.5">
           {canEditNavigation ? (
-            <a href="/admin/navigation" style={styles.primaryLink}>
-              Mapa de navegacion
+            <a
+              href="/admin/navigation"
+              className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-[10px] border border-[rgba(234,88,12,0.4)] bg-[rgba(234,88,12,0.15)] px-3.5 text-[13px] font-bold text-[#fdba74] no-underline transition-[background-color,transform] duration-[180ms] hover:-translate-y-px hover:bg-[rgba(234,88,12,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.45)]"
+            >
+              Mapa de navegación
             </a>
           ) : null}
 
@@ -71,27 +85,26 @@ export function BuildingTable({
             type="button"
             onClick={onRefresh}
             disabled={loadingBuildings}
-            style={styles.secondaryButton}
+            className={ghostBtn}
           >
-            {loadingBuildings ? "Cargando..." : "Recargar"}
+            {loadingBuildings ? "Cargando…" : "Recargar"}
           </button>
         </div>
       </div>
 
-      <div style={styles.filters}>
+      <div className="mb-4 grid grid-cols-[1fr_180px] gap-3">
         <input
           value={searchTerm}
           onChange={(event) => onSearchTermChange(event.target.value)}
-          style={styles.searchInput}
+          className={fieldCls}
           placeholder="Buscar por nombre, código o categoría"
         />
-
         <select
           value={statusFilter}
           onChange={(event) =>
             onStatusFilterChange(event.target.value as AdminBuildingStatusFilter)
           }
-          style={styles.select}
+          className={`${fieldCls} font-semibold`}
         >
           <option value="all">Todos</option>
           <option value="active">Solo activos</option>
@@ -99,94 +112,105 @@ export function BuildingTable({
         </select>
       </div>
 
-      <div style={styles.tableWrapper}>
-        <table style={styles.table}>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[820px] border-collapse">
           <thead>
             <tr>
-              <th style={styles.th}>Código</th>
-              <th style={styles.th}>Nombre</th>
-              <th style={styles.th}>Categoría</th>
-              <th style={styles.th}>Modelo 3D</th>
-              <th style={styles.th}>Estado</th>
-              {canEditBuildings || canEditPhotos ? (
-                <th style={styles.th}>Acciones</th>
+              {["Código", "Nombre", "Categoría", "Modelo 3D", "Estado"].map(
+                (h) => (
+                  <th
+                    key={h}
+                    className="border-b border-[#1e3a5f] bg-[rgba(15,23,42,0.4)] px-3 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-wide text-[#64748b]"
+                  >
+                    {h}
+                  </th>
+                )
+              )}
+              {showActions ? (
+                <th className="border-b border-[#1e3a5f] bg-[rgba(15,23,42,0.4)] px-3 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-wide text-[#64748b]">
+                  Acciones
+                </th>
               ) : null}
             </tr>
           </thead>
 
           <tbody>
-            {filteredBuildings.map((building) => {
+            {filteredBuildings.map((building, idx) => {
               const isActive = Boolean(building.is_active);
               const isCurrentEdit = editingBuilding?.id === building.id;
+              const rowBg = isCurrentEdit
+                ? "bg-[rgba(234,88,12,0.08)]"
+                : idx % 2 === 1
+                  ? "bg-[#1a2744]"
+                  : "bg-transparent";
 
               return (
                 <tr
                   key={building.id}
-                  style={
-                    isCurrentEdit
-                      ? styles.editingRow
-                      : !isActive
-                        ? styles.inactiveRow
-                        : undefined
-                  }
+                  className={`${rowBg} transition-colors duration-[180ms] hover:bg-[rgba(234,88,12,0.06)] ${
+                    !isActive ? "opacity-55" : ""
+                  }`}
                 >
-                  <td style={styles.td}>{safeText(building.code)}</td>
-                  <td style={styles.td}>{safeText(building.name)}</td>
-                  <td style={styles.td}>
+                  <td className="border-b border-[#243347] px-3 py-3 align-middle text-[13.5px] font-semibold text-[#e2e8f0]">
+                    {safeText(building.code)}
+                  </td>
+                  <td className="border-b border-[#243347] px-3 py-3 align-middle text-[13.5px] text-[#cbd5e1]">
+                    {safeText(building.name)}
+                  </td>
+                  <td className="border-b border-[#243347] px-3 py-3 align-middle text-[13.5px] text-[#cbd5e1]">
                     {safeText(building.category_name) || "Sin categoría"}
                   </td>
-                  <td style={styles.td}>
+                  <td className="border-b border-[#243347] px-3 py-3 align-middle text-[13.5px] text-[#94a3b8]">
                     {safeText(building.model_node_name) || "Sin nodo"}
                   </td>
-                  <td style={styles.td}>
+                  <td className="border-b border-[#243347] px-3 py-3 align-middle">
                     <span
-                      style={
-                        isActive ? styles.activeBadge : styles.inactiveBadge
-                      }
+                      className={`inline-flex rounded-full border px-2.5 py-[3px] text-[11.5px] font-bold ${
+                        isActive
+                          ? "border-[rgba(34,197,94,0.25)] bg-[rgba(34,197,94,0.12)] text-[#86efac]"
+                          : "border-[rgba(239,68,68,0.22)] bg-[rgba(239,68,68,0.1)] text-[#fca5a5]"
+                      }`}
                     >
                       {isActive ? "Activo" : "Inactivo"}
                     </span>
                   </td>
-                  {canEditBuildings || canEditPhotos ? (
-                    <td style={styles.td}>
-                      <div style={styles.actions}>
+                  {showActions ? (
+                    <td className="border-b border-[#243347] px-3 py-3 align-middle">
+                      <div className="flex flex-wrap gap-1.5">
                         {canEditBuildings ? (
                           <>
                             <button
                               type="button"
                               onClick={() => onStartEdit(building)}
                               disabled={actionLoadingId === building.id}
-                              style={styles.editButton}
+                              className={`${rowBtn} border border-[rgba(234,88,12,0.3)] bg-[rgba(234,88,12,0.12)] text-[#fdba74]`}
                             >
                               Editar
                             </button>
-
                             <button
                               type="button"
                               onClick={() => onToggleStatus(building)}
                               disabled={actionLoadingId === building.id}
-                              style={styles.smallButton}
+                              className={`${rowBtn} border border-[#334155] bg-transparent text-[#94a3b8]`}
                             >
                               {isActive ? "Desactivar" : "Activar"}
                             </button>
-
                             <button
                               type="button"
                               onClick={() => onDelete(building)}
                               disabled={actionLoadingId === building.id}
-                              style={styles.dangerButton}
+                              className={`${rowBtn} border border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.08)] text-[#fca5a5]`}
                             >
                               Eliminar
                             </button>
                           </>
                         ) : null}
-
                         {canEditPhotos ? (
                           <button
                             type="button"
                             onClick={() => onOpenImages(building)}
                             disabled={actionLoadingId === building.id}
-                            style={styles.photoButton}
+                            className={`${rowBtn} border border-[rgba(139,92,246,0.3)] bg-[rgba(139,92,246,0.1)] text-[#c4b5fd]`}
                           >
                             Fotos
                           </button>
@@ -201,10 +225,21 @@ export function BuildingTable({
             {filteredBuildings.length === 0 ? (
               <tr>
                 <td
-                  style={styles.emptyTd}
-                  colSpan={canEditBuildings || canEditPhotos ? 6 : 5}
+                  className="border-b border-[#243347] px-5 py-12 text-center text-[14px] text-[#475569]"
+                  colSpan={showActions ? 6 : 5}
                 >
-                  No hay edificios para mostrar.
+                  <div className="flex flex-col items-center gap-2">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <span className="font-semibold text-[#94a3b8]">
+                      No hay edificios para mostrar.
+                    </span>
+                    <span className="text-[12.5px]">
+                      Ajusta la búsqueda o el filtro de estado.
+                    </span>
+                  </div>
                 </td>
               </tr>
             ) : null}
@@ -212,31 +247,27 @@ export function BuildingTable({
         </table>
       </div>
 
-      <div style={styles.pagination}>
+      <div className="mt-[18px] flex items-center justify-center gap-3 border-t border-[#243347] pt-3.5">
         <button
           type="button"
           onClick={() =>
             onPageChange((currentPage) => Math.max(1, currentPage - 1))
           }
           disabled={page <= 1}
-          style={styles.pageButton}
+          className={ghostBtn}
         >
           Anterior
         </button>
-
-        <span style={styles.pageInfo}>
+        <span className="text-[13px] font-semibold text-[#64748b]">
           Página {page} de {totalPages}
         </span>
-
         <button
           type="button"
           onClick={() =>
-            onPageChange((currentPage) =>
-              Math.min(totalPages, currentPage + 1)
-            )
+            onPageChange((currentPage) => Math.min(totalPages, currentPage + 1))
           }
           disabled={page >= totalPages}
-          style={styles.pageButton}
+          className={ghostBtn}
         >
           Siguiente
         </button>
@@ -244,224 +275,3 @@ export function BuildingTable({
     </section>
   );
 }
-
-const styles: Record<string, CSSProperties> = {
-  tableCard: {
-    background: "#1e293b",
-    border: "1px solid #334155",
-    borderRadius: "18px",
-    padding: "22px",
-    boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
-    overflow: "hidden",
-  },
-  sectionTitle: {
-    margin: "0 0 4px",
-    fontSize: "18px",
-    fontWeight: 700,
-    color: "#f1f5f9",
-  },
-  text: {
-    margin: "0 0 8px",
-    color: "#64748b",
-    lineHeight: 1.5,
-    fontSize: "13px",
-  },
-  filters: {
-    display: "grid",
-    gridTemplateColumns: "1fr 180px",
-    gap: "12px",
-    marginBottom: "16px",
-  },
-  searchInput: {
-    width: "100%",
-    boxSizing: "border-box",
-    border: "1px solid #334155",
-    borderRadius: "10px",
-    padding: "9px 13px",
-    fontSize: "13.5px",
-    outline: "none",
-    background: "#0f172a",
-    color: "#e2e8f0",
-  },
-  select: {
-    width: "100%",
-    boxSizing: "border-box",
-    border: "1px solid #334155",
-    borderRadius: "10px",
-    padding: "9px 13px",
-    fontSize: "13.5px",
-    outline: "none",
-    background: "#0f172a",
-    color: "#e2e8f0",
-    fontWeight: 600,
-  },
-  secondaryButton: {
-    border: "1px solid #334155",
-    borderRadius: "10px",
-    padding: "9px 14px",
-    background: "transparent",
-    color: "#94a3b8",
-    fontWeight: 600,
-    cursor: "pointer",
-    fontSize: "13px",
-  },
-  primaryLink: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    border: "1px solid rgba(234,88,12,0.4)",
-    borderRadius: "10px",
-    padding: "9px 14px",
-    background: "rgba(234,88,12,0.15)",
-    color: "#fdba74",
-    fontWeight: 700,
-    cursor: "pointer",
-    textDecoration: "none",
-    whiteSpace: "nowrap",
-    fontSize: "13px",
-  },
-  editButton: {
-    border: "1px solid rgba(234,88,12,0.3)",
-    borderRadius: "8px",
-    padding: "6px 10px",
-    background: "rgba(234,88,12,0.1)",
-    color: "#fdba74",
-    fontWeight: 600,
-    cursor: "pointer",
-    fontSize: "12.5px",
-  },
-  photoButton: {
-    border: "1px solid rgba(139,92,246,0.3)",
-    borderRadius: "8px",
-    padding: "6px 10px",
-    background: "rgba(139,92,246,0.1)",
-    color: "#c4b5fd",
-    fontWeight: 600,
-    cursor: "pointer",
-    fontSize: "12.5px",
-  },
-  smallButton: {
-    border: "1px solid #334155",
-    borderRadius: "8px",
-    padding: "6px 10px",
-    background: "transparent",
-    color: "#94a3b8",
-    fontWeight: 600,
-    cursor: "pointer",
-    fontSize: "12.5px",
-  },
-  dangerButton: {
-    border: "1px solid rgba(239,68,68,0.3)",
-    borderRadius: "8px",
-    padding: "6px 10px",
-    background: "rgba(239,68,68,0.08)",
-    color: "#fca5a5",
-    fontWeight: 600,
-    cursor: "pointer",
-    fontSize: "12.5px",
-  },
-  tableHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: "16px",
-    alignItems: "flex-start",
-    marginBottom: "16px",
-  },
-  tableHeaderActions: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    gap: "10px",
-    flexWrap: "wrap",
-  },
-  tableWrapper: {
-    overflowX: "auto",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    minWidth: "820px",
-  },
-  th: {
-    textAlign: "left",
-    padding: "10px 12px",
-    borderBottom: "1px solid #1e3a5f",
-    color: "#475569",
-    fontSize: "11.5px",
-    fontWeight: 700,
-    textTransform: "uppercase",
-    letterSpacing: "0.06em",
-    background: "rgba(15,23,42,0.4)",
-  },
-  td: {
-    padding: "11px 12px",
-    borderBottom: "1px solid #243347",
-    color: "#cbd5e1",
-    fontSize: "13.5px",
-    verticalAlign: "middle",
-  },
-  emptyTd: {
-    padding: "32px 20px",
-    textAlign: "center",
-    color: "#475569",
-    borderBottom: "1px solid #243347",
-    fontSize: "14px",
-  },
-  actions: {
-    display: "flex",
-    gap: "6px",
-    flexWrap: "wrap",
-  },
-  inactiveRow: {
-    opacity: 0.55,
-  },
-  editingRow: {
-    background: "rgba(234,88,12,0.06)",
-  },
-  activeBadge: {
-    display: "inline-flex",
-    padding: "3px 9px",
-    borderRadius: "999px",
-    background: "rgba(34,197,94,0.12)",
-    border: "1px solid rgba(34,197,94,0.25)",
-    color: "#86efac",
-    fontWeight: 700,
-    fontSize: "11.5px",
-  },
-  inactiveBadge: {
-    display: "inline-flex",
-    padding: "3px 9px",
-    borderRadius: "999px",
-    background: "rgba(239,68,68,0.1)",
-    border: "1px solid rgba(239,68,68,0.22)",
-    color: "#fca5a5",
-    fontWeight: 700,
-    fontSize: "11.5px",
-  },
-  pagination: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "12px",
-    marginTop: "18px",
-    paddingTop: "14px",
-    borderTop: "1px solid #243347",
-  },
-  pageButton: {
-    border: "1px solid #334155",
-    borderRadius: "10px",
-    padding: "7px 16px",
-    background: "transparent",
-    color: "#94a3b8",
-    fontWeight: 600,
-    cursor: "pointer",
-    fontSize: "13px",
-  },
-  pageInfo: {
-    color: "#64748b",
-    fontWeight: 600,
-    fontSize: "13px",
-  },
-};
-
-

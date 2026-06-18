@@ -60,9 +60,13 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
     }),
 
   setSearchTerm: (value) =>
-    set({
-      searchTerm: value,
-    }),
+    set((state) =>
+      state.searchTerm === value
+        ? state
+        : {
+            searchTerm: value,
+          }
+    ),
 
   clearRoute: () =>
     set({

@@ -24,6 +24,13 @@ const AdminBuildingsPage = lazy(async () => {
   return { default: AdminBuildingsPage };
 });
 
+const AdminBuildingEditorPage = lazy(async () => {
+  const { AdminBuildingEditorPage } = await import(
+    "../features/admin/pages/AdminBuildingEditorPage"
+  );
+  return { default: AdminBuildingEditorPage };
+});
+
 const AdminCategoriesPage = lazy(async () => {
   const { AdminCategoriesPage } = await import("../features/admin/pages/AdminCategoriesPage");
   return { default: AdminCategoriesPage };
@@ -236,6 +243,30 @@ export default function App() {
               <ErrorBoundary>
                 <Suspense fallback={<AdminLoadingFallback />}>
                   <AdminBuildingsPage />
+                </Suspense>
+              </ErrorBoundary>
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_BUILDING_NEW}
+          element={
+            <AdminProtectedRoute permission="can_edit_buildings">
+              <ErrorBoundary>
+                <Suspense fallback={<AdminLoadingFallback />}>
+                  <AdminBuildingEditorPage />
+                </Suspense>
+              </ErrorBoundary>
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_BUILDING_EDIT}
+          element={
+            <AdminProtectedRoute permission="can_edit_buildings">
+              <ErrorBoundary>
+                <Suspense fallback={<AdminLoadingFallback />}>
+                  <AdminBuildingEditorPage />
                 </Suspense>
               </ErrorBoundary>
             </AdminProtectedRoute>

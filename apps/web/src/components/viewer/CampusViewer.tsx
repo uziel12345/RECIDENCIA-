@@ -1,7 +1,7 @@
 import { Suspense, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Html, OrbitControls, useGLTF } from "@react-three/drei";
-import { Box3, Vector3 } from "three";
+import { Box3, Vector3, type Object3D } from "three";
 import type { Building } from "../../features/buildings/types/building";
 import { useLocationStore } from "../../store/location-store";
 import { useBuildingStore } from "../../store/building-store";
@@ -10,7 +10,9 @@ import { useBuildings } from "../../hooks/useBuildings";
 import {
   startUserLocationTracking,
   stopUserLocationTracking,
+  haversineMeters,
 } from "../../features/location/services/geolocation";
+import { SetBuildingGpsPanel } from "./SetBuildingGpsPanel";
 import { RouteLine } from "../../features/buildings/components/RouteLine";
 import { getCategoryAccent } from "../ui/categoryAccent";
 import {
@@ -27,14 +29,31 @@ import { CategoryLegend } from "./CategoryLegend";
 import { UserLocationMarker } from "./UserLocationMarker";
 import { ViewerLoading } from "./ViewerLoading";
 import { ViewerToolbar, type NavigationDebugMode } from "./ViewerToolbar";
-import { useWeather } from "./weather/useWeather";
-import { WeatherLayer, WeatherOverlay } from "./weather/WeatherLayer";
-import { WeatherControls } from "./weather/WeatherControls";
-import { WEATHER_DEFS, ITO_LAT, ITO_LON } from "./weather/weatherConfig";
 
 const CAMPUS_ROTATION_Y = Math.PI / 2;
 const CAMPUS_POSITION_X = 0;
 const CAMPUS_POSITION_Z = 0;
+const DEFAULT_SCENE = {
+  sky: "#e6f3ff",
+  fog: "#e6f3ff",
+  fogNear: 360,
+  fogFar: 700,
+  ambient: 1.4,
+  hemisphere: 0.75,
+  directional: 2.1,
+  gridPrimary: "#b8cce0",
+  gridSecondary: "#d0e3f0",
+};
+const BASE_DETECTION_THRESHOLD_METERS = 70;
+const MAX_DETECTION_THRESHOLD_METERS = 150;
+
+function getDetectionThreshold(accuracy: number | null): number {
+  if (accuracy === null) return BASE_DETECTION_THRESHOLD_METERS;
+  return Math.min(
+    Math.max(BASE_DETECTION_THRESHOLD_METERS, accuracy * 1.5),
+    MAX_DETECTION_THRESHOLD_METERS
+  );
+}
 
 type FocusPoint = { x: number; z: number };
 
@@ -57,11 +76,28 @@ function campusLocalToWorld(x: number, z: number) {
 type BuildingLabelEntry = {
   buildingId: string;
   name: string;
+  alias: string;
   accentColor: string;
   x: number;
   y: number;
   z: number;
 };
+
+function getBuildingAlias(building: Building): string {
+  return building.code.trim() || building.name;
+}
+
+function toRuntimeGlbName(name: string): string {
+  return name.replace(/\s/g, "_").replace(/\./g, "");
+}
+
+function findSceneObjectByModelName(scene: Object3D, modelName: string) {
+  const direct = scene.getObjectByName(modelName);
+  if (direct) return direct;
+
+  const runtimeName = toRuntimeGlbName(modelName);
+  return scene.getObjectByName(runtimeName) ?? null;
+}
 
 const BuildingLabels = memo(function BuildingLabels({
   buildings,
@@ -79,40 +115,51 @@ const BuildingLabels = memo(function BuildingLabels({
   const labels = useMemo<BuildingLabelEntry[]>(() => {
     scene.updateMatrixWorld(true);
     const result: BuildingLabelEntry[] = [];
+    const nodeUseCounts = new Map<string, number>();
+    const missingNodes: string[] = [];
 
     for (const building of buildings) {
-      if (!building.is_active) continue;
+      if (!building.is_active || !building.model_node_name) continue;
 
-      let local: Vector3 | null = null;
-
-      if (building.model_node_name) {
-        const glbName = resolveGlbName(building.model_node_name);
-        const node = scene.getObjectByName(glbName);
-
-        if (node) {
-          const box = new Box3().setFromObject(node);
-
-          if (!box.isEmpty()) {
-            const topWorld = new Vector3(
-              (box.min.x + box.max.x) / 2,
-              box.max.y,
-              (box.min.z + box.max.z) / 2,
-            );
-            local = scene.worldToLocal(topWorld);
-          }
-        }
+      const glbName = resolveGlbName(building.model_node_name);
+      const node = findSceneObjectByModelName(scene, glbName);
+      if (!node) {
+        missingNodes.push(`${building.code}: ${glbName}`);
+        continue;
       }
 
-      if (!local) continue;
+      const box = new Box3().setFromObject(node);
+      if (box.isEmpty()) continue;
 
+      const topWorld = new Vector3(
+        (box.min.x + box.max.x) / 2,
+        box.max.y,
+        (box.min.z + box.max.z) / 2,
+      );
+      const local = scene.worldToLocal(topWorld);
+
+      const stackIdx = nodeUseCounts.get(glbName) ?? 0;
+      nodeUseCounts.set(glbName, stackIdx + 1);
+
+      const angle = stackIdx * 1.2;
+      const radius = stackIdx === 0 ? 0 : 5 + stackIdx * 1.5;
       const accent = getCategoryAccent(building.category_name);
       result.push({
         buildingId: building.id,
         name: building.name,
+        alias: getBuildingAlias(building),
         accentColor: building.category_color || accent.fg,
-        x: local.x,
-        y: local.y + 3,
-        z: local.z,
+        x: local.x + Math.cos(angle) * radius,
+        y: local.y + 4 + stackIdx * 1.8,
+        z: local.z + Math.sin(angle) * radius,
+      });
+    }
+
+    if (import.meta.env.DEV) {
+      console.info("[CampusViewer] etiquetas 3D", {
+        buildings: buildings.length,
+        labels: result.length,
+        missingNodes,
       });
     }
 
@@ -137,18 +184,19 @@ const BuildingLabels = memo(function BuildingLabels({
           <Html
             key={label.buildingId}
             position={[label.x, label.y, label.z]}
-            occlude
-            zIndexRange={[isSelected ? 35 : 25, 0]}
+            zIndexRange={[isSelected ? 60 : 50, 0]}
           >
             <button
               type="button"
+              aria-label={label.name}
+              title={label.name}
               onClick={() => handleSelect(label.buildingId)}
               style={{
                 transform: "translateX(-50%) translateY(-100%)",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 5,
-                padding: isMobile ? "3px 8px" : "4px 10px 4px 6px",
+                padding: isMobile ? "3px 7px" : "4px 8px 4px 6px",
                 borderRadius: 999,
                 border: `1.5px solid ${isSelected ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.14)"}`,
                 background: isSelected ? label.accentColor : "rgba(8,14,28,0.80)",
@@ -177,7 +225,7 @@ const BuildingLabels = memo(function BuildingLabels({
                   flexShrink: 0,
                 }}
               />
-              {label.name}
+              {label.alias}
             </button>
           </Html>
         );
@@ -198,17 +246,9 @@ export function CampusViewer({
 
   const mapPosition = useLocationStore((state) => state.mapPosition);
   const geoPosition = useLocationStore((state) => state.geoPosition);
-
-  // Round to ~1 km to avoid re-fetching on minor GPS jitter
-  const weatherLat = geoPosition
-    ? Math.round(geoPosition.latitude  * 100) / 100
-    : ITO_LAT;
-  const weatherLon = geoPosition
-    ? Math.round(geoPosition.longitude * 100) / 100
-    : ITO_LON;
-
-  const { mode: weatherMode, control: weatherControl, setControl: setWeatherControl } =
-    useWeather(weatherLat, weatherLon);
+  const simulatedPosition = useLocationStore((state) => state.simulatedPosition);
+  const setMapPosition = useLocationStore((state) => state.setMapPosition);
+  const setNearestBuilding = useLocationStore((state) => state.setNearestBuilding);
 
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const routeDestination = useBuildingStore((state) => state.routeDestination);
@@ -221,13 +261,15 @@ export function CampusViewer({
     (adminUser?.role === "superadmin" ||
       (enableAdminTools && adminUser?.role === "admin"));
 
-  const { buildings } = useBuildings({ admin: canUseAdvancedTools });
+  const [buildingsVersion, setBuildingsVersion] = useState(0);
+  const { buildings } = useBuildings({ admin: canUseAdvancedTools, version: buildingsVersion });
   const [focus, setFocus] = useState<FocusPoint | null>(null);
   const [isModelLoading, setIsModelLoading] = useState(true);
   const [isLoadingExiting, setIsLoadingExiting] = useState(false);
   const [navigationDebugMode, setNavigationDebugMode] =
     useState<NavigationDebugMode>("hidden");
   const [draftEditorActive, setDraftEditorActive] = useState(false);
+  const [gpsRecorderOpen, setGpsRecorderOpen] = useState(false);
   const draftEditor = useDraftEditor();
 
   useEffect(() => {
@@ -238,9 +280,59 @@ export function CampusViewer({
   }, [canUseAdvancedTools]);
 
   useEffect(() => {
-    startUserLocationTracking({ isMobile });
+    startUserLocationTracking();
     return () => stopUserLocationTracking();
-  }, [isMobile]);
+  }, []);
+
+  useEffect(() => {
+    if (simulatedPosition) return;
+
+    if (!geoPosition || buildings.length === 0) {
+      setMapPosition(null);
+      setNearestBuilding(null);
+      return;
+    }
+
+    let nearest: { building: Building; distMeters: number } | null = null;
+
+    for (const building of buildings) {
+      if (
+        !building.is_active ||
+        building.latitude == null ||
+        building.longitude == null ||
+        building.x == null ||
+        building.z == null
+      ) {
+        continue;
+      }
+
+      const dist = haversineMeters(
+        geoPosition.latitude,
+        geoPosition.longitude,
+        Number(building.latitude),
+        Number(building.longitude)
+      );
+
+      if (!nearest || dist < nearest.distMeters) {
+        nearest = { building, distMeters: dist };
+      }
+    }
+
+    const threshold = getDetectionThreshold(geoPosition.accuracy);
+
+    if (nearest && nearest.distMeters <= threshold) {
+      setMapPosition({ x: Number(nearest.building.x), y: 2, z: Number(nearest.building.z) });
+      setNearestBuilding({
+        buildingId: nearest.building.id,
+        buildingCode: nearest.building.code,
+        buildingName: nearest.building.name,
+        distanceMeters: nearest.distMeters,
+      });
+    } else {
+      setMapPosition(null);
+      setNearestBuilding(null);
+    }
+  }, [buildings, geoPosition, simulatedPosition, setMapPosition, setNearestBuilding]);
 
   useEffect(() => {
     if (!controlsRef.current) return;
@@ -345,7 +437,7 @@ export function CampusViewer({
 
   const hasLocation = mapPosition !== null;
   const showNavigationDebug = navigationDebugMode !== "hidden";
-  const scene = WEATHER_DEFS[weatherMode].scene;
+  const scene = DEFAULT_SCENE;
 
   return (
     <div
@@ -361,6 +453,7 @@ export function CampusViewer({
           hasLocation={hasLocation}
           navigationDebugMode={navigationDebugMode}
           draftEditorActive={draftEditorActive}
+          gpsRecorderOpen={gpsRecorderOpen}
           onFocusUser={handleFocusUser}
           onResetView={handleResetView}
           onZoom={handleZoom}
@@ -372,8 +465,17 @@ export function CampusViewer({
             })
           }
           onToggleDraftEditor={() => setDraftEditorActive((current) => !current)}
+          onToggleGpsRecorder={() => setGpsRecorderOpen((current) => !current)}
           canUseAdvancedTools={canUseAdvancedTools}
           isMobile={isMobile}
+        />
+      )}
+
+      {canUseAdvancedTools && gpsRecorderOpen && (
+        <SetBuildingGpsPanel
+          buildings={buildings}
+          onClose={() => setGpsRecorderOpen(false)}
+          onBuildingUpdated={() => setBuildingsVersion((v) => v + 1)}
         />
       )}
 
@@ -443,20 +545,9 @@ export function CampusViewer({
             <RouteLine />
             <DestinationBuildingHighlight />
             <UserLocationMarker />
-            <WeatherLayer mode={weatherMode} isMobile={isMobile} />
           </group>
         </Suspense>
       </Canvas>
-
-      <WeatherOverlay mode={weatherMode} />
-
-      {canUseAdvancedTools && (
-        <WeatherControls
-          mode={weatherMode}
-          control={weatherControl}
-          onControlChange={setWeatherControl}
-        />
-      )}
     </div>
   );
 }

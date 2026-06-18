@@ -51,7 +51,7 @@ export function BuildingSearch({
   const setSelectedBuilding = useBuildingStore((state) => state.setSelectedBuilding);
   const setRouteDestination = useBuildingStore((state) => state.setRouteDestination);
 
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState(searchTerm);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -78,7 +78,6 @@ export function BuildingSearch({
 
   useEffect(() => {
     const term = inputValue.trim();
-    setSearchTerm(term);
 
     if (term.length < MIN_QUERY_LEN) {
       setResults([]);
@@ -101,7 +100,12 @@ export function BuildingSearch({
     }, DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [inputValue, setSearchTerm]);
+  }, [inputValue]);
+
+  function handleInputChange(value: string) {
+    setInputValue(value);
+    setSearchTerm(value.trim());
+  }
 
   function handleClear() {
     setInputValue("");
@@ -143,7 +147,7 @@ export function BuildingSearch({
         className="ito-search__input"
         placeholder="Buscar aula, trámite o edificio..."
         value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
+        onChange={(e) => handleInputChange(e.target.value)}
         onFocus={() => {
           if (results.length > 0) setIsOpen(true);
         }}

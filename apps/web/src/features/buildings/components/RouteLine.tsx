@@ -8,6 +8,7 @@ import { useBuildingStore } from "../../../store/building-store";
 import { useLocationStore } from "../../../store/location-store";
 import {
   getBuildingEntrances,
+  NAVIGATION_DATA_CHANGED_EVENT,
 } from "../../../services/navigation.service";
 import { useNavigationGraph } from "../navigation/hooks/useNavigationGraph";
 
@@ -352,23 +353,43 @@ export function RouteLine() {
 
   const { findPath, isReady } = useNavigationGraph();
 
-  // Carga entradas una sola vez al montar
   useEffect(() => {
     let mounted = true;
-    getBuildingEntrances()
-      .then((data) => {
+
+    async function loadEntrances() {
+      try {
+        const data = await getBuildingEntrances();
         if (mounted) setEntrances(data.filter((e) => e.is_accessible));
-      })
-      .catch((err: unknown) => console.error("Error cargando entradas:", err))
-      .finally(() => { if (mounted) setLoading(false); });
-    return () => { mounted = false; };
+      } catch (err: unknown) {
+        console.error("Error cargando entradas:", err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+
+    function refreshEntrances() {
+      void loadEntrances();
+    }
+
+    void loadEntrances();
+    const intervalId = window.setInterval(refreshEntrances, 30000);
+    window.addEventListener(NAVIGATION_DATA_CHANGED_EVENT, refreshEntrances);
+    window.addEventListener("focus", refreshEntrances);
+    document.addEventListener("visibilitychange", refreshEntrances);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener(NAVIGATION_DATA_CHANGED_EVENT, refreshEntrances);
+      window.removeEventListener("focus", refreshEntrances);
+      document.removeEventListener("visibilitychange", refreshEntrances);
+    };
   }, []);
 
   // Calcula la ruta cada vez que cambia: destino, posición, grafo listo
   useEffect(() => {
     let cancelled = false;
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRouteData(null);
 
     if (loading || !routeDestination) {

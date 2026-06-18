@@ -6,11 +6,13 @@ export type ViewerToolbarProps = {
   hasLocation: boolean;
   navigationDebugMode: NavigationDebugMode;
   draftEditorActive: boolean;
+  gpsRecorderOpen: boolean;
   onFocusUser: () => void;
   onResetView: () => void;
   onZoom: (delta: number) => void;
   onToggleNavigationDebug: () => void;
   onToggleDraftEditor: () => void;
+  onToggleGpsRecorder: () => void;
   canUseAdvancedTools?: boolean;
   isMobile?: boolean;
 };
@@ -19,11 +21,13 @@ export function ViewerToolbar({
   hasLocation,
   navigationDebugMode,
   draftEditorActive,
+  gpsRecorderOpen,
   onFocusUser,
   onResetView,
   onZoom,
   onToggleNavigationDebug,
   onToggleDraftEditor,
+  onToggleGpsRecorder,
   canUseAdvancedTools = false,
   isMobile = false,
 }: ViewerToolbarProps) {
@@ -110,6 +114,17 @@ export function ViewerToolbar({
             title={draftEditorActive ? "Salir del editor temporal" : "Dibujar ruta"}
           >
             <Icon name="edit" size={17} />
+          </button>
+
+          <button
+            type="button"
+            className={`ito-toolbar__btn ${gpsRecorderOpen ? "is-active" : ""}`}
+            onClick={onToggleGpsRecorder}
+            aria-label="Registrar GPS de edificios"
+            aria-pressed={gpsRecorderOpen}
+            title="Registrar GPS de edificios"
+          >
+            <Icon name="locate" size={17} />
           </button>
         </>
       )}

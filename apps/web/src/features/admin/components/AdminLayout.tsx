@@ -92,7 +92,8 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
   const { user, logout } = useAdminAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
+  const [pinnedOpen, setPinnedOpen] = useState(false);
+  const [hoverPreview, setHoverPreview] = useState(false);
   const [hoveredRoute, setHoveredRoute] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<{ label: string; y: number } | null>(null);
 
@@ -110,7 +111,9 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
     ? user.full_name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase()
     : (user?.username?.[0] ?? "A").toUpperCase();
 
-  const sidebarWidth = collapsed ? SIDEBAR_MINI : SIDEBAR_FULL;
+  const expanded = pinnedOpen || hoverPreview;
+  const collapsed = !expanded;
+  const sidebarWidth = expanded ? SIDEBAR_FULL : SIDEBAR_MINI;
 
   return (
     <div style={s.shell}>
@@ -122,11 +125,17 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
       ) : null}
 
       <aside
+        onMouseEnter={() => setHoverPreview(true)}
+        onMouseLeave={() => {
+          setHoverPreview(false);
+          setHoveredRoute(null);
+          setTooltip(null);
+        }}
         style={{
           ...s.sidebar,
           width: sidebarWidth,
           minWidth: sidebarWidth,
-          transition: "width 0.2s ease, min-width 0.2s ease",
+          transition: "width 0.22s ease, min-width 0.22s ease",
         }}
       >
         {/* Cabecera / brand */}
@@ -145,8 +154,13 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
         {/* Botón de colapsar / expandir */}
         <button
           type="button"
-          onClick={() => setCollapsed((c) => !c)}
-          title={collapsed ? "Expandir menú" : "Colapsar menú"}
+          onClick={() => {
+            setPinnedOpen((current) => !current);
+            setTooltip(null);
+          }}
+          title={pinnedOpen ? "Contraer menú" : "Expandir menú"}
+          aria-pressed={pinnedOpen}
+          aria-label={pinnedOpen ? "Contraer menú" : "Expandir menú"}
           style={collapsed ? s.toggleBtnMini : s.toggleBtn}
         >
           <svg
@@ -158,7 +172,7 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ transform: collapsed ? "rotate(180deg)" : "none", transition: "transform 0.2s ease" }}
+            style={{ transform: pinnedOpen ? "none" : "rotate(180deg)", transition: "transform 0.2s ease" }}
           >
             <polyline points="15 18 9 12 15 6" />
           </svg>
@@ -170,7 +184,10 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
         <nav style={collapsed ? s.navMini : s.nav}>
           {!collapsed && <p style={s.navSection}>Módulos</p>}
           {visibleNav.map((item) => {
-            const active = location.pathname === item.route;
+            const active =
+              location.pathname === item.route ||
+              (item.route === ROUTES.ADMIN_BUILDINGS &&
+                location.pathname.startsWith("/admin/buildings/"));
             const hovered = hoveredRoute === item.route;
             return (
               <button

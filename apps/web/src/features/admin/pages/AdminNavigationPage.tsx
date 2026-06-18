@@ -10,6 +10,7 @@ import {
 import { CampusViewer } from "../../../components/viewer/CampusViewer";
 import { AdminLayout } from "../components/AdminLayout";
 import { getCategoryAccent } from "../../../components/ui/categoryAccent";
+import { NAVIGATION_DATA_CHANGED_EVENT } from "../../../services/navigation.service";
 
 const PANEL_WIDTH = 268;
 
@@ -69,7 +70,17 @@ export function AdminNavigationPage() {
   }, []);
 
   useEffect(() => {
+    function refreshHealth() {
+      void loadHealth();
+    }
+
     void loadHealth();
+    window.addEventListener(NAVIGATION_DATA_CHANGED_EVENT, refreshHealth);
+    window.addEventListener("focus", refreshHealth);
+    return () => {
+      window.removeEventListener(NAVIGATION_DATA_CHANGED_EVENT, refreshHealth);
+      window.removeEventListener("focus", refreshHealth);
+    };
   }, [loadHealth]);
 
   const categories = useMemo<CategoryStat[]>(() => {

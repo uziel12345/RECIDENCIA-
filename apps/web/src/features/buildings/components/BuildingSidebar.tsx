@@ -19,7 +19,7 @@ function normalizeSearchText(value: string | null | undefined): string {
     ? value
         .toLowerCase()
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[̀-ͯ]/g, "")
     : "";
 }
 
@@ -34,27 +34,22 @@ function getBuildingSearchAliases(building: Building): string {
       "tramite tramites constancia constancias kardex documentos inscripcion reinscripcion control escolar servicios escolares becas pagos atencion estudiante"
     );
   }
-
   if (category.includes("aula") || /^([a-z]|x|x001)$/i.test(building.code)) {
     aliases.push("aula aulas salon salones clase clases maestro materia horario");
   }
-
   if (category.includes("laboratorio") || name.includes("laboratorio")) {
     aliases.push(
       "laboratorio laboratorios practica practicas computo investigacion equipo taller"
     );
   }
-
   if (category.includes("biblioteca") || code.includes("bib")) {
     aliases.push("biblioteca libro libros prestamo consulta estudio estudiar");
   }
-
   if (category.includes("administrativo")) {
     aliases.push(
       "direccion administracion oficina oficinas coordinacion finanzas pagos recursos humanos"
     );
   }
-
   if (name.includes("cafeteria") || code.includes("caf")) {
     aliases.push("cafeteria cafe comida alimentos bebidas");
   }
@@ -69,6 +64,8 @@ type BuildingSidebarProps = {
   showGreeting?: boolean;
   userName?: string;
 };
+
+const SECTION = "flex flex-col gap-2.5";
 
 export function BuildingSidebar({
   isMobile = false,
@@ -99,32 +96,26 @@ export function BuildingSidebar({
 
   const categories = useMemo(() => {
     const map = new Map<string, number>();
-
     for (const building of buildings) {
       if (!building.is_active) continue;
-
       map.set(
         building.category_name,
         (map.get(building.category_name) ?? 0) + 1
       );
     }
-
     return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
   }, [buildings]);
 
   const filteredBuildings = useMemo(() => {
     const normalizedSearch = normalizeSearchText(searchTerm.trim());
-
     const result = buildings
       .filter((building) => building.is_active)
       .filter((building) => {
         if (!activeCategory) return true;
-
         return building.category_name === activeCategory;
       })
       .filter((building) => {
         if (!normalizedSearch) return true;
-
         const searchableText = [
           building.name,
           building.code,
@@ -137,7 +128,6 @@ export function BuildingSidebar({
         ]
           .map(normalizeSearchText)
           .join(" ");
-
         return searchableText.includes(normalizedSearch);
       });
 
@@ -146,7 +136,6 @@ export function BuildingSidebar({
     return [...result].sort((a, b) => {
       if (a.id === selectedBuilding.id) return -1;
       if (b.id === selectedBuilding.id) return 1;
-
       return 0;
     });
   }, [buildings, searchTerm, selectedBuilding, activeCategory]);
@@ -156,11 +145,11 @@ export function BuildingSidebar({
     [buildings]
   );
 
-  const recommendedBuildings = useMemo(() => {
+  const recommendedBuildings = (() => {
     const priority = buildings.filter((b) => b.is_active && b.is_priority);
     if (priority.length > 0) return priority.slice(0, 5);
     return buildings.filter((b) => b.is_active).slice(0, 4);
-  }, [buildings]);
+  })();
 
   const hasLocation = permission === "granted" && mapPosition !== null;
   const hasSearchTerm = searchTerm.trim().length > 0;
@@ -175,12 +164,10 @@ export function BuildingSidebar({
     setSelectedBuilding(building);
     onItemSelected?.(building);
   }
-
   function handleClearSelection() {
     setSelectedBuilding(null);
     onClearSelection?.();
   }
-
   function handleSelectSearchResult(result: SearchResult) {
     if (result.kind === "building") {
       setSelectedSearchResult(null);
@@ -193,31 +180,49 @@ export function BuildingSidebar({
     <aside
       className={
         isMobile
-          ? "ito-sidebar ito-sidebar--mobile"
-          : `ito-sidebar${isPublicDesktop ? " ito-sidebar--public" : ""}`
+          ? "flex h-auto w-full flex-col gap-4 px-1 pb-6 pt-1"
+          : "flex h-full w-full flex-col gap-4 overflow-y-auto bg-[var(--color-surface)] p-[18px] pt-5"
       }
     >
       {(canUseRoutes || isMobile) && (
-        <header className="ito-brand">
-          <div className="ito-brand__mark" aria-hidden="true">
-            <img src="/ICONO-TEC.jpeg" alt="ITO" className="ito-brand__logo-img" />
+        <header className="flex items-center gap-3 pb-2">
+          <div
+            className="grid h-11 w-11 flex-shrink-0 place-items-center overflow-hidden rounded-xl bg-[var(--color-surface-muted)] shadow-[var(--shadow-md)]"
+            aria-hidden="true"
+          >
+            <img
+              src="/ICONO-TEC.jpeg"
+              alt="ITO"
+              className="h-[38px] w-[38px] object-contain"
+            />
           </div>
-
-          <div className="ito-brand__text">
-            <div className="ito-brand__title">Campus ITO</div>
-            <div className="ito-brand__subtitle">Mapa interactivo 3D</div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[16px] font-bold leading-tight tracking-tight text-[var(--color-text)]">
+              Campus ITO
+            </div>
+            <div className="mt-0.5 text-[12px] text-[var(--color-text-muted)]">
+              Mapa interactivo 3D
+            </div>
           </div>
-
-          <div className="ito-brand__stats" aria-label="Estadísticas">
+          <div aria-label="Estadísticas">
             <div
-              className={`ito-brand__stat${hasLocation ? " is-live" : ""}`}
-              title={
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${
                 hasLocation
-                  ? "Tu ubicación está activa"
-                  : "Esperando ubicación"
+                  ? "border-[var(--color-success-border)] bg-[var(--color-success-bg)] text-[var(--color-success-text)]"
+                  : "border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]"
+              }`}
+              title={
+                hasLocation ? "Tu ubicación está activa" : "Esperando ubicación"
               }
             >
-              <span className="ito-brand__stat-dot" aria-hidden="true" />
+              <span
+                className={`h-[7px] w-[7px] rounded-full ${
+                  hasLocation
+                    ? "bg-[#10b981] shadow-[0_0_0_4px_rgba(16,185,129,0.18)]"
+                    : "bg-[var(--color-text-subtle)]"
+                }`}
+                aria-hidden="true"
+              />
               {hasLocation ? "En vivo" : "Sin GPS"}
             </div>
           </div>
@@ -225,53 +230,63 @@ export function BuildingSidebar({
       )}
 
       {isPublicDesktop && showGreeting && (
-        <div className="ito-sidebar__greeting">
-          <span className="ito-sidebar__greeting-question">
+        <div className="flex flex-col gap-1 px-0.5 pb-1.5 pt-1">
+          <span className="text-balance text-[15px] font-bold leading-tight tracking-tight text-[var(--color-text)]">
             {userName
               ? `¿A dónde vas hoy, ${userName.split(" ")[0]}?`
               : "¿A dónde quieres ir hoy?"}
           </span>
-          <span className="ito-sidebar__greeting-sub">
+          <span className="text-[12px] font-medium text-[var(--color-text-muted)]">
             Busca aulas, servicios, laboratorios y más
           </span>
         </div>
       )}
 
       {isPublicDesktop && !showGreeting && (
-        <div className="ito-sidebar__hint">
+        <div className="flex items-center gap-1.5 px-1 pb-1 text-[12px] font-semibold text-[var(--color-text-subtle)]">
           <Icon name="search" size={14} aria-hidden="true" />
           <span>Busca aulas, edificios o servicios</span>
         </div>
       )}
 
       {(canUseRoutes || isMobile) && (
-        <div className="ito-quick-stats" role="list">
-          <div className="ito-quick-stat" role="listitem">
-            <span className="ito-quick-stat__value">{totalActive}</span>
-            <span className="ito-quick-stat__label">Edificios</span>
-          </div>
-
-          <div className="ito-quick-stat" role="listitem">
-            <span className="ito-quick-stat__value">{categories.length}</span>
-            <span className="ito-quick-stat__label">Categorías</span>
-          </div>
-
-          <div className="ito-quick-stat" role="listitem">
+        <div className="grid grid-cols-3 gap-2 px-2 pb-1" role="list">
+          {[
+            { value: totalActive, label: "Edificios" },
+            { value: categories.length, label: "Categorías" },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="flex flex-col items-start rounded-xl border border-[var(--color-border)] bg-[var(--gradient-surface)] px-3 py-2.5"
+              role="listitem"
+            >
+              <span className="text-[20px] font-extrabold leading-none text-[var(--color-text)]">
+                {stat.value}
+              </span>
+              <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                {stat.label}
+              </span>
+            </div>
+          ))}
+          <div
+            className="flex flex-col items-start rounded-xl border border-[var(--color-border)] bg-[var(--gradient-surface)] px-3 py-2.5"
+            role="listitem"
+          >
             <span
-              className={`ito-quick-stat__value${
-                hasLocation ? " ito-quick-stat__value--ok" : ""
+              className={`inline-flex items-center gap-1 text-[20px] font-extrabold leading-none ${
+                hasLocation ? "text-[#059669]" : "text-[var(--color-text)]"
               }`}
             >
               <Icon name={hasLocation ? "check" : "alert"} size={14} />
             </span>
-            <span className="ito-quick-stat__label">
+            <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
               {hasLocation ? "GPS" : "GPS off"}
             </span>
           </div>
         </div>
       )}
 
-      <div className="ito-sidebar__section">
+      <div className={SECTION}>
         <BuildingSearch
           buildings={buildings}
           onSelectResult={handleSelectSearchResult}
@@ -279,7 +294,7 @@ export function BuildingSidebar({
       </div>
 
       {selectedSearchResult && (
-        <div className="ito-sidebar__section ito-sidebar__section--card">
+        <div className={SECTION}>
           <SearchResultCard
             result={selectedSearchResult}
             onClose={() => setSelectedSearchResult(null)}
@@ -288,9 +303,9 @@ export function BuildingSidebar({
       )}
 
       {categories.length > 0 && (
-        <div className="ito-sidebar__section">
+        <div className={SECTION}>
           <div
-            className="ito-chip-row"
+            className="flex flex-nowrap gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             role="tablist"
             aria-label="Categorías"
           >
@@ -298,26 +313,29 @@ export function BuildingSidebar({
               type="button"
               role="tab"
               aria-selected={activeCategory === null}
-              className={`ito-chip ${
-                activeCategory === null ? "is-active" : ""
+              className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-[12px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] ${
+                activeCategory === null
+                  ? "border-[var(--color-brand-100)] bg-[var(--color-brand-50)] text-[var(--color-brand-700)]"
+                  : "border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text)]"
               }`}
               onClick={() => setActiveCategory(null)}
             >
               <span>Todos</span>
-              <span className="ito-chip__count">{totalActive}</span>
+              <span className="rounded-full bg-black/[0.06] px-1.5 py-px text-[11px] font-bold">
+                {totalActive}
+              </span>
             </button>
 
             {categories.map(([name, count]) => {
               const accent = getCategoryAccent(name);
               const isActive = activeCategory === name;
-
               return (
                 <button
                   key={name}
                   type="button"
                   role="tab"
                   aria-selected={isActive}
-                  className={`ito-chip ${isActive ? "is-active" : ""}`}
+                  className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-muted)] transition hover:border-[var(--color-border-strong)] hover:text-[var(--color-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] aria-selected:font-bold"
                   onClick={() => setActiveCategory(isActive ? null : name)}
                   style={
                     isActive
@@ -331,16 +349,13 @@ export function BuildingSidebar({
                 >
                   <span
                     aria-hidden="true"
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: 999,
-                      background: accent.fg,
-                      display: "inline-block",
-                    }}
+                    className="inline-block h-2 w-2 rounded-full"
+                    style={{ background: accent.fg }}
                   />
                   <span>{name}</span>
-                  <span className="ito-chip__count">{count}</span>
+                  <span className="rounded-full bg-black/[0.06] px-1.5 py-px text-[11px] font-bold">
+                    {count}
+                  </span>
                 </button>
               );
             })}
@@ -349,125 +364,154 @@ export function BuildingSidebar({
       )}
 
       {selectedBuilding && (
-        <div className="ito-sidebar__section ito-sidebar__section--card">
-          <BuildingInfoCard building={selectedBuilding} onClose={handleClearSelection} />
+        <div className={SECTION}>
+          <BuildingInfoCard
+            building={selectedBuilding}
+            onClose={handleClearSelection}
+          />
         </div>
       )}
 
       {(selectedBuilding || routeDestination) && (
-        <div className="ito-sidebar__section">
+        <div className={SECTION}>
           <RoutePanel compact={isMobile} canUseDemo={canUseDemo} />
         </div>
       )}
 
-      {isPublicDesktop && !showList && !loading && recommendedBuildings.length > 0 && (
-        <div className="ito-sidebar__section">
-          <div className="ito-recommended">
-            <div className="ito-recommended__header">
-              <span className="ito-recommended__title">Lugares destacados</span>
-            </div>
+      {isPublicDesktop &&
+        !showList &&
+        !loading &&
+        recommendedBuildings.length > 0 && (
+          <div className={SECTION}>
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between px-0.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
+                  Lugares destacados
+                </span>
+              </div>
 
-            {recommendedBuildings.map((building) => {
-              const accent = getCategoryAccent(building.category_name);
-              const accentColor = building.category_color || accent.fg;
-
-              return (
-                <button
-                  key={building.id}
-                  type="button"
-                  className="ito-recommended-item"
-                  onClick={() => handleSelectBuilding(building)}
-                >
-                  <div
-                    className="ito-recommended-item__icon"
-                    style={{ background: accent.bg }}
-                    aria-hidden="true"
+              {recommendedBuildings.map((building) => {
+                const accent = getCategoryAccent(building.category_name);
+                const accentColor = building.category_color || accent.fg;
+                return (
+                  <button
+                    key={building.id}
+                    type="button"
+                    className="group flex min-h-11 w-full items-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-left transition hover:translate-x-0.5 hover:border-[var(--color-brand-200)] hover:bg-[var(--color-brand-50)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)]"
+                    onClick={() => handleSelectBuilding(building)}
                   >
-                    <Icon name="building" size={16} style={{ color: accentColor }} />
-                  </div>
+                    <div
+                      className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg"
+                      style={{ background: accent.bg }}
+                      aria-hidden="true"
+                    >
+                      <Icon
+                        name="building"
+                        size={16}
+                        style={{ color: accentColor }}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="block truncate text-[13px] font-semibold leading-tight text-[var(--color-text)]">
+                        {building.name}
+                      </span>
+                      <span className="mt-0.5 block truncate text-[11px] font-medium text-[var(--color-text-muted)]">
+                        {building.category_name}
+                      </span>
+                    </div>
+                    <div
+                      className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-full border border-[var(--color-brand-100)] bg-[var(--color-brand-50)] text-[var(--color-brand-700)] transition group-hover:border-[var(--color-brand-700)] group-hover:bg-[var(--color-brand-600)] group-hover:text-white"
+                      aria-hidden="true"
+                    >
+                      <Icon name="chevron-right" size={14} />
+                    </div>
+                  </button>
+                );
+              })}
 
-                  <div className="ito-recommended-item__text">
-                    <span className="ito-recommended-item__name">
-                      {building.name}
-                    </span>
-                    <span className="ito-recommended-item__category">
-                      {building.category_name}
-                    </span>
-                  </div>
-
-                  <div className="ito-recommended-item__go" aria-hidden="true">
-                    <Icon name="chevron-right" size={14} />
-                  </div>
-                </button>
-              );
-            })}
-
-            <button
-              type="button"
-              className="ito-list-expand-btn"
-              onClick={() => setShowAllBuildings(true)}
-            >
-              <Icon name="list" size={14} />
-              <span>Ver todos los edificios ({totalActive})</span>
-            </button>
+              <button
+                type="button"
+                className="mt-1 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-dashed border-[var(--color-border-strong)] bg-transparent px-3.5 text-[13px] font-semibold text-[var(--color-text-muted)] transition hover:border-[var(--color-brand-200)] hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)]"
+                onClick={() => setShowAllBuildings(true)}
+              >
+                <Icon name="list" size={14} />
+                <span>Ver todos los edificios ({totalActive})</span>
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {showList && (
-        <div className="ito-sidebar__section ito-sidebar__section--list">
-          <div className="ito-section-header">
-            <h2 className="ito-section-header__title">
+        <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-hidden">
+          <div className="flex items-center justify-between px-0.5">
+            <h2 className="m-0 text-[13px] font-bold uppercase tracking-wider text-[var(--color-text)]">
               {hasSearchTerm
                 ? "Resultados"
                 : activeCategory
                   ? activeCategory
                   : "Edificios"}
             </h2>
-
-            <span className="ito-section-header__count">
+            <span className="min-w-7 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-2.5 py-0.5 text-center text-[11px] font-bold text-[var(--color-text-muted)]">
               {loading ? "…" : `${filteredBuildings.length}`}
             </span>
           </div>
 
           {hasSearchTerm && (
-            <div className="ito-search-summary">
-              Buscando: <strong>{searchTerm}</strong>
+            <div className="px-0.5 text-[12px] text-[var(--color-text-muted)]">
+              Buscando:{" "}
+              <strong className="font-bold text-[var(--color-text)]">
+                {searchTerm}
+              </strong>
             </div>
           )}
 
           <div
-            className="ito-list"
+            className="flex flex-col gap-3 overflow-y-auto overflow-x-hidden scroll-smooth pb-3 pl-0.5 pr-2 pt-0.5"
             style={isMobile ? { maxHeight: "none" } : undefined}
           >
             {loading ? (
-              <div className="ito-empty">
-                <div className="ito-empty__spinner" aria-hidden="true" />
-                <p>Cargando edificios…</p>
+              <div className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-center text-[var(--color-text-muted)]">
+                <div
+                  className="h-[22px] w-[22px] animate-spin rounded-full border-2 border-[var(--color-border)] border-t-[var(--color-brand-600)]"
+                  aria-hidden="true"
+                />
+                <p className="m-0 text-[14px] font-semibold text-[var(--color-text)]">
+                  Cargando edificios…
+                </p>
               </div>
             ) : loadError ? (
-              <div className="ito-empty" role="alert">
+              <div
+                className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-center text-[var(--color-text-muted)]"
+                role="alert"
+              >
                 <Icon name="alert" size={28} />
-                <p>Sin conexión al servidor</p>
-                <span>{loadError}</span>
+                <p className="m-0 text-[14px] font-semibold text-[var(--color-text)]">
+                  Sin conexión al servidor
+                </p>
+                <span className="text-[12px]">{loadError}</span>
               </div>
             ) : filteredBuildings.length === 0 ? (
-              <div className="ito-empty">
+              <div className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-center text-[var(--color-text-muted)]">
                 <Icon name="search" size={28} />
-                <p>No se encontraron edificios.</p>
-                <span>Intenta con otro término o categoría.</span>
+                <p className="m-0 text-[14px] font-semibold text-[var(--color-text)]">
+                  No se encontraron edificios.
+                </p>
+                <span className="text-[12px]">
+                  Intenta con otro término o categoría.
+                </span>
               </div>
             ) : (
               filteredBuildings.map((building) => {
                 const isSelected = selectedBuilding?.id === building.id;
                 const accent = getCategoryAccent(building.category_name);
-
                 return (
                   <button
                     key={building.id}
                     type="button"
-                    className={`ito-list-item ito-list-item--enhanced ${
-                      isSelected ? "is-selected" : ""
+                    className={`group grid w-full grid-cols-[5px_minmax(0,1fr)_24px] items-center gap-x-3 rounded-2xl border bg-[var(--color-surface)] p-3.5 text-left shadow-[var(--shadow-xs)] transition hover:-translate-y-px hover:bg-[var(--color-surface-muted)] hover:shadow-[var(--shadow-sm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] ${
+                      isSelected
+                        ? "border-transparent"
+                        : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
                     }`}
                     onClick={() => handleSelectBuilding(building)}
                     aria-pressed={isSelected}
@@ -481,23 +525,25 @@ export function BuildingSidebar({
                     }
                   >
                     <span
-                      className="ito-list-item__rail"
+                      className="h-full min-h-12 w-[5px] rounded-full opacity-90"
                       aria-hidden="true"
                       style={{ background: accent.fg }}
                     />
-
-                    <div className="ito-list-item__main">
-                      <div className="ito-list-item__title-row">
-                        <span className="ito-list-item__code">
+                    <div className="flex min-w-0 flex-col gap-2">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-2 py-[3px] text-[11px] font-extrabold uppercase leading-none tracking-wide text-[var(--color-text-muted)]">
                           {building.code}
                         </span>
                         <CategoryBadge name={building.category_name} size="sm" />
                       </div>
-
-                      <div className="ito-list-item__name">{building.name}</div>
+                      <div className="text-[15px] font-bold leading-snug tracking-tight text-[var(--color-text)] [overflow-wrap:anywhere]">
+                        {building.name}
+                      </div>
                     </div>
-
-                    <span className="ito-list-item__chevron" aria-hidden="true">
+                    <span
+                      className="grid h-6 w-6 flex-shrink-0 place-items-center rounded-full text-[var(--color-text-subtle)] transition group-hover:translate-x-0.5 group-hover:text-[var(--color-text)]"
+                      aria-hidden="true"
+                    >
                       <Icon name="chevron-right" size={16} />
                     </span>
                   </button>

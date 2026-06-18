@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { CampusViewer } from "../../components/viewer/CampusViewer";
@@ -23,6 +23,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "../../components/ui/Icons";
+import { ThemeToggle } from "../../components/ui/ThemeToggle";
 import { VisitorTopBar } from "./components/VisitorTopBar";
 import { QuickDestinations } from "./components/QuickDestinations";
 import {
@@ -46,7 +47,10 @@ export function VisitorPage() {
   const setSearchTerm = useBuildingStore((state) => state.setSearchTerm);
 
   const [requestedSheetState, setSheetState] = useState<SheetState>("closed");
-  const sheetState: SheetState = requestedSheetState;
+  const sheetState: SheetState =
+    isMobile && routeDestination && requestedSheetState === "closed"
+      ? "peek"
+      : requestedSheetState;
   const [totalBuildings, setTotalBuildings] = useState(0);
   const [showQuickDest, setShowQuickDest] = useState(false);
   const [showServices, setShowServices] = useState(false);
@@ -62,54 +66,46 @@ export function VisitorPage() {
       .catch(() => setTotalBuildings(0));
   }, []);
 
-  // Cuando se establece un destino de ruta en móvil, abre el sheet a "peek"
-  // para que el usuario vea el estado de la ruta (errores, distancia, Cambiar)
-  useEffect(() => {
-    if (isMobile && routeDestination) {
-      setSheetState((s) => (s === "closed" ? "peek" : s));
-    }
-  }, [routeDestination, isMobile]);
-
   const handleLogout = () => {
     logout();
     navigate(ROUTES.WELCOME);
   };
 
-  const closeMobilePanels = () => {
+  const closeMobilePanels = useCallback(() => {
     setShowQuickDest(false);
     setShowServices(false);
     setSheetState("closed");
-  };
+  }, []);
 
-  const handleSelectService = (service: CampusService) => {
+  const handleSelectService = useCallback((service: CampusService) => {
     setSearchTerm(service.searchTerm);
     setViewMode("map");
     closeMobilePanels();
     setSheetState("full");
-  };
+  }, [closeMobilePanels, setSearchTerm]);
 
-  const openBuildingSearch = () => {
+  const openBuildingSearch = useCallback(() => {
     closeMobilePanels();
     setSheetState("full");
     window.setTimeout(() => {
       document.getElementById("building-search")?.focus();
     }, 360);
-  };
+  }, [closeMobilePanels]);
 
-  const openQuickDestinations = () => {
+  const openQuickDestinations = useCallback(() => {
     closeMobilePanels();
     setShowQuickDest(true);
-  };
+  }, [closeMobilePanels]);
 
-  const openServices = () => {
+  const openServices = useCallback(() => {
     closeMobilePanels();
     setShowServices(true);
-  };
+  }, [closeMobilePanels]);
 
-  const openBuildings = () => {
+  const openBuildings = useCallback(() => {
     closeMobilePanels();
     setSheetState("full");
-  };
+  }, [closeMobilePanels]);
 
   const mobileActions = useMemo(() => {
     return [
@@ -136,7 +132,14 @@ export function VisitorPage() {
         primary: true,
       },
     ];
-  }, [sheetState, showQuickDest, showServices]);
+  }, [
+    openBuildings,
+    openQuickDestinations,
+    openServices,
+    sheetState,
+    showQuickDest,
+    showServices,
+  ]);
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -159,6 +162,8 @@ export function VisitorPage() {
                 </span>
               </div>
             </div>
+
+            <ThemeToggle />
 
             <button
               type="button"

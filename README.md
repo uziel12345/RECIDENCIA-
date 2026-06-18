@@ -26,17 +26,18 @@ Sistema web para visualizar y administrar un mapa 3D interactivo del campus del 
 | Módulo | Ruta base | Descripción |
 |---|---|---|
 | Auth | `/auth` | Login, logout, perfil |
-| Buildings | `/buildings` | CRUD de edificios |
+| Admin Users | `/auth/admin-users` | Gestión de usuarios administrativos |
+| Buildings | `/buildings` | CRUD de edificios, servicios y consulta de categorías |
+| Building Images | `/building-images` | Carga y administración de imágenes de edificios |
 | Classrooms | `/classrooms` | CRUD de aulas + horario público |
-| Categories | `/categories` | Categorías de edificios |
 | Procedures | `/procedures` | Trámites y servicios |
+| Requirements | `/requirements` | Requisitos de trámites |
 | Search | `/search` | Búsqueda unificada full-text |
-| Users | `/users` | Gestión de usuarios admin |
 | Students | `/students` | CRUD de alumnos + ubicación académica |
 | Professors | `/professors` | CRUD de profesores + ubicación académica |
 | Schedules | `/schedules` | Horarios con inscripción de alumnos |
-| Navigation | `/navigation` | Rutas campus (grafo A\*) |
-| Audit | `/audit` | Registro de acciones (superadmin) |
+| Navigation | `/navigation` | Nodos, aristas y rutas del campus |
+| Audit Logs | Servicio interno | Registro de acciones administrativas en BD |
 
 ## Stack tecnológico
 
@@ -57,7 +58,7 @@ Sistema web para visualizar y administrar un mapa 3D interactivo del campus del 
 - Zod (validación de esquemas)
 - Multer (upload de imágenes)
 - Helmet + CORS + Express Rate Limit
-- Vitest (374 tests, 26 suites)
+- Vitest (381 tests, 26 suites)
 
 ### Paquete compartido (`packages/shared`)
 
@@ -109,7 +110,7 @@ RECIDENCIA-/
 │           └── utils/
 │
 ├── docs/
-│   ├── schema.sql                # DDL completo (16 tablas)
+│   ├── schema.sql                # DDL completo (17 tablas)
 │   └── seed.sql                  # Datos de prueba mínimos
 │
 ├── package.json
@@ -125,22 +126,23 @@ Los datos de prueba (seed mínimo) se encuentran en [`docs/seed.sql`](docs/seed.
 
 | # | Tabla | Descripción |
 |---|---|---|
-| 1 | `users` | Usuarios administrativos |
-| 2 | `categories` | Categorías de edificios |
+| 1 | `admin_users` | Usuarios administrativos |
+| 2 | `building_categories` | Categorías de edificios |
 | 3 | `buildings` | Edificios del campus |
 | 4 | `building_images` | Imágenes de edificios |
-| 5 | `classrooms` | Aulas dentro de edificios |
-| 6 | `procedure_categories` | Categorías de trámites |
-| 7 | `procedures` | Trámites y servicios |
-| 8 | `procedure_requirements` | Requisitos por trámite |
-| 9 | `procedure_classrooms` | Relación trámite↔aula |
-| 10 | `navigation_nodes` | Nodos del grafo de rutas |
-| 11 | `navigation_edges` | Aristas del grafo de rutas |
-| 12 | `audit_logs` | Registro de auditoría |
-| 13 | `students` | Alumnos (soft delete) |
-| 14 | `professors` | Profesores (soft delete) |
-| 15 | `schedules` | Horarios académicos |
-| 16 | `student_schedules` | Inscripción alumno↔horario |
+| 5 | `building_services` | Servicios disponibles en edificios |
+| 6 | `navigation_nodes` | Nodos del grafo de rutas |
+| 7 | `navigation_edges` | Aristas del grafo de rutas |
+| 8 | `building_entrances` | Entradas de edificios vinculadas al grafo |
+| 9 | `classrooms` | Aulas dentro de edificios |
+| 10 | `procedures` | Trámites y servicios |
+| 11 | `procedure_requirements` | Requisitos por trámite |
+| 12 | `building_procedures` | Relación edificio-trámite |
+| 13 | `audit_logs` | Registro de auditoría |
+| 14 | `students` | Alumnos (soft delete) |
+| 15 | `professors` | Profesores (soft delete) |
+| 16 | `schedules` | Horarios académicos |
+| 17 | `student_schedules` | Inscripción alumno-horario |
 
 ## Control de acceso (RBAC)
 

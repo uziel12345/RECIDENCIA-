@@ -11,6 +11,8 @@ export * from "./utils/navigation.utils.js";
 
 export * from "./api/client.js";
 export * from "./api/buildings.api.js";
+export * from "./api/classrooms.api.js";
+export * from "./api/procedures.api.js";
 export * from "./api/navigation.api.js";
 export * from "./api/auth.api.js";
 export * from "./api/search.api.js";

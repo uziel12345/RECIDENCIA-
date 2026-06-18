@@ -1,5 +1,9 @@
 export function AppFooter({ variant = "light" }: { variant?: "light" | "dark" }) {
   const isDark = variant === "dark";
+  const borderColor = isDark ? "rgba(255,255,255,0.08)" : "var(--color-border)";
+  const titleColor = isDark ? "#f5f5f5" : "var(--color-text)";
+  const subtitleColor = isDark ? "rgba(255,255,255,0.45)" : "var(--color-text-subtle)";
+
   return (
     <footer
       style={{
@@ -8,7 +12,7 @@ export function AppFooter({ variant = "light" }: { variant?: "light" | "dark" })
         justifyContent: "center",
         gap: 10,
         padding: "12px 16px",
-        borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(10,10,10,0.08)"}`,
+        borderTop: `1px solid ${borderColor}`,
         flexShrink: 0,
       }}
     >
@@ -22,7 +26,7 @@ export function AppFooter({ variant = "light" }: { variant?: "light" | "dark" })
           style={{
             fontSize: 11,
             fontWeight: 700,
-            color: isDark ? "#f5f5f5" : "#0a0a0a",
+            color: titleColor,
             letterSpacing: "0.01em",
           }}
         >
@@ -31,7 +35,7 @@ export function AppFooter({ variant = "light" }: { variant?: "light" | "dark" })
         <div
           style={{
             fontSize: 10,
-            color: isDark ? "rgba(255,255,255,0.45)" : "#a3a3a3",
+            color: subtitleColor,
             marginTop: 1,
           }}
         >

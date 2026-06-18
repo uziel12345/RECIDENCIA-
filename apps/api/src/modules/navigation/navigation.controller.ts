@@ -47,6 +47,7 @@ export async function getNavigationEdges(_req: Request, res: Response) {
 
 export async function getBuildingEntrances(_req: Request, res: Response) {
   const entrances = await repo.findAllEntrances();
+  res.setHeader("Cache-Control", "no-store");
   return res.status(200).json({ success: true, data: entrances });
 }
 

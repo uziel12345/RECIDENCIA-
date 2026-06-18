@@ -20,6 +20,9 @@ function getBuildingDescription(building: Building): string | null {
   return null;
 }
 
+const closeBtn =
+  "grid h-10 w-10 place-items-center rounded-full bg-[var(--color-surface)] text-[var(--color-text)] shadow-[0_1px_4px_rgba(10,10,10,0.18)] backdrop-blur-sm transition hover:bg-[var(--color-surface-muted)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2";
+
 export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
   const setRouteDestination = useBuildingStore(
     (state) => state.setRouteDestination
@@ -32,15 +35,17 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
 
   useEffect(() => {
     let cancelled = false;
-    setFailedImages(new Set());
     getBuildingImagesApi(building.id)
       .then((imgs) => {
         if (!cancelled) {
+          setFailedImages(new Set());
           setGalleryImages(imgs.filter((img) => img.is_active && !img.is_cover));
         }
       })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [building.id]);
 
   const visibleImages = galleryImages.filter((img) => !failedImages.has(img.id));
@@ -51,21 +56,28 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
 
   return (
     <article
-      className="ito-info-card"
+      className="ito-building-info-card flex flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-maps)]"
       aria-label={`Información de ${building.name}`}
     >
       {coverUrl ? (
-        <div className="ito-info-card__cover">
+        <div className="ito-bic-cover relative w-full overflow-hidden">
           <img
             src={coverUrl}
             alt=""
-            className="ito-info-card__cover-img"
+            className="h-full w-full object-cover"
             loading="lazy"
           />
-
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-4 pt-10">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-white/85">
+              Edificio {building.code || "Sin código"}
+            </div>
+            <h3 className="mt-0.5 text-balance text-[17px] font-bold leading-tight text-white">
+              {building.name}
+            </h3>
+          </div>
           <button
             type="button"
-            className="ito-info-card__close"
+            className={`absolute right-3 top-3 ${closeBtn}`}
             onClick={() => onClose?.()}
             aria-label="Cerrar información"
           >
@@ -74,25 +86,28 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
         </div>
       ) : (
         <div
-          className="ito-info-card__hero"
+          className="relative flex items-center gap-3 p-4 text-white"
           style={{
             background: `linear-gradient(135deg, ${accent.fg} 0%, ${accent.fgDark} 100%)`,
           }}
         >
-          <div className="ito-info-card__hero-icon" aria-hidden="true">
+          <div
+            className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-xl bg-white/20 ring-1 ring-inset ring-white/30"
+            aria-hidden="true"
+          >
             <Icon name="building" size={26} />
           </div>
-
-          <div className="ito-info-card__hero-text">
-            <div className="ito-info-card__code">
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] font-bold uppercase tracking-wider opacity-90">
               Edificio {building.code || "Sin código"}
             </div>
-            <h3 className="ito-info-card__name">{building.name}</h3>
+            <h3 className="mt-0.5 text-balance text-[17px] font-bold leading-tight">
+              {building.name}
+            </h3>
           </div>
-
           <button
             type="button"
-            className="ito-info-card__close"
+            className={`absolute right-3 top-3 ${closeBtn}`}
             onClick={() => onClose?.()}
             aria-label="Cerrar información"
           >
@@ -101,50 +116,35 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
         </div>
       )}
 
-      {coverUrl && (
-        <div className="ito-info-card__cover-title">
-          <div className="ito-info-card__code">
-            Edificio {building.code || "Sin código"}
-          </div>
-          <h3 className="ito-info-card__name">{building.name}</h3>
-        </div>
-      )}
-
-      <div className="ito-info-card__body">
-        <div className="ito-info-card__row">
-          <span className="ito-info-card__label">Categoría</span>
+      <div className="flex flex-col gap-3.5 p-4">
+        <div className="flex items-center justify-between gap-2.5">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
+            Categoría
+          </span>
           <CategoryBadge name={building.category_name} />
         </div>
 
         {building.is_priority && (
-          <div className="ito-info-card__priority">
+          <div className="flex w-fit items-center gap-1.5 rounded-lg bg-[var(--color-brand-50)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--color-brand-700)]">
             <Icon name="sparkles" size={14} />
             <span>Edificio prioritario</span>
           </div>
         )}
 
         {description && (
-          <div className="ito-info-card__row ito-info-card__row--block">
-            <span className="ito-info-card__label">Descripción</span>
-            <p className="ito-info-card__text">{description}</p>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
+              Descripción
+            </span>
+            <p className="m-0 text-[13px] leading-relaxed text-[var(--color-text)]">
+              {description}
+            </p>
           </div>
         )}
 
         {routeError && routeDestination?.id === building.id && (
           <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 8,
-              padding: "8px 10px",
-              borderRadius: 8,
-              background: "#fef2f2",
-              border: "1px solid #fecaca",
-              color: "#dc2626",
-              fontSize: 12,
-              fontWeight: 500,
-              lineHeight: 1.4,
-            }}
+            className="flex items-start gap-2 rounded-lg border border-[#fecaca] bg-[#fef2f2] px-2.5 py-2 text-[12px] font-medium leading-snug text-[#dc2626]"
             role="alert"
           >
             <Icon name="alert" size={13} />
@@ -153,16 +153,12 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
         )}
 
         {visibleImages.length > 0 && (
-          <div className="ito-info-card__row ito-info-card__row--block">
-            <span className="ito-info-card__label">Imágenes</span>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
+              Imágenes
+            </span>
             <div
-              style={{
-                display: "flex",
-                gap: 8,
-                overflowX: "auto",
-                paddingBottom: 4,
-                scrollbarWidth: "none",
-              }}
+              className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               aria-label="Galería de imágenes del edificio"
             >
               {visibleImages.slice(0, 6).map((img) => (
@@ -174,33 +170,26 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
                   onError={() =>
                     setFailedImages((prev) => new Set([...prev, img.id]))
                   }
-                  style={{
-                    width: 80,
-                    height: 60,
-                    objectFit: "cover",
-                    borderRadius: 8,
-                    flexShrink: 0,
-                    border: "1px solid rgba(148,163,184,0.15)",
-                  }}
+                  className="h-[60px] w-20 flex-shrink-0 rounded-lg object-cover ring-1 ring-inset ring-black/5"
                 />
               ))}
             </div>
           </div>
         )}
 
-        <div className="ito-info-card__actions ito-info-card__actions--stack">
+        <div className="flex flex-col gap-2 pt-1">
           <button
             type="button"
-            className="ito-btn ito-btn--primary ito-btn--block"
+            className="ito-btn-nav-primary inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--color-brand-600)] px-4 text-[13px] font-bold text-white shadow-[0_2px_6px_rgba(234,88,12,0.25)] transition hover:-translate-y-px hover:bg-[var(--color-brand-700)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2"
             onClick={() => setRouteDestination(building)}
           >
             <Icon name="route" size={16} />
-            <span>Como llegar</span>
+            <span>Cómo llegar</span>
           </button>
 
           <button
             type="button"
-            className="ito-btn ito-btn--ghost ito-btn--block"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 text-[13px] font-bold text-[var(--color-text)] transition hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2"
             onClick={() => onClose?.()}
           >
             <Icon name="search" size={16} />
@@ -211,4 +200,3 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
     </article>
   );
 }
-

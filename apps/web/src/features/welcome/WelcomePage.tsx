@@ -1,15 +1,19 @@
-﻿import { useNavigate } from "react-router-dom";
-import { useState, type CSSProperties } from "react";
+import { useNavigate } from "react-router-dom";
+import { useState, type ReactNode, type CSSProperties } from "react";
 import { useAuthStore } from "../../store/auth-store";
 import { useAdminAuthStore } from "../../store/admin-auth-store";
 import { ROUTES } from "../../types/routes";
-import { GraduationCapIcon, UsersIcon, BuildingIcon } from "../../components/ui/Icons";
+import {
+  GraduationCapIcon,
+  UsersIcon,
+  BuildingIcon,
+} from "../../components/ui/Icons";
 
 interface RoleCard {
   id: "student" | "visitor" | "admin-access";
   title: string;
   description: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   color: string;
   bgColor: string;
   borderColor: string;
@@ -69,7 +73,6 @@ export function WelcomePage() {
           return;
         }
       }
-
       navigate(ROUTES.ADMIN_LOGIN);
       return;
     }
@@ -93,49 +96,90 @@ export function WelcomePage() {
   };
 
   return (
-    <div className="welcome-page">
-      <div className="welcome-page__container">
-        <header className="welcome-page__header">
-          <div className="welcome-page__logo">
-            <div className="welcome-page__logo-icon">
-              <img src="/ICONO-TEC.jpeg" alt="ITO" className="welcome-page__logo-img" />
+    <div className="theme-light-lock relative flex min-h-screen items-center justify-center overflow-hidden bg-[url('/Portada.jpeg')] bg-cover bg-center p-5 sm:p-8">
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(67,20,7,0.96)_0%,rgba(124,45,18,0.9)_18%,rgba(194,65,12,0.72)_40%,rgba(234,88,12,0.36)_58%,rgba(255,247,237,0.08)_78%,transparent_100%),linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.12))]" />
+
+      <div className="relative z-[1] flex w-full max-w-[460px] animate-[ito-slide-in-up_0.3s_ease-out] flex-col overflow-hidden rounded-3xl border border-[rgba(255,237,213,0.72)] bg-white/95 shadow-[0_28px_70px_rgba(67,20,7,0.34)] backdrop-blur-xl">
+        <header className="relative overflow-hidden bg-[linear-gradient(135deg,#ea580c_0%,#7c2d12_100%)] px-7 pb-6 pt-8">
+          <div className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/[0.06]" />
+          <div className="relative z-[1] flex items-center gap-3.5">
+            <div className="grid h-[52px] w-[52px] flex-shrink-0 place-items-center overflow-hidden rounded-2xl border border-white/25 bg-white">
+              <img
+                src="/ICONO-TEC.jpeg"
+                alt="ITO"
+                className="block h-12 w-12 object-contain"
+              />
             </div>
-            <div className="welcome-page__logo-text">
-              <h1>Mapa ITO</h1>
-              <p>Instituto Tecnológico de Oaxaca</p>
+            <div>
+              <h1 className="m-0 text-[22px] font-extrabold tracking-tight text-white">
+                Mapa ITO
+              </h1>
+              <p className="m-0 mt-0.5 text-[12px] text-white/75">
+                Instituto Tecnológico de Oaxaca
+              </p>
             </div>
           </div>
         </header>
 
-        <main className="welcome-page__main">
-          <div className="welcome-page__intro">
-            <h2>Acceso al campus</h2>
-            <p>¿Cómo deseas explorar el campus hoy?</p>
+        <main className="flex flex-col">
+          <div className="px-7 pb-2 pt-6">
+            <h2 className="m-0 mb-1 text-[13px] font-bold uppercase tracking-wider text-[var(--color-brand-600)]">
+              Acceso al campus
+            </h2>
+            <p className="m-0 text-[15px] font-semibold leading-snug text-[var(--color-text)]">
+              ¿Cómo deseas explorar el campus hoy?
+            </p>
           </div>
 
-          <div className="welcome-page__roles">
+          <div className="flex flex-col gap-1 px-5 pb-2 pt-3">
             {roleCards.map((card) => (
               <button
                 key={card.id}
-                className="role-card"
                 onClick={() => handleRoleSelect(card)}
-                style={{
-                  "--role-color": card.color,
-                  "--role-bg": card.bgColor,
-                  "--role-border": card.borderColor,
-                } as React.CSSProperties}
+                className="group relative flex min-h-11 w-full items-center gap-3.5 rounded-2xl border border-transparent bg-transparent p-3.5 text-left transition hover:translate-x-0.5 hover:border-[color:var(--role-border)] hover:bg-[color:var(--role-bg)] hover:shadow-[var(--shadow-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2"
+                style={
+                  {
+                    "--role-color": card.color,
+                    "--role-bg": card.bgColor,
+                    "--role-border": card.borderColor,
+                  } as CSSProperties
+                }
               >
-                <span className="role-card__accent" aria-hidden="true" />
-                <div className="role-card__icon" aria-hidden="true">{card.icon}</div>
-                <div className="role-card__content">
-                  <h3 className="role-card__title">{card.title}</h3>
-                  <p className="role-card__description">{card.description}</p>
+                <span
+                  className="absolute inset-y-2 left-0 w-[3px] rounded-r bg-[color:var(--role-color)] opacity-0 transition-opacity group-hover:opacity-100"
+                  aria-hidden="true"
+                />
+                <div
+                  className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-full border-[1.5px] border-[color:var(--role-border)] bg-[color:var(--role-bg)] text-[color:var(--role-color)] transition-transform group-hover:scale-105"
+                  aria-hidden="true"
+                >
+                  {card.icon}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="m-0 mb-0.5 text-[15px] font-bold tracking-tight text-[var(--color-text)]">
+                    {card.title}
+                  </h3>
+                  <p className="m-0 text-[12px] leading-snug text-[var(--color-text-muted)]">
+                    {card.description}
+                  </p>
                 </div>
                 {card.action === "admin-login" && (
-                  <span className="role-card__badge">Requiere acceso</span>
+                  <span className="flex-shrink-0 whitespace-nowrap rounded-full border border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--color-warning-text)]">
+                    Requiere acceso
+                  </span>
                 )}
-                <div className="role-card__arrow" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <div
+                  className="flex-shrink-0 text-[var(--color-text-subtle)] transition group-hover:translate-x-1 group-hover:text-[color:var(--role-color)]"
+                  aria-hidden="true"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
                     <path d="M9 18l6-6-6-6" />
                   </svg>
                 </div>
@@ -144,27 +188,40 @@ export function WelcomePage() {
           </div>
         </main>
 
-        <footer className="welcome-page__footer">
-          <p>Mapa 3D interactivo · ITO Campus</p>
+        <footer className="mt-1 border-t border-[rgba(229,229,229,0.74)] bg-white/50 px-7 pb-5 pt-4">
+          <p className="m-0 text-center text-[11px] tracking-wide text-[var(--color-text-subtle)]">
+            Mapa 3D interactivo · ITO Campus
+          </p>
         </footer>
       </div>
 
       {showAdminSessionModal ? (
-        <div style={styles.modalBackdrop} role="dialog" aria-modal="true">
-          <div style={styles.modal}>
-            <h2 style={styles.modalTitle}>Sesión administrativa activa</h2>
-            <p style={styles.modalText}>
-              Puedes continuar como {adminUser?.username ?? "administrador"} o cambiar de usuario.
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-[rgba(15,23,42,0.55)] p-5"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-[min(420px,100%)] rounded-2xl bg-white p-5 shadow-[0_22px_50px_rgba(15,23,42,0.25)]">
+            <h2 className="m-0 mb-2 text-[22px] font-bold text-[var(--color-text)]">
+              Sesión administrativa activa
+            </h2>
+            <p className="m-0 mb-4 leading-relaxed text-[var(--color-text-muted)]">
+              Puedes continuar como {adminUser?.username ?? "administrador"} o
+              cambiar de usuario.
             </p>
-            <div style={styles.modalActions}>
+            <div className="flex flex-wrap gap-2.5">
               <button
                 type="button"
                 onClick={() => navigate(ROUTES.ADMIN_BUILDINGS)}
-                style={styles.primaryButton}
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--color-brand-700)] bg-[var(--color-brand-600)] px-3.5 font-extrabold text-white transition hover:bg-[var(--color-brand-700)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2"
               >
                 Continuar
               </button>
-              <button type="button" onClick={handleChangeAdminUser} style={styles.secondaryButton}>
+              <button
+                type="button"
+                onClick={handleChangeAdminUser}
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--color-border-strong)] bg-white px-3.5 font-extrabold text-[var(--color-text)] transition hover:bg-[var(--color-surface-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2"
+              >
                 Cambiar usuario
               </button>
             </div>
@@ -174,56 +231,3 @@ export function WelcomePage() {
     </div>
   );
 }
-
-const styles: Record<string, CSSProperties> = {
-  modalBackdrop: {
-    position: "fixed",
-    inset: 0,
-    display: "grid",
-    placeItems: "center",
-    background: "rgba(15, 23, 42, 0.55)",
-    padding: "20px",
-    zIndex: 50,
-  },
-  modal: {
-    width: "min(420px, 100%)",
-    background: "#ffffff",
-    borderRadius: "18px",
-    padding: "22px",
-    boxShadow: "0 22px 50px rgba(15, 23, 42, 0.25)",
-  },
-  modalTitle: {
-    margin: "0 0 8px",
-    color: "#0f172a",
-    fontSize: "22px",
-  },
-  modalText: {
-    margin: "0 0 18px",
-    color: "#475569",
-    lineHeight: 1.5,
-  },
-  modalActions: {
-    display: "flex",
-    gap: "10px",
-    flexWrap: "wrap",
-  },
-  primaryButton: {
-    border: "1px solid #c2410c",
-    borderRadius: "12px",
-    padding: "10px 14px",
-    background: "#ea580c",
-    color: "#ffffff",
-    fontWeight: 800,
-    cursor: "pointer",
-  },
-  secondaryButton: {
-    border: "1px solid #cbd5e1",
-    borderRadius: "12px",
-    padding: "10px 14px",
-    background: "#ffffff",
-    color: "#0f172a",
-    fontWeight: 800,
-    cursor: "pointer",
-  },
-};
-

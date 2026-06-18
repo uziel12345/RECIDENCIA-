@@ -11,6 +11,7 @@ type BuildingsCacheEntry = {
 
 type UseBuildingsOptions = {
   admin?: boolean;
+  version?: number;
 };
 
 const publicCache: BuildingsCacheEntry = {
@@ -33,10 +34,10 @@ function getErrorMessage(error: unknown): string {
     : "No se pudo conectar al servidor. Verifica tu conexión e intenta de nuevo.";
 }
 
-function loadBuildings(admin: boolean): Promise<Building[]> {
+function loadBuildings(admin: boolean, force = false): Promise<Building[]> {
   const cache = admin ? adminCache : publicCache;
 
-  if (cache.loaded) {
+  if (cache.loaded && !force) {
     return Promise.resolve(cache.data);
   }
 
@@ -65,7 +66,7 @@ function loadBuildings(admin: boolean): Promise<Building[]> {
 }
 
 export function useBuildings(options: UseBuildingsOptions = {}) {
-  const admin = options.admin ?? false;
+  const { admin = false, version = 0 } = options;
   const cache = admin ? adminCache : publicCache;
   const [buildings, setBuildings] = useState<Building[]>(cache.data);
   const [loading, setLoading] = useState(!cache.loaded && !cache.error);
@@ -75,17 +76,21 @@ export function useBuildings(options: UseBuildingsOptions = {}) {
     let mounted = true;
     const activeCache = admin ? adminCache : publicCache;
 
-    if (activeCache.loaded) {
-      setBuildings(activeCache.data);
-      setError(activeCache.error);
-      setLoading(false);
-      return;
-    }
+    queueMicrotask(() => {
+      if (!mounted) return;
 
-    setLoading(true);
-    setError(null);
+      if (activeCache.loaded) {
+        setBuildings(activeCache.data);
+        setError(activeCache.error);
+        setLoading(false);
+        return;
+      }
 
-    loadBuildings(admin)
+      setLoading(true);
+      setError(null);
+    });
+
+    loadBuildings(admin, true)
       .then((data) => {
         if (!mounted) return;
         setBuildings(data);
@@ -103,7 +108,7 @@ export function useBuildings(options: UseBuildingsOptions = {}) {
     return () => {
       mounted = false;
     };
-  }, [admin]);
+  }, [admin, version]);
 
   return { buildings, loading, error };
 }

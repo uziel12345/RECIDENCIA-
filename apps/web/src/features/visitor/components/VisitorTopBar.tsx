@@ -1,4 +1,5 @@
 import { SearchIcon, LogOutIcon } from "../../../components/ui/Icons";
+import { ThemeToggle } from "../../../components/ui/ThemeToggle";
 
 interface VisitorTopBarProps {
   onSearchClick: () => void;
@@ -29,6 +30,8 @@ export function VisitorTopBar({ onSearchClick, onLogout }: VisitorTopBarProps) {
         >
           <SearchIcon size={18} />
         </button>
+
+        <ThemeToggle />
 
         <button
           type="button"

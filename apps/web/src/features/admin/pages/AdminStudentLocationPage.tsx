@@ -55,7 +55,7 @@ export function AdminStudentLocationPage() {
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
           <span>
-            Requiere sesión activa con rol <strong style={{ color: "#fdba74" }}>Servicios Escolares</strong> o superior. Acceso sin sesión devuelve 401.
+            Disponible para usuarios con rol <strong style={{ color: "#fdba74" }}>Servicios Escolares</strong> o superior.
           </span>
         </div>
 
@@ -71,7 +71,7 @@ export function AdminStudentLocationPage() {
                   type="text"
                   value={controlNumber}
                   onChange={(e) => setControlNumber(e.target.value)}
-                  placeholder="20221001"
+                  placeholder="Ej. 20221001"
                   required
                   style={s.input}
                 />
@@ -85,7 +85,7 @@ export function AdminStudentLocationPage() {
                     type="text"
                     value={period}
                     onChange={(e) => setPeriod(e.target.value)}
-                    placeholder="2026-1"
+                    placeholder="Ej. 2026-1"
                     style={s.input}
                   />
                 </div>
@@ -96,7 +96,7 @@ export function AdminStudentLocationPage() {
                     type="text"
                     value={at}
                     onChange={(e) => setAt(e.target.value)}
-                    placeholder="09:30"
+                    placeholder="Ej. 09:30"
                     style={s.input}
                   />
                 </div>
@@ -114,6 +114,13 @@ export function AdminStudentLocationPage() {
                   <>
                     <span style={s.spinner} />
                     Consultando...
+                  </>
+                ) : !controlNumber.trim() ? (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    Ingresa un número de control
                   </>
                 ) : (
                   <>
@@ -206,7 +213,7 @@ const s: Record<string, CSSProperties> = {
   label: { fontSize: 11.5, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" },
   input: { border: "1px solid #334155", borderRadius: 10, padding: "10px 13px", fontSize: 14, background: "#0f172a", color: "#f1f5f9", outline: "none", width: "100%", boxSizing: "border-box" },
   btnSearch: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, border: "none", borderRadius: 10, padding: "11px 20px", background: "#f97316", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14 },
-  btnDisabled: { background: "#1e3a5f", color: "#475569", cursor: "not-allowed" },
+  btnDisabled: { background: "#243b5a", color: "#94a3b8", cursor: "not-allowed", opacity: 0.72 },
   spinner: { width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", display: "inline-block", animation: "spin 0.8s linear infinite" },
   alertError: { display: "flex", alignItems: "center", gap: 9, marginBottom: 18, padding: "12px 15px", borderRadius: 10, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#fca5a5", fontSize: 13.5 },
   resultCard: { background: "#1e293b", border: "1px solid #334155", borderRadius: 16, padding: "22px 24px" },

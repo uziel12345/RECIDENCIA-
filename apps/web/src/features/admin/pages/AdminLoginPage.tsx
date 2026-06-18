@@ -1,8 +1,11 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { ROUTES } from "../../../types/routes";
+
+const inputCls =
+  "w-full min-h-11 rounded-2xl border border-[#334155] bg-[#0f172a] px-3.5 py-3 text-[15px] text-[#e2e8f0] placeholder:text-[#475569] outline-none transition-[border-color,box-shadow] duration-[180ms] focus:border-[#ea580c] focus:ring-2 focus:ring-[rgba(234,88,12,0.45)]";
 
 export function AdminLoginPage() {
   const { login, loadSession, loading, error, isAuthenticated, clearError } =
@@ -30,105 +33,58 @@ export function AdminLoginPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     const success = await login(username.trim(), password);
-
     if (success) {
       void navigate(ROUTES.ADMIN_BUILDINGS, { replace: true });
     }
   };
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "grid",
-        placeItems: "center",
-        padding: "24px",
-        background:
-          "linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #ea580c 100%)",
-      }}
-    >
-      <section
-        style={{
-          width: "100%",
-          maxWidth: "420px",
-          background: "#ffffff",
-          borderRadius: "24px",
-          padding: "28px",
-          boxShadow: "0 24px 70px rgba(15, 23, 42, 0.35)",
-          border: "1px solid #e2e8f0",
-        }}
-      >
-        <header style={{ marginBottom: "24px" }}>
+    <main className="grid min-h-screen place-items-center bg-[#0f172a] p-6">
+      <section className="w-full max-w-[420px] rounded-3xl border border-[#1e293b] bg-[#1e293b] p-7 shadow-[0_24px_70px_rgba(0,0,0,0.45)]">
+        <div className="mb-5">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[13px] font-semibold text-[#94a3b8] transition-colors duration-[180ms] hover:bg-[#0f172a] hover:text-[#cbd5e1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.45)]"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            Volver
+          </button>
+        </div>
+
+        <header className="mb-6">
           <div
-            style={{
-              width: 72,
-              height: 72,
-              borderRadius: "18px",
-              background: "#ffffff",
-              border: "1px solid #fed7aa",
-              display: "grid",
-              placeItems: "center",
-              boxShadow: "0 10px 24px rgba(234, 88, 12, 0.18)",
-              marginBottom: "16px",
-              overflow: "hidden",
-            }}
+            className="mb-4 grid h-[68px] w-[68px] place-items-center overflow-hidden rounded-[18px] border border-[#334155] bg-white"
             aria-hidden="true"
           >
             <img
               src="/ICONO-TEC.jpeg"
               alt=""
-              style={{ width: 66, height: 66, objectFit: "contain", display: "block" }}
+              className="block h-[62px] w-[62px] object-contain"
             />
           </div>
 
-          <p
-            style={{
-              margin: "0 0 8px",
-              color: "#ea580c",
-              fontWeight: 700,
-              fontSize: "14px",
-            }}
-          >
+          <p className="mb-2 text-[12px] font-bold uppercase tracking-wider text-[#f97316]">
             Panel administrativo
           </p>
-
-          <h1
-            style={{
-              margin: 0,
-              color: "#0f172a",
-              fontSize: "28px",
-              lineHeight: 1.2,
-            }}
-          >
+          <h1 className="m-0 text-[28px] font-bold leading-tight text-[#f1f5f9]">
             Iniciar sesión
           </h1>
-
-          <p
-            style={{
-              margin: "10px 0 0",
-              color: "#64748b",
-              lineHeight: 1.5,
-            }}
-          >
+          <p className="mt-2.5 text-[14px] leading-relaxed text-[#64748b]">
             Accede para administrar edificios del mapa interactivo del ITO.
           </p>
         </header>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="flex flex-col">
           <label
             htmlFor="username"
-            style={{
-              display: "block",
-              marginBottom: "8px",
-              color: "#334155",
-              fontWeight: 700,
-            }}
+            className="mb-2 text-[12.5px] font-bold uppercase tracking-wide text-[#94a3b8]"
           >
             Usuario
           </label>
-
           <input
             id="username"
             type="text"
@@ -136,32 +92,17 @@ export function AdminLoginPage() {
             onChange={(event) => setUsername(event.target.value)}
             autoComplete="username"
             required
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              border: "1px solid #cbd5e1",
-              borderRadius: "14px",
-              padding: "12px 14px",
-              fontSize: "15px",
-              outline: "none",
-              marginBottom: "18px",
-            }}
+            className={`${inputCls} mb-[18px]`}
             placeholder="admin"
           />
 
           <label
             htmlFor="password"
-            style={{
-              display: "block",
-              marginBottom: "8px",
-              color: "#334155",
-              fontWeight: 700,
-            }}
+            className="mb-2 text-[12.5px] font-bold uppercase tracking-wide text-[#94a3b8]"
           >
             Contraseña
           </label>
-
-          <div style={{ position: "relative", marginBottom: "18px" }}>
+          <div className="relative mb-[18px]">
             <input
               id="password"
               type={showPassword ? "text" : "password"}
@@ -169,34 +110,14 @@ export function AdminLoginPage() {
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="current-password"
               required
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                border: "1px solid #cbd5e1",
-                borderRadius: "14px",
-                padding: "12px 44px 12px 14px",
-                fontSize: "15px",
-                outline: "none",
-              }}
+              className={`${inputCls} pr-11`}
               placeholder="Ingresa tu contraseña"
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-              style={{
-                position: "absolute",
-                right: "12px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: "4px",
-                color: "#94a3b8",
-                display: "flex",
-                alignItems: "center",
-              }}
+              className="absolute right-1.5 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-lg text-[#94a3b8] transition-colors duration-[180ms] hover:bg-[#0f172a] hover:text-[#cbd5e1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.45)]"
             >
               {showPassword ? (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -216,15 +137,7 @@ export function AdminLoginPage() {
           {error ? (
             <div
               role="alert"
-              style={{
-                marginBottom: "18px",
-                padding: "12px 14px",
-                borderRadius: "14px",
-                background: "#fee2e2",
-                border: "1px solid #fecaca",
-                color: "#991b1b",
-                fontWeight: 600,
-              }}
+              className="mb-[18px] rounded-2xl border border-[rgba(239,68,68,0.35)] bg-[rgba(239,68,68,0.12)] px-3.5 py-3 text-[13.5px] font-semibold text-[#fca5a5]"
             >
               {error}
             </div>
@@ -233,23 +146,22 @@ export function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            style={{
-              width: "100%",
-              border: "none",
-              borderRadius: "14px",
-              padding: "13px 16px",
-              background: loading ? "#94a3b8" : "#ea580c",
-              color: "#ffffff",
-              fontWeight: 800,
-              fontSize: "15px",
-              cursor: loading ? "not-allowed" : "pointer",
-            }}
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#ea580c] px-4 py-3 text-[15px] font-extrabold text-white shadow-[0_6px_18px_rgba(234,88,12,0.28)] transition-[transform,background-color] duration-[180ms] hover:-translate-y-px hover:bg-[#c2410c] active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#475569] disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.45)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1e293b]"
           >
-            {loading ? "Validando..." : "Entrar"}
+            {loading ? (
+              <>
+                <span
+                  className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                  aria-hidden="true"
+                />
+                Validando…
+              </>
+            ) : (
+              "Entrar"
+            )}
           </button>
         </form>
       </section>
     </main>
   );
 }
-

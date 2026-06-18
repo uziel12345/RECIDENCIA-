@@ -3,15 +3,15 @@ import { useLocationStore } from "../../../store/location-store";
 import { Icon } from "../../../components/ui/Icons";
 import { formatPositiveDistance, formatPositiveDuration } from "@ito-map/shared";
 import {
-  applyManualCalibration,
-  clearManualCalibration,
+  setSimulatedPosition,
+  clearSimulatedPosition,
 } from "../../location/services/geolocation";
 
 const SIMULATED_LOCATION = {
   buildingId: "cc-simulado",
   buildingName: "Centro de Cómputo",
-  targetX: -10.7109,
-  targetZ: -119.5335,
+  x: -10.7109,
+  z: -119.5335,
 };
 
 type RoutePanelProps = {
@@ -31,10 +31,11 @@ export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelPr
   const permission = useLocationStore((state) => state.permission);
   const geoPosition = useLocationStore((state) => state.geoPosition);
   const mapPosition = useLocationStore((state) => state.mapPosition);
-  const manualCalibration = useLocationStore((state) => state.manualCalibration);
+  const simulatedPosition = useLocationStore((state) => state.simulatedPosition);
+  const nearestBuilding = useLocationStore((state) => state.nearestBuilding);
 
   const hasValidLocation = permission === "granted" && mapPosition !== null;
-  const isSimulated = !!manualCalibration;
+  const isSimulated = !!simulatedPosition;
   // Habilitado siempre que haya edificio seleccionado; el error de GPS lo muestra RouteLine
   const canGenerate = !!selectedBuilding;
 
@@ -43,6 +44,17 @@ export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelPr
 
   const statusInfo = (() => {
     if (permission === "granted") {
+      if (nearestBuilding) {
+        return {
+          variant: "success" as const,
+          text: `Ubicación: ${nearestBuilding.buildingName}`,
+          hint:
+            geoPosition?.accuracy !== null && geoPosition?.accuracy !== undefined
+              ? `Precision ${geoPosition.accuracy.toFixed(1)} m`
+              : undefined,
+        };
+      }
+
       return {
         variant: "success" as const,
         text: "Ubicación disponible",
@@ -111,7 +123,7 @@ export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelPr
           type="button"
           className="ito-btn ito-btn--ghost"
           style={{ width: "100%", justifyContent: "center", fontSize: 13 }}
-          onClick={() => applyManualCalibration(SIMULATED_LOCATION)}
+          onClick={() => setSimulatedPosition(SIMULATED_LOCATION)}
         >
           <Icon name="location" size={14} />
           <span>Simular ubicación (demo)</span>
@@ -123,15 +135,15 @@ export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelPr
           className="ito-route-status ito-route-status--warning"
           role="status"
           style={{ gap: 8, cursor: "pointer" }}
-          onClick={clearManualCalibration}
+          onClick={clearSimulatedPosition}
           title="Haz clic para quitar la simulación"
         >
           <Icon name="alert" size={13} />
-          <span>Ubicación simulada en {manualCalibration!.buildingName} · Toca para quitar</span>
+          <span>Ubicación simulada en {simulatedPosition!.buildingName} · Toca para quitar</span>
         </div>
       )}
 
-      <div style={{ display: "grid", gap: 8 }}>
+      <div className="ito-route-timeline">
         <div className="ito-route-step">
           <div
             className="ito-route-step__icon ito-route-step__icon--origin"
@@ -143,13 +155,17 @@ export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelPr
             <div className="ito-route-step__label">Origen</div>
             <div className="ito-route-step__value">
               {isSimulated
-                ? `Simulado: ${manualCalibration!.buildingName}`
+                ? `Simulado: ${simulatedPosition!.buildingName}`
+                : nearestBuilding
+                  ? nearestBuilding.buildingName
                 : hasValidLocation
                   ? "Tu ubicación actual"
                   : "Ubicación pendiente"}
             </div>
-            {hasValidLocation && !isSimulated && (
-              <div className="ito-route-step__hint">Detectada en el campus</div>
+            {hasValidLocation && !isSimulated && nearestBuilding && (
+              <div className="ito-route-step__hint">
+                Detectada por GPS del edificio
+              </div>
             )}
           </div>
         </div>

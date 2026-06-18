@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import {
   AdditiveBlending,
@@ -20,25 +20,26 @@ function RainParticles({ cfg, isMobile }: RainParticlesProps) {
   const count = isMobile ? cfg.countMobile : cfg.count;
   const rainRef = useRef<LineSegments<BufferGeometry, LineBasicMaterial>>(null);
 
-  // Stored in a ref so useFrame can mutate them without triggering re-renders
+  // Stored in refs so useFrame can mutate them without triggering re-renders
   const speedsRef = useRef<Float32Array>(new Float32Array(0));
   const streaksRef = useRef<Float32Array>(new Float32Array(0));
 
-  const positions = useMemo(() => {
-    const bufs = buildRainBuffers({
-      count,
-      range: cfg.range,
-      height: cfg.height,
-      speedBase: cfg.speedBase,
-      speedVariance: cfg.speedVariance,
-      streakBase: cfg.streakBase,
-      streakVariance: cfg.streakVariance,
-      slant: cfg.slant,
-    });
-    speedsRef.current = bufs.speeds;
-    streaksRef.current = bufs.streaks;
-    return bufs.positions;
-  }, [count, cfg.range, cfg.height, cfg.speedBase, cfg.speedVariance, cfg.streakBase, cfg.streakVariance, cfg.slant]);
+  const buffers = useMemo(() => buildRainBuffers({
+    count,
+    range: cfg.range,
+    height: cfg.height,
+    speedBase: cfg.speedBase,
+    speedVariance: cfg.speedVariance,
+    streakBase: cfg.streakBase,
+    streakVariance: cfg.streakVariance,
+    slant: cfg.slant,
+  }), [count, cfg.range, cfg.height, cfg.speedBase, cfg.speedVariance, cfg.streakBase, cfg.streakVariance, cfg.slant]);
+
+  // Sync animation refs after render — safe to mutate refs in effects
+  useEffect(() => {
+    speedsRef.current = buffers.speeds;
+    streaksRef.current = buffers.streaks;
+  }, [buffers]);
 
   useFrame((_, delta) => {
     const rain = rainRef.current;
@@ -73,7 +74,7 @@ function RainParticles({ cfg, isMobile }: RainParticlesProps) {
   return (
     <lineSegments ref={rainRef} raycast={() => null}>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-position" args={[buffers.positions, 3]} />
       </bufferGeometry>
       <lineBasicMaterial
         color={cfg.color}

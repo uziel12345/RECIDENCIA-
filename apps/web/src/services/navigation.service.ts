@@ -17,6 +17,12 @@ import {
   type NavigationNode,
 } from "@ito-map/shared";
 
+export const NAVIGATION_DATA_CHANGED_EVENT = "ito:navigation-data-changed";
+
+function notifyNavigationDataChanged() {
+  window.dispatchEvent(new CustomEvent(NAVIGATION_DATA_CHANGED_EVENT));
+}
+
 export async function getNavigationNodes(): Promise<NavigationNode[]> {
   return getNavigationNodesApi();
 }
@@ -32,33 +38,46 @@ export async function getBuildingEntrances(): Promise<BuildingEntrance[]> {
 export async function createNavigationNode(
   input: CreateNavigationNodeInput
 ): Promise<NavigationNode> {
-  return createNavigationNodeApi(input);
+  const node = await createNavigationNodeApi(input);
+  notifyNavigationDataChanged();
+  return node;
 }
 
 export async function createNavigationEdge(
   input: CreateNavigationEdgeInput
 ): Promise<NavigationEdge> {
-  return createNavigationEdgeApi(input);
+  const edge = await createNavigationEdgeApi(input);
+  notifyNavigationDataChanged();
+  return edge;
 }
 
 export async function createBuildingEntrance(
   input: CreateBuildingEntranceInput
 ): Promise<BuildingEntrance> {
-  return createBuildingEntranceApi(input);
+  const entrance = await createBuildingEntranceApi(input);
+  notifyNavigationDataChanged();
+  return entrance;
 }
 
 export async function deleteNavigationNode(id: string): Promise<{ id: string }> {
-  return deleteNavigationNodeApi(id);
+  const result = await deleteNavigationNodeApi(id);
+  notifyNavigationDataChanged();
+  return result;
 }
 
 export async function deleteNavigationEdge(id: string): Promise<{ id: string }> {
-  return deleteNavigationEdgeApi(id);
+  const result = await deleteNavigationEdgeApi(id);
+  notifyNavigationDataChanged();
+  return result;
 }
 
 export async function deleteOrphanAccessNodes(): Promise<{ count: number }> {
-  return deleteOrphanAccessNodesApi();
+  const result = await deleteOrphanAccessNodesApi();
+  notifyNavigationDataChanged();
+  return result;
 }
 
 export async function resetAllNavigation(): Promise<void> {
   await resetAllNavigationApi();
+  notifyNavigationDataChanged();
 }

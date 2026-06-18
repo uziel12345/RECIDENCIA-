@@ -1,4 +1,5 @@
 import { SearchIcon, LogOutIcon } from "../../../components/ui/Icons";
+import { ThemeToggle } from "../../../components/ui/ThemeToggle";
 
 interface StudentTopBarProps {
   userName: string;
@@ -28,6 +29,7 @@ export function StudentTopBar({ userName, onSearchClick, onLogout }: StudentTopB
         >
           <SearchIcon size={20} />
         </button>
+        <ThemeToggle />
         <button
           type="button"
           className="student-top-bar__btn student-top-bar__btn--logout"

@@ -4,6 +4,7 @@ import type { NavigationNode } from "@ito-map/shared";
 import {
   getNavigationEdges,
   getNavigationNodes,
+  NAVIGATION_DATA_CHANGED_EVENT,
 } from "../../../../services/navigation.service";
 import { useBuildings } from "../../../../hooks/useBuildings";
 import {
@@ -31,19 +32,36 @@ export function useNavigationGraph() {
     error: buildingsError,
   } = useBuildings();
   const [graphState, setGraphState] = useState<GraphState>({ status: "loading" });
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    function refreshGraph() {
+      setRefreshKey((value) => value + 1);
+    }
+
+    window.addEventListener(NAVIGATION_DATA_CHANGED_EVENT, refreshGraph);
+    window.addEventListener("focus", refreshGraph);
+
+    return () => {
+      window.removeEventListener(NAVIGATION_DATA_CHANGED_EVENT, refreshGraph);
+      window.removeEventListener("focus", refreshGraph);
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
 
     if (buildingsLoading) {
-      setGraphState({ status: "loading" });
-      mounted = false;
+      queueMicrotask(() => {
+        if (mounted) setGraphState({ status: "loading" });
+      });
       return;
     }
 
     if (buildingsError) {
-      setGraphState({ status: "error", message: buildingsError });
-      mounted = false;
+      queueMicrotask(() => {
+        if (mounted) setGraphState({ status: "error", message: buildingsError });
+      });
       return;
     }
 
@@ -66,7 +84,7 @@ export function useNavigationGraph() {
     return () => {
       mounted = false;
     };
-  }, [buildings, buildingsError, buildingsLoading]);
+  }, [buildings, buildingsError, buildingsLoading, refreshKey]);
 
   const findPath = useCallback(
     (from: THREE.Vector3, to: THREE.Vector3, goalNodeId?: string): THREE.Vector3[] => {

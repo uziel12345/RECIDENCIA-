@@ -9,6 +9,8 @@ export const ROUTES = {
   // Real admin views
   ADMIN_LOGIN: "/admin/login",
   ADMIN_BUILDINGS: "/admin/buildings",
+  ADMIN_BUILDING_NEW: "/admin/buildings/new",
+  ADMIN_BUILDING_EDIT: "/admin/buildings/:id/edit",
   ADMIN_CATEGORIES: "/admin/categories",
   ADMIN_NAVIGATION: "/admin/navigation",
   ADMIN_USERS: "/admin/users",

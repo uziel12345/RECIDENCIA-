@@ -3,10 +3,8 @@ import { useEffect, useState } from "react";
 import { getCategoriesApi } from "@ito-map/shared";
 import type { BuildingCategory } from "@ito-map/shared";
 import { AdminLayout } from "../components/AdminLayout";
-import { useAdminAuthStore } from "../../../store/admin-auth-store";
 
 export function AdminCategoriesPage() {
-  const { user } = useAdminAuthStore();
   const [categories, setCategories] = useState<BuildingCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,13 +29,6 @@ export function AdminCategoriesPage() {
               Categorías de edificios disponibles en el mapa interactivo del ITO.
             </p>
           </div>
-
-          {user ? (
-            <div style={s.sessionBadge}>
-              <span style={s.sessionDot} />
-              <span style={s.sessionText}>{user.full_name || user.username}</span>
-            </div>
-          ) : null}
         </header>
 
         {error ? (
@@ -163,18 +154,6 @@ const s: Record<string, CSSProperties> = {
   },
   title: { margin: "0 0 6px", fontSize: 28, fontWeight: 700, color: "#f1f5f9", lineHeight: 1.1 },
   subtitle: { margin: 0, fontSize: 14, color: "#64748b" },
-  sessionBadge: {
-    display: "flex",
-    alignItems: "center",
-    gap: 7,
-    padding: "8px 14px",
-    background: "#1e293b",
-    border: "1px solid #334155",
-    borderRadius: 99,
-    flexShrink: 0,
-  },
-  sessionDot: { width: 7, height: 7, borderRadius: "50%", background: "#22c55e" },
-  sessionText: { fontSize: 12.5, fontWeight: 600, color: "#cbd5e1" },
   alertError: {
     display: "flex",
     alignItems: "center",

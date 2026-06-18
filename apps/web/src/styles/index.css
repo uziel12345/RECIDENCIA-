@@ -1,12 +1,12 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 /* ==========================================================================
-   SISTEMA DE DISEÑO - Mapa 3D ITO
+   SISTEMA DE DISEÃ‘O - Mapa 3D ITO
    Paleta: Naranja institucional + blancos y negros
    ========================================================================== */
 
 :root {
-  /* ── Marca ─────────────────────────────────────────── */
+  /* â”€â”€ Marca â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --color-brand-50:  #fff7ed;
   --color-brand-100: #ffedd5;
   --color-brand-200: #fed7aa;
@@ -16,12 +16,12 @@
   --color-brand-800: #9a3412;
   --color-brand-900: #7c2d12;
 
-  /* ── Acento ────────────────────────────────────────── */
+  /* â”€â”€ Acento â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --color-accent-400: #fb923c;
   --color-accent-500: #f97316;
   --color-accent-600: #ea580c;
 
-  /* ── Neutros ───────────────────────────────────────── */
+  /* â”€â”€ Neutros â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --color-bg:            #f5f5f5;
   --color-surface:       #ffffff;
   --color-surface-muted: #fafafa;
@@ -32,7 +32,7 @@
   --color-text-muted:    #525252;
   --color-text-subtle:   #a3a3a3;
 
-  /* ── Estados ───────────────────────────────────────── */
+  /* â”€â”€ Estados â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --color-success-bg:     #ecfdf5;
   --color-success-border: #a7f3d0;
   --color-success-text:   #065f46;
@@ -43,7 +43,7 @@
   --color-danger-border:  #fecaca;
   --color-danger-text:    #991b1b;
 
-  /* ── Sombras ───────────────────────────────────────── */
+  /* â”€â”€ Sombras â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --shadow-xs:   0 1px 2px rgba(10, 10, 10, 0.04);
   --shadow-sm:   0 1px 4px rgba(10, 10, 10, 0.06), 0 1px 2px rgba(10, 10, 10, 0.04);
   --shadow-md:   0 4px 16px rgba(10, 10, 10, 0.08), 0 1px 4px rgba(10, 10, 10, 0.04);
@@ -51,20 +51,23 @@
   --shadow-xl:   0 24px 56px rgba(10, 10, 10, 0.16), 0 8px 16px rgba(10, 10, 10, 0.08);
   --shadow-brand: 0 4px 20px rgba(234, 88, 12, 0.30);
   --shadow-card:  0 2px 12px rgba(10, 10, 10, 0.07), 0 0 1px rgba(10, 10, 10, 0.08);
+  --shadow-maps:    0 1px 2px rgba(10,10,10,0.06), 0 4px 16px rgba(10,10,10,0.08);
+  --shadow-maps-lg: 0 2px 6px rgba(10,10,10,0.08), 0 12px 32px rgba(10,10,10,0.14);
+  --ring-brand: rgba(234, 88, 12, 0.45);
 
-  /* ── Gradientes ────────────────────────────────────── */
+  /* â”€â”€ Gradientes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --gradient-brand:    linear-gradient(135deg, var(--color-brand-600) 0%, var(--color-brand-900) 100%);
   --gradient-brand-soft: linear-gradient(135deg, var(--color-brand-50) 0%, #fde8d0 100%);
   --gradient-surface:  linear-gradient(180deg, #ffffff 0%, var(--color-surface-muted) 100%);
 
-  /* ── Radios ────────────────────────────────────────── */
+  /* â”€â”€ Radios â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
   --radius-2xl: 24px;
 
-  /* ── Mobile ────────────────────────────────────────── */
+  /* â”€â”€ Mobile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --sheet-peek-height: 92px;
   --mobile-bar-height: 76px;
   --mobile-top-height: 64px;
@@ -1038,7 +1041,7 @@ input {
   min-width: 0;
 }
 
-/* Botón de toggle del panel lateral */
+/* BotÃ³n de toggle del panel lateral */
 .ito-sidebar-toggle {
   position: absolute;
   left: 12px;
@@ -1422,7 +1425,7 @@ input {
   font-weight: 600;
 }
 
-/* Panel del editor temporal de rutas — overlay 2D fuera del Canvas */
+/* Panel del editor temporal de rutas â€” overlay 2D fuera del Canvas */
 .ito-draft-panel-anchor {
   position: absolute;
   bottom: 12px;
@@ -4368,250 +4371,6 @@ svg {
   gap: 8px;
 }
 
-
-/* ============================ LOCATION CALIBRATION ============================ */
-
-.ito-calibration {
-  margin-top: 10px;
-  overflow: hidden;
-  border: 1px solid #fde68a;
-  border-radius: 16px;
-  background: #fffbeb;
-  box-shadow: 0 1px 2px rgba(10, 10, 10, 0.04);
-}
-
-.ito-calibration__status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-}
-
-.ito-calibration__dot {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #f59e0b;
-}
-
-.ito-calibration__dot--ok {
-  background: #22c55e;
-}
-
-.ito-calibration__msg {
-  flex: 1;
-  min-width: 0;
-  color: #475569;
-  font-weight: 600;
-  line-height: 1.3;
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ito-calibration__toggle {
-  flex-shrink: 0;
-  padding: 4px 10px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #c2410c;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.ito-calibration__toggle:hover {
-  background: #fff7ed;
-}
-
-.ito-calibration__clear {
-  flex-shrink: 0;
-  padding: 3px 7px;
-  border-radius: 8px;
-  border: 1px solid #fecaca;
-  background: #fee2e2;
-  color: #991b1b;
-  font-size: 11px;
-  font-weight: 800;
-  cursor: pointer;
-  line-height: 1;
-}
-
-.ito-calibration__panel {
-  padding: 10px 12px 12px;
-  border-top: 1px solid #fcd34d;
-  background: #ffffff;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.ito-calibration__hint {
-  margin: 0;
-  color: #64748b;
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-.ito-calibration__select {
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
-  color: #0f172a;
-  font-size: 13px;
-  font-weight: 600;
-  outline: none;
-  cursor: pointer;
-}
-
-.ito-calibration__select:focus {
-  border-color: #f97316;
-  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.15);
-}
-
-.ito-calibration__actions {
-  display: flex;
-  gap: 8px;
-}
-
-/* ============================ LOCATION CALIBRATION ============================ */
-
-.ito-calibration {
-  margin-top: 10px;
-  overflow: hidden;
-  border: 1px solid #fde68a;
-  border-radius: 16px;
-  background: #fffbeb;
-  box-shadow: 0 1px 2px rgba(10, 10, 10, 0.04);
-}
-
-.ito-calibration__status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-}
-
-.ito-calibration__dot {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #f59e0b;
-}
-
-.ito-calibration__dot--ok {
-  background: #22c55e;
-}
-
-.ito-calibration__msg {
-  flex: 1;
-  min-width: 0;
-  color: #475569;
-  font-weight: 600;
-  line-height: 1.3;
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ito-calibration__toggle {
-  flex-shrink: 0;
-  padding: 4px 10px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #c2410c;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.ito-calibration__toggle:hover {
-  background: #fff7ed;
-}
-
-.ito-calibration__clear {
-  flex-shrink: 0;
-  padding: 3px 7px;
-  border-radius: 8px;
-  border: 1px solid #fecaca;
-  background: #fee2e2;
-  color: #991b1b;
-  font-size: 11px;
-  font-weight: 800;
-  cursor: pointer;
-  line-height: 1;
-}
-
-.ito-calibration__panel {
-  padding: 10px 12px 12px;
-  border-top: 1px solid #fcd34d;
-  background: #ffffff;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.ito-calibration__hint {
-  margin: 0;
-  color: #64748b;
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-.ito-calibration__select {
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
-  color: #0f172a;
-  font-size: 13px;
-  font-weight: 600;
-  outline: none;
-  cursor: pointer;
-}
-
-.ito-calibration__select:focus {
-  border-color: #f97316;
-  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.15);
-}
-
-.ito-calibration__actions {
-  display: flex;
-  gap: 8px;
-}
-
-@media (max-width: 768px) {
-  .ito-calibration {
-    margin-top: 8px;
-    border-radius: 15px;
-  }
-
-  .ito-calibration__status {
-    padding: 9px 10px;
-  }
-
-  .ito-calibration__msg {
-    font-size: 11.5px;
-  }
-
-  .ito-calibration__panel {
-    padding: 10px;
-  }
-
-  .ito-calibration__actions {
-    flex-direction: column;
-  }
-}
-
 /* ============================ RESPONSIVE VIEW REDESIGN ============================ */
 
 :root {
@@ -4914,6 +4673,112 @@ svg {
 
   .ito-sidebar--mobile .ito-sidebar__section {
     padding: 6px 0;
+  }
+
+  /* ── Admin panels: GPS recorder ─────────────────────────────────────── */
+  .ito-setgps-panel {
+    /* Span full width minus toolbar (≈52px) and margins */
+    top: calc(var(--mobile-floating-top) + var(--mobile-floating-bar) + 8px);
+    left: var(--mobile-shell-gap);
+    right: calc(52px + var(--mobile-shell-gap));
+    width: auto;
+    /* Scrollable so tall content doesn't overflow screen */
+    max-height: calc(100dvh - var(--mobile-floating-top) - var(--mobile-floating-bar) - 100px - var(--safe-bottom));
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Slightly larger hit targets */
+    font-size: 13px;
+    border-radius: 12px;
+  }
+
+  .ito-setgps-panel__header {
+    padding: 12px 14px;
+    font-size: 14px;
+    /* Sticky so close button is always reachable when scrolling */
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #1e293b;
+  }
+
+  .ito-setgps-panel__body {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .ito-setgps-panel__coverage-num {
+    font-size: 22px;
+  }
+
+  .ito-setgps-panel__coverage {
+    font-size: 13px;
+  }
+
+  .ito-setgps-panel__signal {
+    padding: 9px 12px;
+    font-size: 12px;
+  }
+
+  .ito-setgps-panel__select {
+    padding: 10px 12px;
+    font-size: 13px;
+    /* Restore native appearance for better mobile UX */
+    appearance: auto;
+    -webkit-appearance: auto;
+  }
+
+  .ito-setgps-panel__save {
+    padding: 12px 14px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+
+  .ito-setgps-panel__auto-btn {
+    padding: 10px 12px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+
+  .ito-setgps-panel__hint,
+  .ito-setgps-panel__warn,
+  .ito-setgps-panel__error {
+    font-size: 12px;
+    padding: 7px 10px;
+  }
+
+  .ito-setgps-panel__auto-result {
+    font-size: 12px;
+    padding: 7px 10px;
+  }
+
+  .ito-setgps-panel__label {
+    font-size: 12px;
+  }
+
+  /* ── Admin panels: Draft route editor ──────────────────────────────── */
+  .ito-draft-panel-anchor {
+    bottom: auto;
+    top: calc(var(--mobile-floating-top) + var(--mobile-floating-bar) + 8px);
+    left: var(--mobile-shell-gap);
+    right: calc(52px + var(--mobile-shell-gap));
+  }
+
+  .ito-draft-editor-panel {
+    width: 100%;
+    max-height: calc(100dvh - var(--mobile-floating-top) - var(--mobile-floating-bar) - 100px - var(--safe-bottom));
+    overflow-y: auto;
+    border-radius: 10px;
+    font-size: 12px;
+  }
+
+  .ito-draft-editor-panel textarea {
+    height: 140px;
+    font-size: 10px;
+  }
+
+  .ito-draft-editor-panel__actions button {
+    padding: 8px 7px;
+    font-size: 12px;
   }
 }
 
@@ -5840,7 +5705,7 @@ svg {
 .ito-viewer-loading__dot:nth-child(2) { animation-delay: 0.18s; }
 .ito-viewer-loading__dot:nth-child(3) { animation-delay: 0.36s; }
 
-/* Entrada de paneles de pestaña (sidebar) */
+/* Entrada de paneles de pestaÃ±a (sidebar) */
 @keyframes ito-slide-in-up {
   from { opacity: 0; transform: translateY(7px); }
   to   { opacity: 1; transform: translateY(0);   }
@@ -5850,7 +5715,7 @@ svg {
   animation: ito-slide-in-up 0.22s ease-out;
 }
 
-/* Entrada del área principal de contenido (pestañas no-mapa) */
+/* Entrada del Ã¡rea principal de contenido (pestaÃ±as no-mapa) */
 .ito-tab-main {
   animation: ito-fade-in 0.2s ease-out;
 }
@@ -5870,7 +5735,7 @@ svg {
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* Glassmorphism: botón toggle del panel lateral (flota sobre el canvas) */
+/* Glassmorphism: botÃ³n toggle del panel lateral (flota sobre el canvas) */
 .ito-sidebar-toggle {
   background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(10px);
@@ -6095,7 +5960,6 @@ svg {
 .quick-destination,
 .ito-info-card,
 .ito-route-panel,
-.ito-calibration,
 .visitor-page__panel-heading,
 .ito-quick-card {
   background:
@@ -6854,7 +6718,7 @@ svg {
   opacity: 1;
 }
 
-/* Sun glow — only visible on clear */
+/* Sun glow â€” only visible on clear */
 .ito-weather-atmosphere__sun {
   opacity: 0;
   background:
@@ -7125,4 +6989,1252 @@ svg {
   letter-spacing: 0.03em;
   white-space: nowrap;
 }
+
+/* ============================================================
+   REDESIGN ADDITIONS
+   ============================================================ */
+
+/* --- Bottom-sheet drag handle --- */
+.sheet-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-border-strong, #d4d4d4);
+  margin: 8px auto 4px;
+  flex-shrink: 0;
+  transition: background-color 180ms ease, width 240ms ease;
+}
+.sheet-handle:active { background: var(--color-brand-600); width: 52px; }
+
+/* --- Segmented pill nav (Student = orange, Visitor = green) --- */
+.student-page__nav,
+.visitor-page__nav {
+  gap: 4px;
+  padding: 6px;
+  margin: 12px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+}
+.student-page__nav-item,
+.visitor-page__nav-item {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  min-height: 40px;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    transform 240ms ease;
+}
+.student-page__nav-item:hover,
+.visitor-page__nav-item:hover {
+  transform: translateY(-1px);
+}
+.student-page__nav-item.is-active {
+  background: var(--color-brand-600);
+  border-color: var(--color-brand-700);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
+}
+.visitor-page__nav-item.is-active {
+  background: #059669;
+  border-color: #047857;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+}
+.student-page__nav-item:focus-visible,
+.visitor-page__nav-item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring-brand, rgba(234, 88, 12, 0.45));
+}
+
+/* --- Role pill --- */
+.student-page__user-role,
+.visitor-page__user-role {
+  align-self: flex-start;
+  margin-top: 3px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+}
+.student-page__user-role {
+  background: var(--color-brand-50);
+  color: var(--color-brand-700);
+}
+.visitor-page__user-role {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+/* --- Floating sidebar card over 3D map (full-map mode) --- */
+.student-page--fullmap .student-page__sidebar,
+.visitor-page--fullmap .visitor-page__sidebar {
+  border-right: none;
+  box-shadow: var(--shadow-maps-lg, 0 12px 32px rgba(10, 10, 10, 0.14));
+}
+
+/* --- Sidebar collapse animation --- */
+.student-page__sidebar,
+.visitor-page__sidebar {
+  transition: transform 240ms ease, opacity 180ms ease;
+}
+.student-page.is-sidebar-collapsed .student-page__sidebar,
+.visitor-page.is-sidebar-collapsed .visitor-page__sidebar {
+  transform: translateX(-12px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --- Sidebar toggle micro-interaction --- */
+.ito-sidebar-toggle {
+  transition: transform 240ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+.ito-sidebar-toggle:hover { transform: translateY(-1px); }
+.ito-sidebar-toggle:active { transform: scale(0.97); }
+.ito-sidebar-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring-brand, rgba(234, 88, 12, 0.45));
+}
+
+/* --- Mobile overlay glassmorphism --- */
+.student-mobile__schedule-modal,
+.visitor-mobile__dest-modal {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow: 0 -8px 40px rgba(10, 10, 10, 0.18);
+}
+.visitor-mobile__dest-modal::before {
+  content: "";
+  display: block;
+  height: 3px;
+  background: #059669;
+}
+
+/* --- Tab panel slide transition --- */
+.ito-tab-panel,
+.ito-tab-main {
+  animation: ito-slide-in-up 240ms ease;
+}
+
+/* ============================================================
+   DARK MODE + GLASS MORPHISM â€” v3
+   Tokens bajo html.dark; por defecto, modo claro.
+   ============================================================ */
+
+@keyframes ito-slide-in-up {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* â”€â”€â”€ ESTRUCTURALES (activos en ambos temas) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+
+.ito-route-timeline {
+  position: relative;
+  display: grid;
+  gap: 8px;
+}
+
+.ito-route-timeline::before {
+  content: "";
+  position: absolute;
+  left: 27px;
+  top: 44px;
+  height: calc(50% - 18px);
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    180deg,
+    rgba(234, 88, 12, 0.70) 0%,
+    rgba(251, 191, 36, 0.35) 100%
+  );
+  pointer-events: none;
+}
+
+.ito-bic-cover { height: 180px; }
+
+.ito-btn-nav-primary {
+  min-height: 48px;
+  font-size: 14px;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 20px rgba(234, 88, 12, 0.36);
+  letter-spacing: -0.01em;
+}
+.ito-btn-nav-primary:hover:not(:disabled) {
+  box-shadow: 0 8px 28px rgba(234, 88, 12, 0.50);
+  transform: translateY(-2px);
+}
+
+.ito-list-item {
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.22s ease,
+              border-color 0.22s ease,
+              background 0.22s ease;
+}
+.ito-list-item:hover { transform: translateY(-3px) scale(1.005); }
+
+/* â”€â”€â”€ 26. THEME TOGGLE BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.ito-theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.14s ease;
+}
+.ito-theme-toggle:hover {
+  background: var(--color-surface-hover, var(--color-surface-muted));
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+  transform: scale(1.06);
+}
+.ito-theme-toggle:active { transform: scale(0.95); }
+.ito-theme-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.35);
+}
+
+/* â”€â”€â”€ 1. TOKENS OSCUROS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark {
+  --color-bg:            #0c0f14;
+  --color-surface:       #141820;
+  --color-surface-muted: #1a1f2a;
+  --color-surface-hover: #1f2535;
+  --color-border:        rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.14);
+  --color-text:          #f1f5f9;
+  --color-text-muted:    #94a3b8;
+  --color-text-subtle:   #4b5871;
+  --color-brand-50:  rgba(234, 88, 12, 0.12);
+  --color-brand-100: rgba(234, 88, 12, 0.20);
+  --color-success-bg:     rgba(6, 78, 59, 0.28);
+  --color-success-border: rgba(16, 185, 129, 0.25);
+  --color-success-text:   #34d399;
+  --color-warning-bg:     rgba(120, 53, 15, 0.28);
+  --color-warning-border: rgba(245, 158, 11, 0.25);
+  --color-warning-text:   #fbbf24;
+  --color-danger-bg:      rgba(127, 29, 29, 0.28);
+  --color-danger-border:  rgba(239, 68, 68, 0.25);
+  --color-danger-text:    #f87171;
+  --shadow-xs:   0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-sm:   0 1px 4px rgba(0, 0, 0, 0.50), 0 1px 2px rgba(0, 0, 0, 0.30);
+  --shadow-md:   0 4px 16px rgba(0, 0, 0, 0.55), 0 1px 4px rgba(0, 0, 0, 0.30);
+  --shadow-lg:   0 12px 32px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.40);
+  --shadow-xl:   0 24px 56px rgba(0, 0, 0, 0.72), 0 8px 16px rgba(0, 0, 0, 0.50);
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.45), 0 0 1px rgba(255, 255, 255, 0.04);
+  --shadow-maps:    0 1px 2px rgba(0, 0, 0, 0.50), 0 4px 16px rgba(0, 0, 0, 0.55);
+  --shadow-maps-lg: 0 2px 6px rgba(0, 0, 0, 0.55), 0 12px 32px rgba(0, 0, 0, 0.60);
+  --shadow-brand: 0 4px 20px rgba(234, 88, 12, 0.38);
+  --gradient-surface:    linear-gradient(180deg, #1a1f2a 0%, #141820 100%);
+  --gradient-brand-soft: linear-gradient(135deg, rgba(194, 65, 12, 0.16) 0%, rgba(120, 53, 15, 0.10) 100%);
+}
+
+html.dark body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.10);
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* â”€â”€â”€ 2. RESET BG-WHITE EN CONTENEDORES PRINCIPALES â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .visitor-page__sidebar .bg-white,
+html.dark .ito-sheet .bg-white {
+  background-color: var(--color-surface);
+}
+
+html.dark .visitor-page__sidebar button.bg-white,
+html.dark .ito-sheet__body button.bg-white {
+  background-color: var(--color-surface-muted);
+}
+
+html.dark .visitor-page__sidebar-content > aside {
+  background: var(--color-surface);
+}
+
+/* â”€â”€â”€ 3. MOBILE TOP BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-mobile-top {
+  background: linear-gradient(
+    180deg,
+    rgba(12, 15, 20, 0.92) 0%,
+    rgba(12, 15, 20, 0.55) 72%,
+    transparent 100%
+  );
+}
+
+html.dark .ito-mobile-top__brand {
+  background: rgba(20, 24, 34, 0.82);
+  border-color: rgba(255, 255, 255, 0.10);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.38),
+              0 1px 0 rgba(255, 255, 255, 0.06) inset;
+}
+
+html.dark .ito-mobile-top__mark {
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+html.dark .ito-mobile-top__title  { color: #f1f5f9; }
+html.dark .ito-mobile-top__subtitle { color: #64748b; }
+html.dark .ito-mobile-top__live   { color: #34d399; }
+
+html.dark .ito-mobile-top__live-dot {
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.22);
+}
+
+/* â”€â”€â”€ 4. MOBILE BOTTOM SHEET â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-sheet {
+  background: rgba(14, 17, 24, 0.97);
+  border-top-color: rgba(255, 255, 255, 0.10);
+  box-shadow: 0 -20px 52px rgba(0, 0, 0, 0.68),
+              0 1px 0 rgba(255, 255, 255, 0.06) inset;
+}
+
+html.dark .ito-sheet__handle-bar {
+  width: 52px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.22);
+  transition: background 0.2s ease,
+              width 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+html.dark .ito-sheet__handle-tap:hover .ito-sheet__handle-bar,
+html.dark .ito-sheet__handle-tap:active .ito-sheet__handle-bar {
+  background: var(--color-brand-500);
+  width: 66px;
+}
+
+html.dark .ito-sheet--peek {
+  box-shadow: 0 -14px 44px rgba(0, 0, 0, 0.72),
+              0 1px 0 rgba(255, 255, 255, 0.06) inset;
+}
+
+html.dark .ito-sheet__head    { border-bottom-color: rgba(255, 255, 255, 0.08); }
+html.dark .ito-sheet__title   { color: #f1f5f9; }
+html.dark .ito-sheet__subtitle { color: #64748b; }
+html.dark .ito-sheet__sticky  { background: rgba(14, 17, 24, 0.97); }
+
+html.dark .ito-sheet__icon-btn {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #94a3b8;
+}
+html.dark .ito-sheet__icon-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+}
+
+/* â”€â”€â”€ 5. QUICK ACTIONS DOCK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-mobile-bar__inner {
+  background: rgba(14, 17, 24, 0.92);
+  border-color: rgba(255, 255, 255, 0.10);
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.58),
+              0 1px 0 rgba(255, 255, 255, 0.06) inset;
+}
+
+html.dark .ito-mobile-bar__btn { color: #64748b; }
+
+html.dark .ito-mobile-bar__btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+}
+
+html.dark .ito-mobile-bar__btn.is-active {
+  background: rgba(234, 88, 12, 0.18);
+  border-color: rgba(234, 88, 12, 0.32);
+  color: #fb923c;
+}
+
+html.dark .ito-mobile-bar__btn--primary {
+  background: linear-gradient(135deg, #ea580c 0%, #9a3412 100%);
+  border-color: rgba(234, 88, 12, 0.50);
+  box-shadow: 0 8px 24px rgba(234, 88, 12, 0.38);
+  color: #fff;
+}
+
+html.dark .ito-mobile-bar__btn--primary:hover:not(:disabled),
+html.dark .ito-mobile-bar__btn--primary.is-active {
+  background: linear-gradient(135deg, #c2410c 0%, #7c2d12 100%);
+  color: #fff;
+}
+
+/* â”€â”€â”€ 6. BUILDING QUICK CARD (sobre el mapa) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-quick-card {
+  background: rgba(14, 17, 24, 0.94);
+  border-color: rgba(255, 255, 255, 0.10);
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.58),
+              0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+html.dark .ito-quick-card__title  { color: #f1f5f9; }
+html.dark .ito-quick-card__code   { color: #64748b; }
+
+html.dark .ito-quick-card__close {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #64748b;
+}
+html.dark .ito-quick-card__close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+}
+
+html.dark .ito-quick-action--ghost {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+}
+html.dark .ito-quick-action--ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* â”€â”€â”€ 7. DESKTOP SIDEBAR VISITOR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .visitor-page__sidebar,
+html.dark .visitor-page--fullmap .visitor-page__sidebar {
+  background: rgba(12, 15, 20, 0.98);
+  border-right-color: rgba(255, 255, 255, 0.07);
+}
+
+html.dark .visitor-page__sidebar-header {
+  background: transparent;
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+}
+
+html.dark .visitor-page__sidebar-header::after {
+  background: var(--color-brand-600);
+}
+
+html.dark .visitor-page__nav {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+html.dark .visitor-page__nav-item { color: #64748b; }
+
+html.dark .visitor-page__nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #cbd5e1;
+  transform: translateY(0);
+}
+
+html.dark .visitor-page__nav-item.is-active {
+  background: var(--color-brand-600);
+  border-color: var(--color-brand-700);
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(234, 88, 12, 0.38);
+}
+
+html.dark .visitor-page__user-name { color: #f1f5f9; }
+
+html.dark .visitor-page__user-role {
+  background: rgba(234, 88, 12, 0.14);
+  color: #fb923c;
+}
+
+html.dark .visitor-page__user-avatar {
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.40),
+              0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+}
+
+html.dark .visitor-page__logout {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #64748b;
+}
+html.dark .visitor-page__logout:hover {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.28);
+  color: #f87171;
+}
+
+html.dark .visitor-page__panel {
+  background: rgba(20, 24, 32, 0.55);
+}
+
+html.dark .visitor-page__panel-heading {
+  background: rgba(26, 31, 42, 0.80);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+html.dark .visitor-page__panel-heading h2 { color: #f1f5f9; }
+html.dark .visitor-page__panel-heading p  { color: #64748b; }
+
+html.dark .visitor-page__panel-icon {
+  background: rgba(234, 88, 12, 0.14);
+  color: #fb923c;
+}
+
+/* â”€â”€â”€ 8. ROUTE PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-route-panel {
+  background: rgba(20, 24, 32, 0.80);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+html.dark .ito-route-panel__title { color: #64748b; }
+
+html.dark .ito-route-step {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+html.dark .ito-route-step__label { color: #64748b; }
+html.dark .ito-route-step__value { color: #e2e8f0; }
+html.dark .ito-route-step__hint  { color: #64748b; }
+
+html.dark .ito-route-step__icon--origin {
+  background: rgba(234, 88, 12, 0.16);
+  color: #fb923c;
+  border-color: rgba(234, 88, 12, 0.28);
+}
+html.dark .ito-route-step__icon--destination {
+  background: rgba(251, 191, 36, 0.14);
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.22);
+}
+
+html.dark .ito-route-stats {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.18);
+  padding: 12px 14px;
+  border-radius: 10px;
+}
+html.dark .ito-route-stats__value { color: #34d399; font-size: 14px; font-weight: 700; }
+html.dark .ito-route-stats__sep   { background: rgba(16, 185, 129, 0.18); }
+html.dark .ito-route-stats__item  { gap: 6px; }
+html.dark .ito-route-stats__item svg { color: #34d399; }
+
+/* â”€â”€â”€ 9. BUILDING INFO CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-bic-cover {
+  background: rgba(20, 24, 32, 0.90);
+}
+
+html.dark .ito-building-info-card {
+  background: var(--color-surface);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+
+html.dark .ito-building-info-card .bg-white {
+  background-color: var(--color-surface-muted);
+}
+
+html.dark .ito-bic-cover button {
+  background: rgba(14, 17, 24, 0.70);
+  color: #f1f5f9;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+html.dark .ito-bic-cover button:hover {
+  background: rgba(14, 17, 24, 0.90);
+}
+
+/* â”€â”€â”€ 10. HOVER ANIMADO EN CARDS (colores dark) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-list-item {
+  background: rgba(26, 31, 42, 0.75);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+html.dark .ito-list-item:hover {
+  background: rgba(30, 37, 52, 0.92);
+  border-color: rgba(234, 88, 12, 0.32);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45),
+              0 0 0 1px rgba(234, 88, 12, 0.18);
+}
+html.dark .ito-list-item.is-selected {
+  background: rgba(26, 31, 42, 0.90);
+}
+html.dark .ito-list-item__code {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #94a3b8;
+}
+html.dark .ito-list-item__name { color: #f1f5f9; }
+html.dark .ito-list-item__chevron { color: #4b5871; }
+html.dark .ito-list-item:hover .ito-list-item__chevron { color: #fb923c; }
+
+/* â”€â”€â”€ 11. ESTADO VACÃO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-empty {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-lg);
+  border: 1.5px dashed rgba(255, 255, 255, 0.09);
+  padding: 44px 24px;
+}
+html.dark .ito-empty p    { color: #e2e8f0; }
+html.dark .ito-empty span { color: #64748b; }
+
+/* â”€â”€â”€ 12. SEARCH INPUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-search__input {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #f1f5f9;
+}
+html.dark .ito-search__input::placeholder { color: #4b5871; }
+html.dark .ito-search__input:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.07);
+}
+html.dark .ito-search__input:focus {
+  border-color: var(--color-brand-500);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.16);
+}
+html.dark .ito-search__icon  { color: #4b5871; }
+html.dark .ito-search__clear { color: #64748b; }
+html.dark .ito-search__clear:hover {
+  background: rgba(255, 255, 255, 0.10);
+  color: #e2e8f0;
+}
+
+/* â”€â”€â”€ 13. CHIPS / FILTROS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-chip {
+  background: rgba(26, 31, 42, 0.80);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #94a3b8;
+}
+html.dark .ito-chip:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #e2e8f0;
+}
+html.dark .ito-chip.is-active {
+  background: rgba(234, 88, 12, 0.16);
+  color: #fb923c;
+  border-color: rgba(234, 88, 12, 0.32);
+}
+
+/* â”€â”€â”€ 14. BADGES CATEGORÃA (dark contrast) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-sheet .ito-badge,
+html.dark .visitor-page__sidebar .ito-badge,
+html.dark .ito-quick-card .ito-badge {
+  filter: saturate(0.88) brightness(1.12);
+}
+
+/* â”€â”€â”€ 15. BOTONES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-btn--ghost {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+}
+html.dark .ito-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* â”€â”€â”€ 16. TOOLBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-toolbar__btn {
+  background: rgba(20, 24, 32, 0.88);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #e2e8f0;
+}
+html.dark .ito-toolbar__btn:hover:not(:disabled) {
+  background: rgba(30, 36, 52, 0.96);
+}
+html.dark .ito-toolbar__group {
+  background: rgba(20, 24, 32, 0.88);
+  border-color: rgba(255, 255, 255, 0.10);
+}
+html.dark .ito-toolbar__divider { background: rgba(255, 255, 255, 0.10); }
+
+/* â”€â”€â”€ 17. SECTION HEADERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-section-header__title { color: #e2e8f0; }
+html.dark .ito-section-header__count {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #64748b;
+}
+
+/* â”€â”€â”€ 18. BRAND MARK / STATS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-brand__mark     { background: rgba(255, 255, 255, 0.07); }
+html.dark .ito-brand__title    { color: #f1f5f9; }
+html.dark .ito-brand__subtitle { color: #64748b; }
+
+html.dark .ito-brand__stat {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #64748b;
+}
+html.dark .ito-brand__stat.is-live {
+  background: rgba(6, 78, 59, 0.22);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.22);
+}
+
+/* â”€â”€â”€ 19. QUICK STATS SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-quick-stat {
+  background: rgba(26, 31, 42, 0.80);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+html.dark .ito-quick-stat__value { color: #f1f5f9; }
+html.dark .ito-quick-stat__label { color: #64748b; }
+
+/* â”€â”€â”€ 20. FAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-fab {
+  background: rgba(20, 24, 32, 0.90);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #e2e8f0;
+}
+
+/* â”€â”€â”€ 21. BACKDROPS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-backdrop,
+html.dark .ito-sheet-backdrop {
+  background: rgba(0, 0, 0, 0.52);
+}
+
+/* â”€â”€â”€ 22. MOBILE DRAWER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-mobile-drawer {
+  background: rgba(14, 17, 24, 0.97);
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+html.dark .ito-mobile-drawer__handle-bar { background: rgba(255, 255, 255, 0.18); }
+html.dark .ito-mobile-drawer__title      { color: #f1f5f9; }
+html.dark .ito-mobile-drawer__subtitle   { color: #64748b; }
+html.dark .ito-mobile-drawer__close {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #94a3b8;
+}
+
+/* â”€â”€â”€ 23. MOBILE OVERLAYS (destinos / servicios) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .student-mobile__schedule-modal,
+html.dark .visitor-mobile__dest-modal {
+  background: rgba(14, 17, 24, 0.97);
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  box-shadow: 0 -8px 48px rgba(0, 0, 0, 0.65);
+}
+
+html.dark .student-mobile__schedule-header,
+html.dark .visitor-mobile__dest-header {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+html.dark .student-mobile__schedule-header h2,
+html.dark .visitor-mobile__dest-header h2 {
+  color: #f1f5f9;
+}
+html.dark .student-mobile__schedule-header button,
+html.dark .visitor-mobile__dest-header button {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #94a3b8;
+}
+
+html.dark .visitor-mobile__dest-modal::before {
+  background: var(--color-brand-600);
+}
+
+/* â”€â”€â”€ 24. VIEWER BACKGROUND â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-campus__viewer {
+  background: linear-gradient(180deg, #0d1117 0%, #0c1020 60%, #0f1525 100%);
+}
+
+html.dark .ito-viewer-loading {
+  background: linear-gradient(180deg, #0c0f14 0%, #141820 60%, #1a1f2a 100%);
+}
+html.dark .ito-viewer-loading__inner {
+  background: rgba(20, 24, 32, 0.95);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+html.dark .ito-viewer-loading__title    { color: #f1f5f9; }
+html.dark .ito-viewer-loading__subtitle { color: #64748b; }
+
+/* â”€â”€â”€ 25. LEGEND â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-legend {
+  background: rgba(14, 17, 24, 0.92);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+html.dark .ito-legend__title { color: #64748b; }
+html.dark .ito-legend__item  { color: #e2e8f0; }
+
+/* â”€â”€â”€ 27. RESET LIQUID-GLASS + STUDENT PAGE DARK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* El bloque "liquid glass" (~6252â€“6680) aplica fondos blancos
+   hardcodeados. AquÃ­ los cancelamos para html.dark.              */
+
+/* Cancelar animaciÃ³n en elementos con glass flow */
+html.dark .student-page__sidebar,
+html.dark .visitor-page__sidebar,
+html.dark .student-top-bar,
+html.dark .visitor-top-bar,
+html.dark .ito-sheet,
+html.dark .ito-mobile-bar__inner,
+html.dark .ito-quick-card,
+html.dark .ito-toolbar,
+html.dark .ito-route-panel,
+html.dark .student-mobile__schedule-modal,
+html.dark .visitor-mobile__dest-modal {
+  animation: none;
+}
+
+/* Ocultar pseudo-elementos de brillo (::before sheen + ::after) */
+html.dark .student-page__sidebar::before,
+html.dark .student-page__sidebar::after,
+html.dark .visitor-page__sidebar::before,
+html.dark .visitor-page__sidebar::after,
+html.dark .student-top-bar::before,
+html.dark .student-top-bar::after,
+html.dark .visitor-top-bar::before,
+html.dark .visitor-top-bar::after,
+html.dark .ito-sheet::before,
+html.dark .ito-sheet::after,
+html.dark .ito-mobile-bar__inner::before,
+html.dark .ito-mobile-bar__inner::after,
+html.dark .ito-quick-card::before,
+html.dark .ito-quick-card::after,
+html.dark .ito-toolbar::before,
+html.dark .ito-toolbar::after,
+html.dark .ito-legend::before,
+html.dark .ito-legend::after,
+html.dark .ito-route-panel::before,
+html.dark .ito-route-panel::after,
+html.dark .student-mobile__schedule-modal::before,
+html.dark .student-mobile__schedule-modal::after,
+html.dark .visitor-mobile__dest-modal::before,
+html.dark .visitor-mobile__dest-modal::after {
+  display: none;
+  opacity: 0;
+  animation: none;
+}
+
+/* â”€â”€ Student sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .student-page__sidebar,
+html.dark .student-page--fullmap .student-page__sidebar {
+  background: rgba(12, 15, 20, 0.98);
+  border-right-color: rgba(255, 255, 255, 0.07);
+  box-shadow: var(--shadow-maps-lg);
+}
+
+html.dark .student-page__sidebar-header {
+  background: transparent;
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+}
+
+html.dark .student-page__sidebar-header::after {
+  background: var(--color-brand-600);
+}
+
+html.dark .student-page__nav {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.07);
+  box-shadow: none;
+}
+
+html.dark .student-page__nav-item {
+  background: transparent;
+  border-color: transparent;
+  color: #64748b;
+  box-shadow: none;
+}
+
+html.dark .student-page__nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #cbd5e1;
+  transform: translateY(0);
+}
+
+html.dark .student-page__nav-item.is-active {
+  background: var(--color-brand-600);
+  border-color: var(--color-brand-700);
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(234, 88, 12, 0.38);
+}
+
+html.dark .student-page__user-name { color: #f1f5f9; }
+
+html.dark .student-page__user-role {
+  background: rgba(234, 88, 12, 0.14);
+  color: #fb923c;
+}
+
+html.dark .student-page__user-avatar {
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.40),
+              0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+}
+
+html.dark .student-page__logout {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #64748b;
+}
+html.dark .student-page__logout:hover {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.28);
+  color: #f87171;
+}
+
+html.dark .student-page__sidebar-content,
+html.dark .student-page__schedule-full {
+  background: rgba(12, 15, 20, 0.60);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html.dark .visitor-page__sidebar-content {
+  background: rgba(12, 15, 20, 0.60);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html.dark .student-page__sidebar-content .ito-sidebar,
+html.dark .visitor-page__sidebar-content .ito-sidebar,
+html.dark .ito-sidebar--mobile {
+  background: transparent;
+  border-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html.dark .student-page__sidebar-content .ito-list-item {
+  background: rgba(26, 31, 42, 0.75);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html.dark .student-page__sidebar-content .ito-list-item:hover {
+  background: rgba(30, 37, 52, 0.92);
+  border-color: rgba(234, 88, 12, 0.32);
+}
+
+/* â”€â”€ Mobile top bars â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .student-top-bar,
+html.dark .visitor-top-bar {
+  background: rgba(12, 15, 20, 0.92);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.40),
+              0 1px 0 rgba(255, 255, 255, 0.05) inset;
+}
+
+html.dark .visitor-top-bar__title,
+html.dark .student-top-bar__name { color: #f1f5f9; }
+html.dark .visitor-top-bar__subtitle,
+html.dark .student-top-bar__greeting { color: #64748b; }
+
+html.dark .visitor-top-bar__button,
+html.dark .student-top-bar__btn {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #94a3b8;
+}
+html.dark .visitor-top-bar__button:hover,
+html.dark .student-top-bar__btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+}
+
+/* â”€â”€ ito-toolbar (reset glass) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .ito-toolbar {
+  background: rgba(20, 24, 32, 0.88);
+  border-color: rgba(255, 255, 255, 0.10);
+}
+
+/* â”€â”€ Sheet + modal body/header (glass reset) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+html.dark .student-mobile__schedule-header,
+html.dark .visitor-mobile__dest-header,
+html.dark .ito-sheet__head {
+  background: rgba(14, 17, 24, 0.96);
+}
+
+html.dark .student-mobile__schedule-body,
+html.dark .visitor-mobile__dest-body,
+html.dark .ito-sheet__body {
+  background: rgba(14, 17, 24, 0.55);
+}
+
+/* Keep public entry screens visually stable regardless of the app theme. */
+.theme-light-lock {
+  --color-brand-50:  #fff7ed;
+  --color-brand-100: #ffedd5;
+  --color-brand-200: #fed7aa;
+  --color-brand-500: #f97316;
+  --color-brand-600: #ea580c;
+  --color-brand-700: #c2410c;
+  --color-brand-800: #9a3412;
+  --color-brand-900: #7c2d12;
+  --color-accent-400: #fb923c;
+  --color-accent-500: #f97316;
+  --color-accent-600: #ea580c;
+  --color-bg:            #f5f5f5;
+  --color-surface:       #ffffff;
+  --color-surface-muted: #fafafa;
+  --color-surface-hover: #f5f5f5;
+  --color-border:        #e5e5e5;
+  --color-border-strong: #d4d4d4;
+  --color-text:          #0a0a0a;
+  --color-text-muted:    #525252;
+  --color-text-subtle:   #a3a3a3;
+  --color-success-bg:     #ecfdf5;
+  --color-success-border: #a7f3d0;
+  --color-success-text:   #065f46;
+  --color-warning-bg:     #fff7ed;
+  --color-warning-border: #fed7aa;
+  --color-warning-text:   #9a3412;
+  --color-danger-bg:      #fef2f2;
+  --color-danger-border:  #fecaca;
+  --color-danger-text:    #991b1b;
+  --shadow-card:  0 2px 12px rgba(10, 10, 10, 0.07), 0 0 1px rgba(10, 10, 10, 0.08);
+  --shadow-brand: 0 4px 20px rgba(234, 88, 12, 0.30);
+  --ring-brand: rgba(234, 88, 12, 0.45);
+  color: var(--color-text);
+  color-scheme: light;
+}
+
+/* ── Set Building GPS Panel (admin only) ───────────────────────────────────── */
+.ito-setgps-panel {
+  position: absolute;
+  top: 16px;
+  right: 68px;
+  z-index: 20;
+  width: 272px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+  color: #e2e8f0;
+  font-size: 13px;
+  overflow: hidden;
+}
+
+.ito-setgps-panel__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  font-weight: 600;
+  font-size: 13px;
+  color: #93c5fd;
+}
+.ito-setgps-panel__header > span { flex: 1; }
+
+.ito-setgps-panel__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  padding: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}
+.ito-setgps-panel__close:hover { color: #e2e8f0; }
+
+.ito-setgps-panel__body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ito-setgps-panel__coverage {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+.ito-setgps-panel__coverage-num {
+  font-size: 18px;
+  font-weight: 700;
+  color: #38bdf8;
+  font-variant-numeric: tabular-nums;
+}
+
+.ito-setgps-panel__signal {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  font-size: 11px;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+}
+.ito-setgps-panel__signal.is-active { color: #94a3b8; }
+
+.ito-setgps-panel__signal-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #475569;
+}
+.ito-setgps-panel__signal.is-active .ito-setgps-panel__signal-dot {
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+}
+
+.ito-setgps-panel__acc { color: #38bdf8; margin-left: 2px; }
+
+.ito-setgps-panel__label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: -4px;
+}
+
+.ito-setgps-panel__select {
+  width: 100%;
+  padding: 7px 10px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+}
+.ito-setgps-panel__select:focus { border-color: #3b82f6; }
+
+.ito-setgps-panel__warn {
+  font-size: 11px;
+  color: #fbbf24;
+  padding: 5px 8px;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: 5px;
+}
+
+.ito-setgps-panel__save {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 9px 12px;
+  background: #2563eb;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+.ito-setgps-panel__save:hover:not(:disabled) { background: #1d4ed8; }
+.ito-setgps-panel__save:disabled { opacity: 0.45; cursor: default; }
+.ito-setgps-panel__save.is-saved { background: #059669; cursor: default; }
+
+.ito-setgps-panel__error {
+  font-size: 11px;
+  color: #f87171;
+  padding: 5px 8px;
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 5px;
+}
+
+.ito-setgps-panel__hint {
+  margin: 0;
+  font-size: 11px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.ito-setgps-panel__divider {
+  height: 1px;
+  background: #1e293b;
+  margin: 2px 0;
+}
+
+.ito-setgps-panel__auto {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ito-setgps-panel__auto-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  background: #1e3a5f;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  color: #93c5fd;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ito-setgps-panel__auto-btn:hover { background: #1e40af; color: #bfdbfe; }
+
+.ito-setgps-panel__auto-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.ito-setgps-panel__auto-bar {
+  height: 4px;
+  background: #1e293b;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.ito-setgps-panel__auto-fill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 99px;
+  transition: width 0.2s;
+}
+
+.ito-setgps-panel__auto-result {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  padding: 5px 8px;
+  border-radius: 5px;
+}
+.ito-setgps-panel__auto-result.is-ok {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+}
+.ito-setgps-panel__auto-result.has-errors {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+/* ── User location label (3D overlay) ──────────────────────────────────────── */
+.ito-location-label {
+  padding: 4px 10px;
+  background: rgba(15, 23, 42, 0.82);
+  color: #e2e8f0;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  white-space: nowrap;
+  pointer-events: none;
+  border: 1px solid rgba(51, 65, 85, 0.6);
+  backdrop-filter: blur(4px);
+}
+
 

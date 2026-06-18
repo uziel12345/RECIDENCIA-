@@ -12,31 +12,38 @@ export type MapCoordinates = {
   z: number;
 };
 
-type LocationPermissionState = "idle" | "granted" | "denied" | "unsupported";
+export type NearestBuilding = {
+  buildingId: string;
+  buildingCode: string;
+  buildingName: string;
+  distanceMeters: number;
+};
 
-export type ManualCalibration = {
+export type SimulatedPosition = {
   buildingId: string;
   buildingName: string;
-  targetX: number;
-  targetZ: number;
+  x: number;
+  z: number;
 };
+
+type LocationPermissionState = "idle" | "granted" | "denied" | "unsupported";
 
 type LocationStore = {
   permission: LocationPermissionState;
   geoPosition: GeoCoordinates | null;
   mapPosition: MapCoordinates | null;
-  isLowAccuracy: boolean;
+  nearestBuilding: NearestBuilding | null;
   errorMessage: string | null;
   watchId: number | null;
-  manualCalibration: ManualCalibration | null;
+  simulatedPosition: SimulatedPosition | null;
 
   setPermission: (permission: LocationPermissionState) => void;
   setGeoPosition: (position: GeoCoordinates | null) => void;
   setMapPosition: (position: MapCoordinates | null) => void;
-  setIsLowAccuracy: (value: boolean) => void;
+  setNearestBuilding: (building: NearestBuilding | null) => void;
   setErrorMessage: (message: string | null) => void;
   setWatchId: (watchId: number | null) => void;
-  setManualCalibration: (calibration: ManualCalibration | null) => void;
+  setSimulatedPosition: (position: SimulatedPosition | null) => void;
   resetLocation: () => void;
 };
 
@@ -44,27 +51,27 @@ export const useLocationStore = create<LocationStore>((set) => ({
   permission: "idle",
   geoPosition: null,
   mapPosition: null,
-  isLowAccuracy: false,
+  nearestBuilding: null,
   errorMessage: null,
   watchId: null,
-  manualCalibration: null,
+  simulatedPosition: null,
 
   setPermission: (permission) => set({ permission }),
   setGeoPosition: (geoPosition) => set({ geoPosition }),
   setMapPosition: (mapPosition) => set({ mapPosition }),
-  setIsLowAccuracy: (isLowAccuracy) => set({ isLowAccuracy }),
+  setNearestBuilding: (nearestBuilding) => set({ nearestBuilding }),
   setErrorMessage: (errorMessage) => set({ errorMessage }),
   setWatchId: (watchId) => set({ watchId }),
-  setManualCalibration: (manualCalibration) => set({ manualCalibration }),
+  setSimulatedPosition: (simulatedPosition) => set({ simulatedPosition }),
 
   resetLocation: () =>
     set({
       permission: "idle",
       geoPosition: null,
       mapPosition: null,
-      isLowAccuracy: false,
+      nearestBuilding: null,
       errorMessage: null,
       watchId: null,
-      manualCalibration: null,
+      simulatedPosition: null,
     }),
 }));

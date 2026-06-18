@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { CampusViewer } from "../../components/viewer/CampusViewer";
@@ -22,6 +22,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "../../components/ui/Icons";
+import { ThemeToggle } from "../../components/ui/ThemeToggle";
 import { StudentTopBar } from "./components/StudentTopBar";
 import { SchedulePanel } from "./components/SchedulePanel";
 import {
@@ -45,7 +46,11 @@ export function StudentPage() {
   const setSearchTerm = useBuildingStore((state) => state.setSearchTerm);
 
   const [requestedSheetState, setSheetState] = useState<SheetState>("closed");
-  const sheetState: SheetState = requestedSheetState;
+  // Deriva el estado del sheet: si hay ruta activa en móvil y el sheet está cerrado, lo abre en peek
+  const sheetState: SheetState =
+    isMobile && routeDestination && requestedSheetState === "closed"
+      ? "peek"
+      : requestedSheetState;
   const [totalBuildings, setTotalBuildings] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("map");
   const [showSchedule, setShowSchedule] = useState(false);
@@ -61,14 +66,6 @@ export function StudentPage() {
       .catch(() => setTotalBuildings(0));
   }, []);
 
-  // Cuando se establece un destino de ruta en móvil, abre el sheet a "peek"
-  // para que el usuario vea el estado de la ruta (errores, distancia, Cambiar)
-  useEffect(() => {
-    if (isMobile && routeDestination) {
-      setSheetState((s) => (s === "closed" ? "peek" : s));
-    }
-  }, [routeDestination, isMobile]);
-
   const handleLogout = () => {
     logout();
     navigate(ROUTES.WELCOME);
@@ -81,43 +78,43 @@ export function StudentPage() {
     setSheetState("closed");
   };
 
-  const closeMobilePanels = () => {
+  const closeMobilePanels = useCallback(() => {
     setShowSchedule(false);
     setShowServices(false);
     setSheetState("closed");
-  };
+  }, []);
 
-  const handleSelectService = (service: CampusService) => {
+  const handleSelectService = useCallback((service: CampusService) => {
     setSearchTerm(service.searchTerm);
     closeMobilePanels();
     setViewMode("map");
     setSheetState("full");
-  };
+  }, [closeMobilePanels, setSearchTerm]);
 
-  const openBuildingSearch = () => {
+  const openBuildingSearch = useCallback(() => {
     closeMobilePanels();
     setViewMode("map");
     setSheetState("full");
     window.setTimeout(() => {
       document.getElementById("building-search")?.focus();
     }, 360);
-  };
+  }, [closeMobilePanels]);
 
-  const openSchedule = () => {
+  const openSchedule = useCallback(() => {
     closeMobilePanels();
     setShowSchedule(true);
-  };
+  }, [closeMobilePanels]);
 
-  const openServices = () => {
+  const openServices = useCallback(() => {
     closeMobilePanels();
     setShowServices(true);
-  };
+  }, [closeMobilePanels]);
 
-  const openBuildings = () => {
+  const openBuildings = useCallback(() => {
     closeMobilePanels();
     setViewMode("map");
     setSheetState("full");
-  };
+  }, [closeMobilePanels]);
 
   const mobileActions = useMemo(() => {
     return [
@@ -144,7 +141,7 @@ export function StudentPage() {
         primary: true,
       },
     ];
-  }, [sheetState, showSchedule, showServices]);
+  }, [openBuildings, openSchedule, openServices, sheetState, showSchedule, showServices]);
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -176,6 +173,8 @@ export function StudentPage() {
                 <span className="student-page__user-role">Alumno</span>
               </div>
             </div>
+
+            <ThemeToggle />
 
             <button
               type="button"
