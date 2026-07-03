@@ -34,9 +34,13 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
   searchTerm: "",
 
   setSelectedBuilding: (building) =>
-    set({
-      selectedBuilding: building,
-    }),
+    set((state) =>
+      state.selectedBuilding?.id === building?.id
+        ? state
+        : {
+            selectedBuilding: building,
+          }
+    ),
 
   setRouteDestination: (building) =>
     set({

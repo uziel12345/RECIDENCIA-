@@ -13,6 +13,7 @@ import {
 import searchRoutes from "../modules/search/search.routes.js";
 import studentsRoutes from "../modules/students/students.routes.js";
 import professorsRoutes from "../modules/professors/professors.routes.js";
+import geolocationRoutes from "../modules/geolocation/geolocation.routes.js";
 import {
   schedulesRouter,
   classroomScheduleRouter,
@@ -34,5 +35,6 @@ router.use("/search", searchRoutes);
 router.use("/students", studentsRoutes);
 router.use("/professors", professorsRoutes);
 router.use("/schedules", schedulesRouter);
+router.use("/geolocation", geolocationRoutes);
 
 export default router;

@@ -3,27 +3,7 @@ import { useLocationStore } from "../../store/location-store";
 import { updateBuildingApi } from "@ito-map/shared";
 import type { Building } from "../../features/buildings/types/building";
 import { Icon } from "../ui/Icons";
-
-// Inverse of the original affine GPS→3D transform used in the old coordinate-mapper.ts.
-// Given a building's (x, z) 3D position, calculates the approximate campus GPS center.
-const REF_LAT = 17.07761201319465;
-const REF_LNG = -96.74416660753468;
-const METERS_PER_LAT = 111320;
-const METERS_PER_LNG = 106411.66838807071;
-const A_X = 0.943977879, B_X = 0.007413161, C_X = 9.63565497;
-const A_Z = 0.0204740651, B_Z = -0.942769452, C_Z = 27.2371311;
-const DET = A_X * B_Z - B_X * A_Z;
-
-function xzToGps(x: number, z: number): { latitude: number; longitude: number } {
-  const px = x - C_X;
-  const pz = z - C_Z;
-  const e = (px * B_Z - B_X * pz) / DET;
-  const n = (A_X * pz - px * A_Z) / DET;
-  return {
-    latitude: REF_LAT + n / METERS_PER_LAT,
-    longitude: REF_LNG + e / METERS_PER_LNG,
-  };
-}
+import { xzToGps } from "../../features/location/services/campus-transform";
 
 type AutoStatus =
   | { state: "idle" }

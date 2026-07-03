@@ -60,8 +60,8 @@ export function BuildingTable({
   const showActions = canEditBuildings || canEditPhotos;
 
   return (
-    <section className="overflow-hidden rounded-[18px] border border-[#334155] bg-[#1e293b] p-[22px] shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
-      <div className="mb-4 flex items-start justify-between gap-4">
+    <section className="admin-table-card overflow-hidden rounded-[18px] border border-[#334155] bg-[#1e293b] p-[22px] shadow-[0_4px_24px_rgba(0,0,0,0.3)] max-[640px]:rounded-[14px] max-[640px]:p-3.5">
+      <div className="mb-4 flex items-start justify-between gap-4 max-[640px]:flex-col">
         <div>
           <h2 className="m-0 mb-1 text-[18px] font-bold text-[#f1f5f9]">
             Listado
@@ -71,11 +71,11 @@ export function BuildingTable({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-2.5">
+        <div className="flex flex-wrap items-center justify-end gap-2.5 max-[640px]:w-full max-[640px]:justify-stretch">
           {canEditNavigation ? (
             <a
               href="/admin/navigation"
-              className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-[10px] border border-[rgba(234,88,12,0.4)] bg-[rgba(234,88,12,0.15)] px-3.5 text-[13px] font-bold text-[#fdba74] no-underline transition-[background-color,transform] duration-[180ms] hover:-translate-y-px hover:bg-[rgba(234,88,12,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.45)]"
+              className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-[10px] border border-[rgba(234,88,12,0.4)] bg-[rgba(234,88,12,0.15)] px-3.5 text-[13px] font-bold text-[#fdba74] no-underline transition-[background-color,transform] duration-[180ms] hover:-translate-y-px hover:bg-[rgba(234,88,12,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.45)] max-[640px]:flex-1"
             >
               Mapa de navegación
             </a>
@@ -85,14 +85,14 @@ export function BuildingTable({
             type="button"
             onClick={onRefresh}
             disabled={loadingBuildings}
-            className={ghostBtn}
+            className={`${ghostBtn} max-[640px]:flex-1`}
           >
             {loadingBuildings ? "Cargando…" : "Recargar"}
           </button>
         </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-[1fr_180px] gap-3">
+      <div className="mb-4 grid grid-cols-[1fr_180px] gap-3 max-[640px]:grid-cols-1">
         <input
           value={searchTerm}
           onChange={(event) => onSearchTermChange(event.target.value)}
@@ -112,7 +112,120 @@ export function BuildingTable({
         </select>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="hidden gap-3 max-[640px]:grid">
+        {filteredBuildings.map((building) => {
+          const isActive = Boolean(building.is_active);
+          const isBusy = actionLoadingId === building.id;
+          const code = safeText(building.code) || "S/C";
+
+          return (
+            <article
+              key={building.id}
+              className={`rounded-[14px] border border-[#334155] bg-[#152033] p-3.5 shadow-[0_10px_26px_rgba(0,0,0,0.18)] ${
+                !isActive ? "opacity-70" : ""
+              }`}
+            >
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <span className="mb-1 inline-flex rounded-md border border-[rgba(234,88,12,0.28)] bg-[rgba(234,88,12,0.12)] px-2 py-1 text-[12px] font-black uppercase tracking-wide text-[#fdba74]">
+                    {code}
+                  </span>
+                  <h3 className="m-0 text-[16px] font-bold leading-snug text-[#f1f5f9]">
+                    {safeText(building.name) || "Sin nombre"}
+                  </h3>
+                </div>
+
+                <span
+                  className={`inline-flex shrink-0 rounded-full border px-2.5 py-1 text-[11.5px] font-bold ${
+                    isActive
+                      ? "border-[rgba(34,197,94,0.25)] bg-[rgba(34,197,94,0.12)] text-[#86efac]"
+                      : "border-[rgba(239,68,68,0.22)] bg-[rgba(239,68,68,0.1)] text-[#fca5a5]"
+                  }`}
+                >
+                  {isActive ? "Activo" : "Inactivo"}
+                </span>
+              </div>
+
+              <dl className="mb-3 grid grid-cols-2 gap-2 text-[12.5px]">
+                <div className="rounded-[10px] bg-[#0f172a] p-2.5">
+                  <dt className="mb-1 font-bold uppercase tracking-wide text-[#64748b]">
+                    Categoría
+                  </dt>
+                  <dd className="m-0 font-semibold text-[#cbd5e1]">
+                    {safeText(building.category_name) || "Sin categoría"}
+                  </dd>
+                </div>
+                <div className="rounded-[10px] bg-[#0f172a] p-2.5">
+                  <dt className="mb-1 font-bold uppercase tracking-wide text-[#64748b]">
+                    Modelo 3D
+                  </dt>
+                  <dd className="m-0 break-words font-semibold text-[#cbd5e1]">
+                    {safeText(building.model_node_name) || "Sin nodo"}
+                  </dd>
+                </div>
+              </dl>
+
+              {showActions ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {canEditBuildings ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => onStartEdit(building)}
+                        disabled={isBusy}
+                        className="min-h-11 rounded-[10px] border border-[rgba(234,88,12,0.32)] bg-[rgba(234,88,12,0.14)] px-3 text-[13px] font-bold text-[#fdba74] disabled:opacity-50"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onToggleStatus(building)}
+                        disabled={isBusy}
+                        className="min-h-11 rounded-[10px] border border-[#334155] bg-[#0f172a] px-3 text-[13px] font-bold text-[#cbd5e1] disabled:opacity-50"
+                      >
+                        {isActive ? "Desactivar" : "Activar"}
+                      </button>
+                    </>
+                  ) : null}
+                  {canEditPhotos ? (
+                    <button
+                      type="button"
+                      onClick={() => onOpenImages(building)}
+                      disabled={isBusy}
+                      className="min-h-11 rounded-[10px] border border-[rgba(139,92,246,0.32)] bg-[rgba(139,92,246,0.12)] px-3 text-[13px] font-bold text-[#c4b5fd] disabled:opacity-50"
+                    >
+                      Fotos
+                    </button>
+                  ) : null}
+                  {canEditBuildings ? (
+                    <button
+                      type="button"
+                      onClick={() => onDelete(building)}
+                      disabled={isBusy}
+                      className="min-h-11 rounded-[10px] border border-[rgba(239,68,68,0.32)] bg-[rgba(239,68,68,0.1)] px-3 text-[13px] font-bold text-[#fca5a5] disabled:opacity-50"
+                    >
+                      Eliminar
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+            </article>
+          );
+        })}
+
+        {filteredBuildings.length === 0 ? (
+          <div className="rounded-[14px] border border-[#334155] bg-[#152033] px-4 py-10 text-center text-[14px] text-[#94a3b8]">
+            <p className="m-0 font-semibold text-[#cbd5e1]">
+              No hay edificios para mostrar.
+            </p>
+            <p className="m-0 mt-1 text-[12.5px] text-[#64748b]">
+              Ajusta la búsqueda o el filtro de estado.
+            </p>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="overflow-x-auto rounded-[12px] max-[640px]:hidden">
         <table className="w-full min-w-[820px] border-collapse">
           <thead>
             <tr>
@@ -247,7 +360,7 @@ export function BuildingTable({
         </table>
       </div>
 
-      <div className="mt-[18px] flex items-center justify-center gap-3 border-t border-[#243347] pt-3.5">
+      <div className="mt-[18px] flex items-center justify-center gap-3 border-t border-[#243347] pt-3.5 max-[640px]:grid max-[640px]:grid-cols-2 max-[640px]:gap-2">
         <button
           type="button"
           onClick={() =>
@@ -258,7 +371,7 @@ export function BuildingTable({
         >
           Anterior
         </button>
-        <span className="text-[13px] font-semibold text-[#64748b]">
+        <span className="text-[13px] font-semibold text-[#64748b] max-[640px]:col-span-2 max-[640px]:row-start-1 max-[640px]:text-center">
           Página {page} de {totalPages}
         </span>
         <button

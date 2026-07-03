@@ -40,6 +40,8 @@ export function setSimulatedPosition(sim: SimulatedPosition): void {
     buildingCode: "",
     buildingName: sim.buildingName,
     distanceMeters: 0,
+    confidence: "high",
+    method: "manual",
   });
   store.setPermission("granted");
   store.setErrorMessage(null);

@@ -20,6 +20,18 @@ const locationRateLimit = rateLimit({
     message: "Límite de consultas de ubicación alcanzado. Intenta en 15 minutos.",
   },
 });
+
+const scheduleRateLimit = rateLimit({
+  windowMs: 15 * 60_000,
+  max: 8,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `sched-stu:${ipKeyGenerator(req.ip ?? "unknown")}`,
+  message: {
+    success: false,
+    message: "Límite de consultas de horario alcanzado. Intenta en 15 minutos.",
+  },
+});
 import {
   createStudentSchema,
   updateStudentSchema,
@@ -31,6 +43,8 @@ import {
 import {
   getStudents,
   getStudentById,
+  getStudentSchedules,
+  getMindboxSchedule,
   getStudentLocation,
   createStudent,
   updateStudent,
@@ -39,6 +53,23 @@ import {
 } from "./students.controller.js";
 
 const router = Router();
+
+// Schedule lookup — public, rate-limited by IP (internal DB)
+router.get(
+  "/:controlNumber/schedules",
+  scheduleRateLimit,
+  validateParams(studentControlNumberSchema),
+  getStudentSchedules
+);
+
+// Schedule desde Mindbox — requiere MINDBOX_BASE_URL + MINDBOX_API_TOKEN en .env
+// Retorna 503 si las variables de entorno no están configuradas
+router.get(
+  "/:controlNumber/mindbox-schedule",
+  scheduleRateLimit,
+  validateParams(studentControlNumberSchema),
+  getMindboxSchedule
+);
 
 // Location lookup — requires can_view_student_location (servicios_escolares+)
 router.get(

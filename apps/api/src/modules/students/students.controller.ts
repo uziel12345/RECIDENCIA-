@@ -3,6 +3,7 @@ import { asyncHandler } from "../../shared/utils/async-handler.js";
 import { sendSuccess } from "../../shared/http/response.js";
 import { auditLog } from "../../shared/services/audit.service.js";
 import { StudentsService } from "./students.service.js";
+import { getMindboxService } from "../mindbox/mindbox.service.js";
 
 const service = new StudentsService();
 
@@ -19,6 +20,21 @@ export const getStudents = asyncHandler(async (_req: Request, res: Response) => 
 export const getStudentById = asyncHandler(async (req: Request, res: Response) => {
   const id = getSingleParam(req.params.id);
   const data = await service.getById(id);
+  return sendSuccess(res, data);
+});
+
+export const getStudentSchedules = asyncHandler(async (req: Request, res: Response) => {
+  const controlNumber = getSingleParam(req.params.controlNumber);
+  const period = typeof req.query.period === "string" ? req.query.period : undefined;
+  const data = await service.getSchedules(controlNumber, period);
+  return sendSuccess(res, data);
+});
+
+// Horario desde Mindbox — requiere MINDBOX_BASE_URL y MINDBOX_API_TOKEN en .env
+export const getMindboxSchedule = asyncHandler(async (req: Request, res: Response) => {
+  const controlNumber = getSingleParam(req.params.controlNumber);
+  const mindbox = getMindboxService();
+  const data = await mindbox.getStudentSchedule(controlNumber);
   return sendSuccess(res, data);
 });
 

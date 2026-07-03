@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Building } from "@ito-map/shared";
 import { getAdminBuildings, getBuildings } from "../services/buildings.service";
 
@@ -71,15 +71,18 @@ export function useBuildings(options: UseBuildingsOptions = {}) {
   const [buildings, setBuildings] = useState<Building[]>(cache.data);
   const [loading, setLoading] = useState(!cache.loaded && !cache.error);
   const [error, setError] = useState<string | null>(cache.error);
+  const lastVersionRef = useRef(version);
 
   useEffect(() => {
     let mounted = true;
     const activeCache = admin ? adminCache : publicCache;
+    const forceReload = version !== lastVersionRef.current;
+    lastVersionRef.current = version;
 
     queueMicrotask(() => {
       if (!mounted) return;
 
-      if (activeCache.loaded) {
+      if (activeCache.loaded && !forceReload) {
         setBuildings(activeCache.data);
         setError(activeCache.error);
         setLoading(false);
@@ -90,7 +93,7 @@ export function useBuildings(options: UseBuildingsOptions = {}) {
       setError(null);
     });
 
-    loadBuildings(admin, true)
+    loadBuildings(admin, forceReload)
       .then((data) => {
         if (!mounted) return;
         setBuildings(data);

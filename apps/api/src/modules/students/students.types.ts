@@ -26,3 +26,20 @@ export interface StudentLocationRow extends RowDataPacket {
   building_code: string;
   building_name: string;
 }
+
+export interface StudentScheduleRow extends RowDataPacket {
+  id: string;
+  subject: string;
+  professor_id: string;
+  professor_name: string | null;
+  classroom_id: string;
+  classroom_code: string;
+  classroom_name: string;
+  building_id: string;
+  building_code: string;
+  building_name: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  period: string;
+}

@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import type { Pool, RowDataPacket } from "mysql2/promise";
 import { pool } from "../../db/connection.js";
-import type { StudentRow, StudentLocationRow } from "./students.types.js";
+import type { StudentRow, StudentLocationRow, StudentScheduleRow } from "./students.types.js";
 
 const STUDENT_SELECT = `
   SELECT id, control_number, full_name, email, program, semester, is_active, deleted_at
@@ -133,5 +133,43 @@ export class StudentsRepository {
     sql += " ORDER BY s.start_time ASC LIMIT 1";
     const [rows] = await this.db.query<StudentLocationRow[]>(sql, params);
     return rows[0] ?? null;
+  }
+
+  async findAllSchedulesByControlNumber(
+    controlNumber: string,
+    period?: string
+  ): Promise<StudentScheduleRow[]> {
+    const params: unknown[] = [controlNumber];
+    let sql = `
+      SELECT
+        sc.id,
+        sc.subject,
+        sc.professor_id,
+        p.full_name   AS professor_name,
+        c.id          AS classroom_id,
+        c.code        AS classroom_code,
+        c.name        AS classroom_name,
+        b.id          AS building_id,
+        b.code        AS building_code,
+        b.name        AS building_name,
+        sc.day_of_week,
+        TIME_FORMAT(sc.start_time, '%H:%i') AS start_time,
+        TIME_FORMAT(sc.end_time,   '%H:%i') AS end_time,
+        sc.period
+      FROM students st
+      JOIN student_schedules ss ON ss.student_id = st.id
+      JOIN schedules sc ON ss.schedule_id = sc.id
+      LEFT JOIN professors p ON sc.professor_id = p.id AND p.deleted_at IS NULL
+      JOIN classrooms c ON sc.classroom_id = c.id AND c.deleted_at IS NULL
+      JOIN buildings  b ON c.building_id   = b.id AND b.deleted_at IS NULL
+      WHERE st.control_number = ? AND st.deleted_at IS NULL AND st.is_active = 1
+    `;
+    if (period) {
+      sql += " AND sc.period = ?";
+      params.push(period);
+    }
+    sql += " ORDER BY sc.day_of_week ASC, sc.start_time ASC";
+    const [rows] = await this.db.query<StudentScheduleRow[]>(sql, params);
+    return rows;
   }
 }

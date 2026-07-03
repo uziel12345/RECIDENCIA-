@@ -90,7 +90,7 @@ app.use("/api", routes);
 
 app.use(express.static(webDist));
 app.get("*", (req, res, next) => {
-  if (req.path.startsWith("/api")) {
+  if (req.path.startsWith("/api") || req.path.startsWith("/uploads")) {
     next();
     return;
   }

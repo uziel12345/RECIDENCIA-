@@ -181,8 +181,8 @@ export function AdminProfessorLocationPage() {
                 <input
                   id="professor-query"
                   type="text"
-                  value={employeeNumber}
-                  onChange={(e) => setEmployeeNumber(e.target.value)}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
                   placeholder="EMP001"
                   required
                   style={s.input}
@@ -220,7 +220,7 @@ export function AdminProfessorLocationPage() {
                     <span style={s.spinner} />
                     Consultando...
                   </>
-                ) : !employeeNumber.trim() ? (
+                ) : !query.trim() ? (
                   <>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />

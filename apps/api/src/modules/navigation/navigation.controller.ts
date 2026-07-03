@@ -2,10 +2,7 @@ import type { Request, Response } from "express";
 import { ApiError } from "../../shared/errors/api-error.js";
 import { sendSuccess } from "../../shared/http/response.js";
 import { auditLog } from "../../shared/services/audit.service.js";
-import {
-  calculateNavigationRoute,
-  invalidateNavigationCache,
-} from "./navigation.service.js";
+import { invalidateNavigationCache } from "./navigation.service.js";
 import { NavigationRepository } from "./navigation.repository.js";
 
 const repo = new NavigationRepository();
@@ -159,24 +156,7 @@ export async function deleteOrphanAccessNodesController(req: Request, res: Respo
   );
 }
 
-// ── Route / cache ─────────────────────────────────────────────────────────────
-
-export async function getNavigationRoute(req: Request, res: Response) {
-  const fromNodeId = String(req.query.fromNodeId ?? "").trim();
-  const toNodeId   = String(req.query.toNodeId   ?? "").trim();
-
-  if (!fromNodeId || !toNodeId) {
-    throw new ApiError(400, "Los parámetros fromNodeId y toNodeId son obligatorios");
-  }
-
-  const route = await calculateNavigationRoute(fromNodeId, toNodeId);
-
-  if (!route) {
-    throw new ApiError(404, "No se encontró una ruta entre los nodos indicados");
-  }
-
-  return res.status(200).json({ success: true, data: route });
-}
+// ── Cache ─────────────────────────────────────────────────────────────────────
 
 export async function invalidateNavigationCacheController(
   _req: Request,

@@ -87,6 +87,29 @@ export class StudentsService {
     return { id, deleted: true };
   }
 
+  async getSchedules(controlNumber: string, period?: string) {
+    const student = await this.repository.findByControlNumber(controlNumber);
+    if (!student || !student.is_active) throw new ApiError(404, "Alumno no encontrado");
+
+    const rows = await this.repository.findAllSchedulesByControlNumber(controlNumber, period);
+    return rows.map((r) => ({
+      id: r.id,
+      subject: r.subject,
+      professor_id: r.professor_id,
+      professor_name: r.professor_name ?? "",
+      classroom_id: r.classroom_id,
+      classroom_code: r.classroom_code,
+      classroom_name: r.classroom_name,
+      building_id: r.building_id,
+      building_code: r.building_code,
+      building_name: r.building_name,
+      day_of_week: r.day_of_week,
+      start_time: r.start_time,
+      end_time: r.end_time,
+      period: r.period,
+    }));
+  }
+
   async getLocation(controlNumber: string, period?: string, at?: string) {
     const student = await this.repository.findByControlNumber(controlNumber);
     if (!student || !student.is_active) throw new ApiError(404, "Alumno no encontrado");

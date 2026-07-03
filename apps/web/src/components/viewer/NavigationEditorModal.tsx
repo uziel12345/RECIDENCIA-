@@ -463,12 +463,12 @@ export function NavigationEditorModal({ controls, buildings, onClose }: Props) {
                   <select
                     value={addNodeType}
                     onChange={(e) =>
-                      setAddNodeType(e.target.value as "intersection" | "building_access")
+                      setAddNodeType(e.target.value as "intersection" | "entrance")
                     }
                     style={S.select}
                   >
                     <option value="intersection">Intersección (camino)</option>
-                    <option value="building_access">Acceso a edificio</option>
+                    <option value="entrance">Acceso a edificio</option>
                   </select>
                   <div style={S.info()}>
                     {saving

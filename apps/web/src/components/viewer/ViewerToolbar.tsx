@@ -1,4 +1,5 @@
 import { Icon } from "../ui/Icons";
+import type { ViewMode } from "./CampusViewer";
 
 export type NavigationDebugMode = "hidden" | "all" | "issues";
 
@@ -7,12 +8,16 @@ export type ViewerToolbarProps = {
   navigationDebugMode: NavigationDebugMode;
   draftEditorActive: boolean;
   gpsRecorderOpen: boolean;
+  calibrationOpen: boolean;
   onFocusUser: () => void;
   onResetView: () => void;
   onZoom: (delta: number) => void;
   onToggleNavigationDebug: () => void;
   onToggleDraftEditor: () => void;
   onToggleGpsRecorder: () => void;
+  onToggleCalibration: () => void;
+  viewMode: ViewMode;
+  onToggleViewMode: () => void;
   canUseAdvancedTools?: boolean;
   isMobile?: boolean;
 };
@@ -22,15 +27,20 @@ export function ViewerToolbar({
   navigationDebugMode,
   draftEditorActive,
   gpsRecorderOpen,
+  calibrationOpen,
   onFocusUser,
   onResetView,
   onZoom,
   onToggleNavigationDebug,
   onToggleDraftEditor,
   onToggleGpsRecorder,
+  onToggleCalibration,
+  viewMode,
+  onToggleViewMode,
   canUseAdvancedTools = false,
   isMobile = false,
 }: ViewerToolbarProps) {
+  const isAerial = viewMode === "aerial";
   const showNavigationDebug = navigationDebugMode !== "hidden";
   const debugTitle =
     navigationDebugMode === "hidden"
@@ -38,6 +48,63 @@ export function ViewerToolbar({
       : navigationDebugMode === "all"
         ? "Ver solo problemas"
         : "Ocultar depuración";
+
+  if (isMobile) {
+    return (
+      <div
+        className="ito-toolbar ito-toolbar--mobile ito-toolbar--mobile-compact"
+        role="toolbar"
+        aria-label="Controles del mapa"
+      >
+        <button
+          type="button"
+          className={`ito-toolbar__btn ${
+            hasLocation ? "ito-toolbar__btn--accent" : ""
+          }`}
+          onClick={onFocusUser}
+          aria-label="Centrar en mi ubicaciÃ³n"
+          title={hasLocation ? "Centrar en mi ubicaciÃ³n" : "Esperando ubicaciÃ³nâ€¦"}
+          disabled={!hasLocation}
+        >
+          <Icon name="crosshair" size={18} />
+        </button>
+
+        <button
+          type="button"
+          className="ito-toolbar__btn"
+          onClick={onResetView}
+          aria-label="Restablecer vista"
+          title="Restablecer vista"
+        >
+          <Icon name="home" size={18} />
+        </button>
+
+        <button
+          type="button"
+          className={`ito-toolbar__btn ${isAerial ? "is-active" : ""}`}
+          onClick={onToggleViewMode}
+          aria-label={isAerial ? "Cambiar a vista inmersiva" : "Cambiar a vista aÃ©rea"}
+          aria-pressed={isAerial}
+          title={isAerial ? "Vista inmersiva" : "Vista aÃ©rea"}
+        >
+          <Icon name={isAerial ? "navigation" : "map"} size={18} />
+        </button>
+
+        {canUseAdvancedTools && (
+          <button
+            type="button"
+            className={`ito-toolbar__btn ${calibrationOpen ? "is-active" : ""}`}
+            onClick={onToggleCalibration}
+            aria-label="Calibrar posiciÃ³n GPS"
+            aria-pressed={calibrationOpen}
+            title="Calibrar posiciÃ³n"
+          >
+            <Icon name="compass" size={17} />
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -86,10 +153,21 @@ export function ViewerToolbar({
         type="button"
         className="ito-toolbar__btn"
         onClick={onResetView}
-        aria-label="Vista general del campus"
-        title="Vista general"
+        aria-label="Restablecer vista"
+        title="Restablecer vista"
       >
         <Icon name="home" size={18} />
+      </button>
+
+      <button
+        type="button"
+        className={`ito-toolbar__btn ${isAerial ? "is-active" : ""}`}
+        onClick={onToggleViewMode}
+        aria-label={isAerial ? "Cambiar a vista inmersiva" : "Cambiar a vista aérea"}
+        aria-pressed={isAerial}
+        title={isAerial ? "Vista inmersiva (nivel de calle)" : "Vista aérea (todo el campus)"}
+      >
+        <Icon name={isAerial ? "navigation" : "map"} size={18} />
       </button>
 
       {canUseAdvancedTools && (
@@ -125,6 +203,17 @@ export function ViewerToolbar({
             title="Registrar GPS de edificios"
           >
             <Icon name="locate" size={17} />
+          </button>
+
+          <button
+            type="button"
+            className={`ito-toolbar__btn ${calibrationOpen ? "is-active" : ""}`}
+            onClick={onToggleCalibration}
+            aria-label="Calibrar posición GPS"
+            aria-pressed={calibrationOpen}
+            title="Calibrar posición en el mapa"
+          >
+            <Icon name="compass" size={17} />
           </button>
         </>
       )}

@@ -82,13 +82,13 @@ export type DraftEditorControls = {
   editSelNode: NavigationNode | null;
   editConnectMode: boolean;
   editSubMode: "select" | "add-node";
-  addNodeType: "intersection" | "building_access";
+  addNodeType: "intersection" | "entrance";
   setEditSelNode: (node: NavigationNode | null) => void;
   startEditConnect: () => void;
   connectEditNodes: (target: NavigationNode) => Promise<void>;
   deleteEditNode: () => Promise<void>;
   setEditSubMode: (mode: "select" | "add-node") => void;
-  setAddNodeType: (type: "intersection" | "building_access") => void;
+  setAddNodeType: (type: "intersection" | "entrance") => void;
   addNodeToDatabase: (x: number, z: number) => Promise<void>;
   resetAllNavigation: () => Promise<void>;
   deleteOrphanAccessNodes: () => Promise<void>;
@@ -205,39 +205,13 @@ function buildDraftSql(
     const values = entranceNodes
       .map(
         (n, i) =>
-          `  (${sqlStr(entranceCode(i))}, ${sqlStr(`Acceso ${n.buildingName}`)}, 'building_access', ${n.x.toFixed(4)}, 0.0000, ${n.z.toFixed(4)}, 0, 1, 1, JSON_OBJECT('source', 'draft-editor', 'building_id', ${sqlStr(n.buildingId)}))`
+          `  (${sqlStr(entranceCode(i))}, ${sqlStr(`Acceso ${n.buildingName}`)}, 'entrance', ${n.x.toFixed(4)}, 0.0000, ${n.z.toFixed(4)}, 0, 1, 1, JSON_OBJECT('source', 'draft-editor', 'building_id', ${sqlStr(n.buildingId)}))`
       )
       .join(",\n");
 
     parts.push(
       `\n-- Nodos de acceso a edificio (${entranceNodes.length})\nINSERT INTO navigation_nodes\n  (code, name, node_type, x, y, z, floor_level, is_walkable, is_active, metadata)\nVALUES\n${values}\nON DUPLICATE KEY UPDATE\n  node_type = VALUES(node_type), x = VALUES(x), y = VALUES(y), z = VALUES(z),\n  is_active = 1, updated_at = CURRENT_TIMESTAMP;`
     );
-
-    // Auto-conectar entrada al nodo de camino más cercano
-    const allPathNodes: { code: string; x: number; z: number }[] = [];
-    allPaths.forEach((path, pi) => {
-      const codeMap = buildNodeCodeMap(path, pi);
-      path.nodes.forEach((node) => {
-        allPathNodes.push({ code: resolveCode(node, codeMap), x: node.x, z: node.z });
-      });
-    });
-
-    if (allPathNodes.length > 0) {
-      parts.push(`\n-- Conexión entrada → nodo de camino más cercano`);
-      entranceNodes.forEach((en, i) => {
-        const ec = entranceCode(i);
-        let nearest: { code: string; dist: number } | null = null;
-        for (const pn of allPathNodes) {
-          const dist = Math.sqrt(Math.pow(en.x - pn.x, 2) + Math.pow(en.z - pn.z, 2));
-          if (!nearest || dist < nearest.dist) nearest = { code: pn.code, dist };
-        }
-        if (nearest) {
-          parts.push(
-            `INSERT INTO navigation_edges\n  (from_node_id, to_node_id, distance, path_type, is_bidirectional, is_accessible, metadata)\nSELECT fn.id, tn.id, ${nearest.dist.toFixed(2)}, 'walkway', 1, 1, JSON_OBJECT('source', 'draft-editor')\nFROM navigation_nodes fn, navigation_nodes tn\nWHERE fn.code = ${sqlStr(ec)} AND tn.code = ${sqlStr(nearest.code)}\nON DUPLICATE KEY UPDATE distance = VALUES(distance), is_active = 1, updated_at = CURRENT_TIMESTAMP;`
-          );
-        }
-      });
-    }
 
     // building_entrances
     parts.push(`\n-- Entradas de edificio`);
@@ -282,7 +256,7 @@ export function useDraftEditor(): DraftEditorControls {
   const [editSelNode, setEditSelNodeState] = useState<NavigationNode | null>(null);
   const [editConnectMode, setEditConnectMode] = useState(false);
   const [editSubMode, setEditSubModeState] = useState<"select" | "add-node">("select");
-  const [addNodeType, setAddNodeTypeState] = useState<"intersection" | "building_access">("intersection");
+  const [addNodeType, setAddNodeTypeState] = useState<"intersection" | "entrance">("intersection");
   const [draftEntranceLinks, setDraftEntranceLinks] = useState<DraftEntranceLink[]>([]);
 
   // Carga nodos existentes de la BD (ambos modos los necesitan: path para snap visual, entrance para auto-conectar)
@@ -427,7 +401,7 @@ export function useDraftEditor(): DraftEditorControls {
         const created = await createNavigationNode({
           code: `nav-access-${Date.now().toString(36)}-${entrance.id}`,
           name: `Acceso ${entrance.buildingName}`,
-          node_type: "building_access",
+          node_type: "entrance",
           x: entrance.x,
           y: 0,
           z: entrance.z,
@@ -445,31 +419,6 @@ export function useDraftEditor(): DraftEditorControls {
           is_primary: false,
           is_accessible: true,
         });
-
-        const dbNodes = availableNodes.map((n) => ({
-          id: n.id,
-          x: Number(n.x),
-          z: Number(n.z),
-        }));
-        const nearest = [...savedPathNodes, ...dbNodes].reduce<{
-          id: string;
-          distance: number;
-        } | null>((current, node) => {
-          const distance = Math.hypot(entrance.x - node.x, entrance.z - node.z);
-          if (!current || distance < current.distance) return { id: node.id, distance };
-          return current;
-        }, null);
-
-        if (nearest) {
-          await createNavigationEdge({
-            from_node_id: created.id,
-            to_node_id: nearest.id,
-            path_type: "walkway",
-            is_bidirectional: true,
-            is_accessible: true,
-            metadata: { source: "admin-editor", auto_connected: true },
-          });
-        }
       }
 
       clearDraft();
@@ -564,7 +513,7 @@ export function useDraftEditor(): DraftEditorControls {
     }
   }
 
-  function setAddNodeType(type: "intersection" | "building_access") {
+  function setAddNodeType(type: "intersection" | "entrance") {
     setAddNodeTypeState(type);
   }
 
@@ -575,12 +524,12 @@ export function useDraftEditor(): DraftEditorControls {
     try {
       const suffix = Date.now().toString(36);
       const code =
-        addNodeType === "building_access"
+        addNodeType === "entrance"
           ? `nav-acc-${suffix}`
           : `nav-int-${suffix}`;
       await createNavigationNode({
         code,
-        name: addNodeType === "building_access" ? "Acceso" : "Nodo",
+        name: addNodeType === "entrance" ? "Acceso" : "Nodo",
         node_type: addNodeType,
         x: round4(x),
         y: 0,
@@ -991,7 +940,7 @@ export function NavigationDraftEditorLayer({
           const isLinked = Boolean(linked);
           const color = isLinked
             ? "#22c55e"
-            : node.node_type === "building_access"
+            : node.node_type === "entrance"
               ? "#fb923c"
               : "#86efac";
           return (
@@ -1050,7 +999,7 @@ export function NavigationDraftEditorLayer({
             ? "#facc15"
             : isTo
               ? "#22d3ee"
-              : node.node_type === "building_access"
+              : node.node_type === "entrance"
                 ? "#f43f5e"
                 : "#ea580c";
           return (
@@ -1140,7 +1089,7 @@ export function NavigationDraftEditorLayer({
             ? "#facc15"
             : isConnectTarget
               ? "#22d3ee"
-              : node.node_type === "building_access"
+              : node.node_type === "entrance"
                 ? "#f43f5e"
                 : "#6366f1";
           return (
@@ -1407,11 +1356,11 @@ export function NavigationDraftEditorPanel({
                   className="ito-draft-editor-panel__building-select"
                   value={controls.addNodeType}
                   onChange={(e) =>
-                    controls.setAddNodeType(e.target.value as "intersection" | "building_access")
+                    controls.setAddNodeType(e.target.value as "intersection" | "entrance")
                   }
                 >
                   <option value="intersection">Camino (intersection)</option>
-                  <option value="building_access">Entrada (building_access)</option>
+                  <option value="entrance">Entrada (entrance)</option>
                 </select>
                 <span style={{ fontSize: 11 }}>
                   {saving ? "Guardando nodo..." : "Clic en el mapa para colocar y guardar."}

@@ -31,9 +31,8 @@ function nodeColor(node: NavigationNode, entrances: BuildingEntrance[]): string 
   const isEntrance = entrances.some((entrance) => entrance.node_id === node.id);
 
   if (isEntrance) return "#ef4444";
+  if (node.node_type === "entrance") return "#ef4444";
   if (node.node_type === "intersection") return "#ea580c";
-  if (node.node_type === "building_access") return "#ef4444";
-  if (node.node_type === "poi") return "#8b5cf6";
 
   return "#ea580c";
 }

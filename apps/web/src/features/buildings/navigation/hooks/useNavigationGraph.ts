@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import * as THREE from "three";
-import type { NavigationNode } from "@ito-map/shared";
+import type { BuildingEntrance, NavigationNode } from "@ito-map/shared";
 import {
+  getBuildingEntrances,
   getNavigationEdges,
   getNavigationNodes,
   NAVIGATION_DATA_CHANGED_EVENT,
@@ -23,6 +24,7 @@ type GraphState =
       nodes: NavigationNode[];
       nodeById: Map<string, NavigationNode>;
       adjacency: AdjMap;
+      entrances: BuildingEntrance[];
     };
 
 export function useNavigationGraph() {
@@ -34,17 +36,14 @@ export function useNavigationGraph() {
   const [graphState, setGraphState] = useState<GraphState>({ status: "loading" });
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Solo recarga cuando cambia la navegación explícitamente (no en cada focus de ventana)
   useEffect(() => {
     function refreshGraph() {
       setRefreshKey((value) => value + 1);
     }
-
     window.addEventListener(NAVIGATION_DATA_CHANGED_EVENT, refreshGraph);
-    window.addEventListener("focus", refreshGraph);
-
     return () => {
       window.removeEventListener(NAVIGATION_DATA_CHANGED_EVENT, refreshGraph);
-      window.removeEventListener("focus", refreshGraph);
     };
   }, []);
 
@@ -65,13 +64,15 @@ export function useNavigationGraph() {
       return;
     }
 
-    Promise.all([getNavigationNodes(), getNavigationEdges()])
-      .then(([nodes, edges]) => {
+    // Una sola petición que trae todo el grafo + entradas
+    Promise.all([getNavigationNodes(), getNavigationEdges(), getBuildingEntrances()])
+      .then(([nodes, edges, allEntrances]) => {
         if (!mounted) return;
         const nodeById = new Map(nodes.map((n) => [n.id, n]));
         const obstacles = buildBuildingObstacles(buildings);
         const adjacency = buildAdjacency(edges, nodeById, obstacles);
-        setGraphState({ status: "ready", nodes, nodeById, adjacency });
+        const entrances = allEntrances.filter((e) => e.is_accessible);
+        setGraphState({ status: "ready", nodes, nodeById, adjacency, entrances });
       })
       .catch((err: unknown) => {
         if (!mounted) return;
@@ -93,8 +94,13 @@ export function useNavigationGraph() {
       const { nodes, nodeById, adjacency } = graphState;
 
       const startNode = snapToNearest(from.x, from.z, nodes);
-      const goalNode = goalNodeId
-        ? (nodeById.get(goalNodeId) ?? snapToNearest(to.x, to.z, nodes))
+
+      // Intenta usar el nodo exacto de la entrada. Si ese nodo no tiene ningún
+      // edge en el grafo (entrada creada pero no conectada aún), cae al nodo
+      // más cercano para no bloquear la ruta completamente.
+      const exactGoal = goalNodeId ? nodeById.get(goalNodeId) : null;
+      const goalNode = (exactGoal && adjacency.has(exactGoal.id))
+        ? exactGoal
         : snapToNearest(to.x, to.z, nodes);
 
       if (!startNode || !goalNode) return [];
@@ -108,8 +114,6 @@ export function useNavigationGraph() {
         return new THREE.Vector3(n.x, n.y, n.z);
       });
 
-      // El ultimo punto es la coordenada exacta de la entrada del edificio.
-      // El primer punto es el nodo de snap, no la posicion GPS cruda.
       path[path.length - 1] = to.clone();
 
       return path;
@@ -121,5 +125,6 @@ export function useNavigationGraph() {
     findPath,
     isReady: graphState.status === "ready",
     error: graphState.status === "error" ? graphState.message : null,
+    entrances: graphState.status === "ready" ? graphState.entrances : [],
   };
 }

@@ -255,7 +255,7 @@ export function VisitorPage() {
             >
               {sidebarCollapsed ? <ChevronRightIcon size={14} /> : <ChevronLeftIcon size={14} />}
             </button>
-            <CampusViewer isMobile={false} mobilePanelOpen={false} />
+            <CampusViewer isMobile={false} mobilePanelOpen={false} mapXOffset={sidebarCollapsed ? 0 : -75} />
           </div>
         </main>
       </div>

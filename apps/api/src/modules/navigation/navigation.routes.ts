@@ -10,7 +10,6 @@ import {
   getBuildingEntrances,
   getNavigationEdges,
   getNavigationNodes,
-  getNavigationRoute,
   invalidateNavigationCacheController,
   resetAllNavigationController,
 } from "./navigation.controller.js";
@@ -28,7 +27,7 @@ import { asyncHandler } from "../../shared/utils/async-handler.js";
 // Límite específico para los endpoints públicos del grafo (previene scraping masivo)
 const navigationReadLimit = rateLimit({
   windowMs: 60_000,
-  max: 30,
+  max: 90,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -42,7 +41,6 @@ const router = Router();
 router.get("/nodes", navigationReadLimit, asyncHandler(getNavigationNodes));
 router.get("/edges", navigationReadLimit, asyncHandler(getNavigationEdges));
 router.get("/building-entrances", navigationReadLimit, asyncHandler(getBuildingEntrances));
-router.get("/route", navigationReadLimit, asyncHandler(getNavigationRoute));
 
 router.post(
   "/nodes",

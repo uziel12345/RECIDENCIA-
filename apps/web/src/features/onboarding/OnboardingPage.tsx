@@ -6,7 +6,7 @@ const ROLE_CONTENT = {
   student: {
     title: "Bienvenido, Alumno",
     description:
-      "Podrás localizar tus aulas, consultar tu horario de clases y trazar rutas dentro del Instituto Tecnológico de Oaxaca.",
+      "Explora el campus, localiza edificios, aulas y servicios escolares, y traza rutas dentro del Instituto Tecnológico de Oaxaca.",
   },
   visitor: {
     title: "Bienvenido, Visitante",

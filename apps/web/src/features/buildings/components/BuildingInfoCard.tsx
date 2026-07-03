@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useBuildingStore } from "../../../store/building-store";
+import { useBuildingGlbStore } from "../../../store/building-glb-store";
 import { CategoryBadge } from "../../../components/ui/CategoryBadge";
 import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
@@ -7,6 +8,7 @@ import { resolveApiAssetUrl } from "../../../utils/resolve-api-asset-url";
 import { getBuildingImagesApi } from "@ito-map/shared";
 import type { BuildingImage } from "@ito-map/shared";
 import type { Building } from "../types/building";
+import { setSimulatedPosition } from "../../location/services/geolocation";
 
 type BuildingInfoCardProps = {
   building: Building;
@@ -29,9 +31,11 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
   );
   const routeError = useBuildingStore((state) => state.routeError);
   const routeDestination = useBuildingStore((state) => state.routeDestination);
+  const glbPosition = useBuildingGlbStore((state) => state.positions[building.id]);
 
   const [galleryImages, setGalleryImages] = useState<BuildingImage[]>([]);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const [coverFailedForId, setCoverFailedForId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,20 +56,27 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
 
   const accent = getCategoryAccent(building.category_name);
   const coverUrl = resolveApiAssetUrl(building.cover_image_url);
+  const showCover = !!coverUrl && coverFailedForId !== building.id;
   const description = getBuildingDescription(building);
+  const locationPosition =
+    glbPosition ??
+    (building.x != null && building.z != null
+      ? { x: Number(building.x), z: Number(building.z) }
+      : null);
 
   return (
     <article
       className="ito-building-info-card flex flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-maps)]"
       aria-label={`Información de ${building.name}`}
     >
-      {coverUrl ? (
+      {showCover ? (
         <div className="ito-bic-cover relative w-full overflow-hidden">
           <img
             src={coverUrl}
             alt=""
             className="h-full w-full object-cover"
             loading="lazy"
+            onError={() => setCoverFailedForId(building.id)}
           />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-4 pt-10">
             <div className="text-[11px] font-bold uppercase tracking-wider text-white/85">
@@ -185,6 +196,24 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
           >
             <Icon name="route" size={16} />
             <span>Cómo llegar</span>
+          </button>
+
+          <button
+            type="button"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 text-[13px] font-bold text-[var(--color-text)] transition hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => {
+              if (!locationPosition) return;
+              setSimulatedPosition({
+                buildingId: building.id,
+                buildingName: building.name,
+                x: locationPosition.x,
+                z: locationPosition.z,
+              });
+            }}
+            disabled={!locationPosition}
+          >
+            <Icon name="crosshair" size={16} />
+            <span>Estoy aquí</span>
           </button>
 
           <button

@@ -27,6 +27,7 @@ export type Schedule = {
   classroom_code: string;
   classroom_name: string;
   building_id: string;
+  building_code: string;
   building_name: string;
   day_of_week: number;
   start_time: string;

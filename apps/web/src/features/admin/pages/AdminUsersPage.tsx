@@ -10,6 +10,7 @@ import {
 } from "@ito-map/shared";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { AdminLayout } from "../components/AdminLayout";
+import { useIsMobile } from "../../../hooks/useIsMobile";
 
 const ADMIN_ROLES: UserRole[] = [
   "superadmin",
@@ -37,6 +38,7 @@ const emptyForm = {
 
 export function AdminUsersPage() {
   const { user } = useAdminAuthStore();
+  const isMobile = useIsMobile();
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
@@ -100,12 +102,12 @@ export function AdminUsersPage() {
 
   return (
     <AdminLayout>
-      <div style={s.page}>
-        <header style={s.header}>
+      <div style={{ ...s.page, ...(isMobile ? s.pageMobile : {}) }}>
+        <header style={{ ...s.header, ...(isMobile ? s.headerMobile : {}) }}>
           <div>
             <p style={s.overline}>Administración</p>
-            <h1 style={s.title}>Usuarios</h1>
-            <p style={s.subtitle}>Gestiona los administradores del sistema.</p>
+            <h1 style={{ ...s.title, ...(isMobile ? s.titleMobile : {}) }}>Usuarios</h1>
+            <p style={{ ...s.subtitle, ...(isMobile ? s.subtitleMobile : {}) }}>Gestiona los administradores del sistema.</p>
           </div>
         </header>
 
@@ -128,14 +130,14 @@ export function AdminUsersPage() {
         ) : null}
 
         {canManageUsers ? (
-          <form onSubmit={handleCreate} style={s.formCard}>
+          <form onSubmit={handleCreate} style={{ ...s.formCard, ...(isMobile ? s.cardMobile : {}) }}>
             <h2 style={s.cardTitle}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2">
                 <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
               </svg>
               Crear administrador
             </h2>
-            <div style={s.formGrid}>
+            <div style={{ ...s.formGrid, ...(isMobile ? s.formGridMobile : {}) }}>
               <Field label="Usuario">
                 <input
                   required
@@ -206,8 +208,8 @@ export function AdminUsersPage() {
           </form>
         ) : null}
 
-        <div style={s.tableCard}>
-          <div style={s.tableHeader}>
+        <div style={{ ...s.tableCard, ...(isMobile ? s.cardMobile : {}) }}>
+          <div style={{ ...s.tableHeader, ...(isMobile ? s.tableHeaderMobile : {}) }}>
             <h2 style={s.cardTitle}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2">
                 <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
@@ -215,12 +217,12 @@ export function AdminUsersPage() {
               </svg>
               Administradores
             </h2>
-            <button type="button" onClick={loadUsers} disabled={loading} style={s.btnSecondary}>
+            <button type="button" onClick={loadUsers} disabled={loading} style={{ ...s.btnSecondary, ...(isMobile ? s.btnMobile : {}) }}>
               {loading ? "Cargando..." : "Actualizar"}
             </button>
           </div>
 
-          <div style={s.tableWrap}>
+          <div style={{ ...s.tableWrap, ...(isMobile ? s.tableWrapMobile : {}) }}>
             <table style={s.table}>
               <thead>
                 <tr>
@@ -290,22 +292,30 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const s: Record<string, CSSProperties> = {
   page: { padding: "28px 32px", minHeight: "100%" },
+  pageMobile: { padding: "16px 14px 24px" },
   header: { marginBottom: 28 },
+  headerMobile: { marginBottom: 18 },
   overline: { margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: "#f97316", textTransform: "uppercase", letterSpacing: "0.08em" },
   title: { margin: "0 0 6px", fontSize: 28, fontWeight: 700, color: "#f1f5f9", lineHeight: 1.1 },
+  titleMobile: { fontSize: 23 },
   subtitle: { margin: 0, fontSize: 14, color: "#64748b" },
+  subtitleMobile: { fontSize: 13 },
   alertError: { display: "flex", alignItems: "center", gap: 9, marginBottom: 18, padding: "12px 15px", borderRadius: 10, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#fca5a5", fontSize: 13.5, fontWeight: 500 },
   alertSuccess: { display: "flex", alignItems: "center", gap: 9, marginBottom: 18, padding: "12px 15px", borderRadius: 10, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#86efac", fontSize: 13.5, fontWeight: 500 },
   formCard: { background: "#1e293b", border: "1px solid #334155", borderRadius: 16, padding: "22px 24px", marginBottom: 22 },
   tableCard: { background: "#1e293b", border: "1px solid #334155", borderRadius: 16, padding: "22px 24px" },
+  cardMobile: { borderRadius: 14, padding: "16px 14px" },
   cardTitle: { margin: 0, fontSize: 15, fontWeight: 700, color: "#f1f5f9", display: "flex", alignItems: "center", gap: 8 },
   formGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, margin: "18px 0" },
+  formGridMobile: { gridTemplateColumns: "1fr", gap: 12 },
   input: { width: "100%", boxSizing: "border-box", border: "1px solid #334155", borderRadius: 10, padding: "9px 12px", fontSize: 13.5, background: "#0f172a", color: "#f1f5f9", outline: "none" },
   checkboxField: { display: "flex", alignItems: "flex-end", paddingBottom: 2 },
   checkboxLabel: { display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, color: "#94a3b8", cursor: "pointer" },
   checkbox: { width: 16, height: 16, accentColor: "#f97316" },
   tableHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 },
+  tableHeaderMobile: { flexDirection: "column", alignItems: "stretch", gap: 12 },
   tableWrap: { overflowX: "auto" },
+  tableWrapMobile: { marginLeft: -6, marginRight: -6, paddingBottom: 4 },
   table: { width: "100%", borderCollapse: "collapse", minWidth: 720 },
   th: { textAlign: "left", padding: "10px 14px", borderBottom: "1px solid #334155", color: "#475569", fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", background: "#161f2e" },
   tr: { borderBottom: "1px solid #243147" },
@@ -320,6 +330,7 @@ const s: Record<string, CSSProperties> = {
   dotInactive: { width: 6, height: 6, borderRadius: "50%", background: "#475569" },
   btnPrimary: { border: "none", borderRadius: 10, padding: "10px 20px", background: "#f97316", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13.5 },
   btnSecondary: { border: "1px solid #334155", borderRadius: 10, padding: "8px 16px", background: "transparent", color: "#94a3b8", fontWeight: 600, cursor: "pointer", fontSize: 13 },
+  btnMobile: { minHeight: 44, width: "100%" },
   btnActivate: { border: "1px solid rgba(34,197,94,0.3)", borderRadius: 8, padding: "6px 12px", background: "rgba(34,197,94,0.08)", color: "#86efac", fontWeight: 600, cursor: "pointer", fontSize: 12.5 },
   btnDeactivate: { border: "1px solid #334155", borderRadius: 8, padding: "6px 12px", background: "transparent", color: "#94a3b8", fontWeight: 600, cursor: "pointer", fontSize: 12.5 },
 };

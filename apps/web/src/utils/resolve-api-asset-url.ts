@@ -1,23 +1,32 @@
 export function resolveApiAssetUrl(url: string | null | undefined): string | null {
   if (!url) return null;
 
-  // Already an absolute URL (CDN, external storage, etc.)
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    return url;
+  const cleanUrl = url.trim();
+  if (!cleanUrl) return null;
+
+  // Already an absolute URL, CDN, external storage, data URL, etc.
+  if (
+    cleanUrl.startsWith("http://") ||
+    cleanUrl.startsWith("https://") ||
+    cleanUrl.startsWith("data:") ||
+    cleanUrl.startsWith("blob:")
+  ) {
+    return cleanUrl;
   }
 
-  const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
+  const normalizedUrl = cleanUrl.startsWith("/") ? cleanUrl : `/${cleanUrl}`;
 
   // Production cross-origin deployment: API lives on a different domain.
   // Use the explicit VITE_API_URL origin only when it's NOT localhost.
   const apiBaseUrl = import.meta.env.VITE_API_URL;
+
   if (
     apiBaseUrl &&
     apiBaseUrl.startsWith("http") &&
     !apiBaseUrl.includes("localhost") &&
     !apiBaseUrl.includes("127.0.0.1")
   ) {
-    const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, "");
+    const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
     return `${apiOrigin}${normalizedUrl}`;
   }
 
@@ -27,4 +36,10 @@ export function resolveApiAssetUrl(url: string | null | undefined): string | nul
   return typeof window !== "undefined"
     ? `${window.location.origin}${normalizedUrl}`
     : normalizedUrl;
+}
+
+export function resolveBuildingImageUrl(
+  url: string | null | undefined,
+): string | null {
+  return resolveApiAssetUrl(url);
 }

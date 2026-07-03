@@ -3,9 +3,8 @@
 
 export type NavigationPathType =
   | "waypoint"
-  | "building_access"
-  | "intersection"
-  | "poi";
+  | "entrance"
+  | "intersection";
 
 export type EdgePathType =
   | "walkway"

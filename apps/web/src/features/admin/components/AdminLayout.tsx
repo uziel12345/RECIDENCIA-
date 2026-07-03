@@ -5,6 +5,7 @@ import { ROLE_PERMISSIONS } from "@ito-map/shared";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { AppFooter } from "../../../components/ui/AppFooter";
 import { ROUTES } from "../../../types/routes";
+import { useIsMobile } from "../../../hooks/useIsMobile";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -92,6 +93,7 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
   const { user, logout } = useAdminAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useIsMobile();
   const [pinnedOpen, setPinnedOpen] = useState(false);
   const [hoverPreview, setHoverPreview] = useState(false);
   const [hoveredRoute, setHoveredRoute] = useState<string | null>(null);
@@ -111,12 +113,12 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
     ? user.full_name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase()
     : (user?.username?.[0] ?? "A").toUpperCase();
 
-  const expanded = pinnedOpen || hoverPreview;
+  const expanded = isMobile ? false : pinnedOpen || hoverPreview;
   const collapsed = !expanded;
-  const sidebarWidth = expanded ? SIDEBAR_FULL : SIDEBAR_MINI;
+  const sidebarWidth = isMobile ? "100%" : expanded ? SIDEBAR_FULL : SIDEBAR_MINI;
 
   return (
-    <div style={s.shell}>
+    <div style={{ ...s.shell, ...(isMobile ? s.shellMobile : {}) }}>
       {/* Tooltip flotante para modo colapsado */}
       {collapsed && tooltip ? (
         <div style={{ ...s.tooltip, top: tooltip.y - 14 }}>
@@ -125,7 +127,9 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
       ) : null}
 
       <aside
-        onMouseEnter={() => setHoverPreview(true)}
+        onMouseEnter={() => {
+          if (!isMobile) setHoverPreview(true);
+        }}
         onMouseLeave={() => {
           setHoverPreview(false);
           setHoveredRoute(null);
@@ -133,13 +137,15 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
         }}
         style={{
           ...s.sidebar,
+          ...(isMobile ? s.sidebarMobile : {}),
           width: sidebarWidth,
           minWidth: sidebarWidth,
+          ...(isMobile ? { minWidth: 0 } : {}),
           transition: "width 0.22s ease, min-width 0.22s ease",
         }}
       >
         {/* Cabecera / brand */}
-        <div style={collapsed ? s.brandMini : s.brand}>
+        <div style={isMobile ? s.brandMobile : collapsed ? s.brandMini : s.brand}>
           <div style={s.brandIcon}>
             <img src="/ICONO-TEC.jpeg" alt="ITO" style={{ width: 30, height: 30, objectFit: "contain" }} />
           </div>
@@ -152,36 +158,38 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
         </div>
 
         {/* Botón de colapsar / expandir */}
-        <button
-          type="button"
-          onClick={() => {
-            setPinnedOpen((current) => !current);
-            setTooltip(null);
-          }}
-          title={pinnedOpen ? "Contraer menú" : "Expandir menú"}
-          aria-pressed={pinnedOpen}
-          aria-label={pinnedOpen ? "Contraer menú" : "Expandir menú"}
-          style={collapsed ? s.toggleBtnMini : s.toggleBtn}
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ transform: pinnedOpen ? "none" : "rotate(180deg)", transition: "transform 0.2s ease" }}
+        {!isMobile && (
+          <button
+            type="button"
+            onClick={() => {
+              setPinnedOpen((current) => !current);
+              setTooltip(null);
+            }}
+            title={pinnedOpen ? "Contraer menú" : "Expandir menú"}
+            aria-pressed={pinnedOpen}
+            aria-label={pinnedOpen ? "Contraer menú" : "Expandir menú"}
+            style={collapsed ? s.toggleBtnMini : s.toggleBtn}
           >
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ transform: pinnedOpen ? "none" : "rotate(180deg)", transition: "transform 0.2s ease" }}
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+        )}
 
-        <div style={s.divider} />
+        {!isMobile && <div style={s.divider} />}
 
         {/* Navegación */}
-        <nav style={collapsed ? s.navMini : s.nav}>
+        <nav style={isMobile ? s.navMobile : collapsed ? s.navMini : s.nav}>
           {!collapsed && <p style={s.navSection}>Módulos</p>}
           {visibleNav.map((item) => {
             const active =
@@ -222,12 +230,12 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
           })}
         </nav>
 
-        <div style={s.spacer} />
-        <div style={s.divider} />
+        {!isMobile && <div style={s.spacer} />}
+        {!isMobile && <div style={s.divider} />}
 
         {/* Sección de usuario */}
         {collapsed ? (
-          <div style={s.userMini}>
+          <div style={isMobile ? s.userMiniMobile : s.userMini}>
             <div style={s.avatar} title={user?.full_name || user?.username}>{initials}</div>
             <button
               type="button"
@@ -264,14 +272,16 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
           </div>
         )}
 
-        <AppFooter variant="dark" />
+        {!isMobile && <AppFooter variant="dark" />}
       </aside>
 
-      <main style={{ ...s.content, ...contentStyle }}>
-        <div style={s.contentBrand} aria-hidden="true">
-          <img src="/ICONO-TEC.jpeg" alt="" style={s.contentBrandIcon} />
-          <span style={s.contentBrandText}>Panel Admin ITO</span>
-        </div>
+      <main style={{ ...s.content, ...(isMobile ? s.contentMobile : {}), ...contentStyle }}>
+        {!isMobile && (
+          <div style={s.contentBrand} aria-hidden="true">
+            <img src="/ICONO-TEC.jpeg" alt="" style={s.contentBrandIcon} />
+            <span style={s.contentBrandText}>Panel Admin ITO</span>
+          </div>
+        )}
         {children}
       </main>
     </div>
@@ -286,6 +296,11 @@ const s: Record<string, CSSProperties> = {
     background: "#0f172a",
     color: "#f1f5f9",
   },
+  shellMobile: {
+    flexDirection: "column",
+    minHeight: "100dvh",
+    height: "100dvh",
+  },
   sidebar: {
     background: "#1e293b",
     borderRight: "1px solid #334155",
@@ -294,6 +309,18 @@ const s: Record<string, CSSProperties> = {
     padding: "16px 0 14px",
     overflow: "hidden",
     flexShrink: 0,
+  },
+  sidebarMobile: {
+    height: 64,
+    minHeight: 64,
+    borderRight: "none",
+    borderBottom: "1px solid #334155",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: "8px 10px",
+    overflowX: "auto",
+    overflowY: "hidden",
   },
   brand: {
     display: "flex",
@@ -306,6 +333,11 @@ const s: Record<string, CSSProperties> = {
     display: "flex",
     justifyContent: "center",
     padding: "0 0 8px",
+  },
+  brandMobile: {
+    display: "flex",
+    justifyContent: "center",
+    flexShrink: 0,
   },
   brandIcon: {
     width: 36,
@@ -383,6 +415,16 @@ const s: Record<string, CSSProperties> = {
     padding: "0 6px",
     alignItems: "center",
   },
+  navMobile: {
+    display: "flex",
+    flexDirection: "row",
+    gap: 6,
+    padding: 0,
+    alignItems: "center",
+    overflowX: "auto",
+    flex: 1,
+    minWidth: 0,
+  },
   navSection: {
     margin: "0 0 5px 8px",
     fontSize: 10,
@@ -457,6 +499,14 @@ const s: Record<string, CSSProperties> = {
     gap: 8,
     padding: "0 0 2px",
   },
+  userMiniMobile: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 0,
+    flexShrink: 0,
+  },
   avatar: {
     width: 30,
     height: 30,
@@ -522,6 +572,10 @@ const s: Record<string, CSSProperties> = {
     overflowY: "auto",
     background: "#0f172a",
     position: "relative",
+  },
+  contentMobile: {
+    height: "calc(100dvh - 64px)",
+    minHeight: 0,
   },
   contentBrand: {
     position: "absolute",

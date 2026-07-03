@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Html, Line } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
@@ -6,14 +6,11 @@ import { distanceToEstimatedSeconds, type BuildingEntrance } from "@ito-map/shar
 
 import { useBuildingStore } from "../../../store/building-store";
 import { useLocationStore } from "../../../store/location-store";
-import {
-  getBuildingEntrances,
-  NAVIGATION_DATA_CHANGED_EVENT,
-} from "../../../services/navigation.service";
 import { useNavigationGraph } from "../navigation/hooks/useNavigationGraph";
 
 const ROUTE_HEIGHT = 3;
 const ARROW_SPACING = 18; // unidades entre flechas direccionales
+const _DEFAULT_UP = new THREE.Vector3(0, 1, 0);
 
 type RouteRenderData = {
   routePoints: THREE.Vector3[];
@@ -134,15 +131,16 @@ function RouteArrow({
   index: number;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const DEFAULT_UP = new THREE.Vector3(0, 1, 0);
 
-  // Quaternion para alinear el cono con la dirección de movimiento (plano XZ)
-  const flatDir = new THREE.Vector3(direction.x, 0, direction.z).normalize();
-  const quaternion = new THREE.Quaternion().setFromUnitVectors(DEFAULT_UP, flatDir);
+  // Memoizado: solo recalcula cuando cambia la dirección del segmento
+  const quaternion = useMemo(() => {
+    const flatDir = new THREE.Vector3(direction.x, 0, direction.z).normalize();
+    return new THREE.Quaternion().setFromUnitVectors(_DEFAULT_UP, flatDir);
+  }, [direction.x, direction.z]);
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock, invalidate }) => {
+    invalidate();
     if (!meshRef.current) return;
-    // Pulso con offset por índice para efecto "marching"
     const t = (Math.sin(clock.getElapsedTime() * 2.5 - index * 0.9) + 1) / 2;
     const mat = meshRef.current.material as THREE.MeshStandardMaterial;
     mat.opacity = 0.45 + t * 0.5;
@@ -170,16 +168,35 @@ function RouteArrow({
 
 function AnimatedRouteLine({ points }: { points: THREE.Vector3[] }) {
   const lineRef = useRef<THREE.Line>(null);
+  const glowRef = useRef<THREE.Line>(null);
 
-  useFrame(({ clock }) => {
-    if (!lineRef.current) return;
-    const mat = lineRef.current.material as THREE.LineBasicMaterial;
+  useFrame(({ clock, invalidate }) => {
+    invalidate();
     const t = (Math.sin(clock.getElapsedTime() * 2) + 1) / 2;
-    mat.opacity = 0.75 + t * 0.2;
+    if (lineRef.current) {
+      const mat = lineRef.current.material as THREE.LineBasicMaterial;
+      mat.opacity = 0.75 + t * 0.2;
+    }
+    if (glowRef.current) {
+      const mat = glowRef.current.material as THREE.LineBasicMaterial;
+      const tGlow = (Math.sin(clock.getElapsedTime() * 2 + Math.PI / 3) + 1) / 2;
+      mat.opacity = 0.18 + tGlow * 0.22;
+    }
   });
 
   return (
     <>
+      {/* Halo ámbar exterior — mayor visibilidad sobre asfalto oscuro */}
+      <Line
+        ref={glowRef as React.Ref<never>}
+        points={points}
+        color="#f59e0b"
+        lineWidth={26}
+        transparent
+        opacity={0.28}
+        depthTest={false}
+        renderOrder={19}
+      />
       {/* Sombra blanca */}
       <Line
         points={points}
@@ -336,10 +353,16 @@ function DestinationMarker({
   );
 }
 
+const RECALC_DISTANCE_THRESHOLD = 8;   // unidades del mapa para recalcular
+const ARRIVAL_DISTANCE_THRESHOLD  = 15;  // unidades para considerar llegada
+
 // ── Componente principal ───────────────────────────────────────────────────────
+
+const ARRIVAL_CLEAR_DELAY_MS = 1800;
 
 export function RouteLine() {
   const routeDestination = useBuildingStore((s) => s.routeDestination);
+  const clearRoute       = useBuildingStore((s) => s.clearRoute);
   const setCurrentRouteNodeIds = useBuildingStore((s) => s.setCurrentRouteNodeIds);
   const setRouteStats = useBuildingStore((s) => s.setRouteStats);
   const setRouteError = useBuildingStore((s) => s.setRouteError);
@@ -347,52 +370,62 @@ export function RouteLine() {
   const mapPosition = useLocationStore((s) => s.mapPosition);
   const permission = useLocationStore((s) => s.permission);
 
-  const [entrances, setEntrances] = useState<BuildingEntrance[]>([]);
-  const [loading, setLoading] = useState(true);
   const [routeData, setRouteData] = useState<RouteRenderData | null>(null);
+  // Nombre del destino alcanzado — muestra toast de llegada por ARRIVAL_CLEAR_DELAY_MS
+  const [arrivedAt, setArrivedAt] = useState<{ name: string; point: THREE.Vector3 } | null>(null);
+  const arrivalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { findPath, isReady } = useNavigationGraph();
+  // Posición en la que se calculó la última ruta — evita recalcular en cada frame GPS
+  const lastCalcPosRef  = useRef<THREE.Vector3 | null>(null);
+  const prevDestIdRef   = useRef<string | null>(null);
 
+  const { findPath, isReady, entrances } = useNavigationGraph();
+
+  // Limpia el timer si el componente se desmonta o cambia destino
   useEffect(() => {
-    let mounted = true;
-
-    async function loadEntrances() {
-      try {
-        const data = await getBuildingEntrances();
-        if (mounted) setEntrances(data.filter((e) => e.is_accessible));
-      } catch (err: unknown) {
-        console.error("Error cargando entradas:", err);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
-    function refreshEntrances() {
-      void loadEntrances();
-    }
-
-    void loadEntrances();
-    const intervalId = window.setInterval(refreshEntrances, 30000);
-    window.addEventListener(NAVIGATION_DATA_CHANGED_EVENT, refreshEntrances);
-    window.addEventListener("focus", refreshEntrances);
-    document.addEventListener("visibilitychange", refreshEntrances);
-
     return () => {
-      mounted = false;
-      window.clearInterval(intervalId);
-      window.removeEventListener(NAVIGATION_DATA_CHANGED_EVENT, refreshEntrances);
-      window.removeEventListener("focus", refreshEntrances);
-      document.removeEventListener("visibilitychange", refreshEntrances);
+      if (arrivalTimerRef.current !== null) clearTimeout(arrivalTimerRef.current);
     };
   }, []);
 
-  // Calcula la ruta cada vez que cambia: destino, posición, grafo listo
+  // Detección de llegada — se ejecuta en cada actualización de posición
+  useEffect(() => {
+    if (!routeDestination || !mapPosition || !routeData) return;
+    if (arrivedAt) return; // ya se detectó llegada, no volver a disparar
+    const userPos = new THREE.Vector3(mapPosition.x, 0, mapPosition.z);
+    const endXZ   = new THREE.Vector3(routeData.endPoint.x, 0, routeData.endPoint.z);
+    if (userPos.distanceTo(endXZ) < ARRIVAL_DISTANCE_THRESHOLD) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setArrivedAt({ name: routeData.destinationName, point: routeData.endPoint.clone() });
+      if (arrivalTimerRef.current !== null) clearTimeout(arrivalTimerRef.current);
+      arrivalTimerRef.current = setTimeout(() => {
+        clearRoute();
+        setArrivedAt(null);
+      }, ARRIVAL_CLEAR_DELAY_MS);
+    }
+  }, [mapPosition, routeDestination, routeData, arrivedAt, clearRoute]);
+
+  // Calcula la ruta cuando: destino, posición (si se movió suficiente), grafo listo
   useEffect(() => {
     let cancelled = false;
 
+    // Al cambiar de destino, forzar recálculo sin importar cuánto se movió
+    const destId = routeDestination?.id ?? null;
+    if (prevDestIdRef.current !== destId) {
+      prevDestIdRef.current = destId;
+      lastCalcPosRef.current = null;
+    }
+
+    // Omitir recálculo si la posición no cambió lo suficiente desde la última vez
+    if (mapPosition && lastCalcPosRef.current) {
+      const cur = new THREE.Vector3(mapPosition.x, 0, mapPosition.z);
+      if (cur.distanceTo(lastCalcPosRef.current) < RECALC_DISTANCE_THRESHOLD) return;
+    }
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRouteData(null);
 
-    if (loading || !routeDestination) {
+    if (!routeDestination) {
       setCurrentRouteNodeIds([]);
       return;
     }
@@ -471,14 +504,16 @@ export function RouteLine() {
     const buildingX = Number(routeDestination.x);
     const buildingZ = Number(routeDestination.z);
     if (Number.isFinite(buildingX) && Number.isFinite(buildingZ)) {
-      routePoints[routePoints.length - 1] = new THREE.Vector3(
-        buildingX, ROUTE_HEIGHT, buildingZ
-      );
+      routePoints[routePoints.length - 1] = new THREE.Vector3(buildingX, ROUTE_HEIGHT, buildingZ);
     }
 
     const totalDistance = calcTotalDistance(routePoints);
     const estimatedSeconds = distanceToEstimatedSeconds(totalDistance);
     const endPoint = routePoints[routePoints.length - 1]!;
+
+    if (mapPosition) {
+      lastCalcPosRef.current = new THREE.Vector3(mapPosition.x, 0, mapPosition.z);
+    }
 
     setCurrentRouteNodeIds([]);
     setRouteStats({ totalDistance, estimatedSeconds });
@@ -494,9 +529,45 @@ export function RouteLine() {
 
     return () => { cancelled = true; };
   }, [
-    loading, isReady, routeDestination, mapPosition, permission, entrances,
+    isReady, routeDestination, mapPosition, permission, entrances,
     findPath, setCurrentRouteNodeIds, setRouteStats, setRouteError,
   ]);
+
+  // Toast de llegada — visible brevemente mientras el timer corre
+  if (arrivedAt) {
+    return (
+      <Html position={[arrivedAt.point.x, arrivedAt.point.y + 12, arrivedAt.point.z]} center>
+        <div
+          style={{
+            background: "rgba(16,185,129,0.97)",
+            color: "#fff",
+            padding: "10px 18px",
+            borderRadius: 14,
+            fontSize: 14,
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+            boxShadow: "0 8px 28px rgba(16,185,129,0.45), 0 2px 8px rgba(0,0,0,0.2)",
+            pointerEvents: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            letterSpacing: "0.01em",
+            fontFamily: "Inter, system-ui, sans-serif",
+            animation: "ito-arrive-in 0.35s cubic-bezier(0.34,1.56,0.64,1)",
+          }}
+        >
+          <span style={{ fontSize: 18, lineHeight: 1 }}>✓</span>
+          <span>¡Llegaste a {arrivedAt.name}!</span>
+        </div>
+        <style>{`
+          @keyframes ito-arrive-in {
+            from { opacity: 0; transform: scale(0.7) translateY(8px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+          }
+        `}</style>
+      </Html>
+    );
+  }
 
   if (!routeData) return null;
 
@@ -507,7 +578,6 @@ export function RouteLine() {
 
   return (
     <>
-      {/* Conector punteado: posición GPS → inicio de ruta */}
       {/* Línea principal animada */}
       <AnimatedRouteLine points={routePoints} />
 

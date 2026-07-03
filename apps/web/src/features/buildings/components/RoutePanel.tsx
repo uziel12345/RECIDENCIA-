@@ -45,8 +45,9 @@ export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelPr
   const statusInfo = (() => {
     if (permission === "granted") {
       if (nearestBuilding) {
+        const isLowConfidence = nearestBuilding.confidence === "low";
         return {
-          variant: "success" as const,
+          variant: isLowConfidence ? "warning" as const : "success" as const,
           text: `Ubicación: ${nearestBuilding.buildingName}`,
           hint:
             geoPosition?.accuracy !== null && geoPosition?.accuracy !== undefined
@@ -157,14 +158,18 @@ export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelPr
               {isSimulated
                 ? `Simulado: ${simulatedPosition!.buildingName}`
                 : nearestBuilding
-                  ? nearestBuilding.buildingName
+                  ? nearestBuilding.confidence === "low"
+                    ? `Posible: ${nearestBuilding.buildingName}`
+                    : nearestBuilding.buildingName
                 : hasValidLocation
                   ? "Tu ubicación actual"
                   : "Ubicación pendiente"}
             </div>
             {hasValidLocation && !isSimulated && nearestBuilding && (
               <div className="ito-route-step__hint">
-                Detectada por GPS del edificio
+                {nearestBuilding.confidence === "low"
+                  ? "GPS aproximado; confirma visualmente"
+                  : "Detectada por GPS del edificio"}
               </div>
             )}
           </div>

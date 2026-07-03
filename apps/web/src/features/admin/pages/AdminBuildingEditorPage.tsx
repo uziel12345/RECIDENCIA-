@@ -176,7 +176,7 @@ export function AdminBuildingEditorPage() {
             Cargando editor...
           </div>
         ) : (
-          <section className="grid grid-cols-1 items-start gap-[22px] xl:grid-cols-[minmax(360px,520px)_1fr]">
+          <section className="grid grid-cols-1 items-start gap-[22px] xl:grid-cols-[300px_1fr]">
             <aside className="rounded-[18px] border border-[#334155] bg-[#1e293b] p-[22px] shadow-[0_4px_24px_rgba(0,0,0,0.3)] xl:sticky xl:top-6">
               <p className="m-0 mb-3 text-[11px] font-bold uppercase tracking-wider text-[#f97316]">
                 Vista del edificio

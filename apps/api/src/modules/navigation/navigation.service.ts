@@ -1,13 +1,4 @@
 import { pool } from "../../db/connection.js";
-import {
-  findShortestPathFromEdges,
-  type WeightedPathEdge,
-} from "./dijkstra.js";
-import {
-  calculateRouteDistance,
-  estimateWalkingSeconds,
-  getEdgeWeight,
-} from "./navigation.helpers.js";
 
 export type NavigationNodeRow = {
   id: string;
@@ -35,13 +26,6 @@ export type NavigationEdgeRow = {
   path_type: string;
   is_active: boolean | number;
   metadata: Record<string, unknown> | null;
-};
-
-export type NavigationRouteResult = {
-  node_ids: string[];
-  nodes: NavigationNodeRow[];
-  total_distance: number;
-  estimated_seconds: number;
 };
 
 type NavigationGraphCache = {
@@ -130,42 +114,4 @@ async function getNavigationGraph(): Promise<{
 
 export function invalidateNavigationCache(): void {
   navigationGraphCache = null;
-}
-
-// Endpoint /navigation/route — actualmente no usado por el frontend.
-// El cliente descarga el grafo completo y ejecuta A* localmente.
-// Ver useNavigationGraph.ts en apps/web.
-export async function calculateNavigationRoute(
-  fromNodeId: string,
-  toNodeId: string
-): Promise<NavigationRouteResult | null> {
-  const { nodes, edges } = await getNavigationGraph();
-
-  const graphEdges: WeightedPathEdge[] = edges.map((edge) => ({
-    from: edge.from_node_id,
-    to: edge.to_node_id,
-    weight: getEdgeWeight(edge),
-    bidirectional: Boolean(edge.is_bidirectional),
-  }));
-
-  const result = findShortestPathFromEdges(fromNodeId, toNodeId, graphEdges);
-
-  if (!result.found || result.nodeIds.length === 0) {
-    return null;
-  }
-
-  const nodeById = new Map(nodes.map((node) => [node.id, node]));
-
-  const routeNodes = result.nodeIds
-    .map((nodeId) => nodeById.get(nodeId) ?? null)
-    .filter((node): node is NavigationNodeRow => node !== null);
-
-  const totalDistance = calculateRouteDistance(result.nodeIds, edges);
-
-  return {
-    node_ids: result.nodeIds,
-    nodes: routeNodes,
-    total_distance: totalDistance,
-    estimated_seconds: estimateWalkingSeconds(totalDistance),
-  };
 }

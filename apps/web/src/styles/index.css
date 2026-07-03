@@ -2138,6 +2138,38 @@ input {
   font-weight: 500;
 }
 
+.ito-viewer-loading__progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+}
+
+.ito-viewer-loading__progress-track {
+  width: 160px;
+  height: 4px;
+  background: var(--color-brand-100, #dbeafe);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ito-viewer-loading__progress-fill {
+  height: 100%;
+  background: var(--color-brand-600, #2563eb);
+  border-radius: 999px;
+  transition: width 0.25s ease;
+  min-width: 4px;
+}
+
+.ito-viewer-loading__progress-pct {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-brand-600, #2563eb);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ============================ RESPONSIVE ============================ */
 
 @media (max-width: 768px) {
@@ -3175,6 +3207,8 @@ svg {
 .student-page__viewer {
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  isolation: isolate;
 }
 
 .student-page__schedule-full {
@@ -3347,6 +3381,90 @@ svg {
   padding: 16px;
 }
 
+/* ============================ NEW STUDENT GUIDE ============================ */
+
+.ito-new-student-guide {
+  padding: 16px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ito-new-student-guide__header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ito-new-student-guide__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text, #1e293b);
+}
+
+.ito-new-student-guide__subtitle {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--color-text-muted, #64748b);
+}
+
+.ito-new-student-guide__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.ito-new-student-guide__tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1.5px solid var(--color-border, #e2e8f0);
+  background: var(--color-surface, #ffffff);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 120ms ease;
+}
+
+.ito-new-student-guide__tile:hover {
+  border-color: var(--color-brand-500, #2563eb);
+  box-shadow: 0 2px 12px rgba(37, 99, 235, 0.12);
+  transform: translateY(-1px);
+}
+
+.ito-new-student-guide__tile:active {
+  transform: translateY(0);
+}
+
+.ito-new-student-guide__tile-emoji {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.ito-new-student-guide__tile-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text, #1e293b);
+  line-height: 1.2;
+}
+
+.ito-new-student-guide__tile-desc {
+  font-size: 11px;
+  color: var(--color-text-muted, #64748b);
+  line-height: 1.3;
+}
+
+.ito-new-student-guide__hint {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--color-text-muted, #64748b);
+  text-align: center;
+  padding-top: 4px;
+}
+
 /* ============================ SCHEDULE PANEL ============================ */
 
 .schedule-panel {
@@ -3364,6 +3482,7 @@ svg {
 .schedule-panel__header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
 }
 
@@ -3421,6 +3540,109 @@ svg {
 .schedule-panel__empty p {
   margin: 0;
   font-size: 14px;
+}
+
+.schedule-panel__unlink {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s;
+}
+
+.schedule-panel__unlink:hover {
+  color: var(--color-text);
+}
+
+.schedule-panel__link-prompt {
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.schedule-panel__link-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.schedule-panel__link-form {
+  display: flex;
+  gap: 8px;
+}
+
+.schedule-panel__link-input {
+  flex: 1;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.schedule-panel__link-input:focus {
+  border-color: var(--color-brand-600);
+}
+
+.schedule-panel__link-btn {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-brand-600);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.schedule-panel__link-btn:hover:not(:disabled) {
+  background: var(--color-brand-700);
+}
+
+.schedule-panel__link-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.schedule-panel__link-btn--sm {
+  height: 32px;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.schedule-panel__loading {
+  padding: 32px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.schedule-panel__error {
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.schedule-panel__error p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-error, #dc2626);
 }
 
 .schedule-class {
@@ -3745,6 +3967,8 @@ svg {
 .visitor-page__viewer {
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  isolation: isolate;
 }
 
 /* Visitor Top Bar (Mobile) */
@@ -8235,6 +8459,412 @@ html.dark .ito-sheet__body {
   pointer-events: none;
   border: 1px solid rgba(51, 65, 85, 0.6);
   backdrop-filter: blur(4px);
+}
+
+/* ── Mobile UX polish: map tools + calibration sheet ─────────────────────── */
+@media (max-width: 768px) {
+  .ito-toolbar--mobile-compact {
+    top: calc(var(--safe-top) + 72px);
+    right: 10px;
+    gap: 7px;
+    padding: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.22);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .ito-toolbar--mobile-compact .ito-toolbar__btn {
+    width: 42px;
+    height: 42px;
+    box-shadow: none;
+    border-color: rgba(15, 23, 42, 0.10);
+  }
+
+  .ito-calibration-panel {
+    position: absolute;
+    top: auto;
+    left: 54px;
+    right: 10px;
+    bottom: calc(10px + var(--safe-bottom));
+    width: auto;
+    max-height: min(72dvh, 620px);
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.96);
+    border-color: rgba(148, 163, 184, 0.22);
+    box-shadow: 0 -12px 44px rgba(0, 0, 0, 0.42);
+    overflow: hidden;
+  }
+
+  .ito-calibration-panel .ito-setgps-panel__header {
+    padding: 13px 16px;
+    font-size: 15px;
+    background: rgba(30, 41, 59, 0.98);
+  }
+
+  .ito-calibration-panel .ito-setgps-panel__close {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .ito-calibration-panel .ito-setgps-panel__body {
+    max-height: calc(min(72dvh, 620px) - 62px);
+    overflow-y: auto;
+    padding: 14px 16px 18px;
+    gap: 12px;
+  }
+
+  .ito-calibration-panel .ito-setgps-panel__signal {
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #cbd5e1;
+  }
+
+  .ito-calibration-panel .ito-setgps-panel__label {
+    margin: 2px 0 -2px;
+    font-size: 11px;
+    color: #cbd5e1;
+  }
+
+  .ito-calibration-panel .ito-setgps-panel__select {
+    min-height: 48px;
+    padding: 0 12px;
+    border-radius: 10px;
+    font-size: 15px;
+    background: #1e293b;
+  }
+
+  .ito-calibration-panel .ito-setgps-panel__save {
+    min-height: 50px;
+    border-radius: 11px;
+    font-size: 15px;
+  }
+
+  .ito-calibration-panel .ito-setgps-panel__hint {
+    display: none;
+  }
+
+  .ito-calibration-panel .ito-setgps-panel__divider {
+    margin: 4px 0;
+    background: rgba(148, 163, 184, 0.14);
+  }
+
+  .ito-calibration-panel pre {
+    max-height: 130px;
+  }
+
+  .ito-calibration-panel .ito-setgps-panel__body > div[style*="background: var(--color-surface-2"] {
+    background: rgba(30, 41, 59, 0.9) !important;
+    color: #e2e8f0 !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .ito-calibration-panel {
+    left: 50px;
+    right: 8px;
+    bottom: calc(8px + var(--safe-bottom));
+    max-height: 76dvh;
+  }
+
+  .ito-toolbar--mobile-compact {
+    right: 8px;
+  }
+}
+
+html.dark .ito-toolbar--mobile-compact {
+  background: rgba(15, 23, 42, 0.78);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* ── Mobile window organization pass ──────────────────────────────────────── */
+@media (max-width: 768px) {
+  html,
+  body,
+  #root {
+    min-width: 320px;
+    overflow-x: hidden;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    font-size: max(16px, 1em);
+  }
+
+  .student-top-bar,
+  .visitor-top-bar {
+    min-height: 58px;
+    padding: 8px 10px;
+    border-radius: 18px;
+  }
+
+  .student-top-bar__actions,
+  .visitor-top-bar__actions {
+    gap: 6px;
+  }
+
+  .student-top-bar__btn,
+  .visitor-top-bar__button {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+  }
+
+  .ito-campus--mobile .ito-toolbar--mobile,
+  .ito-toolbar--mobile-compact {
+    top: calc(var(--safe-top) + 74px);
+  }
+
+  .ito-campus--mobile .ito-sheet {
+    left: 0;
+    right: 0;
+    bottom: calc(78px + var(--safe-bottom));
+    border-radius: 22px 22px 0 0;
+    max-height: calc(100dvh - 74px - var(--safe-top) - 78px - var(--safe-bottom));
+  }
+
+  .ito-campus--mobile .ito-sheet--full {
+    top: calc(6px + var(--safe-top));
+    bottom: calc(76px + var(--safe-bottom));
+    left: 6px;
+    right: 6px;
+    max-height: none;
+    border-radius: 22px;
+  }
+
+  .ito-sheet__head {
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .ito-sheet__title {
+    font-size: 15px;
+    line-height: 1.2;
+  }
+
+  .ito-sheet__subtitle {
+    font-size: 12px;
+  }
+
+  .ito-sheet__head-actions {
+    gap: 6px;
+  }
+
+  .ito-sheet__icon-btn,
+  .student-mobile__schedule-header button,
+  .visitor-mobile__dest-header button {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+  }
+
+  .ito-sheet__body,
+  .student-mobile__schedule-body,
+  .visitor-mobile__dest-body {
+    padding: 12px;
+    overflow-x: hidden;
+  }
+
+  .ito-mobile-bar {
+    left: 8px;
+    right: 8px;
+    bottom: calc(6px + var(--safe-bottom));
+  }
+
+  .ito-mobile-bar__inner {
+    width: 100%;
+    min-height: 64px;
+    padding: 6px;
+    border-radius: 18px;
+    grid-template-columns: repeat(var(--mobile-action-count, 4), minmax(0, 1fr));
+  }
+
+  .ito-mobile-bar__btn {
+    min-width: 0;
+    min-height: 52px;
+    padding: 6px 4px;
+    border-radius: 14px;
+  }
+
+  .ito-mobile-bar__btn-label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 10px;
+    line-height: 1.1;
+  }
+
+  .student-mobile__schedule-modal,
+  .visitor-mobile__dest-modal {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: calc(100dvh - var(--safe-top) - 10px);
+    border-radius: 22px 22px 0 0;
+  }
+
+  .student-mobile__schedule-header,
+  .visitor-mobile__dest-header {
+    padding: 12px 14px;
+  }
+
+  .student-mobile__schedule-header h2,
+  .visitor-mobile__dest-header h2 {
+    font-size: 17px;
+  }
+
+  .quick-destinations {
+    gap: 10px;
+  }
+
+  .quick-destination,
+  .schedule-class,
+  .ito-info-card,
+  .ito-route-panel {
+    border-radius: 14px;
+  }
+
+  .quick-destination {
+    grid-template-columns: 44px minmax(0, 1fr) 24px;
+    padding: 12px;
+  }
+
+  .quick-destination__name,
+  .schedule-class__name,
+  .ito-info-card__name {
+    overflow-wrap: anywhere;
+  }
+
+  .schedule-class {
+    display: grid;
+    grid-template-columns: 74px minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .schedule-class__time {
+    width: auto;
+    min-width: 0;
+  }
+
+  .schedule-class__navigate {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 42px;
+    margin-top: 2px;
+  }
+
+  .ito-info-card__actions,
+  .ito-info-card__actions--stack,
+  .ito-info-card__actions--enhanced {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .ito-info-card__actions .ito-btn,
+  .ito-route-panel .ito-btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .admin-page-shell {
+    padding-bottom: calc(72px + var(--safe-bottom));
+  }
+
+  .admin-table-card table {
+    min-width: 760px;
+  }
+
+  .admin-table-card th,
+  .admin-table-card td {
+    white-space: nowrap;
+  }
+
+  .admin-table-card td:nth-child(2),
+  .admin-table-card td:nth-child(4) {
+    white-space: normal;
+    min-width: 180px;
+  }
+
+  .ito-setgps-panel,
+  .ito-calibration-panel,
+  .ito-draft-editor-panel {
+    max-width: calc(100vw - 16px);
+  }
+}
+
+@media (max-width: 430px) {
+  :root {
+    --sheet-peek-height: 84px;
+    --mobile-floating-bar: 58px;
+  }
+
+  .welcome-page {
+    padding-top: 24dvh;
+  }
+
+  .welcome-page__container {
+    min-height: 76dvh;
+  }
+
+  .role-card {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .role-card__badge {
+    justify-self: start;
+  }
+
+  .ito-campus--mobile .ito-sheet--full {
+    top: calc(4px + var(--safe-top));
+    left: 4px;
+    right: 4px;
+    bottom: calc(72px + var(--safe-bottom));
+  }
+
+  .ito-mobile-bar__inner {
+    min-height: 60px;
+    border-radius: 16px;
+  }
+
+  .ito-mobile-bar__btn-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .quick-destination {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .quick-destination__arrow {
+    display: none;
+  }
+
+  .schedule-class {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-class__time {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 6px;
+  }
+
+  .ito-list-item {
+    grid-template-columns: 4px minmax(0, 1fr);
+  }
+
+  .ito-list-item__chevron {
+    display: none;
+  }
 }
 
 

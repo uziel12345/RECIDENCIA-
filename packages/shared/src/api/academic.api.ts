@@ -1,5 +1,6 @@
 import { apiGet, apiUpload } from "./client.js";
 import type {
+  Schedule,
   StudentLocation,
   ProfessorLocation,
   ProfessorLocationSearch,
@@ -41,6 +42,18 @@ export function searchProfessorLocationApi(
   if (opts?.period) params.set("period", opts.period);
   if (opts?.at) params.set("at", opts.at);
   return apiGet<ProfessorLocationSearch>(`/professors/location/search?${params.toString()}`);
+}
+
+export function getStudentSchedulesApi(
+  controlNumber: string,
+  opts?: { period?: string }
+): Promise<Schedule[]> {
+  const params = new URLSearchParams();
+  if (opts?.period) params.set("period", opts.period);
+  const qs = params.toString();
+  return apiGet<Schedule[]>(
+    `/students/${encodeURIComponent(controlNumber)}/schedules${qs ? `?${qs}` : ""}`
+  );
 }
 
 export function importProfessorSchedulesApi(file: File): Promise<ProfessorScheduleImportResult> {

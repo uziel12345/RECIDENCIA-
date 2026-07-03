@@ -11,6 +11,7 @@ import { CampusViewer } from "../../../components/viewer/CampusViewer";
 import { AdminLayout } from "../components/AdminLayout";
 import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { NAVIGATION_DATA_CHANGED_EVENT } from "../../../services/navigation.service";
+import { useIsMobile } from "../../../hooks/useIsMobile";
 
 const PANEL_WIDTH = 268;
 
@@ -26,9 +27,12 @@ type NavHealth = {
 type CategoryStat = { name: string; color: string; count: number };
 
 export function AdminNavigationPage() {
+  const isMobile = useIsMobile();
   const [health, setHealth] = useState<NavHealth | null>(null);
   const [loadingHealth, setLoadingHealth] = useState(false);
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(() =>
+    typeof window === "undefined" ? true : window.innerWidth >= 768
+  );
   const [buildings, setBuildings] = useState<Building[]>([]);
 
   const loadHealth = useCallback(async () => {
@@ -116,15 +120,29 @@ export function AdminNavigationPage() {
           </button>
         )}
 
-        {/* Panel lateral */}
+        {/* Fondo semitransparente en móvil: tocar fuera del panel lo cierra */}
+        {isMobile && panelOpen && (
+          <div style={s.mobileBackdrop} onClick={() => setPanelOpen(false)} />
+        )}
+
+        {/* Panel lateral — en móvil flota sobre el mapa en vez de empujarlo */}
         <aside
-          style={{
-            ...s.panel,
-            width: panelOpen ? PANEL_WIDTH : 0,
-            minWidth: panelOpen ? PANEL_WIDTH : 0,
-            padding: panelOpen ? "12px 12px 14px" : 0,
-            transition: "width 0.22s ease, min-width 0.22s ease, padding 0.22s ease",
-          }}
+          style={
+            isMobile
+              ? {
+                  ...s.panel,
+                  ...s.panelMobile,
+                  transform: panelOpen ? "translateX(0)" : "translateX(-100%)",
+                  padding: "12px 12px 14px",
+                }
+              : {
+                  ...s.panel,
+                  width: panelOpen ? PANEL_WIDTH : 0,
+                  minWidth: panelOpen ? PANEL_WIDTH : 0,
+                  padding: panelOpen ? "12px 12px 14px" : 0,
+                  transition: "width 0.22s ease, min-width 0.22s ease, padding 0.22s ease",
+                }
+          }
         >
           {/* Cabecera compacta */}
           <div style={s.panelHeader}>
@@ -235,7 +253,7 @@ export function AdminNavigationPage() {
         {/* Mapa 3D */}
         <div style={s.mapShell}>
           <CampusViewer
-            isMobile={false}
+            isMobile={isMobile}
             mobilePanelOpen={false}
             enableAdminTools
             hideCategoryLegend
@@ -282,6 +300,23 @@ const s: Record<string, CSSProperties> = {
     height: "100%",
     flexShrink: 0,
     boxSizing: "border-box",
+  },
+  /* En móvil el panel flota sobre el mapa (no empuja el layout con flex) */
+  panelMobile: {
+    position: "absolute",
+    inset: 0,
+    zIndex: 30,
+    width: "100%",
+    minWidth: 0,
+    maxWidth: "100%",
+    transition: "transform 0.25s ease",
+    boxShadow: "6px 0 24px rgba(0,0,0,0.35)",
+  },
+  mobileBackdrop: {
+    position: "absolute",
+    inset: 0,
+    zIndex: 29,
+    background: "rgba(0,0,0,0.45)",
   },
   panelHeader: {
     display: "flex",

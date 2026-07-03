@@ -9,7 +9,7 @@ export const navigationIdSchema = z.object({
 export const createNavigationNodeSchema = z.object({
   code: z.string().trim().min(1).max(80).optional(),
   name: z.string().trim().max(160).nullable().optional(),
-  node_type: z.enum(["waypoint", "building_access", "intersection", "poi"]),
+  node_type: z.enum(["waypoint", "entrance", "intersection"]),
   x: z.coerce.number().finite(),
   y: z.coerce.number().finite().default(0),
   z: z.coerce.number().finite(),

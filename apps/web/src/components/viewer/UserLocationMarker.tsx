@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useEffect, useRef } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import { useLocationStore } from "../../store/location-store";
@@ -7,14 +7,28 @@ import { useLocationStore } from "../../store/location-store";
 const DOT_COLOR = "#2563eb";
 const RING_SPEED = 1.4;
 const RING_MAX_SCALE = 2.8;
+const BEACON_Y = 14;
+const LABEL_Y = 22;
+// Redibuja a una tasa fija en vez de en cada frame disponible, para no anular
+// el ahorro de frameloop="demand" mientras el marcador de usuario está visible.
+const INVALIDATE_FPS = 24;
 
 export function UserLocationMarker() {
   const mapPosition = useLocationStore((s) => s.mapPosition);
   const nearestBuilding = useLocationStore((s) => s.nearestBuilding);
   const ring1Ref = useRef<THREE.Mesh>(null);
   const ring2Ref = useRef<THREE.Mesh>(null);
+  const invalidate = useThree((state) => state.invalidate);
+  const hasPosition = !!mapPosition;
+
+  useEffect(() => {
+    if (!hasPosition) return;
+    const id = setInterval(() => invalidate(), 1000 / INVALIDATE_FPS);
+    return () => clearInterval(id);
+  }, [hasPosition, invalidate]);
 
   useFrame(({ clock }) => {
+    if (!mapPosition) return;
     const t = clock.getElapsedTime() * RING_SPEED;
 
     if (ring1Ref.current) {
@@ -38,56 +52,63 @@ export function UserLocationMarker() {
   return (
     <group position={[mapPosition.x, mapPosition.y, mapPosition.z]}>
       {/* Pulsing rings on the ground */}
-      <mesh ref={ring1Ref} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh ref={ring1Ref} rotation={[-Math.PI / 2, 0, 0]} renderOrder={1000}>
         <ringGeometry args={[3.2, 4.4, 32]} />
         <meshBasicMaterial
           color={DOT_COLOR}
           transparent
           opacity={0.55}
           side={THREE.DoubleSide}
+          depthTest={false}
         />
       </mesh>
-      <mesh ref={ring2Ref} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh ref={ring2Ref} rotation={[-Math.PI / 2, 0, 0]} renderOrder={1000}>
         <ringGeometry args={[3.2, 4.4, 32]} />
         <meshBasicMaterial
           color={DOT_COLOR}
           transparent
           opacity={0.3}
           side={THREE.DoubleSide}
+          depthTest={false}
         />
       </mesh>
 
       {/* Base disc */}
-      <mesh position={[0, 0.3, 0]}>
+      <mesh position={[0, BEACON_Y, 0]} renderOrder={1001}>
         <cylinderGeometry args={[1.4, 1.4, 0.35, 32]} />
-        <meshStandardMaterial color="#1d4ed8" />
+        <meshStandardMaterial color="#1d4ed8" depthTest={false} />
       </mesh>
 
       {/* Main sphere */}
-      <mesh position={[0, 1.2, 0]}>
+      <mesh position={[0, BEACON_Y + 1.2, 0]} renderOrder={1002}>
         <sphereGeometry args={[1.6, 20, 20]} />
         <meshStandardMaterial
           color={DOT_COLOR}
           emissive={DOT_COLOR}
           emissiveIntensity={0.35}
+          depthTest={false}
         />
       </mesh>
 
       {/* Inner white dot */}
-      <mesh position={[0, 1.2, 0]}>
+      <mesh position={[0, BEACON_Y + 1.2, 0]} renderOrder={1003}>
         <sphereGeometry args={[0.65, 16, 16]} />
-        <meshStandardMaterial color="#ffffff" />
+        <meshStandardMaterial color="#ffffff" depthTest={false} />
       </mesh>
 
       {/* Building label */}
       {nearestBuilding && (
         <Html
-          position={[0, 7, 0]}
+          position={[0, LABEL_Y, 0]}
           center
           distanceFactor={60}
-          zIndexRange={[5000, 0]}
+          zIndexRange={[100, 0]}
         >
-          <div className="ito-location-label">{nearestBuilding.buildingName}</div>
+          <div className="ito-location-label">
+            {nearestBuilding.confidence === "low"
+              ? `Posible: ${nearestBuilding.buildingName}`
+              : nearestBuilding.buildingName}
+          </div>
         </Html>
       )}
     </group>
