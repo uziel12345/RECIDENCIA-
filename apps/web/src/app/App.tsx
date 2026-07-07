@@ -1,4 +1,4 @@
-﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+﻿import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { lazy, Suspense, useState, useEffect } from "react";
 import { WelcomePage } from "../features/welcome/WelcomePage";
 import { OnboardingPage } from "../features/onboarding/OnboardingPage";
@@ -226,6 +226,38 @@ function PublicRoute({
   return <>{children}</>;
 }
 
+// Se renderiza como hermano de <Routes>, no dentro de ella, para que el
+// Editor de grafo (con su modelo 3D) no se desmonte al navegar a otra
+// sección del admin y vuelva a montarse desde cero al regresar. Solo se
+// monta la primera vez que se visita /admin/navigation; después se oculta
+// con CSS en vez de desmontarse.
+function PersistentAdminNavigation() {
+  const location = useLocation();
+  const isActive = location.pathname === ROUTES.ADMIN_NAVIGATION;
+  // Ratchet booleano: una vez visitada la ruta, se queda "true" para siempre.
+  // Ajustar el estado en el propio render (guardado por la condición, no en
+  // un efecto) es el patrón sancionado por React para "recordar algo de un
+  // render anterior" sin el round-trip de un efecto.
+  const [hasVisited, setHasVisited] = useState(false);
+  if (isActive && !hasVisited) {
+    setHasVisited(true);
+  }
+
+  if (!hasVisited) return null;
+
+  return (
+    <div style={{ display: isActive ? undefined : "none" }}>
+      <AdminProtectedRoute permission="can_edit_navigation">
+        <ErrorBoundary>
+          <Suspense fallback={<MapLoadingFallback />}>
+            <AdminNavigationPage />
+          </Suspense>
+        </ErrorBoundary>
+      </AdminProtectedRoute>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -284,18 +316,12 @@ export default function App() {
             </AdminProtectedRoute>
           }
         />
-        <Route
-          path={ROUTES.ADMIN_NAVIGATION}
-          element={
-            <AdminProtectedRoute permission="can_edit_navigation">
-              <ErrorBoundary>
-                <Suspense fallback={<MapLoadingFallback />}>
-                  <AdminNavigationPage />
-                </Suspense>
-              </ErrorBoundary>
-            </AdminProtectedRoute>
-          }
-        />
+        {/* El Editor de grafo se renderiza fuera de <Routes> (ver
+            <PersistentAdminNavigation/> más abajo) para mantenerlo montado
+            al navegar a otras secciones del admin. Esta entrada solo existe
+            para que la ruta matchee (si no, el catch-all redirigiría a
+            WELCOME). */}
+        <Route path={ROUTES.ADMIN_NAVIGATION} element={null} />
         <Route
           path={ROUTES.ADMIN_USERS}
           element={
@@ -367,6 +393,8 @@ export default function App() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to={ROUTES.WELCOME} replace />} />
       </Routes>
+
+      <PersistentAdminNavigation />
     </BrowserRouter>
   );
 }

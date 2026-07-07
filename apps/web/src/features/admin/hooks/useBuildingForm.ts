@@ -3,6 +3,7 @@ import type {
   CreateBuildingInput,
   UpdateBuildingInput,
 } from "@ito-map/shared";
+import { normalizeDisplayText } from "../../../utils/text";
 
 export type BuildingFormState = {
   code: string;
@@ -55,9 +56,7 @@ export function createSlug(value: string): string {
 }
 
 export function safeText(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (value === null || value === undefined) return "";
-  return String(value);
+  return normalizeDisplayText(value);
 }
 
 export function numberToFormValue(value: number | null | undefined): string {

@@ -25,7 +25,7 @@ const quickDestinations: QuickDestination[] = [
   {
     id: "admissions",
     name: "Admisiones",
-    description: "Informes y tramites de ingreso",
+    description: "Informes y trámites de ingreso",
     icon: <GraduationCapIcon size={20} />,
     buildingCodes: ["ASE", "DIR"],
     color: "#ea580c",

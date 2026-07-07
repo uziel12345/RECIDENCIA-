@@ -339,6 +339,14 @@ input {
   font-weight: 400;
 }
 
+/* input[type=search] trae su propia "x" nativa en Chrome/Edge/Safari — la
+   ocultamos porque ya dibujamos nuestro propio botón .ito-search__clear. */
+.ito-search__input::-webkit-search-cancel-button,
+.ito-search__input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 .ito-search__input:hover {
   border-color: var(--color-border-strong);
   background: var(--color-surface);
@@ -3167,10 +3175,10 @@ svg {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   border-radius: var(--radius-md);
-  border: 1px solid transparent;
-  background: transparent;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
   color: var(--color-text-muted);
   font-size: 13px;
   font-weight: 600;
@@ -3181,8 +3189,8 @@ svg {
 }
 
 .student-page__nav-item:hover {
-  background: var(--color-surface);
-  border-color: var(--color-border);
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-strong);
   color: var(--color-text);
 }
 
@@ -4652,7 +4660,8 @@ svg {
 
 .student-page__nav {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
   flex-shrink: 0;
 }
 
@@ -4849,7 +4858,12 @@ svg {
   left: var(--mobile-shell-gap);
   right: var(--mobile-shell-gap);
   bottom: calc(8px + var(--safe-bottom));
-  max-height: calc(100dvh - var(--mobile-floating-top) - 28px);
+  /* height fija (no solo max-height): si el contenido es corto (ej. el
+     formulario de "Horario"), la tarjeta igual debe cubrir la pantalla
+     hasta abajo del top bar flotante, en vez de encogerse y dejar ver el
+     mapa 3D debajo. El body interno (flex:1, overflow-y:auto) hace scroll
+     si el contenido es más alto que esto. */
+  height: calc(100dvh - var(--mobile-floating-top) - 28px);
   border-radius: 24px;
   box-shadow: 0 22px 50px rgba(10, 10, 10, 0.26);
 }
@@ -5189,6 +5203,21 @@ svg {
   left: calc(var(--desktop-sidebar-width) + 28px);
   z-index: 121;
   transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Barra de búsqueda flotante sobre el mapa 3D, separada de la tarjeta del
+   sidebar — se desplaza junto con el toggle cuando el sidebar se colapsa. */
+.ito-map-search-overlay {
+  position: absolute;
+  top: 16px;
+  left: calc(var(--desktop-sidebar-width) + 28px);
+  width: min(400px, calc(100% - var(--desktop-sidebar-width) - 60px));
+  z-index: 25;
+  transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.is-sidebar-collapsed .ito-map-search-overlay {
+  left: 16px;
 }
 
 .student-page--fullmap.is-sidebar-collapsed .ito-sidebar-toggle,
@@ -6883,6 +6912,16 @@ svg {
   max-width: calc(100vw - 88px);
 }
 
+/* La barra de búsqueda flotante (.ito-map-search-overlay) y el toolbar de
+   controles del mapa comparten la misma esquina superior izquierda en modo
+   fullmap (top ~16-18px, junto al sidebar) — el toolbar (z-index 180) queda
+   dibujado encima de la búsqueda. Se baja la búsqueda debajo del toolbar
+   (18px top + 42px botones + 14px padding + 16px de aire ≈ 92px). */
+.student-page--fullmap .ito-map-search-overlay,
+.visitor-page--fullmap .ito-map-search-overlay {
+  top: 92px;
+}
+
 .student-page--fullmap .ito-sidebar-toggle,
 .visitor-page--fullmap .ito-sidebar-toggle {
   z-index: 190;
@@ -8054,8 +8093,8 @@ html.dark .student-page__nav {
 }
 
 html.dark .student-page__nav-item {
-  background: transparent;
-  border-color: transparent;
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.07);
   color: #64748b;
   box-shadow: none;
 }
@@ -8730,6 +8769,81 @@ html.dark .ito-toolbar--mobile-compact {
   .ito-info-card,
   .ito-route-panel {
     border-radius: 14px;
+  }
+
+  .ito-route-panel {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .ito-route-panel__title {
+    align-items: flex-start;
+    font-size: 11px;
+    line-height: 1.25;
+  }
+
+  .ito-route-status {
+    align-items: flex-start;
+    padding: 10px;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .ito-route-timeline {
+    gap: 10px;
+  }
+
+  .ito-route-timeline::before {
+    left: 27px;
+    top: 48px;
+    height: calc(50% - 10px);
+  }
+
+  .ito-route-step {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .ito-route-step__icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .ito-route-step__label {
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
+  .ito-route-step__value {
+    font-size: 15px;
+    line-height: 1.25;
+    word-break: normal;
+    overflow-wrap: anywhere;
+    hyphens: none;
+  }
+
+  .ito-route-step__hint {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .ito-route-step > .ito-btn {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 44px;
+    margin: 4px 0 0 !important;
+    align-self: stretch !important;
+    justify-content: center;
+    font-size: 14px !important;
+    padding: 10px 12px !important;
+  }
+
+  .ito-route-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .quick-destination {

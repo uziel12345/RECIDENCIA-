@@ -1,22 +1,33 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { useGLTF, Html } from "@react-three/drei";
+import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import { useBuildingStore } from "../../store/building-store";
 import { useBuildingGlbStore } from "../../store/building-glb-store";
 import { resolveGlbName } from "./glb-utils";
-
-const MODEL_PATH = "/models/campus.glb";
+import { useIsMobile } from "../../hooks/useIsMobile";
+import { getCategoryAccent } from "../ui/categoryAccent";
+import type { Building } from "../../features/buildings/types/building";
+import { useCampusGltf } from "./useCampusGltf";
 
 // Naranja para el destino de ruta activa
 const ROUTE_COLOR = new THREE.Color(0xf97316);
-// Azul ITO para edificio seleccionado sin ruta
-const SELECT_COLOR = new THREE.Color(0x2563eb);
+
+// Color de acento de la categoría del edificio (fallback azul ITO si no hay categoría)
+function getSelectionColorHex(
+  building: Pick<Building, "category_name" | "category_color"> | null | undefined,
+): string {
+  if (!building) return "#2563eb";
+  return building.category_color || getCategoryAccent(building.category_name).fg;
+}
 
 const BEACON_HEIGHT = 28;
 // Redibuja a una tasa fija en vez de en cada frame disponible, para no anular
 // el ahorro de frameloop="demand" mientras hay un glow/beacon/pin animado.
-const INVALIDATE_FPS = 24;
+// Móvil usa una tasa más baja: la animación (pulso lento) se ve igual de fluida
+// pero con menos trabajo de GPU repetido.
+const INVALIDATE_FPS_DESKTOP = 24;
+const INVALIDATE_FPS_MOBILE = 15;
 
 // ── Glow en el mesh ────────────────────────────────────────────────────────────
 //
@@ -28,6 +39,7 @@ function useBuildingGlow(
   modelNodeName: string | null | undefined,
   scene: THREE.Group,
   color: THREE.Color,
+  isMobile: boolean,
 ) {
   const meshesRef    = useRef<THREE.Mesh[]>([]);
   const originalsRef = useRef<(THREE.Material | THREE.Material[])[]>([]);
@@ -74,9 +86,11 @@ function useBuildingGlow(
         ? (original[0] as THREE.MeshStandardMaterial)
         : (original as THREE.MeshStandardMaterial);
       const cloned = src.clone() as THREE.MeshStandardMaterial;
-      cloned.color.set(color);
+      // No tocar cloned.color: conserva la textura/color real del edificio
+      // (techo rojo, paredes blancas). El glow es un tinte emissive aditivo
+      // encima, no un reemplazo — así el edificio sigue siendo identificable.
       cloned.emissive.set(color);
-      cloned.emissiveIntensity = 0.4;
+      cloned.emissiveIntensity = 0.3;
       clonedsRef.current.push(cloned);
       child.material = cloned;
     });
@@ -96,15 +110,16 @@ function useBuildingGlow(
 
   useEffect(() => {
     if (!modelNodeName) return;
-    const id = setInterval(() => invalidate(), 1000 / INVALIDATE_FPS);
+    const fps = isMobile ? INVALIDATE_FPS_MOBILE : INVALIDATE_FPS_DESKTOP;
+    const id = setInterval(() => invalidate(), 1000 / fps);
     return () => clearInterval(id);
-  }, [modelNodeName, invalidate]);
+  }, [modelNodeName, isMobile, invalidate]);
 
   useFrame((_, delta) => {
     if (!clonedsRef.current.length) return;
     elapsed.current += delta;
     const pulse = (Math.sin(elapsed.current * 2.8) + 1) / 2;
-    const intensity = 0.3 + pulse * 0.7;
+    const intensity = 0.22 + pulse * 0.5;
     for (const mat of clonedsRef.current) {
       mat.emissiveIntensity = intensity;
     }
@@ -113,16 +128,27 @@ function useBuildingGlow(
 
 // ── Beacon naranja para destino de ruta ────────────────────────────────────────
 
-function DestinationBeacon({ x, z, name }: { x: number; z: number; name: string }) {
+function DestinationBeacon({
+  x,
+  z,
+  name,
+  isMobile,
+}: {
+  x: number;
+  z: number;
+  name: string;
+  isMobile: boolean;
+}) {
   const pillarRef = useRef<THREE.Mesh>(null);
   const ringRef   = useRef<THREE.Mesh>(null);
   const elapsed   = useRef(0);
   const invalidate = useThree((state) => state.invalidate);
 
   useEffect(() => {
-    const id = setInterval(() => invalidate(), 1000 / INVALIDATE_FPS);
+    const fps = isMobile ? INVALIDATE_FPS_MOBILE : INVALIDATE_FPS_DESKTOP;
+    const id = setInterval(() => invalidate(), 1000 / fps);
     return () => clearInterval(id);
-  }, [invalidate]);
+  }, [isMobile, invalidate]);
 
   useFrame((_, delta) => {
     elapsed.current += delta;
@@ -174,15 +200,26 @@ function DestinationBeacon({ x, z, name }: { x: number; z: number; name: string 
 
 // ── Pin azul para edificio seleccionado sin ruta ───────────────────────────────
 
-function SelectionPin({ x, z }: { x: number; z: number }) {
+function SelectionPin({
+  x,
+  z,
+  color,
+  isMobile,
+}: {
+  x: number;
+  z: number;
+  color: string;
+  isMobile: boolean;
+}) {
   const ringRef = useRef<THREE.Mesh>(null);
   const elapsed = useRef(0);
   const invalidate = useThree((state) => state.invalidate);
 
   useEffect(() => {
-    const id = setInterval(() => invalidate(), 1000 / INVALIDATE_FPS);
+    const fps = isMobile ? INVALIDATE_FPS_MOBILE : INVALIDATE_FPS_DESKTOP;
+    const id = setInterval(() => invalidate(), 1000 / fps);
     return () => clearInterval(id);
-  }, [invalidate]);
+  }, [isMobile, invalidate]);
 
   useFrame((_, delta) => {
     elapsed.current += delta;
@@ -200,19 +237,19 @@ function SelectionPin({ x, z }: { x: number; z: number }) {
       {/* Ring pulsante en el suelo */}
       <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.2, 0]}>
         <ringGeometry args={[4, 6, 32]} />
-        <meshBasicMaterial color="#2563eb" transparent opacity={0.35} side={THREE.DoubleSide} />
+        <meshBasicMaterial color={color} transparent opacity={0.35} side={THREE.DoubleSide} />
       </mesh>
 
       {/* Pillar delgado */}
       <mesh position={[0, PIN_Y / 2, 0]}>
         <cylinderGeometry args={[0.22, 0.22, PIN_Y, 6]} />
-        <meshStandardMaterial color="#2563eb" emissive="#2563eb" emissiveIntensity={0.5} transparent opacity={0.75} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.5} transparent opacity={0.75} />
       </mesh>
 
       {/* Esfera */}
       <mesh position={[0, PIN_Y, 0]}>
         <sphereGeometry args={[1.8, 20, 20]} />
-        <meshStandardMaterial color="#2563eb" emissive="#2563eb" emissiveIntensity={0.7} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.7} />
       </mesh>
     </group>
   );
@@ -224,14 +261,23 @@ export function DestinationBuildingHighlight() {
   const routeDestination = useBuildingStore((s) => s.routeDestination);
   const selectedBuilding  = useBuildingStore((s) => s.selectedBuilding);
   const glbPositions      = useBuildingGlbStore((s) => s.positions);
-  const { scene } = useGLTF(MODEL_PATH);
+  const { scene } = useCampusGltf();
+  const isMobile = useIsMobile();
 
   // Cuando hay ruta activa: glow naranja en el destino de ruta
-  // Cuando solo hay selección: glow azul en el edificio seleccionado
-  const glowTarget     = routeDestination ?? selectedBuilding;
-  const glowColor      = routeDestination ? ROUTE_COLOR : SELECT_COLOR;
+  // Cuando solo hay selección: glow del color de la categoría del edificio
+  const glowTarget = routeDestination ?? selectedBuilding;
 
-  useBuildingGlow(glowTarget?.model_node_name, scene as unknown as THREE.Group, glowColor);
+  const selectionColorHex = useMemo(
+    () => getSelectionColorHex(selectedBuilding),
+    [selectedBuilding],
+  );
+  const glowColor = useMemo(
+    () => (routeDestination ? ROUTE_COLOR : new THREE.Color(selectionColorHex)),
+    [routeDestination, selectionColorHex],
+  );
+
+  useBuildingGlow(glowTarget?.model_node_name, scene as unknown as THREE.Group, glowColor, isMobile);
 
   // ── Beacon/Pin ─────────────────────────────────────────────────────────────
 
@@ -240,7 +286,7 @@ export function DestinationBuildingHighlight() {
     const x = glbPos?.x ?? routeDestination.x;
     const z = glbPos?.z ?? routeDestination.z;
     if (x == null || z == null) return null;
-    return <DestinationBeacon x={x} z={z} name={routeDestination.name} />;
+    return <DestinationBeacon x={x} z={z} name={routeDestination.name} isMobile={isMobile} />;
   }
 
   if (selectedBuilding) {
@@ -248,7 +294,7 @@ export function DestinationBuildingHighlight() {
     const x = glbPos?.x ?? selectedBuilding.x;
     const z = glbPos?.z ?? selectedBuilding.z;
     if (x == null || z == null) return null;
-    return <SelectionPin x={x} z={z} />;
+    return <SelectionPin x={x} z={z} color={selectionColorHex} isMobile={isMobile} />;
   }
 
   return null;

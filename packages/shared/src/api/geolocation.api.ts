@@ -6,6 +6,7 @@ import type {
   CreateBuildingGeofenceInput,
   CreateCalibrationPointInput,
   CreateCalibrationProfileInput,
+  GenerateDefaultGeofencesResult,
 } from "../types/geolocation.types.js";
 
 export function getActiveCalibrationProfileApi(): Promise<CalibrationProfile | null> {
@@ -44,5 +45,12 @@ export function createBuildingGeofenceApi(
   return apiPost<BuildingGeofence, CreateBuildingGeofenceInput>(
     "/geolocation/geofences",
     input
+  );
+}
+
+export function generateDefaultGeofencesApi(): Promise<GenerateDefaultGeofencesResult> {
+  return apiPost<GenerateDefaultGeofencesResult, undefined>(
+    "/geolocation/geofences/generate-defaults",
+    undefined
   );
 }

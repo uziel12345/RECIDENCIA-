@@ -6,18 +6,22 @@ export class SearchService {
   constructor(private readonly repository = new SearchRepository()) {}
 
   async search(q: string, type: SearchType): Promise<SearchResultRow[]> {
-    const term = `%${q}%`;
+    // Se busca por palabra en vez de por frase completa, para que el orden o
+    // los espacios entre palabras no importen (ej. "control escolar" también
+    // encuentra "Servicios Escolares y Control").
+    const words = q.trim().split(/\s+/).filter(Boolean);
+    if (words.length === 0) return [];
 
-    if (type === "building") return this.repository.searchBuildings(term);
-    if (type === "classroom") return this.repository.searchClassrooms(term);
-    if (type === "procedure") return this.repository.searchProcedures(term, "tramite");
-    if (type === "service") return this.repository.searchProcedures(term, "servicio");
+    if (type === "building") return this.repository.searchBuildings(words);
+    if (type === "classroom") return this.repository.searchClassrooms(words);
+    if (type === "procedure") return this.repository.searchProcedures(words, "tramite");
+    if (type === "service") return this.repository.searchProcedures(words, "servicio");
 
     const [buildings, classrooms, procedures, services] = await Promise.all([
-      this.repository.searchBuildings(term),
-      this.repository.searchClassrooms(term),
-      this.repository.searchProcedures(term, "tramite"),
-      this.repository.searchProcedures(term, "servicio"),
+      this.repository.searchBuildings(words),
+      this.repository.searchClassrooms(words),
+      this.repository.searchProcedures(words, "tramite"),
+      this.repository.searchProcedures(words, "servicio"),
     ]);
 
     return [...buildings, ...classrooms, ...procedures, ...services];

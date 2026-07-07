@@ -6,11 +6,17 @@ import { Icon } from "../ui/Icons";
 import {
   createCalibrationPointApi,
   createCalibrationProfileApi,
+  generateDefaultGeofencesApi,
+  getActiveCalibrationProfileApi,
   getCalibrationPointsApi,
+  updateBuildingApi,
+  type CalibrationProfile,
+  type GenerateDefaultGeofencesResult,
 } from "@ito-map/shared";
 import {
   gpsToXZ,
   gpsToXZUncalibrated,
+  xzToGps,
   getCalibOffset,
   getActiveGpsTransform,
   setActiveGpsTransform,
@@ -28,11 +34,31 @@ import { setSimulatedPosition, clearSimulatedPosition } from "../../features/loc
 type Props = {
   buildings: Building[];
   onClose: () => void;
+  onBuildingUpdated: () => void;
 };
 
 const MAX_CALIBRATION_ACCURACY_METERS = 25;
 const MAX_PROFILE_AVG_RESIDUAL_METERS = 15;
 const MAX_PROFILE_MAX_RESIDUAL_METERS = 25;
+
+// Coordenadas reales tomadas de OpenStreetMap (Overpass API, consultado
+// 2026-07-06) para edificios del campus mapeados individualmente ahí. Evita
+// tener que caminar a estos 4 para recolectar el punto — solo aplica a
+// edificios que OSM mapea con nombre propio dentro del predio del ITO;
+// el resto del campus (más al fondo, ej. Centro de Cómputo o el gimnasio)
+// no está mapeado en detalle en OSM y sigue requiriendo caminar 1-2 puntos
+// ahí para que la fórmula no quede sesgada hacia esta esquina.
+const OSM_REFERENCE_POINTS: { code: string; latitude: number; longitude: number }[] = [
+  { code: "BIB", latitude: 17.0777, longitude: -96.7442 },
+  { code: "B", latitude: 17.0782, longitude: -96.7448 },
+  { code: "C", latitude: 17.078, longitude: -96.7449 },
+  { code: "F", latitude: 17.0767, longitude: -96.7441 },
+];
+
+type AutoGpsStatus =
+  | { state: "idle" }
+  | { state: "running"; done: number; total: number; errors: number }
+  | { state: "done"; done: number; total: number; errors: number };
 
 function fmt(n: number): string {
   return n.toFixed(2);
@@ -42,7 +68,18 @@ function isGoodCalibrationPoint(point: { accuracy: number | null }): boolean {
   return point.accuracy === null || point.accuracy <= MAX_CALIBRATION_ACCURACY_METERS;
 }
 
-export function CampusCalibrationPanel({ buildings, onClose }: Props) {
+function isGoodProfile(profile: CalibrationProfile | null): boolean {
+  if (!profile) return false;
+  if (profile.avg_residual_meters != null && profile.avg_residual_meters > MAX_PROFILE_AVG_RESIDUAL_METERS) {
+    return false;
+  }
+  if (profile.max_residual_meters != null && profile.max_residual_meters > MAX_PROFILE_MAX_RESIDUAL_METERS) {
+    return false;
+  }
+  return true;
+}
+
+export function CampusCalibrationPanel({ buildings, onClose, onBuildingUpdated }: Props) {
   const geoPosition = useLocationStore((s) => s.geoPosition);
   const simulatedPosition = useLocationStore((s) => s.simulatedPosition);
   const glbPositions = useBuildingGlbStore((s) => s.positions);
@@ -57,6 +94,16 @@ export function CampusCalibrationPanel({ buildings, onClose }: Props) {
   const [pointStatus, setPointStatus] = useState<"idle" | "loading" | "saving" | "saved" | "error">("idle");
   const [publishStatus, setPublishStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
+
+  // Paso 2: perfil activo publicado — habilita/bloquea poblar GPS de edificios
+  const [activeProfile, setActiveProfile] = useState<CalibrationProfile | null>(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [buildingGpsStatus, setBuildingGpsStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [autoGpsStatus, setAutoGpsStatus] = useState<AutoGpsStatus>({ state: "idle" });
+
+  // Paso 3: geocercas
+  const [geoStatus, setGeoStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [geoResult, setGeoResult] = useState<GenerateDefaultGeofencesResult | null>(null);
 
   const hasActiveCalib = offset.dx !== 0 || offset.dz !== 0;
   const hasGoodGps =
@@ -97,6 +144,18 @@ export function CampusCalibrationPanel({ buildings, onClose }: Props) {
     };
   }, []);
 
+  const refreshActiveProfile = () => {
+    setProfileLoaded(false);
+    getActiveCalibrationProfileApi()
+      .then((profile) => {
+        setActiveProfile(profile);
+        setProfileLoaded(true);
+      })
+      .catch(() => setProfileLoaded(true));
+  };
+
+  useEffect(refreshActiveProfile, []);
+
   // Posición 3D calculada con la calibración activa
   const calPos = geoPosition
     ? gpsToXZ(geoPosition.latitude, geoPosition.longitude)
@@ -104,13 +163,15 @@ export function CampusCalibrationPanel({ buildings, onClose }: Props) {
 
   // Edificio seleccionado
   const selected = buildings.find((b) => b.id === selectedId);
-  const selectedGlbPos = selected ? glbPositions[selected.id] : null;
-  const buildingPos =
-    selectedGlbPos
-      ? { x: selectedGlbPos.x, z: selectedGlbPos.z, source: "glb" as const }
-      : selected && selected.x != null && selected.z != null
-      ? { x: Number(selected.x), z: Number(selected.z), source: "database" as const }
-      : null;
+  const resolveModelPos = (building: Building) => {
+    const glbPos = glbPositions[building.id];
+    if (glbPos) return { x: glbPos.x, z: glbPos.z, source: "glb" as const };
+    if (building.x != null && building.z != null) {
+      return { x: Number(building.x), z: Number(building.z), source: "database" as const };
+    }
+    return null;
+  };
+  const buildingPos = selected ? resolveModelPos(selected) : null;
 
   // Error entre posición calculada y posición real del edificio
   const errorM =
@@ -193,6 +254,52 @@ export function CampusCalibrationPanel({ buildings, onClose }: Props) {
       setPointStatus("error");
       setSyncMessage("Punto guardado localmente; no se pudo guardar en la API");
     }
+  };
+
+  const handleImportOsmPoints = async () => {
+    const matched = OSM_REFERENCE_POINTS.flatMap(({ code, latitude, longitude }) => {
+      const building = buildings.find((b) => b.code === code);
+      const pos = building ? resolveModelPos(building) : null;
+      if (!building || !pos) return [];
+      const point: ReferencePoint = {
+        buildingId: building.id,
+        buildingName: building.name,
+        buildingCode: building.code ?? "",
+        modelX: pos.x,
+        modelZ: pos.z,
+        latitude,
+        longitude,
+        accuracy: 5,
+      };
+      return [point];
+    });
+
+    if (matched.length === 0) {
+      setPointStatus("error");
+      setSyncMessage("No se encontraron en la BD los edificios de OpenStreetMap (BIB/B/C/F)");
+      return;
+    }
+
+    const matchedIds = new Set(matched.map((p) => p.buildingId));
+    const next = [...refPoints.filter((p) => !matchedIds.has(p.buildingId)), ...matched];
+    setRefPoints(next);
+    saveReferencePoints(next);
+    setFitResult(null);
+    setSyncMessage(`${matched.length} puntos de OpenStreetMap importados. Camina 1-2 puntos más lejos de esta zona para repartir la cobertura.`);
+
+    await Promise.allSettled(
+      matched.map((point) =>
+        createCalibrationPointApi({
+          building_id: point.buildingId,
+          label: `${point.buildingName} (OSM)`,
+          latitude: point.latitude,
+          longitude: point.longitude,
+          accuracy_meters: point.accuracy,
+          model_x: point.modelX,
+          model_z: point.modelZ,
+        })
+      )
+    );
   };
 
   const handleRemoveRefPoint = (buildingId: string) => {
@@ -298,6 +405,7 @@ export function CampusCalibrationPanel({ buildings, onClose }: Props) {
       }
       setPublishStatus("saved");
       setSyncMessage("Perfil publicado y aplicado como calibracion activa");
+      refreshActiveProfile();
     } catch {
       setPublishStatus("error");
       setSyncMessage("No se pudo publicar el perfil en la API");
@@ -314,15 +422,87 @@ export function CampusCalibrationPanel({ buildings, onClose }: Props) {
     });
   };
 
+  // ── Paso 2: poblar GPS de edificios ─────────────────────────────────────
+
+  const withGpsCount = buildings.filter(
+    (b) => b.latitude != null && b.longitude != null
+  ).length;
+
+  const canAutoCalc = buildings.some(
+    (b) => b.x != null && b.z != null && (b.latitude == null || b.longitude == null)
+  );
+
+  const handleSaveBuildingGps = async () => {
+    if (!selectedId || !geoPosition) return;
+    setBuildingGpsStatus("saving");
+    try {
+      await updateBuildingApi(selectedId, {
+        latitude: geoPosition.latitude,
+        longitude: geoPosition.longitude,
+      });
+      setBuildingGpsStatus("saved");
+      onBuildingUpdated();
+      setTimeout(() => setBuildingGpsStatus("idle"), 2500);
+    } catch {
+      setBuildingGpsStatus("error");
+    }
+  };
+
+  const handleAutoCalculateGps = async () => {
+    const toProcess = buildings.filter(
+      (b) => b.x != null && b.z != null && (b.latitude == null || b.longitude == null)
+    );
+    if (toProcess.length === 0) return;
+
+    setAutoGpsStatus({ state: "running", done: 0, total: toProcess.length, errors: 0 });
+
+    let done = 0;
+    let errors = 0;
+
+    for (let i = 0; i < toProcess.length; i += 5) {
+      const batch = toProcess.slice(i, i + 5);
+      await Promise.allSettled(
+        batch.map(async (building) => {
+          try {
+            const gps = xzToGps(Number(building.x), Number(building.z));
+            await updateBuildingApi(building.id, gps);
+            done++;
+          } catch {
+            errors++;
+          }
+        })
+      );
+      setAutoGpsStatus({ state: "running", done: done + errors, total: toProcess.length, errors });
+    }
+
+    setAutoGpsStatus({ state: "done", done, total: toProcess.length, errors });
+    onBuildingUpdated();
+  };
+
+  // ── Paso 3: geocercas ────────────────────────────────────────────────────
+
+  const handleGenerateGeofences = async () => {
+    setGeoStatus("saving");
+    try {
+      const result = await generateDefaultGeofencesApi();
+      setGeoResult(result);
+      setGeoStatus("saved");
+    } catch {
+      setGeoStatus("error");
+    }
+  };
+
   const sortedBuildings = [...buildings]
     .filter((b) => b.is_active && b.x != null && b.z != null)
     .sort((a, b) => a.name.localeCompare(b.name));
+
+  const goodActiveProfile = isGoodProfile(activeProfile);
 
   return (
     <div className="ito-setgps-panel ito-calibration-panel">
       <div className="ito-setgps-panel__header">
         <Icon name="compass" size={14} />
-        <span>Calibración GPS</span>
+        <span>Calibración y GPS del campus</span>
         <button
           type="button"
           className="ito-setgps-panel__close"
@@ -351,7 +531,6 @@ export function CampusCalibrationPanel({ buildings, onClose }: Props) {
           )}
         </div>
 
-        {/* Posición en el mapa */}
         {calPos && (
           <div
             style={{
@@ -367,7 +546,7 @@ export function CampusCalibrationPanel({ buildings, onClose }: Props) {
 
         <div className="ito-setgps-panel__divider" />
 
-        {/* Paso 1: seleccionar edificio */}
+        {/* Selector de edificio, compartido por los 3 pasos */}
         <label className="ito-setgps-panel__label" htmlFor="calib-building">
           ¿En qué edificio estás parado ahora?
         </label>
@@ -378,6 +557,7 @@ export function CampusCalibrationPanel({ buildings, onClose }: Props) {
           onChange={(e) => {
             setSelectedId(e.target.value);
             setSaved(false);
+            setBuildingGpsStatus("idle");
           }}
         >
           <option value="">Selecciona el edificio…</option>
@@ -389,7 +569,6 @@ export function CampusCalibrationPanel({ buildings, onClose }: Props) {
           ))}
         </select>
 
-        {/* Decir dónde estoy: mueve el punto azul directo al edificio, sin GPS */}
         <button
           type="button"
           className="ito-setgps-panel__save"
@@ -412,7 +591,6 @@ export function CampusCalibrationPanel({ buildings, onClose }: Props) {
           </div>
         )}
 
-        {/* Error actual */}
         {buildingPos && calPos && errorM !== null && (
           <div
             style={{
@@ -433,11 +611,17 @@ export function CampusCalibrationPanel({ buildings, onClose }: Props) {
           </div>
         )}
 
-        {/* Botón calibrar */}
+        <div className="ito-setgps-panel__divider" />
+
+        {/* ══════════════════ PASO 1: CALIBRAR LA FÓRMULA ══════════════════ */}
+        <p className="ito-setgps-panel__label" style={{ fontWeight: 800 }}>
+          Paso 1 — Calibrar la fórmula GPS↔modelo
+        </p>
+
         <button
           type="button"
           className={`ito-setgps-panel__save${saved ? " is-saved" : ""}`}
-          style={{ marginTop: 10 }}
+          style={{ marginTop: 8 }}
           onClick={handleCalibrate}
           disabled={!selectedId || !geoPosition || !buildingPos || !hasGoodGps || saved}
         >
@@ -447,20 +631,19 @@ export function CampusCalibrationPanel({ buildings, onClose }: Props) {
             </>
           ) : (
             <>
-              <Icon name="crosshair" size={14} /> Calibrar desde este punto
+              <Icon name="crosshair" size={14} /> Corrección rápida (1 punto)
             </>
           )}
         </button>
 
-        {/* Estado de calibración activa */}
         {hasActiveCalib && (
           <>
-            <div className="ito-setgps-panel__divider" />
             <div
               style={{
                 fontSize: 12,
                 color: "var(--color-text-2, #6b7280)",
                 fontFamily: "monospace",
+                marginTop: 6,
               }}
             >
               Corrección activa: dx={offset.dx > 0 ? "+" : ""}{fmt(offset.dx)}&nbsp;&nbsp;
@@ -472,30 +655,28 @@ export function CampusCalibrationPanel({ buildings, onClose }: Props) {
               style={{ marginTop: 6, background: "var(--color-surface-2, #f3f4f6)", color: "var(--color-text, #111)" }}
               onClick={handleReset}
             >
-              Restablecer calibración
+              Restablecer corrección
             </button>
           </>
         )}
 
-        <div className="ito-setgps-panel__divider" />
-        <p className="ito-setgps-panel__hint">
-          Párate en el centro del edificio, espera buena señal GPS (±15 m o mejor)
-          y presiona "Calibrar". Para mayor precisión repite en 2–3 edificios
-          alejados entre sí.
+        <p className="ito-setgps-panel__hint" style={{ marginTop: 8 }}>
+          Recalibración completa (recomendada): importa los puntos gratis de
+          OpenStreetMap y camina solo 1-2 edificios alejados de esa zona
+          (ej. Centro de Cómputo, gimnasio) para repartir la cobertura por
+          todo el campus. Con 3 o más puntos podrás calcular y publicar la
+          fórmula completa.
         </p>
 
-        <div className="ito-setgps-panel__divider" />
-
-        {/* Recalibración completa: recalcula la fórmula desde cero con varios puntos */}
-        <p className="ito-setgps-panel__label">
-          Recalibración completa (multi-punto)
-        </p>
-        <p className="ito-setgps-panel__hint" style={{ marginTop: 0 }}>
-          Camina a 5-8 edificios repartidos por todo el campus. En cada uno,
-          selecciona el edificio arriba, espera buena señal y presiona
-          "Agregar punto". Con 3 o más puntos podrás recalcular la fórmula
-          completa (más precisa que la corrección de un solo punto).
-        </p>
+        <button
+          type="button"
+          className="ito-setgps-panel__save"
+          style={{ marginTop: 0, marginBottom: 8, background: "var(--color-surface-2, #f3f4f6)", color: "var(--color-text, #111)" }}
+          onClick={handleImportOsmPoints}
+        >
+          <Icon name="map-pin" size={14} />{" "}
+          Importar 4 puntos de OpenStreetMap (sin caminar)
+        </button>
 
         <button
           type="button"
@@ -631,12 +812,155 @@ const C_Z = ${fitResult.fit.C_Z.toFixed(9)};`}
                 <><Icon name="compass" size={14} /> Publicar perfil activo</>
               )}
             </button>
-            <p className="ito-setgps-panel__hint" style={{ marginTop: 6 }}>
-              Envía estas constantes para reemplazar las de{" "}
-              <code>campus-transform.ts</code> — así la corrección queda fija
-              en el código para todos los dispositivos, sin depender de la
-              calibración por navegador.
+          </div>
+        )}
+
+        <div className="ito-setgps-panel__divider" />
+
+        {/* ══════════════════ PASO 2: POBLAR GPS DE EDIFICIOS ══════════════════ */}
+        <p className="ito-setgps-panel__label" style={{ fontWeight: 800 }}>
+          Paso 2 — Poblar GPS de edificios
+        </p>
+
+        {!profileLoaded ? (
+          <p className="ito-setgps-panel__hint" style={{ marginTop: 0 }}>
+            Verificando calibración activa…
+          </p>
+        ) : !goodActiveProfile ? (
+          <p className="ito-setgps-panel__hint" style={{ marginTop: 0 }}>
+            🔒 Bloqueado: publica un perfil de calibración con buen residual en
+            el Paso 1 antes de poblar el GPS de los edificios — si lo haces con
+            una fórmula mala, grabas la posición equivocada en los 65 edificios
+            de un solo golpe.
+          </p>
+        ) : (
+          <>
+            <div className="ito-setgps-panel__coverage">
+              <span className="ito-setgps-panel__coverage-num">
+                {withGpsCount}/{buildings.length}
+              </span>
+              <span>edificios con GPS registrado</span>
+            </div>
+
+            {(canAutoCalc || autoGpsStatus.state !== "idle") && (
+              <div className="ito-setgps-panel__auto">
+                {autoGpsStatus.state === "idle" && (
+                  <>
+                    <p className="ito-setgps-panel__hint" style={{ marginBottom: 0 }}>
+                      Calcula el GPS de todos los edificios automáticamente a
+                      partir de la fórmula ya calibrada. Preciso para
+                      detección por edificio (~5–20 m).
+                    </p>
+                    <button
+                      type="button"
+                      className="ito-setgps-panel__auto-btn"
+                      onClick={handleAutoCalculateGps}
+                    >
+                      <Icon name="locate" size={13} />
+                      <span>
+                        Calcular GPS de{" "}
+                        {
+                          buildings.filter(
+                            (b) => b.x != null && b.z != null && (b.latitude == null || b.longitude == null)
+                          ).length
+                        }{" "}
+                        edificios automáticamente
+                      </span>
+                    </button>
+                  </>
+                )}
+
+                {autoGpsStatus.state === "running" && (
+                  <div className="ito-setgps-panel__auto-progress">
+                    <div className="ito-setgps-panel__auto-bar">
+                      <div
+                        className="ito-setgps-panel__auto-fill"
+                        style={{
+                          width: `${Math.round((autoGpsStatus.done / autoGpsStatus.total) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                    <span>
+                      Calculando… {autoGpsStatus.done}/{autoGpsStatus.total}
+                      {autoGpsStatus.errors > 0 && ` (${autoGpsStatus.errors} errores)`}
+                    </span>
+                  </div>
+                )}
+
+                {autoGpsStatus.state === "done" && (
+                  <div
+                    className={`ito-setgps-panel__auto-result ${autoGpsStatus.errors > 0 ? "has-errors" : "is-ok"}`}
+                  >
+                    <Icon name="check" size={13} />
+                    <span>
+                      {autoGpsStatus.done} edificios actualizados
+                      {autoGpsStatus.errors > 0 && `, ${autoGpsStatus.errors} fallaron`}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <p className="ito-setgps-panel__hint" style={{ marginTop: 8 }}>
+              O corrige un edificio a mano: selecciónalo arriba, párate dentro
+              y guarda tu posición actual.
             </p>
+            <button
+              type="button"
+              className={`ito-setgps-panel__save${buildingGpsStatus === "saved" ? " is-saved" : ""}`}
+              onClick={handleSaveBuildingGps}
+              disabled={!selectedId || !geoPosition || buildingGpsStatus === "saving"}
+            >
+              {buildingGpsStatus === "saving" ? (
+                "Guardando…"
+              ) : buildingGpsStatus === "saved" ? (
+                <><Icon name="check" size={14} /> GPS guardado</>
+              ) : (
+                <><Icon name="map-pin" size={14} /> Guardar mi GPS en este edificio</>
+              )}
+            </button>
+            {buildingGpsStatus === "error" && (
+              <div className="ito-setgps-panel__error">
+                No se pudo guardar. Verifica la conexión con la API.
+              </div>
+            )}
+          </>
+        )}
+
+        <div className="ito-setgps-panel__divider" />
+
+        {/* ══════════════════ PASO 3: GEOCERCAS ══════════════════ */}
+        <p className="ito-setgps-panel__label" style={{ fontWeight: 800 }}>
+          Paso 3 — Generar geocercas automáticas
+        </p>
+        <p className="ito-setgps-panel__hint" style={{ marginTop: 0 }}>
+          Crea un cuadro de ~20 m alrededor del GPS de cada edificio que
+          todavía no tenga geocerca (requiere que el edificio ya tenga GPS del
+          Paso 2). Sirve como primera capa de detección "estoy dentro de".
+        </p>
+        <button
+          type="button"
+          className={`ito-setgps-panel__save${geoStatus === "saved" ? " is-saved" : ""}`}
+          onClick={handleGenerateGeofences}
+          disabled={withGpsCount === 0 || geoStatus === "saving"}
+        >
+          {geoStatus === "saving" ? (
+            "Generando…"
+          ) : (
+            <><Icon name="layers" size={14} /> Generar geocercas para edificios sin una</>
+          )}
+        </button>
+        {geoStatus === "error" && (
+          <div className="ito-setgps-panel__error">No se pudieron generar las geocercas.</div>
+        )}
+        {geoResult && geoStatus === "saved" && (
+          <div className="ito-setgps-panel__auto-result is-ok" style={{ marginTop: 6 }}>
+            <Icon name="check" size={13} />
+            <span>
+              {geoResult.created} geocercas creadas
+              {geoResult.skippedExisting > 0 && `, ${geoResult.skippedExisting} ya existían`}
+              {geoResult.skippedNoGps > 0 && `, ${geoResult.skippedNoGps} sin GPS aún`}
+            </span>
           </div>
         )}
       </div>

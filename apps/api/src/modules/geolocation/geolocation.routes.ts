@@ -8,6 +8,7 @@ import {
   createCalibrationPoint,
   createCalibrationProfile,
   createGeofence,
+  generateDefaultGeofences,
   getActiveCalibrationProfile,
   getCalibrationPoints,
   getGeofences,
@@ -68,6 +69,13 @@ router.post(
   authorizePermission("can_edit_buildings"),
   validateBody(createBuildingGeofenceSchema),
   asyncHandler(createGeofence)
+);
+
+router.post(
+  "/geofences/generate-defaults",
+  authenticate,
+  authorizePermission("can_edit_buildings"),
+  asyncHandler(generateDefaultGeofences)
 );
 
 export default router;

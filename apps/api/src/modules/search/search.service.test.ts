@@ -73,10 +73,10 @@ describe("SearchService", () => {
         "procedure",
         "service",
       ]);
-      expect(repository.searchBuildings).toHaveBeenCalledWith("%dir%");
-      expect(repository.searchClassrooms).toHaveBeenCalledWith("%dir%");
-      expect(repository.searchProcedures).toHaveBeenCalledWith("%dir%", "tramite");
-      expect(repository.searchProcedures).toHaveBeenCalledWith("%dir%", "servicio");
+      expect(repository.searchBuildings).toHaveBeenCalledWith(["dir"]);
+      expect(repository.searchClassrooms).toHaveBeenCalledWith(["dir"]);
+      expect(repository.searchProcedures).toHaveBeenCalledWith(["dir"], "tramite");
+      expect(repository.searchProcedures).toHaveBeenCalledWith(["dir"], "servicio");
     });
 
     it("returns empty array when all queries return nothing", async () => {
@@ -89,7 +89,7 @@ describe("SearchService", () => {
       expect(results).toHaveLength(0);
     });
 
-    it("wraps search term with % wildcards", async () => {
+    it("passes a single-element word array for a one-word term", async () => {
       const { service, repository } = createService();
       repository.searchBuildings.mockResolvedValue([]);
       repository.searchClassrooms.mockResolvedValue([]);
@@ -97,7 +97,7 @@ describe("SearchService", () => {
 
       await service.search("constancia", "all");
 
-      expect(repository.searchBuildings).toHaveBeenCalledWith("%constancia%");
+      expect(repository.searchBuildings).toHaveBeenCalledWith(["constancia"]);
     });
   });
 
@@ -111,7 +111,7 @@ describe("SearchService", () => {
       const results = await service.search("dir", "building");
 
       expect(results).toEqual([mockBuilding]);
-      expect(repository.searchBuildings).toHaveBeenCalledWith("%dir%");
+      expect(repository.searchBuildings).toHaveBeenCalledWith(["dir"]);
       expect(repository.searchClassrooms).not.toHaveBeenCalled();
       expect(repository.searchProcedures).not.toHaveBeenCalled();
     });
@@ -127,7 +127,7 @@ describe("SearchService", () => {
       const results = await service.search("101", "classroom");
 
       expect(results).toEqual([mockClassroom]);
-      expect(repository.searchClassrooms).toHaveBeenCalledWith("%101%");
+      expect(repository.searchClassrooms).toHaveBeenCalledWith(["101"]);
       expect(repository.searchBuildings).not.toHaveBeenCalled();
       expect(repository.searchProcedures).not.toHaveBeenCalled();
     });
@@ -144,7 +144,7 @@ describe("SearchService", () => {
 
       expect(results).toEqual([mockProcedure]);
       expect(repository.searchProcedures).toHaveBeenCalledWith(
-        "%constancia%",
+        ["constancia"],
         "tramite"
       );
       expect(repository.searchBuildings).not.toHaveBeenCalled();
@@ -163,7 +163,7 @@ describe("SearchService", () => {
 
       expect(results).toEqual([mockService]);
       expect(repository.searchProcedures).toHaveBeenCalledWith(
-        "%asesoría%",
+        ["asesoría"],
         "servicio"
       );
       expect(repository.searchBuildings).not.toHaveBeenCalled();
@@ -185,7 +185,7 @@ describe("SearchService", () => {
       expect(results[0].kind).toBe("building");
     });
 
-    it("search term is percent-escaped correctly for multi-word term", async () => {
+    it("splits a multi-word term into one array element per word, in order", async () => {
       const { service, repository } = createService();
       repository.searchBuildings.mockResolvedValue([]);
       repository.searchClassrooms.mockResolvedValue([]);
@@ -193,7 +193,24 @@ describe("SearchService", () => {
 
       await service.search("control escolar", "all");
 
-      expect(repository.searchBuildings).toHaveBeenCalledWith("%control escolar%");
+      expect(repository.searchBuildings).toHaveBeenCalledWith([
+        "control",
+        "escolar",
+      ]);
+    });
+
+    it("collapses repeated whitespace between words", async () => {
+      const { service, repository } = createService();
+      repository.searchBuildings.mockResolvedValue([]);
+      repository.searchClassrooms.mockResolvedValue([]);
+      repository.searchProcedures.mockResolvedValue([]);
+
+      await service.search("  control   escolar  ", "all");
+
+      expect(repository.searchBuildings).toHaveBeenCalledWith([
+        "control",
+        "escolar",
+      ]);
     });
   });
 });

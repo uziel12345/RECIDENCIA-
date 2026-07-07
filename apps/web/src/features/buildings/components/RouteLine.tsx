@@ -433,21 +433,21 @@ export function RouteLine() {
     if (!isReady) {
       setCurrentRouteNodeIds([]);
       setRouteStats(null);
-      setRouteError("Preparando el grafo de navegacion del campus.");
+      setRouteError("Preparando el grafo de navegación del campus.");
       return;
     }
 
     if (permission !== "granted") {
       setCurrentRouteNodeIds([]);
       setRouteStats(null);
-      setRouteError("Activa el permiso de ubicacion para trazar la ruta.");
+      setRouteError("Activa el permiso de ubicación para trazar la ruta.");
       return;
     }
 
     if (!mapPosition) {
       setCurrentRouteNodeIds([]);
       setRouteStats(null);
-      setRouteError("Esperando tu ubicacion actual para trazar la ruta.");
+      setRouteError("Esperando tu ubicación actual para trazar la ruta.");
       return;
     }
 

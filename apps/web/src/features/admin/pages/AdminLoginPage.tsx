@@ -45,13 +45,13 @@ export function AdminLoginPage() {
         <div className="mb-5">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(ROUTES.WELCOME, { replace: true })}
             className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[13px] font-semibold text-[#94a3b8] transition-colors duration-[180ms] hover:bg-[#0f172a] hover:text-[#cbd5e1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.45)]"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
               <polyline points="15 18 9 12 15 6" />
             </svg>
-            Volver
+            Ir al inicio
           </button>
         </div>
 

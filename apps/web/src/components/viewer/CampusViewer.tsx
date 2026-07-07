@@ -1,6 +1,6 @@
 import { Suspense, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Html, OrbitControls, useGLTF, useProgress } from "@react-three/drei";
+import { Html, OrbitControls, useProgress } from "@react-three/drei";
 import { Box3, Vector3, type Object3D } from "three";
 import type { Building } from "../../features/buildings/types/building";
 import { useLocationStore } from "../../store/location-store";
@@ -21,7 +21,6 @@ import {
   getBuildingGeofencesApi,
   type BuildingGeofence,
 } from "@ito-map/shared";
-import { SetBuildingGpsPanel } from "./SetBuildingGpsPanel";
 import { CampusCalibrationPanel } from "./CampusCalibrationPanel";
 import { RouteLine } from "../../features/buildings/components/RouteLine";
 import { getCategoryAccent } from "../ui/categoryAccent";
@@ -32,10 +31,11 @@ import {
 import { NavigationEditorModal } from "./NavigationEditorModal";
 import { NavigationDebugLayer } from "./NavigationDebugLayer";
 import { DestinationBuildingHighlight } from "./DestinationBuildingHighlight";
-import { resolveGlbName } from "./glb-utils";
+import { resolveGlbName, toRuntimeGlbName } from "./glb-utils";
 import { useBuildingGlbStore } from "../../store/building-glb-store";
 import { CameraAnimator, type CameraAnim } from "./CameraAnimator";
-import { CampusModel, MODEL_PATH } from "./CampusModel";
+import { CampusModel } from "./CampusModel";
+import { useCampusGltf } from "./useCampusGltf";
 import { CategoryLegend } from "./CategoryLegend";
 import { UserLocationMarker } from "./UserLocationMarker";
 import { ViewerLoading } from "./ViewerLoading";
@@ -48,9 +48,15 @@ export type ViewMode = "immersive" | "aerial";
 
 // Modo inmersivo (por defecto): cerca del suelo, "dentro" del mapa, para
 // distinguir fachadas mientras se navega. Ángulo de picado pronunciado
-// (Y alto vs. Z) para que el cielo vacío no domine el encuadre.
-const DESKTOP_IMMERSIVE_CAMERA_POSITION = new Vector3(0, 150, 230);
-const MOBILE_IMMERSIVE_CAMERA_POSITION = new Vector3(0, 190, 270);
+// (Y alto vs. Z) para que el cielo vacío no domine el encuadre. Posición y
+// objetivo capturados con el botón de dev "Copiar cámara" apuntando a
+// Dirección, en vez de mirar al origen del mundo (0,0,0). El mismo punto de
+// interés se usa en móvil; la posición de cámara móvil escala la distancia
+// desktop→objetivo por el mismo factor que ya se usaba entre ambos modos
+// (~1.22x) — estimado, no capturado en un teléfono real.
+const DESKTOP_IMMERSIVE_CAMERA_POSITION = new Vector3(-30.1, 15.0, 110.0);
+const IMMERSIVE_TARGET = new Vector3(10.3, 8.0, 70.1);
+const MOBILE_IMMERSIVE_CAMERA_POSITION = new Vector3(-39.0, 16.5, 118.8);
 // Modo aéreo: encuadra todo el campus desde arriba, para orientarse antes
 // de acercarse a una zona. Más cerca que la vista aérea original para no
 // verse tan alejado.
@@ -63,10 +69,13 @@ const CAMERA_TARGET = new Vector3(0, 0, 0);
 // mundo se ve proporcionalmente más pequeño en pantalla — se escala para
 // que el campus quede igual de centrado en ambos modos.
 const AERIAL_XOFFSET_SCALE = 1.55;
-const BUILDING_FOCUS_DESKTOP_DISTANCE = 185;
-const BUILDING_FOCUS_MOBILE_DISTANCE = 245;
-const BUILDING_FOCUS_DESKTOP_HEIGHT = 125;
-const BUILDING_FOCUS_MOBILE_HEIGHT = 155;
+// Distancia/altura al enfocar un edificio seleccionado: debe quedar MÁS
+// cerca que la vista inmersiva por defecto (~57u desktop / ~69u móvil) para
+// que seleccionar un edificio se sienta como un acercamiento, no un alejamiento.
+const BUILDING_FOCUS_DESKTOP_DISTANCE = 42;
+const BUILDING_FOCUS_MOBILE_DISTANCE = 55;
+const BUILDING_FOCUS_DESKTOP_HEIGHT = 28;
+const BUILDING_FOCUS_MOBILE_HEIGHT = 36;
 const BUILDING_FOCUS_LOOK_HEIGHT = 8;
 
 function getModeCameraPosition(mode: ViewMode, isMobile: boolean): Vector3 {
@@ -78,6 +87,13 @@ function getModeCameraPosition(mode: ViewMode, isMobile: boolean): Vector3 {
   return mode === "aerial"
     ? DESKTOP_AERIAL_CAMERA_POSITION
     : DESKTOP_IMMERSIVE_CAMERA_POSITION;
+}
+
+// Punto al que mira la cámara por defecto en cada modo. El modo inmersivo
+// (móvil y escritorio) mira a un punto fijo del campus (Dirección); el modo
+// aéreo sigue mirando al origen del mundo (0,0,0), como antes.
+function getModeCameraTarget(mode: ViewMode): Vector3 {
+  return mode === "immersive" ? IMMERSIVE_TARGET : CAMERA_TARGET;
 }
 
 function getModeXOffset(
@@ -299,7 +315,7 @@ function CampusBoundsSync({
   mapXOffset?: number;
   viewMode: ViewMode;
 }) {
-  const { scene } = useGLTF(MODEL_PATH);
+  const { scene } = useCampusGltf();
   const { camera, invalidate } = useThree();
 
   useEffect(() => {
@@ -308,14 +324,11 @@ function CampusBoundsSync({
     // Pose inicial según el modo de vista activo: inmersiva (cerca del
     // suelo, "dentro" del mapa) o aérea (encuadra todo el campus).
     const pose = getModeCameraPosition(viewMode, isMobile);
+    const target = getModeCameraTarget(viewMode);
     const xOff = getModeXOffset(viewMode, isMobile, mapXOffset);
-    if (isMobile) {
-      camera.position.set(0, pose.y, pose.z);
-    } else {
-      camera.position.set(xOff, pose.y, pose.z);
-      if (controlsRef.current) {
-        controlsRef.current.target.set(xOff, 0, 0);
-      }
+    camera.position.set(pose.x + xOff, pose.y, pose.z);
+    if (controlsRef.current) {
+      controlsRef.current.target.set(target.x + xOff, target.y, target.z);
     }
     controlsRef.current?.update();
     invalidate();
@@ -417,7 +430,6 @@ type BuildingLabelEntry = {
   name: string;
   alias: string;
   accentColor: string;
-  isPriority: boolean;
   x: number;
   y: number;
   z: number;
@@ -425,11 +437,6 @@ type BuildingLabelEntry = {
 
 function getBuildingAlias(building: Building): string {
   return building.code.trim() || building.name;
-}
-
-function toRuntimeGlbName(name: string): string {
-  // Colapsa múltiples espacios/saltos de línea en un solo underscore y elimina puntos
-  return name.trim().replace(/\s+/g, "_").replace(/\./g, "");
 }
 
 // Cache de nombres de nodos de la escena, construido una vez por escena.
@@ -489,7 +496,7 @@ const BuildingLabels = memo(function BuildingLabels({
   const selectedBuilding = useBuildingStore((s) => s.selectedBuilding);
   const setSelectedBuilding = useBuildingStore((s) => s.setSelectedBuilding);
   const setGlbPositions = useBuildingGlbStore((s) => s.setPositions);
-  const { scene } = useGLTF(MODEL_PATH);
+  const { scene } = useCampusGltf();
 
   // LOD por distancia: desactivar interacción y bajar opacidad cuando la cámara está lejos.
   // useThree y useFrame son seguros aquí porque BuildingLabels siempre renderiza dentro del Canvas.
@@ -555,7 +562,6 @@ const BuildingLabels = memo(function BuildingLabels({
         name: building.name,
         alias: getBuildingAlias(building),
         accentColor: building.category_color || accent.fg,
-        isPriority: building.is_priority,
         x: local.x,
         y: local.y + 4,
         z: local.z,
@@ -589,7 +595,6 @@ const BuildingLabels = memo(function BuildingLabels({
     <>
       {labels.map((label) => {
         const isSelected = selectedBuilding?.id === label.buildingId;
-        if (isMobile && !isSelected && !label.isPriority) return null;
         // Código del edificio: cortar si es muy largo para que nunca rompa en la pill
         const displayCode = label.alias.length > 16
           ? label.alias.slice(0, 15) + "…"
@@ -738,7 +743,6 @@ export function CampusViewer({
   const [navigationDebugMode, setNavigationDebugMode] =
     useState<NavigationDebugMode>("hidden");
   const [draftEditorActive, setDraftEditorActive] = useState(false);
-  const [gpsRecorderOpen, setGpsRecorderOpen] = useState(false);
   const [calibrationOpen, setCalibrationOpen] = useState(false);
   const draftEditor = useDraftEditor();
 
@@ -751,7 +755,22 @@ export function CampusViewer({
 
   useEffect(() => {
     startUserLocationTracking();
-    return () => stopUserLocationTracking();
+
+    // Android puede matar la entrega de ubicación en segundo plano aunque el
+    // permiso siga "concedido" (solo se otorgó "mientras la app está en
+    // uso") — sin esto, el punto azul queda congelado para siempre después
+    // de minimizar la app y volver a abrirla. Forzamos parar+arrancar de
+    // nuevo cada vez que la pestaña/app vuelve a estar visible.
+    function handleVisibilityChange() {
+      if (document.visibilityState !== "visible") return;
+      stopUserLocationTracking().then(() => startUserLocationTracking());
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      void stopUserLocationTracking();
+    };
   }, []);
 
   useEffect(() => {
@@ -783,14 +802,10 @@ export function CampusViewer({
     if (!controlsRef.current) return;
     const controls = controlsRef.current;
     const pose = getModeCameraPosition(viewMode, isMobile);
-    if (isMobile) {
-      controls.target.copy(CAMERA_TARGET);
-      controls.object.position.copy(pose);
-    } else {
-      const xOff = getModeXOffset(viewMode, isMobile, initialXOffsetRef.current);
-      controls.target.set(xOff, 0, 0);
-      controls.object.position.set(xOff, pose.y, pose.z);
-    }
+    const target = getModeCameraTarget(viewMode);
+    const xOff = getModeXOffset(viewMode, isMobile, initialXOffsetRef.current);
+    controls.target.set(target.x + xOff, target.y, target.z);
+    controls.object.position.set(pose.x + xOff, pose.y, pose.z);
     controls.update();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMobile]);
@@ -892,11 +907,12 @@ export function CampusViewer({
   const handleResetView = () => {
     const xOff = getModeXOffset(viewMode, isMobile, mapXOffset);
     const pose = getModeCameraPosition(viewMode, isMobile);
+    const target = getModeCameraTarget(viewMode);
     lastSelectedFocusRef.current = null;
     setFocus(null);
     cameraAnimRef.current = {
-      pos: isMobile ? pose.clone() : new Vector3(xOff, pose.y, pose.z),
-      look: new Vector3(xOff, 0, 0),
+      pos: new Vector3(pose.x + xOff, pose.y, pose.z),
+      look: new Vector3(target.x + xOff, target.y, target.z),
     };
   };
 
@@ -904,12 +920,13 @@ export function CampusViewer({
     const nextMode: ViewMode = viewMode === "immersive" ? "aerial" : "immersive";
     const xOff = getModeXOffset(nextMode, isMobile, mapXOffset);
     const pose = getModeCameraPosition(nextMode, isMobile);
+    const target = getModeCameraTarget(nextMode);
     lastSelectedFocusRef.current = null;
     setFocus(null);
     setViewMode(nextMode);
     cameraAnimRef.current = {
-      pos: isMobile ? pose.clone() : new Vector3(xOff, pose.y, pose.z),
-      look: new Vector3(xOff, 0, 0),
+      pos: new Vector3(pose.x + xOff, pose.y, pose.z),
+      look: new Vector3(target.x + xOff, target.y, target.z),
     };
   };
 
@@ -970,12 +987,45 @@ export function CampusViewer({
     >
       <LocationSync buildings={buildings} />
 
+      {import.meta.env.DEV && (
+        <button
+          type="button"
+          onClick={() => {
+            const controls = controlsRef.current;
+            if (!controls) return;
+            const pos = controls.object.position;
+            const target = controls.target;
+            const text =
+              `position: new Vector3(${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)})\n` +
+              `target: new Vector3(${target.x.toFixed(1)}, ${target.y.toFixed(1)}, ${target.z.toFixed(1)})`;
+            navigator.clipboard?.writeText(text).catch(() => {});
+            console.log(`[dev] pose de cámara copiada:\n${text}`);
+          }}
+          title="DEV: copiar posición y objetivo actuales de la cámara"
+          style={{
+            position: "absolute",
+            bottom: 12,
+            right: 12,
+            zIndex: 50,
+            padding: "8px 12px",
+            borderRadius: 8,
+            border: "1px solid #f97316",
+            background: "rgba(15,23,42,0.92)",
+            color: "#fdba74",
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: "pointer",
+          }}
+        >
+          📷 Copiar cámara
+        </button>
+      )}
+
       {!mobilePanelOpen && (
         <ViewerToolbar
           hasLocation={hasLocation}
           navigationDebugMode={navigationDebugMode}
           draftEditorActive={draftEditorActive}
-          gpsRecorderOpen={gpsRecorderOpen}
           calibrationOpen={calibrationOpen}
           onFocusUser={handleFocusUser}
           onResetView={handleResetView}
@@ -990,18 +1040,9 @@ export function CampusViewer({
             })
           }
           onToggleDraftEditor={() => setDraftEditorActive((current) => !current)}
-          onToggleGpsRecorder={() => setGpsRecorderOpen((current) => !current)}
           onToggleCalibration={() => setCalibrationOpen((current) => !current)}
           canUseAdvancedTools={canUseAdvancedTools}
           isMobile={isMobile}
-        />
-      )}
-
-      {canUseAdvancedTools && gpsRecorderOpen && (
-        <SetBuildingGpsPanel
-          buildings={buildings}
-          onClose={() => setGpsRecorderOpen(false)}
-          onBuildingUpdated={() => setBuildingsVersion((v) => v + 1)}
         />
       )}
 
@@ -1009,6 +1050,7 @@ export function CampusViewer({
         <CampusCalibrationPanel
           buildings={buildings}
           onClose={() => setCalibrationOpen(false)}
+          onBuildingUpdated={() => setBuildingsVersion((v) => v + 1)}
         />
       )}
 
@@ -1028,7 +1070,7 @@ export function CampusViewer({
 
       <Canvas
         frameloop="demand"
-        dpr={[1, isMobile ? 1.5 : 2]}
+        dpr={[1, isMobile ? 1.25 : 2]}
         gl={{ antialias: !isMobile, powerPreference: "high-performance", alpha: true }}
         camera={{
           position: isMobile
@@ -1076,7 +1118,7 @@ export function CampusViewer({
             rotation={[0, CAMPUS_ROTATION_Y, 0]}
             position={campusPosition}
           >
-            <CampusModel />
+            <CampusModel buildings={buildings} selectionDisabled={draftEditorActive} />
             <ModelLoadedSignal onLoaded={handleModelLoaded} />
             <BuildingLabels
               buildings={buildings}
@@ -1102,4 +1144,7 @@ export function CampusViewer({
   );
 }
 
-useGLTF.preload(MODEL_PATH);
+// La precarga (solo aplica a la variante web/WebP) vive en useCampusGltf.ts,
+// disparada al importar ese módulo — no puede hacerse aquí a nivel de
+// módulo para la variante nativa (KTX2) porque necesita un WebGLRenderer
+// real, que todavía no existe antes de montar el <Canvas>.

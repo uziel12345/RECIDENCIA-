@@ -9,6 +9,8 @@ import {
   type BuildingImage,
 } from "@ito-map/shared";
 import { resolveBuildingImageUrl } from "../../../utils/resolve-api-asset-url";
+import { useIsMobile } from "../../../hooks/useIsMobile";
+import { normalizeDisplayText } from "../../../utils/text";
 
 type ImageFormState = {
   file: File | null;
@@ -39,9 +41,7 @@ function parseNumber(value: string): number {
 }
 
 function safeText(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (value === null || value === undefined) return "";
-  return String(value);
+  return normalizeDisplayText(value);
 }
 
 type BuildingImagesModalProps = {
@@ -53,6 +53,7 @@ export function BuildingImagesModal({
   building,
   onClose,
 }: BuildingImagesModalProps) {
+  const isMobile = useIsMobile();
   const [images, setImages] = useState<BuildingImage[]>([]);
   const [form, setForm] = useState<ImageFormState>(initialImageFormState);
   const [loading, setLoading] = useState(false);
@@ -183,9 +184,9 @@ export function BuildingImagesModal({
   }
 
   return (
-    <div style={styles.modalOverlay}>
-      <section style={styles.modalCard}>
-        <header style={styles.modalHeader}>
+    <div style={{ ...styles.modalOverlay, ...(isMobile ? styles.modalOverlayMobile : {}) }}>
+      <section style={{ ...styles.modalCard, ...(isMobile ? styles.modalCardMobile : {}) }}>
+        <header style={{ ...styles.modalHeader, ...(isMobile ? styles.modalHeaderMobile : {}) }}>
           <div>
             <p style={styles.overline}>Galería de edificio</p>
             <h2 style={styles.modalTitle}>
@@ -199,7 +200,7 @@ export function BuildingImagesModal({
           <button
             type="button"
             onClick={onClose}
-            style={styles.cancelButton}
+            style={{ ...styles.cancelButton, ...(isMobile ? styles.cancelButtonMobile : {}) }}
           >
             Cerrar
           </button>
@@ -213,7 +214,7 @@ export function BuildingImagesModal({
 
         {message ? <div style={styles.successBox}>{message}</div> : null}
 
-        <form onSubmit={handleUpload} style={styles.imageForm}>
+        <form onSubmit={handleUpload} style={{ ...styles.imageForm, ...(isMobile ? styles.imageFormMobile : {}) }}>
           <label style={styles.label}>
             Imagen
             <input
@@ -230,7 +231,7 @@ export function BuildingImagesModal({
             />
           </label>
 
-          <div style={styles.grid}>
+          <div style={{ ...styles.grid, ...(isMobile ? styles.gridMobile : {}) }}>
             <label style={styles.label}>
               Título
               <input
@@ -302,19 +303,19 @@ export function BuildingImagesModal({
           <button
             type="submit"
             disabled={uploading}
-            style={styles.primaryButton}
+            style={{ ...styles.primaryButton, ...(isMobile ? styles.primaryButtonMobile : {}) }}
           >
             {uploading ? "Subiendo..." : "Subir imagen"}
           </button>
         </form>
 
-        <div style={styles.imageListHeader}>
+        <div style={{ ...styles.imageListHeader, ...(isMobile ? styles.imageListHeaderMobile : {}) }}>
           <h3 style={styles.sectionTitle}>Imágenes registradas</h3>
           <button
             type="button"
             onClick={loadImages}
             disabled={loading}
-            style={styles.secondaryButton}
+            style={{ ...styles.secondaryButton, ...(isMobile ? styles.secondaryButtonMobile : {}) }}
           >
             {loading ? "Cargando..." : "Recargar fotos"}
           </button>
@@ -327,7 +328,7 @@ export function BuildingImagesModal({
             No hay imágenes registradas para este edificio.
           </div>
         ) : (
-          <div style={styles.imageGrid}>
+          <div style={{ ...styles.imageGrid, ...(isMobile ? styles.imageGridMobile : {}) }}>
             {images.map((image) => {
               const isImageActive = Boolean(image.is_active);
               const imageSrc = resolveBuildingImageUrl(safeText(image.image_url)) ?? "";
@@ -337,10 +338,11 @@ export function BuildingImagesModal({
                   key={image.id}
                   style={
                     isImageActive
-                      ? styles.imageCard
+                      ? { ...styles.imageCard, ...(isMobile ? styles.imageCardMobile : {}) }
                       : {
                           ...styles.imageCard,
                           ...styles.inactiveImageCard,
+                          ...(isMobile ? styles.imageCardMobile : {}),
                         }
                   }
                 >
@@ -377,12 +379,12 @@ export function BuildingImagesModal({
                       ) : null}
                     </div>
 
-                    <div style={styles.actions}>
+                    <div style={{ ...styles.actions, ...(isMobile ? styles.actionsMobile : {}) }}>
                       <button
                         type="button"
                         onClick={() => handleToggleStatus(image)}
                         disabled={actionLoadingId === image.id}
-                        style={styles.smallButton}
+                        style={{ ...styles.smallButton, ...(isMobile ? styles.smallButtonMobile : {}) }}
                       >
                         {isImageActive ? "Desactivar" : "Activar"}
                       </button>
@@ -391,7 +393,7 @@ export function BuildingImagesModal({
                         type="button"
                         onClick={() => handleDelete(image)}
                         disabled={actionLoadingId === image.id}
-                        style={styles.dangerButton}
+                        style={{ ...styles.dangerButton, ...(isMobile ? styles.smallButtonMobile : {}) }}
                       >
                         Eliminar
                       </button>
@@ -418,6 +420,11 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "24px",
     zIndex: 1000,
   },
+  modalOverlayMobile: {
+    alignItems: "flex-end",
+    placeItems: "stretch",
+    padding: "8px",
+  },
   modalCard: {
     width: "min(1080px, 100%)",
     maxHeight: "90vh",
@@ -428,12 +435,22 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "24px",
     boxShadow: "0 24px 80px rgba(0, 0, 0, 0.6)",
   },
+  modalCardMobile: {
+    width: "100%",
+    maxHeight: "calc(100dvh - 16px)",
+    borderRadius: "22px 22px 12px 12px",
+    padding: "14px",
+  },
   modalHeader: {
     display: "flex",
     justifyContent: "space-between",
     gap: "18px",
     alignItems: "flex-start",
     marginBottom: "18px",
+  },
+  modalHeaderMobile: {
+    flexDirection: "column",
+    gap: "12px",
   },
   modalTitle: {
     margin: 0,
@@ -467,6 +484,11 @@ const styles: Record<string, React.CSSProperties> = {
     whiteSpace: "nowrap",
     fontSize: "13px",
   },
+  cancelButtonMobile: {
+    width: "100%",
+    minHeight: "44px",
+    color: "#e2e8f0",
+  },
   errorBox: {
     marginBottom: "16px",
     padding: "12px 15px",
@@ -493,6 +515,10 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "18px",
     marginBottom: "22px",
     background: "rgba(15,23,42,0.5)",
+  },
+  imageFormMobile: {
+    padding: "14px",
+    borderRadius: "14px",
   },
   label: {
     display: "flex",
@@ -533,6 +559,10 @@ const styles: Record<string, React.CSSProperties> = {
     gridTemplateColumns: "1fr 1fr",
     gap: "14px",
   },
+  gridMobile: {
+    gridTemplateColumns: "1fr",
+    gap: "10px",
+  },
   primaryButton: {
     width: "100%",
     border: "1px solid rgba(234,88,12,0.4)",
@@ -544,6 +574,10 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
     fontSize: "14px",
   },
+  primaryButtonMobile: {
+    minHeight: "48px",
+    fontSize: "15px",
+  },
   secondaryButton: {
     border: "1px solid #334155",
     borderRadius: "10px",
@@ -553,6 +587,10 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: "pointer",
     fontSize: "13px",
+  },
+  secondaryButtonMobile: {
+    width: "100%",
+    minHeight: "44px",
   },
   sectionTitle: {
     margin: "0 0 10px",
@@ -566,6 +604,10 @@ const styles: Record<string, React.CSSProperties> = {
     gap: "14px",
     alignItems: "center",
     marginBottom: "14px",
+  },
+  imageListHeaderMobile: {
+    flexDirection: "column",
+    alignItems: "stretch",
   },
   emptyImages: {
     border: "1px dashed #334155",
@@ -581,12 +623,19 @@ const styles: Record<string, React.CSSProperties> = {
     gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))",
     gap: "16px",
   },
+  imageGridMobile: {
+    gridTemplateColumns: "1fr",
+    gap: "12px",
+  },
   imageCard: {
     border: "1px solid #334155",
     borderRadius: "14px",
     overflow: "hidden",
     background: "#0f172a",
     boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+  },
+  imageCardMobile: {
+    borderRadius: "14px",
   },
   inactiveImageCard: {
     opacity: 0.55,
@@ -659,6 +708,10 @@ const styles: Record<string, React.CSSProperties> = {
     gap: "6px",
     flexWrap: "wrap",
   },
+  actionsMobile: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+  },
   smallButton: {
     border: "1px solid #334155",
     borderRadius: "8px",
@@ -668,6 +721,10 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: "pointer",
     fontSize: "12px",
+  },
+  smallButtonMobile: {
+    minHeight: "40px",
+    textAlign: "center",
   },
   dangerButton: {
     border: "1px solid rgba(239,68,68,0.3)",

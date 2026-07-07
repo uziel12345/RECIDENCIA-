@@ -73,3 +73,9 @@ export type CreateBuildingGeofenceInput = {
   polygon: GeofenceVertex[];
   priority?: number;
 };
+
+export type GenerateDefaultGeofencesResult = {
+  created: number;
+  skippedNoGps: number;
+  skippedExisting: number;
+};

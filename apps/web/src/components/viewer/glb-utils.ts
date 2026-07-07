@@ -255,3 +255,12 @@ export const DB_TO_GLB_NAME: Record<string, string> = {
 export function resolveGlbName(modelNodeName: string): string {
   return DB_TO_GLB_NAME[modelNodeName] ?? modelNodeName;
 }
+
+// Three.js/GLTFLoader sanea los nombres de nodo al cargar la escena: colapsa
+// espacios/saltos de línea a un solo "_" y elimina los puntos por completo.
+// Ej. "Edif y Depto de Ing. Electronica" -> "Edif_y_Depto_de_Ing_Electronica".
+// Sin este paso, cualquier nombre canónico con puntos o espacios (como
+// "D.P.I") nunca coincide con el nodo real de la escena.
+export function toRuntimeGlbName(name: string): string {
+  return name.trim().replace(/\s+/g, "_").replace(/\./g, "");
+}

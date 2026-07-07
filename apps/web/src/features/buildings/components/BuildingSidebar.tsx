@@ -4,6 +4,7 @@ import { useLocationStore } from "../../../store/location-store";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { RoutePanel } from "./RoutePanel";
 import { useBuildings } from "../../../hooks/useBuildings";
+import { useBuildingCategories } from "../hooks/useBuildingCategories";
 import { BuildingSearch } from "./BuildingSearch";
 import { BuildingInfoCard } from "./BuildingInfoCard";
 import { CategoryBadge } from "../../../components/ui/CategoryBadge";
@@ -11,6 +12,8 @@ import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
 import { SearchResultCard } from "../../search/SearchResultCard";
 import { AppFooter } from "../../../components/ui/AppFooter";
+import { normalizeDisplayText } from "../../../utils/text";
+import { matchesSearchWords } from "../../../utils/search-match";
 import type { Building } from "../types/building";
 import type { SearchResult } from "@ito-map/shared";
 
@@ -62,6 +65,7 @@ type BuildingSidebarProps = {
   onItemSelected?: (building: Building) => void;
   onClearSelection?: () => void;
   showGreeting?: boolean;
+  showSearchPanel?: boolean;
   userName?: string;
 };
 
@@ -72,6 +76,7 @@ export function BuildingSidebar({
   onItemSelected,
   onClearSelection,
   showGreeting = false,
+  showSearchPanel = true,
   userName,
 }: BuildingSidebarProps) {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
@@ -80,6 +85,14 @@ export function BuildingSidebar({
     (state) => state.setSelectedBuilding
   );
   const searchTerm = useBuildingStore((state) => state.searchTerm);
+  const activeCategory = useBuildingStore((state) => state.activeCategory);
+  const setActiveCategory = useBuildingStore((state) => state.setActiveCategory);
+  const selectedSearchResult = useBuildingStore(
+    (state) => state.selectedSearchResult
+  );
+  const setSelectedSearchResult = useBuildingStore(
+    (state) => state.setSelectedSearchResult
+  );
   const permission = useLocationStore((state) => state.permission);
   const mapPosition = useLocationStore((state) => state.mapPosition);
   const canUseRoutes = useAdminAuthStore(
@@ -89,25 +102,10 @@ export function BuildingSidebar({
   const isPublicDesktop = !isMobile && !canUseRoutes;
 
   const { buildings, loading, error: loadError } = useBuildings();
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showAllBuildings, setShowAllBuildings] = useState(false);
-  const [selectedSearchResult, setSelectedSearchResult] =
-    useState<SearchResult | null>(null);
-
-  const categories = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const building of buildings) {
-      if (!building.is_active) continue;
-      map.set(
-        building.category_name,
-        (map.get(building.category_name) ?? 0) + 1
-      );
-    }
-    return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
-  }, [buildings]);
+  const { categories, totalActive } = useBuildingCategories(buildings);
 
   const filteredBuildings = useMemo(() => {
-    const normalizedSearch = normalizeSearchText(searchTerm.trim());
     const result = buildings
       .filter((building) => building.is_active)
       .filter((building) => {
@@ -115,7 +113,7 @@ export function BuildingSidebar({
         return building.category_name === activeCategory;
       })
       .filter((building) => {
-        if (!normalizedSearch) return true;
+        if (!searchTerm.trim()) return true;
         const searchableText = [
           building.name,
           building.code,
@@ -125,10 +123,8 @@ export function BuildingSidebar({
           building.category_code,
           building.category_name,
           getBuildingSearchAliases(building),
-        ]
-          .map(normalizeSearchText)
-          .join(" ");
-        return searchableText.includes(normalizedSearch);
+        ].join(" ");
+        return matchesSearchWords(searchableText, searchTerm);
       });
 
     if (!selectedBuilding) return result;
@@ -139,11 +135,6 @@ export function BuildingSidebar({
       return 0;
     });
   }, [buildings, searchTerm, selectedBuilding, activeCategory]);
-
-  const totalActive = useMemo(
-    () => buildings.filter((building) => building.is_active).length,
-    [buildings]
-  );
 
   const recommendedBuildings = (() => {
     const priority = buildings.filter((b) => b.is_active && b.is_priority);
@@ -174,6 +165,15 @@ export function BuildingSidebar({
     } else {
       setSelectedSearchResult(result);
     }
+
+    // Igual que al elegir un edificio de la lista: colapsa el panel móvil
+    // (onItemSelected -> sheet "peek") para que el mapa, ya enfocado en el
+    // edificio, quede visible en vez de tapado por la búsqueda.
+    const buildingId = result.kind === "building" ? result.id : result.buildingId;
+    const building = buildingId
+      ? buildings.find((b) => b.id === buildingId)
+      : undefined;
+    if (building) onItemSelected?.(building);
   }
 
   return (
@@ -229,26 +229,6 @@ export function BuildingSidebar({
         </header>
       )}
 
-      {isPublicDesktop && showGreeting && (
-        <div className="flex flex-col gap-1 px-0.5 pb-1.5 pt-1">
-          <span className="text-balance text-[15px] font-bold leading-tight tracking-tight text-[var(--color-text)]">
-            {userName
-              ? `¿A dónde vas hoy, ${userName.split(" ")[0]}?`
-              : "¿A dónde quieres ir hoy?"}
-          </span>
-          <span className="text-[12px] font-medium text-[var(--color-text-muted)]">
-            Busca aulas, servicios, laboratorios y más
-          </span>
-        </div>
-      )}
-
-      {isPublicDesktop && !showGreeting && (
-        <div className="flex items-center gap-1.5 px-1 pb-1 text-[12px] font-semibold text-[var(--color-text-subtle)]">
-          <Icon name="search" size={14} aria-hidden="true" />
-          <span>Busca aulas, edificios o servicios</span>
-        </div>
-      )}
-
       {(canUseRoutes || isMobile) && (
         <div className="grid grid-cols-3 gap-2 px-2 pb-1" role="list">
           {[
@@ -286,26 +266,36 @@ export function BuildingSidebar({
         </div>
       )}
 
-      <div className={SECTION}>
+      {showSearchPanel && (
+      <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5 shadow-[var(--shadow-xs)]">
+        {isPublicDesktop && showGreeting && (
+          <div className="flex flex-col gap-1 px-0.5">
+            <span className="text-balance text-[15px] font-bold leading-tight tracking-tight text-[var(--color-text)]">
+              {userName
+                ? `¿A dónde vas hoy, ${userName.split(" ")[0]}?`
+                : "¿A dónde quieres ir hoy?"}
+            </span>
+            <span className="text-[12px] font-medium text-[var(--color-text-muted)]">
+              Busca aulas, servicios, laboratorios y más
+            </span>
+          </div>
+        )}
+
+        {isPublicDesktop && !showGreeting && (
+          <div className="flex items-center gap-1.5 px-0.5 text-[12px] font-semibold text-[var(--color-text-subtle)]">
+            <Icon name="search" size={14} aria-hidden="true" />
+            <span>Busca aulas, edificios o servicios</span>
+          </div>
+        )}
+
         <BuildingSearch
           buildings={buildings}
           onSelectResult={handleSelectSearchResult}
         />
-      </div>
 
-      {selectedSearchResult && (
-        <div className={SECTION}>
-          <SearchResultCard
-            result={selectedSearchResult}
-            onClose={() => setSelectedSearchResult(null)}
-          />
-        </div>
-      )}
-
-      {categories.length > 0 && (
-        <div className={SECTION}>
+        {categories.length > 0 && (
           <div
-            className="flex flex-nowrap gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex flex-nowrap gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             role="tablist"
             aria-label="Categorías"
           >
@@ -360,6 +350,16 @@ export function BuildingSidebar({
               );
             })}
           </div>
+        )}
+      </div>
+      )}
+
+      {selectedSearchResult && (
+        <div className={SECTION}>
+          <SearchResultCard
+            result={selectedSearchResult}
+            onClose={() => setSelectedSearchResult(null)}
+          />
         </div>
       )}
 
@@ -413,10 +413,10 @@ export function BuildingSidebar({
                     </div>
                     <div className="min-w-0 flex-1">
                       <span className="block truncate text-[13px] font-semibold leading-tight text-[var(--color-text)]">
-                        {building.name}
+                        {normalizeDisplayText(building.name)}
                       </span>
                       <span className="mt-0.5 block truncate text-[11px] font-medium text-[var(--color-text-muted)]">
-                        {building.category_name}
+                        {normalizeDisplayText(building.category_name)}
                       </span>
                     </div>
                     <div
@@ -534,10 +534,10 @@ export function BuildingSidebar({
                         <span className="inline-flex items-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-2 py-[3px] text-[11px] font-extrabold uppercase leading-none tracking-wide text-[var(--color-text-muted)]">
                           {building.code}
                         </span>
-                        <CategoryBadge name={building.category_name} size="sm" />
+                        <CategoryBadge name={normalizeDisplayText(building.category_name)} size="sm" />
                       </div>
                       <div className="text-[15px] font-bold leading-snug tracking-tight text-[var(--color-text)] [overflow-wrap:anywhere]">
-                        {building.name}
+                        {normalizeDisplayText(building.name)}
                       </div>
                     </div>
                     <span

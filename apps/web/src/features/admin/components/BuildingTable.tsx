@@ -5,7 +5,6 @@ import { safeText } from "../hooks/useBuildingForm";
 
 type BuildingTableProps = {
   buildings: Building[];
-  filteredBuildings: Building[];
   editingBuilding: Building | null;
   searchTerm: string;
   statusFilter: AdminBuildingStatusFilter;
@@ -36,7 +35,6 @@ const rowBtn =
 
 export function BuildingTable({
   buildings,
-  filteredBuildings,
   editingBuilding,
   searchTerm,
   statusFilter,
@@ -113,7 +111,7 @@ export function BuildingTable({
       </div>
 
       <div className="hidden gap-3 max-[640px]:grid">
-        {filteredBuildings.map((building) => {
+        {buildings.map((building) => {
           const isActive = Boolean(building.is_active);
           const isBusy = actionLoadingId === building.id;
           const code = safeText(building.code) || "S/C";
@@ -213,7 +211,7 @@ export function BuildingTable({
           );
         })}
 
-        {filteredBuildings.length === 0 ? (
+        {buildings.length === 0 ? (
           <div className="rounded-[14px] border border-[#334155] bg-[#152033] px-4 py-10 text-center text-[14px] text-[#94a3b8]">
             <p className="m-0 font-semibold text-[#cbd5e1]">
               No hay edificios para mostrar.
@@ -248,7 +246,7 @@ export function BuildingTable({
           </thead>
 
           <tbody>
-            {filteredBuildings.map((building, idx) => {
+            {buildings.map((building, idx) => {
               const isActive = Boolean(building.is_active);
               const isCurrentEdit = editingBuilding?.id === building.id;
               const rowBg = isCurrentEdit
@@ -335,7 +333,7 @@ export function BuildingTable({
               );
             })}
 
-            {filteredBuildings.length === 0 ? (
+            {buildings.length === 0 ? (
               <tr>
                 <td
                   className="border-b border-[#243347] px-5 py-12 text-center text-[14px] text-[#475569]"

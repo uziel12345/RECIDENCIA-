@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import {
   createBuildingApi,
   deleteBuildingApi,
-  getAdminBuildingsPaginatedApi,
+  getAdminBuildingsApi,
   getCategoriesApi,
   updateBuildingApi,
   updateBuildingStatusApi,
@@ -19,13 +19,17 @@ import {
   safeText,
   type BuildingFormState,
 } from "./useBuildingForm";
+import { matchesSearchWords } from "../../../utils/search-match";
 
 export type AdminBuildingStatusFilter = "all" | "active" | "inactive";
 
-const ADMIN_BUILDINGS_LIMIT = 10;
+const ADMIN_BUILDINGS_PAGE_SIZE = 10;
 
 export function useAdminBuildings() {
-  const [buildings, setBuildings] = useState<Building[]>([]);
+  // Todos los edificios (el dataset es pequeño, ~60 registros) — la búsqueda y
+  // la paginación se hacen en el cliente sobre este arreglo completo, para que
+  // buscar encuentre coincidencias en cualquier página, no solo la visible.
+  const [allBuildings, setAllBuildings] = useState<Building[]>([]);
   const [categories, setCategories] = useState<BuildingCategory[]>([]);
   const [form, setForm] = useState<BuildingFormState>(initialFormState);
   const [editingBuilding, setEditingBuilding] = useState<Building | null>(null);
@@ -38,29 +42,22 @@ export function useAdminBuildings() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalRecords, setTotalRecords] = useState(0);
   const [imageModalBuilding, setImageModalBuilding] =
     useState<Building | null>(null);
 
   const isEditing = editingBuilding !== null;
-  const limit = ADMIN_BUILDINGS_LIMIT;
+  const limit = ADMIN_BUILDINGS_PAGE_SIZE;
 
   const filteredBuildings = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
+    return allBuildings.filter((building) => {
+      const searchableText = [
+        safeText(building.name),
+        safeText(building.code),
+        safeText(building.category_name),
+        safeText(building.category_code),
+      ].join(" ");
 
-    return buildings.filter((building) => {
-      const name = safeText(building.name).toLowerCase();
-      const code = safeText(building.code).toLowerCase();
-      const categoryName = safeText(building.category_name).toLowerCase();
-      const categoryCode = safeText(building.category_code).toLowerCase();
-
-      const matchesSearch =
-        !term ||
-        name.includes(term) ||
-        code.includes(term) ||
-        categoryName.includes(term) ||
-        categoryCode.includes(term);
+      const matchesSearch = matchesSearchWords(searchableText, searchTerm);
 
       const isActive = Boolean(building.is_active);
 
@@ -71,7 +68,27 @@ export function useAdminBuildings() {
 
       return matchesSearch && matchesStatus;
     });
-  }, [buildings, searchTerm, statusFilter]);
+  }, [allBuildings, searchTerm, statusFilter]);
+
+  const totalRecords = filteredBuildings.length;
+  const totalPages = Math.max(1, Math.ceil(totalRecords / limit));
+
+  // La búsqueda/filtro puede reducir los resultados por debajo de la página
+  // actual (ej. estabas en la página 4 y ahora solo hay 1 página de resultados).
+  useEffect(() => {
+    setPage((current) => Math.min(current, totalPages));
+  }, [totalPages]);
+
+  // Reinicia a la página 1 cuando cambia el término de búsqueda o el filtro,
+  // para no quedar "atascado" en una página que ya no tiene sentido.
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, statusFilter]);
+
+  const pagedBuildings = useMemo(
+    () => filteredBuildings.slice((page - 1) * limit, page * limit),
+    [filteredBuildings, page, limit]
+  );
 
   const loadCategories = useCallback(async () => {
     try {
@@ -87,11 +104,8 @@ export function useAdminBuildings() {
     setError(null);
 
     try {
-      const response = await getAdminBuildingsPaginatedApi(page, limit);
-
-      setBuildings(Array.isArray(response.data) ? response.data : []);
-      setTotalPages(response.pagination?.totalPages ?? 1);
-      setTotalRecords(response.pagination?.total ?? response.data?.length ?? 0);
+      const data = await getAdminBuildingsApi();
+      setAllBuildings(Array.isArray(data) ? data : []);
     } catch (err) {
       const msg =
         err instanceof Error
@@ -99,13 +113,11 @@ export function useAdminBuildings() {
           : "No se pudieron cargar los edificios";
 
       setError(msg);
-      setBuildings([]);
-      setTotalPages(1);
-      setTotalRecords(0);
+      setAllBuildings([]);
     } finally {
       setLoadingBuildings(false);
     }
-  }, [limit, page]);
+  }, []);
 
   useEffect(() => {
     void loadBuildings();
@@ -246,7 +258,7 @@ export function useAdminBuildings() {
   }
 
   return {
-    buildings,
+    buildings: pagedBuildings,
     categories,
     form,
     editingBuilding,
@@ -263,7 +275,6 @@ export function useAdminBuildings() {
     imageModalBuilding,
     isEditing,
     limit,
-    filteredBuildings,
     setSearchTerm,
     setStatusFilter,
     setPage,

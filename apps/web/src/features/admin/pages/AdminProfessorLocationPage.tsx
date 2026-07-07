@@ -49,7 +49,7 @@ export function AdminProfessorLocationPage() {
       });
       setResult(data);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error al consultar la ubicacion");
+      setError(err instanceof Error ? err.message : "Error al consultar la ubicación");
     } finally {
       setLoading(false);
     }
@@ -232,7 +232,7 @@ export function AdminProfessorLocationPage() {
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
-                    Buscar ubicacion
+                    Buscar ubicación
                   </>
                 )}
               </button>

@@ -82,7 +82,7 @@ type LocationStore = {
   mapPosition: MapCoordinates | null;
   nearestBuilding: NearestBuilding | null;
   errorMessage: string | null;
-  watchId: number | null;
+  watchId: string | null;
   simulatedPosition: SimulatedPosition | null;
 
   setPermission: (permission: LocationPermissionState) => void;
@@ -90,7 +90,7 @@ type LocationStore = {
   setMapPosition: (position: MapCoordinates | null) => void;
   setNearestBuilding: (building: NearestBuilding | null) => void;
   setErrorMessage: (message: string | null) => void;
-  setWatchId: (watchId: number | null) => void;
+  setWatchId: (watchId: string | null) => void;
   setSimulatedPosition: (position: SimulatedPosition | null) => void;
   resetLocation: () => void;
 };

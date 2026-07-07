@@ -70,11 +70,18 @@ export function BuildingSearch({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Sincroniza el input SOLO cuando searchTerm cambia desde afuera de este
+  // componente (ej. un chip de servicio hace setSearchTerm directo). Comparar
+  // contra inputValue.trim() (no el valor crudo) evita que este efecto borre
+  // el espacio final que el usuario acaba de escribir entre palabras — antes
+  // "aud " se resincronizaba a "aud" en cada tecla, impidiendo escribir
+  // búsquedas de varias palabras.
   useEffect(() => {
-    if (searchTerm !== inputValue) {
+    if (searchTerm !== inputValue.trim()) {
       setInputValue(searchTerm);
     }
-  }, [inputValue, searchTerm]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
 
   useEffect(() => {
     const term = inputValue.trim();

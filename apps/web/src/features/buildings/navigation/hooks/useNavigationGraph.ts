@@ -77,7 +77,7 @@ export function useNavigationGraph() {
       .catch((err: unknown) => {
         if (!mounted) return;
         const message =
-          err instanceof Error ? err.message : "Error cargando grafo de navegacion";
+          err instanceof Error ? err.message : "Error cargando grafo de navegación";
         if (import.meta.env.DEV) console.error("[NavGraph] Error cargando grafo", err);
         setGraphState({ status: "error", message });
       });

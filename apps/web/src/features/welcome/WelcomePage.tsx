@@ -9,6 +9,14 @@ import {
   BuildingIcon,
 } from "../../components/ui/Icons";
 
+// Adelanta la descarga (no el parseo) del modelo 3D del campus tan pronto el
+// usuario elige un rol, para que ya esté en caché HTTP cuando el visor
+// (Student/VisitorPage, lazy-loaded) llame a useGLTF. No importa Three.js aquí
+// a propósito — eso metería el chunk vendor-three en el bundle inicial.
+function preloadCampusModel() {
+  fetch("/models/campus.glb", { priority: "low" } as RequestInit).catch(() => {});
+}
+
 interface RoleCard {
   id: "student" | "visitor" | "admin-access";
   title: string;
@@ -81,6 +89,7 @@ export function WelcomePage() {
       return;
     }
 
+    preloadCampusModel();
     selectRole(card.id);
     if (!hasCompletedOnboarding) {
       navigate(ROUTES.ONBOARDING);

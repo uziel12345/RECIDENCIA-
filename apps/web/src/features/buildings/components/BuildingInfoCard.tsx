@@ -5,6 +5,7 @@ import { CategoryBadge } from "../../../components/ui/CategoryBadge";
 import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
 import { resolveApiAssetUrl } from "../../../utils/resolve-api-asset-url";
+import { normalizeDisplayText } from "../../../utils/text";
 import { getBuildingImagesApi } from "@ito-map/shared";
 import type { BuildingImage } from "@ito-map/shared";
 import type { Building } from "../types/building";
@@ -17,7 +18,7 @@ type BuildingInfoCardProps = {
 
 function getBuildingDescription(building: Building): string | null {
   if (building.description && building.description.trim() !== "") {
-    return building.description.trim();
+    return normalizeDisplayText(building.description.trim());
   }
   return null;
 }
@@ -55,6 +56,9 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
   const visibleImages = galleryImages.filter((img) => !failedImages.has(img.id));
 
   const accent = getCategoryAccent(building.category_name);
+  const buildingName = normalizeDisplayText(building.name);
+  const buildingCode = normalizeDisplayText(building.code);
+  const categoryName = normalizeDisplayText(building.category_name);
   const coverUrl = resolveApiAssetUrl(building.cover_image_url);
   const showCover = !!coverUrl && coverFailedForId !== building.id;
   const description = getBuildingDescription(building);
@@ -67,7 +71,7 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
   return (
     <article
       className="ito-building-info-card flex flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-maps)]"
-      aria-label={`Información de ${building.name}`}
+      aria-label={`Información de ${buildingName}`}
     >
       {showCover ? (
         <div className="ito-bic-cover relative w-full overflow-hidden">
@@ -80,10 +84,10 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
           />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-4 pt-10">
             <div className="text-[11px] font-bold uppercase tracking-wider text-white/85">
-              Edificio {building.code || "Sin código"}
+              Edificio {buildingCode || "Sin código"}
             </div>
             <h3 className="mt-0.5 text-balance text-[17px] font-bold leading-tight text-white">
-              {building.name}
+              {buildingName}
             </h3>
           </div>
           <button
@@ -110,10 +114,10 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-[11px] font-bold uppercase tracking-wider opacity-90">
-              Edificio {building.code || "Sin código"}
+              Edificio {buildingCode || "Sin código"}
             </div>
             <h3 className="mt-0.5 text-balance text-[17px] font-bold leading-tight">
-              {building.name}
+              {buildingName}
             </h3>
           </div>
           <button
@@ -132,7 +136,7 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
           <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
             Categoría
           </span>
-          <CategoryBadge name={building.category_name} />
+          <CategoryBadge name={categoryName} />
         </div>
 
         {building.is_priority && (
@@ -176,7 +180,7 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
                 <img
                   key={img.id}
                   src={resolveApiAssetUrl(img.image_url) ?? undefined}
-                  alt={img.title ?? building.name}
+                  alt={normalizeDisplayText(img.title ?? buildingName)}
                   loading="lazy"
                   onError={() =>
                     setFailedImages((prev) => new Set([...prev, img.id]))
@@ -205,7 +209,7 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
               if (!locationPosition) return;
               setSimulatedPosition({
                 buildingId: building.id,
-                buildingName: building.name,
+                buildingName,
                 x: locationPosition.x,
                 z: locationPosition.z,
               });

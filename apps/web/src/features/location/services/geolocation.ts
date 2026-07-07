@@ -1,3 +1,4 @@
+import { Geolocation } from "@capacitor/geolocation";
 import { useLocationStore } from "../../../store/location-store";
 import type { SimulatedPosition } from "../../../store/location-store";
 
@@ -57,26 +58,52 @@ export function clearSimulatedPosition(): void {
   }
 }
 
-export function startUserLocationTracking(): void {
+// Usa el plugin de Capacitor en vez de navigator.geolocation directo: dentro
+// del WebView nativo (Android/iOS empaquetados), la API del navegador no
+// dispara el diálogo de permiso nativo de forma confiable. El plugin sí lo
+// hace, y en la web sigue funcionando igual (ahí es un envoltorio delgado
+// sobre navigator.geolocation).
+export async function startUserLocationTracking(): Promise<void> {
   const store = useLocationStore.getState();
-
-  if (!("geolocation" in navigator)) {
-    store.setPermission("unsupported");
-    store.setErrorMessage("Tu navegador no soporta geolocalización.");
-    return;
-  }
 
   if (store.watchId !== null) return;
 
-  const newWatchId = navigator.geolocation.watchPosition(
-    (position) => {
+  try {
+    const status = await Geolocation.checkPermissions();
+    if (status.location !== "granted") {
+      const requested = await Geolocation.requestPermissions();
+      if (requested.location !== "granted") {
+        store.setPermission("denied");
+        store.setErrorMessage("El usuario denegó el permiso de ubicación.");
+        return;
+      }
+    }
+  } catch {
+    store.setPermission("unsupported");
+    store.setErrorMessage("Este dispositivo no soporta geolocalización.");
+    return;
+  }
+
+  const newWatchId = await Geolocation.watchPosition(
+    { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 },
+    (position, err) => {
+      const currentStore = useLocationStore.getState();
+
+      if (err || !position) {
+        currentStore.setErrorMessage(
+          (err && typeof err === "object" && "message" in err
+            ? String((err as { message: unknown }).message)
+            : null) || "No se pudo obtener la ubicación."
+        );
+        return;
+      }
+
       const received: GeoLikePosition = {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
         accuracy: position.coords.accuracy ?? null,
       };
 
-      const currentStore = useLocationStore.getState();
       currentStore.setPermission("granted");
 
       if (currentStore.simulatedPosition) {
@@ -114,27 +141,28 @@ export function startUserLocationTracking(): void {
       lastAcceptedPosition = received;
       currentStore.setGeoPosition(received);
       currentStore.setErrorMessage(null);
-    },
-    (error) => {
-      const s = useLocationStore.getState();
-      if (error.code === error.PERMISSION_DENIED) {
-        s.setPermission("denied");
-        s.setErrorMessage("El usuario denegó el permiso de ubicación.");
-        return;
-      }
-      s.setErrorMessage(error.message || "No se pudo obtener la ubicación.");
-    },
-    { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
+    }
   );
 
-  store.setWatchId(newWatchId);
+  useLocationStore.getState().setWatchId(newWatchId);
 }
 
-export function stopUserLocationTracking(): void {
+export async function stopUserLocationTracking(): Promise<void> {
   const { watchId, setWatchId } = useLocationStore.getState();
-  if (watchId !== null && "geolocation" in navigator) {
-    navigator.geolocation.clearWatch(watchId);
-    setWatchId(null);
-  }
+  if (watchId === null) return;
+
+  // Limpia el id ANTES de esperar a clearWatch: si un startUserLocationTracking()
+  // se dispara mientras este await sigue pendiente (típico al reanudar la app
+  // tras minimizarla), su guardia "watchId !== null" no debe ver un id viejo
+  // y abortar — así queda claro de inmediato que no hay watch activo.
+  setWatchId(null);
   lastAcceptedPosition = null;
+  try {
+    await Geolocation.clearWatch({ id: watchId });
+  } catch {
+    // El watch ya pudo haberse invalidado del lado nativo (ej. la app
+    // estuvo en segundo plano) — no hay nada que limpiar en ese caso.
+  }
 }
+
+

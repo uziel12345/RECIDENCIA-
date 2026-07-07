@@ -98,6 +98,7 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
   const [hoverPreview, setHoverPreview] = useState(false);
   const [hoveredRoute, setHoveredRoute] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<{ label: string; y: number } | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const permissions = user ? ROLE_PERMISSIONS[user.role] : null;
 
@@ -108,6 +109,13 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
   const visibleNav = NAV_ITEMS.filter(
     (item) => !item.permission || (permissions && permissions[item.permission])
   );
+  const activeNav =
+    visibleNav.find(
+      (item) =>
+        location.pathname === item.route ||
+        (item.route === ROUTES.ADMIN_BUILDINGS &&
+          location.pathname.startsWith("/admin/buildings/"))
+    ) ?? visibleNav[0];
 
   const initials = user?.full_name
     ? user.full_name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase()
@@ -120,7 +128,7 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
   return (
     <div style={{ ...s.shell, ...(isMobile ? s.shellMobile : {}) }}>
       {/* Tooltip flotante para modo colapsado */}
-      {collapsed && tooltip ? (
+      {collapsed && !isMobile && tooltip ? (
         <div style={{ ...s.tooltip, top: tooltip.y - 14 }}>
           {tooltip.label}
         </div>
@@ -157,6 +165,30 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
           )}
         </div>
 
+        {isMobile && (
+          <div style={s.mobileTitle}>
+            <span style={s.mobileTitleKicker}>Estás en</span>
+            <strong style={s.mobileTitleText}>{activeNav?.label ?? "Panel"}</strong>
+          </div>
+        )}
+
+        {isMobile && (
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(true)}
+            style={s.mobileMenuBtn}
+          >
+            <span style={s.mobileMenuBtnIcon}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                <line x1="4" y1="7" x2="20" y2="7" />
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="17" x2="20" y2="17" />
+              </svg>
+            </span>
+            Menú
+          </button>
+        )}
+
         {/* Botón de colapsar / expandir */}
         {!isMobile && (
           <button
@@ -189,7 +221,7 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
         {!isMobile && <div style={s.divider} />}
 
         {/* Navegación */}
-        <nav style={isMobile ? s.navMobile : collapsed ? s.navMini : s.nav}>
+        {!isMobile && <nav style={collapsed ? s.navMini : s.nav}>
           {!collapsed && <p style={s.navSection}>Módulos</p>}
           {visibleNav.map((item) => {
             const active =
@@ -213,22 +245,22 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
                   setHoveredRoute(null);
                   setTooltip(null);
                 }}
-                title={collapsed ? item.label : undefined}
+                title={collapsed && !isMobile ? item.label : undefined}
                 style={{
                   ...s.navItem,
-                  ...(collapsed ? s.navItemMini : {}),
+                  ...(isMobile ? s.navItemMobile : collapsed ? s.navItemMini : {}),
                   ...(active ? s.navItemActive : hovered ? s.navItemHover : {}),
                 }}
               >
                 <span style={{ ...s.navIcon, ...(active ? s.navIconActive : {}) }}>
                   {item.icon}
                 </span>
-                {!collapsed && <span style={s.navLabel}>{item.label}</span>}
-                {!collapsed && active && <span style={s.activeIndicator} />}
+                {(!collapsed || isMobile) && <span style={isMobile ? s.navLabelMobile : s.navLabel}>{item.label}</span>}
+                {!collapsed && !isMobile && active && <span style={s.activeIndicator} />}
               </button>
             );
           })}
-        </nav>
+        </nav>}
 
         {!isMobile && <div style={s.spacer} />}
         {!isMobile && <div style={s.divider} />}
@@ -275,6 +307,66 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
         {!isMobile && <AppFooter variant="dark" />}
       </aside>
 
+      {isMobile && mobileMenuOpen ? (
+        <div style={s.mobileMenuOverlay} role="dialog" aria-modal="true">
+          <div style={s.mobileMenuPanel}>
+            <div style={s.mobileMenuHead}>
+              <div>
+                <p style={s.mobileMenuKicker}>Panel administrativo</p>
+                <h2 style={s.mobileMenuTitle}>¿Qué quieres hacer?</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                style={s.mobileMenuClose}
+                aria-label="Cerrar menú"
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={s.mobileMenuList}>
+              {visibleNav.map((item) => {
+                const active =
+                  location.pathname === item.route ||
+                  (item.route === ROUTES.ADMIN_BUILDINGS &&
+                    location.pathname.startsWith("/admin/buildings/"));
+
+                return (
+                  <button
+                    key={item.route}
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      navigate(item.route);
+                    }}
+                    style={{
+                      ...s.mobileMenuItem,
+                      ...(active ? s.mobileMenuItemActive : {}),
+                    }}
+                  >
+                    <span style={{ ...s.mobileMenuItemIcon, ...(active ? s.mobileMenuItemIconActive : {}) }}>
+                      {item.icon}
+                    </span>
+                    <span style={s.mobileMenuItemText}>
+                      <strong style={s.mobileMenuItemTitle}>{item.label}</strong>
+                      <span style={s.mobileMenuItemHint}>
+                        {getMobileHint(item.label)}
+                      </span>
+                    </span>
+                    <span style={s.mobileMenuItemArrow}>›</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <button type="button" onClick={handleLogout} style={s.mobileMenuLogout}>
+              Cerrar sesión
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       <main style={{ ...s.content, ...(isMobile ? s.contentMobile : {}), ...contentStyle }}>
         {!isMobile && (
           <div style={s.contentBrand} aria-hidden="true">
@@ -286,6 +378,25 @@ export function AdminLayout({ children, contentStyle }: AdminLayoutProps) {
       </main>
     </div>
   );
+}
+
+function getMobileHint(label: string) {
+  switch (label) {
+    case "Edificios":
+      return "Agregar, editar o borrar edificios";
+    case "Categorías":
+      return "Organizar los tipos de edificios";
+    case "Navegación":
+      return "Editar caminos y rutas del mapa";
+    case "Usuarios":
+      return "Administrar cuentas del panel";
+    case "Alumnos":
+      return "Ver ubicación de alumnos";
+    case "Profesores":
+      return "Ver ubicación de profesores";
+    default:
+      return "Abrir esta sección";
+  }
 }
 
 const s: Record<string, CSSProperties> = {
@@ -311,14 +422,14 @@ const s: Record<string, CSSProperties> = {
     flexShrink: 0,
   },
   sidebarMobile: {
-    height: 64,
-    minHeight: 64,
+    height: 72,
+    minHeight: 72,
     borderRight: "none",
     borderBottom: "1px solid #334155",
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    padding: "8px 10px",
+    gap: 10,
+    padding: "9px 12px",
     overflowX: "auto",
     overflowY: "hidden",
   },
@@ -337,7 +448,48 @@ const s: Record<string, CSSProperties> = {
   brandMobile: {
     display: "flex",
     justifyContent: "center",
+    alignItems: "center",
     flexShrink: 0,
+  },
+  mobileTitle: {
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    minWidth: 0,
+    flex: 1,
+  },
+  mobileTitleKicker: {
+    fontSize: 10,
+    color: "#64748b",
+    fontWeight: 800,
+    textTransform: "uppercase",
+    letterSpacing: "0.07em",
+  },
+  mobileTitleText: {
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    fontSize: 16,
+    color: "#f1f5f9",
+  },
+  mobileMenuBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 7,
+    minHeight: 46,
+    padding: "0 13px",
+    border: "1px solid rgba(234,88,12,0.4)",
+    borderRadius: 14,
+    background: "#ea580c",
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: 800,
+    cursor: "pointer",
+    flexShrink: 0,
+  },
+  mobileMenuBtnIcon: {
+    display: "grid",
+    placeItems: "center",
   },
   brandIcon: {
     width: 36,
@@ -418,12 +570,13 @@ const s: Record<string, CSSProperties> = {
   navMobile: {
     display: "flex",
     flexDirection: "row",
-    gap: 6,
+    gap: 8,
     padding: 0,
-    alignItems: "center",
+    alignItems: "stretch",
     overflowX: "auto",
     flex: 1,
     minWidth: 0,
+    scrollbarWidth: "none",
   },
   navSection: {
     margin: "0 0 5px 8px",
@@ -454,6 +607,17 @@ const s: Record<string, CSSProperties> = {
     padding: "9px",
     width: 38,
   },
+  navItemMobile: {
+    flexDirection: "column",
+    justifyContent: "center",
+    gap: 5,
+    width: 74,
+    minWidth: 74,
+    minHeight: 66,
+    padding: "8px 7px",
+    borderRadius: 14,
+    textAlign: "center",
+  },
   navItemHover: {
     background: "rgba(255,255,255,0.05)",
     color: "#cbd5e1",
@@ -475,6 +639,15 @@ const s: Record<string, CSSProperties> = {
   navLabel: {
     flex: 1,
     whiteSpace: "nowrap",
+  },
+  navLabelMobile: {
+    maxWidth: "100%",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    fontSize: 10.5,
+    lineHeight: 1.1,
+    fontWeight: 700,
   },
   activeIndicator: {
     width: 6,
@@ -574,8 +747,128 @@ const s: Record<string, CSSProperties> = {
     position: "relative",
   },
   contentMobile: {
-    height: "calc(100dvh - 64px)",
+    height: "calc(100dvh - 72px)",
     minHeight: 0,
+  },
+  mobileMenuOverlay: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 200,
+    background: "rgba(2, 6, 23, 0.78)",
+    padding: "12px",
+    display: "flex",
+    alignItems: "flex-end",
+  },
+  mobileMenuPanel: {
+    width: "100%",
+    maxHeight: "calc(100dvh - 24px)",
+    overflowY: "auto",
+    border: "1px solid #334155",
+    borderRadius: 22,
+    background: "#111c2d",
+    boxShadow: "0 -20px 60px rgba(0,0,0,0.55)",
+    padding: "16px",
+  },
+  mobileMenuHead: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 12,
+    alignItems: "flex-start",
+    marginBottom: 14,
+  },
+  mobileMenuKicker: {
+    margin: "0 0 4px",
+    fontSize: 11,
+    color: "#f97316",
+    fontWeight: 900,
+    textTransform: "uppercase",
+    letterSpacing: "0.08em",
+  },
+  mobileMenuTitle: {
+    margin: 0,
+    fontSize: 22,
+    lineHeight: 1.1,
+    color: "#f8fafc",
+  },
+  mobileMenuClose: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    border: "1px solid #334155",
+    background: "#0f172a",
+    color: "#cbd5e1",
+    fontSize: 30,
+    lineHeight: 1,
+    cursor: "pointer",
+    flexShrink: 0,
+  },
+  mobileMenuList: {
+    display: "grid",
+    gap: 10,
+  },
+  mobileMenuItem: {
+    display: "grid",
+    gridTemplateColumns: "48px minmax(0, 1fr) 22px",
+    alignItems: "center",
+    gap: 12,
+    width: "100%",
+    minHeight: 78,
+    padding: "12px",
+    borderRadius: 16,
+    border: "1px solid #334155",
+    background: "#162236",
+    color: "#e2e8f0",
+    textAlign: "left",
+    cursor: "pointer",
+  },
+  mobileMenuItemActive: {
+    borderColor: "rgba(234,88,12,0.52)",
+    background: "rgba(234,88,12,0.16)",
+  },
+  mobileMenuItemIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    display: "grid",
+    placeItems: "center",
+    background: "#0f172a",
+    color: "#94a3b8",
+  },
+  mobileMenuItemIconActive: {
+    background: "#ea580c",
+    color: "#fff",
+  },
+  mobileMenuItemText: {
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
+  },
+  mobileMenuItemTitle: {
+    fontSize: 17,
+    color: "#f8fafc",
+  },
+  mobileMenuItemHint: {
+    fontSize: 12.5,
+    lineHeight: 1.3,
+    color: "#94a3b8",
+  },
+  mobileMenuItemArrow: {
+    fontSize: 28,
+    color: "#64748b",
+    justifySelf: "center",
+  },
+  mobileMenuLogout: {
+    width: "100%",
+    minHeight: 50,
+    marginTop: 12,
+    borderRadius: 14,
+    border: "1px solid rgba(239,68,68,0.32)",
+    background: "rgba(239,68,68,0.1)",
+    color: "#fca5a5",
+    fontSize: 15,
+    fontWeight: 800,
+    cursor: "pointer",
   },
   contentBrand: {
     position: "absolute",

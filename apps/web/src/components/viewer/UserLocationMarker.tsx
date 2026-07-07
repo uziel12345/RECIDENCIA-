@@ -3,6 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import { useLocationStore } from "../../store/location-store";
+import { useIsMobile } from "../../hooks/useIsMobile";
 
 const DOT_COLOR = "#2563eb";
 const RING_SPEED = 1.4;
@@ -11,7 +12,10 @@ const BEACON_Y = 14;
 const LABEL_Y = 22;
 // Redibuja a una tasa fija en vez de en cada frame disponible, para no anular
 // el ahorro de frameloop="demand" mientras el marcador de usuario está visible.
-const INVALIDATE_FPS = 24;
+// Móvil usa una tasa más baja: la animación (pulso lento) se ve igual de fluida
+// pero con menos trabajo de GPU repetido.
+const INVALIDATE_FPS_DESKTOP = 24;
+const INVALIDATE_FPS_MOBILE = 15;
 
 export function UserLocationMarker() {
   const mapPosition = useLocationStore((s) => s.mapPosition);
@@ -19,13 +23,15 @@ export function UserLocationMarker() {
   const ring1Ref = useRef<THREE.Mesh>(null);
   const ring2Ref = useRef<THREE.Mesh>(null);
   const invalidate = useThree((state) => state.invalidate);
+  const isMobile = useIsMobile();
   const hasPosition = !!mapPosition;
 
   useEffect(() => {
     if (!hasPosition) return;
-    const id = setInterval(() => invalidate(), 1000 / INVALIDATE_FPS);
+    const fps = isMobile ? INVALIDATE_FPS_MOBILE : INVALIDATE_FPS_DESKTOP;
+    const id = setInterval(() => invalidate(), 1000 / fps);
     return () => clearInterval(id);
-  }, [hasPosition, invalidate]);
+  }, [hasPosition, isMobile, invalidate]);
 
   useFrame(({ clock }) => {
     if (!mapPosition) return;

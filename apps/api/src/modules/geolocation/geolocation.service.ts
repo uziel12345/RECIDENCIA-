@@ -222,4 +222,57 @@ export class GeolocationService {
     const geofence = await this.repository.findGeofenceById(id);
     return geofence ? mapGeofence(geofence) : null;
   }
+
+  /**
+   * Genera un cuadro de ~20m alrededor del GPS de cada edificio activo que
+   * todavia no tenga una geocerca. Equivalente a la migracion
+   * migration-building-geofences-default-20260702.sql, pero disparable desde
+   * el panel de admin en vez de requerir correr SQL a mano.
+   */
+  async generateDefaultGeofences() {
+    const [buildings, existingGeofences] = await Promise.all([
+      this.buildingsRepository.findAllActive(),
+      this.repository.findActiveGeofences(),
+    ]);
+
+    const buildingsWithGeofence = new Set(
+      existingGeofences.map((geofence) => geofence.building_id)
+    );
+
+    const HALF_LAT = 0.00017966; // ~20 m
+    const HALF_LNG = 0.00018795;
+
+    let created = 0;
+    let skippedNoGps = 0;
+    let skippedExisting = 0;
+
+    for (const building of buildings) {
+      if (buildingsWithGeofence.has(building.id)) {
+        skippedExisting++;
+        continue;
+      }
+      if (building.latitude == null || building.longitude == null) {
+        skippedNoGps++;
+        continue;
+      }
+
+      const lat = Number(building.latitude);
+      const lng = Number(building.longitude);
+
+      await this.repository.insertBuildingGeofence({
+        building_id: building.id,
+        name: `Geocerca inicial ${building.code}`,
+        priority: 0,
+        polygon: [
+          { lat: lat + HALF_LAT, lng: lng - HALF_LNG },
+          { lat: lat + HALF_LAT, lng: lng + HALF_LNG },
+          { lat: lat - HALF_LAT, lng: lng + HALF_LNG },
+          { lat: lat - HALF_LAT, lng: lng - HALF_LNG },
+        ],
+      });
+      created++;
+    }
+
+    return { created, skippedNoGps, skippedExisting };
+  }
 }

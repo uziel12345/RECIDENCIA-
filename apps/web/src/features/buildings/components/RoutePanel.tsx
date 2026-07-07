@@ -51,7 +51,7 @@ export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelPr
           text: `Ubicación: ${nearestBuilding.buildingName}`,
           hint:
             geoPosition?.accuracy !== null && geoPosition?.accuracy !== undefined
-              ? `Precision ${geoPosition.accuracy.toFixed(1)} m`
+              ? `Precisión ${geoPosition.accuracy.toFixed(1)} m`
               : undefined,
         };
       }
@@ -250,7 +250,7 @@ export function RoutePanel({ compact = false, canUseDemo = false }: RoutePanelPr
           style={{ flex: 1 }}
         >
           <Icon name="route" size={16} />
-          <span>Como llegar</span>
+          <span>Cómo llegar</span>
         </button>
 
         <button

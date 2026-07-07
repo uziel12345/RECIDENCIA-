@@ -29,7 +29,6 @@ export function AdminBuildingsPage() {
     totalPages,
     totalRecords,
     imageModalBuilding,
-    filteredBuildings,
     setSearchTerm,
     setStatusFilter,
     setPage,
@@ -108,7 +107,6 @@ export function AdminBuildingsPage() {
         <section>
           <BuildingTable
             buildings={buildings}
-            filteredBuildings={filteredBuildings}
             editingBuilding={null}
             searchTerm={searchTerm}
             statusFilter={statusFilter}

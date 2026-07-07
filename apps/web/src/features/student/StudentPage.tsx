@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { CampusViewer } from "../../components/viewer/CampusViewer";
 import { BuildingSidebar } from "../buildings/components/BuildingSidebar";
+import { MapSearchOverlay } from "../buildings/components/MapSearchOverlay";
 import { BuildingQuickCard } from "../buildings/components/BuildingQuickCard";
 import { useBuildingStore } from "../../store/building-store";
 import { useAuthStore } from "../../store/auth-store";
@@ -258,6 +259,7 @@ export function StudentPage() {
               <BuildingSidebar
                 isMobile={false}
                 showGreeting
+                showSearchPanel={false}
                 userName={user?.name || "Estudiante"}
               />
             </div>
@@ -288,19 +290,27 @@ export function StudentPage() {
         </aside>
 
         <main className="student-page__main">
-          {viewMode === "map" && (
-            <div className="student-page__viewer" style={{ position: "relative" }}>
-              <button
-                type="button"
-                className="ito-sidebar-toggle"
-                onClick={() => setSidebarCollapsed((c) => !c)}
-                title={sidebarCollapsed ? "Mostrar panel" : "Ocultar panel"}
-              >
-                {sidebarCollapsed ? <ChevronRightIcon size={14} /> : <ChevronLeftIcon size={14} />}
-              </button>
-              <CampusViewer isMobile={false} mobilePanelOpen={false} mapXOffset={sidebarCollapsed ? 0 : -75} />
-            </div>
-          )}
+          {/* El visor 3D se mantiene siempre montado (solo oculto con CSS) al
+              cambiar de pestaña, para no recargar el GLB ni resetear la
+              cámara/ubicación cada vez que se vuelve a "Mapa". */}
+          <div
+            className="student-page__viewer"
+            style={{
+              position: "relative",
+              display: viewMode === "map" ? undefined : "none",
+            }}
+          >
+            <button
+              type="button"
+              className="ito-sidebar-toggle"
+              onClick={() => setSidebarCollapsed((c) => !c)}
+              title={sidebarCollapsed ? "Mostrar panel" : "Ocultar panel"}
+            >
+              {sidebarCollapsed ? <ChevronRightIcon size={14} /> : <ChevronLeftIcon size={14} />}
+            </button>
+            <MapSearchOverlay userName={user?.name || "Estudiante"} />
+            <CampusViewer isMobile={false} mobilePanelOpen={false} mapXOffset={sidebarCollapsed ? 0 : -75} />
+          </div>
 
           {viewMode === "guide" && (
             <div key="main-guide" className="student-page__schedule-full ito-tab-main">

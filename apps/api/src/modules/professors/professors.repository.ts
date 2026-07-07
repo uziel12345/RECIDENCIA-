@@ -47,12 +47,21 @@ export class ProfessorsRepository {
   }
 
   async findByName(query: string): Promise<ProfessorRow[]> {
+    // Búsqueda por palabra (no por frase completa): cada palabra debe
+    // aparecer en el nombre, sin importar el orden — "lópez maría" también
+    // encuentra "María López García".
+    const words = query.trim().split(/\s+/).filter(Boolean);
+    if (words.length === 0) return [];
+
+    const conditions = words.map(() => "full_name LIKE ?").join(" AND ");
+    const params = words.map((word) => `%${word}%`);
+
     const [rows] = await this.db.query<ProfessorRow[]>(
       `${PROFESSOR_SELECT}
-       WHERE full_name LIKE ? AND deleted_at IS NULL AND is_active = TRUE
+       WHERE ${conditions} AND deleted_at IS NULL AND is_active = TRUE
        ORDER BY full_name ASC
        LIMIT 10`,
-      [`%${query}%`]
+      params
     );
     return rows;
   }

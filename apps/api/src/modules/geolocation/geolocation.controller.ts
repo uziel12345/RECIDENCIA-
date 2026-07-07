@@ -61,3 +61,20 @@ export async function createGeofence(req: Request, res: Response) {
   });
   return sendSuccess(res, geofence, 201, "Geocerca guardada");
 }
+
+export async function generateDefaultGeofences(req: Request, res: Response) {
+  const result = await service.generateDefaultGeofences();
+  auditLog({
+    req,
+    action: "GENERATE_DEFAULT_GEOFENCES",
+    userId: req.authUser?.id,
+    resourceType: "building_geofence",
+    details: result,
+  });
+  return sendSuccess(
+    res,
+    result,
+    200,
+    `${result.created} geocercas generadas`
+  );
+}

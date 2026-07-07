@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Building } from "@ito-map/shared";
+import type { Building, SearchResult } from "@ito-map/shared";
 
 export type RouteStats = {
   totalDistance: number;   // metros
@@ -13,6 +13,8 @@ type BuildingStore = {
   routeStats: RouteStats | null;
   routeError: string | null;
   searchTerm: string;
+  activeCategory: string | null;
+  selectedSearchResult: SearchResult | null;
 
   setSelectedBuilding: (building: Building | null) => void;
   setRouteDestination: (building: Building | null) => void;
@@ -20,6 +22,8 @@ type BuildingStore = {
   setRouteStats: (stats: RouteStats | null) => void;
   setRouteError: (error: string | null) => void;
   setSearchTerm: (value: string) => void;
+  setActiveCategory: (category: string | null) => void;
+  setSelectedSearchResult: (result: SearchResult | null) => void;
   clearRoute: () => void;
   clearSelection: () => void;
   resetBuildingState: () => void;
@@ -32,6 +36,8 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
   routeStats: null,
   routeError: null,
   searchTerm: "",
+  activeCategory: null,
+  selectedSearchResult: null,
 
   setSelectedBuilding: (building) =>
     set((state) =>
@@ -72,6 +78,16 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
           }
     ),
 
+  setActiveCategory: (category) =>
+    set({
+      activeCategory: category,
+    }),
+
+  setSelectedSearchResult: (result) =>
+    set({
+      selectedSearchResult: result,
+    }),
+
   clearRoute: () =>
     set({
       routeDestination: null,
@@ -94,5 +110,7 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
       routeStats: null,
       routeError: null,
       searchTerm: "",
+      activeCategory: null,
+      selectedSearchResult: null,
     }),
 }));

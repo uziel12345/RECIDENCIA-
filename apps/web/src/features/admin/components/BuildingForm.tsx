@@ -160,14 +160,14 @@ function BuildingServicesSection({ buildingId }: { buildingId: string }) {
         </ul>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 max-[640px]:flex-col">
         <input
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="Nombre del servicio"
           disabled={adding}
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleAdd(); } }}
-          className="min-h-11 flex-1 rounded-lg border border-[#334155] bg-[#0f172a] px-3 text-[13px] text-[#e2e8f0] placeholder:text-[#475569] outline-none transition-[border-color] focus:border-[#ea580c]"
+          className="min-h-11 flex-1 rounded-lg border border-[#334155] bg-[#0f172a] px-3 text-[13px] text-[#e2e8f0] placeholder:text-[#475569] outline-none transition-[border-color] focus:border-[#ea580c] max-[640px]:w-full"
         />
         <input
           value={newDesc}
@@ -175,13 +175,13 @@ function BuildingServicesSection({ buildingId }: { buildingId: string }) {
           placeholder="Descripción (opcional)"
           disabled={adding}
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleAdd(); } }}
-          className="min-h-11 flex-[1.5] rounded-lg border border-[#334155] bg-[#0f172a] px-3 text-[13px] text-[#e2e8f0] placeholder:text-[#475569] outline-none transition-[border-color] focus:border-[#ea580c]"
+          className="min-h-11 flex-[1.5] rounded-lg border border-[#334155] bg-[#0f172a] px-3 text-[13px] text-[#e2e8f0] placeholder:text-[#475569] outline-none transition-[border-color] focus:border-[#ea580c] max-[640px]:w-full"
         />
         <button
           type="button"
           disabled={adding || !newName.trim()}
           onClick={() => void handleAdd()}
-          className="inline-flex min-h-11 flex-shrink-0 items-center justify-center rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3.5 text-[13px] font-bold text-white transition-[background-color,transform] hover:-translate-y-px hover:bg-[#c2410c] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-h-11 flex-shrink-0 items-center justify-center rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3.5 text-[13px] font-bold text-white transition-[background-color,transform] hover:-translate-y-px hover:bg-[#c2410c] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 max-[640px]:w-full"
         >
           {adding ? "…" : "Agregar"}
         </button>
@@ -301,7 +301,7 @@ function BuildingClassroomsSection({ buildingId }: { buildingId: string }) {
         </ul>
       )}
 
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-2 gap-2.5 max-[640px]:grid-cols-1">
         <input
           value={code}
           onChange={(e) => { setCode(e.target.value); setSaveError(null); }}
@@ -349,7 +349,7 @@ function BuildingClassroomsSection({ buildingId }: { buildingId: string }) {
           type="button"
           disabled={saving || !code.trim() || !name.trim()}
           onClick={() => void handleAdd()}
-          className="col-span-2 min-h-11 w-full rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3.5 text-[13px] font-bold text-white hover:bg-[#c2410c] disabled:cursor-not-allowed disabled:opacity-50"
+          className="col-span-2 min-h-11 w-full rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3.5 text-[13px] font-bold text-white hover:bg-[#c2410c] disabled:cursor-not-allowed disabled:opacity-50 max-[640px]:col-span-1"
         >
           {saving ? "Guardando…" : "Agregar aula"}
         </button>
@@ -495,7 +495,7 @@ function BuildingProceduresSection({ buildingId }: { buildingId: string }) {
       {/* Crear y vincular */}
       <div className="rounded-xl border border-[#1e3050] bg-[#131e2e] p-4">
         <p className="m-0 mb-3 text-[11px] font-bold uppercase tracking-wide text-[#475569]">Crear nuevo y vincular</p>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2 max-[640px]:grid-cols-1">
           <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Nombre del trámite o servicio" disabled={saving} className={`col-span-2 ${fieldCls}`} />
           <select value={newKind} onChange={(e) => setNewKind(e.target.value as ProcedureKind)} disabled={saving} className={fieldCls}>
             <option value="servicio">Servicio</option>
@@ -631,7 +631,7 @@ export function BuildingForm({
     <div className="rounded-[18px] border border-[#334155] bg-[#1e293b] shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
 
       {/* ── Header ── */}
-      <div className="flex items-start justify-between gap-3.5 border-b border-[#334155] px-6 py-5">
+      <div className="flex items-start justify-between gap-3.5 border-b border-[#334155] px-6 py-5 max-[640px]:flex-col max-[640px]:px-4 max-[640px]:py-4">
         <div>
           <h2 className="m-0 mb-1.5 text-[17px] font-bold text-[#f1f5f9]">
             {isEditing ? "Editar edificio" : "Crear edificio"}
@@ -650,7 +650,7 @@ export function BuildingForm({
           <button
             type="button"
             onClick={onCancelEdit}
-            className="inline-flex min-h-11 items-center whitespace-nowrap rounded-[10px] border border-[#334155] bg-transparent px-3 text-[13px] font-semibold text-[#94a3b8] transition-colors duration-[180ms] hover:bg-[#0f172a] hover:text-[#e2e8f0]"
+            className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-[10px] border border-[#334155] bg-transparent px-3 text-[13px] font-semibold text-[#94a3b8] transition-colors duration-[180ms] hover:bg-[#0f172a] hover:text-[#e2e8f0] max-[640px]:w-full"
           >
             Cancelar
           </button>
@@ -658,7 +658,7 @@ export function BuildingForm({
       </div>
 
       {/* ── Tab bar ── */}
-      <div className="flex border-b border-[#334155] px-2">
+      <div className="grid grid-cols-4 gap-1 border-b border-[#334155] px-2 py-2 max-[640px]:grid-cols-2 max-[640px]:px-3">
         {TABS.map((tab) => {
           const locked = !hasBuilding && tab.id !== "datos";
           const active = activeTab === tab.id;
@@ -669,10 +669,10 @@ export function BuildingForm({
               onClick={() => setActiveTab(tab.id)}
               title={locked ? "Guarda el edificio primero para acceder a esta sección" : undefined}
               className={[
-                "flex items-center gap-1.5 border-b-2 px-4 py-3.5 text-[13px] font-semibold transition-colors duration-[180ms]",
+                "flex min-h-12 items-center justify-center gap-1.5 rounded-[10px] border border-transparent px-3 py-2.5 text-[13px] font-semibold transition-colors duration-[180ms]",
                 active
-                  ? "border-[#ea580c] text-[#f1f5f9]"
-                  : "border-transparent text-[#64748b] hover:text-[#94a3b8]",
+                  ? "border-[#ea580c] bg-[rgba(234,88,12,0.14)] text-[#f1f5f9]"
+                  : "text-[#64748b] hover:bg-[#0f172a] hover:text-[#94a3b8]",
                 locked ? "cursor-default opacity-40" : "cursor-pointer",
               ].join(" ")}
             >
@@ -690,12 +690,12 @@ export function BuildingForm({
       </div>
 
       {/* ── Tab panels ── */}
-      <div className="p-6">
+      <div className="p-6 max-[640px]:p-4">
 
         {/* ── Datos generales ── */}
         {activeTab === "datos" && (
           <form onSubmit={onSubmit}>
-            <div className="grid grid-cols-2 gap-x-5 gap-y-5">
+            <div className="grid grid-cols-2 gap-x-5 gap-y-5 max-[640px]:grid-cols-1 max-[640px]:gap-y-4">
 
               {/* Código */}
               <label className="block">
@@ -728,7 +728,7 @@ export function BuildingForm({
               </label>
 
               {/* Slug */}
-              <label className="col-span-2 block">
+              <label className="col-span-2 block max-[640px]:col-span-1">
                 <span className={labelCls}>Slug</span>
                 <input
                   value={form.slug}
@@ -783,7 +783,7 @@ export function BuildingForm({
               </label>
 
               {/* Descripción */}
-              <label className="col-span-2 block">
+              <label className="col-span-2 block max-[640px]:col-span-1">
                 <span className={labelCls}>Descripción</span>
                 <textarea
                   value={form.description}
@@ -794,7 +794,7 @@ export function BuildingForm({
               </label>
 
               {/* Prioritario */}
-              <label className="col-span-2 flex cursor-pointer items-center gap-2.5 text-[13px] font-semibold text-[#94a3b8]">
+              <label className="col-span-2 flex cursor-pointer items-center gap-2.5 text-[13px] font-semibold text-[#94a3b8] max-[640px]:col-span-1 max-[640px]:items-start">
                 <input
                   type="checkbox"
                   checked={form.is_priority}
@@ -802,7 +802,7 @@ export function BuildingForm({
                   className="h-4 w-4 accent-[#ea580c]"
                 />
                 Marcar como edificio prioritario
-                <span className="ml-1 text-[11.5px] font-normal text-[#475569]">
+                <span className="ml-1 text-[11.5px] font-normal text-[#475569] max-[640px]:block">
                   (aparece en "Lugares destacados" del mapa)
                 </span>
               </label>
@@ -811,7 +811,7 @@ export function BuildingForm({
             <button
               type="submit"
               disabled={saving}
-              className="mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[10px] border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-4 text-[14px] font-bold text-white shadow-[0_6px_18px_rgba(234,88,12,0.25)] transition-[transform,background-color] duration-[180ms] hover:-translate-y-px hover:bg-[#c2410c] active:translate-y-0 disabled:cursor-not-allowed disabled:bg-[#475569] disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.45)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1e293b]"
+              className="mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[10px] border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-4 text-[14px] font-bold text-white shadow-[0_6px_18px_rgba(234,88,12,0.25)] transition-[transform,background-color] duration-[180ms] hover:-translate-y-px hover:bg-[#c2410c] active:translate-y-0 disabled:cursor-not-allowed disabled:bg-[#475569] disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.45)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1e293b] max-[640px]:sticky max-[640px]:bottom-3 max-[640px]:z-10 max-[640px]:min-h-12"
             >
               {saving ? (
                 <>

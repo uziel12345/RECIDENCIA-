@@ -131,26 +131,26 @@ export function AdminBuildingEditorPage() {
 
   return (
     <AdminLayout>
-      <div className="min-h-full px-8 py-7">
-        <header className="mb-7 flex flex-wrap items-start justify-between gap-4">
+      <div className="min-h-full px-8 py-7 max-[640px]:px-3.5 max-[640px]:py-4">
+        <header className="mb-7 flex flex-wrap items-start justify-between gap-4 max-[640px]:mb-4">
           <div>
             <p className="m-0 mb-1.5 text-[11px] font-bold uppercase tracking-wider text-[#f97316]">
               Gestion de campus
             </p>
-            <h1 className="m-0 mb-1.5 text-[28px] font-bold leading-tight text-[#f1f5f9]">
+            <h1 className="m-0 mb-1.5 text-[28px] font-bold leading-tight text-[#f1f5f9] max-[640px]:text-[23px]">
               {isEditing ? "Editar edificio" : "Agregar edificio"}
             </h1>
-            <p className="m-0 text-[14px] text-[#64748b]">
+            <p className="m-0 text-[14px] text-[#64748b] max-[640px]:text-[13px]">
               {building
                 ? safeText(building.name)
-                : "Registra la informacion principal del edificio."}
+                : "Registra la información principal del edificio."}
             </p>
           </div>
 
           <button
             type="button"
             onClick={() => navigate("/admin/buildings")}
-            className="inline-flex min-h-11 items-center justify-center rounded-[10px] border border-[#334155] bg-transparent px-4 text-[13px] font-semibold text-[#94a3b8] transition-colors duration-[180ms] hover:bg-[#1e293b] hover:text-[#e2e8f0]"
+            className="inline-flex min-h-11 items-center justify-center rounded-[10px] border border-[#334155] bg-transparent px-4 text-[13px] font-semibold text-[#94a3b8] transition-colors duration-[180ms] hover:bg-[#1e293b] hover:text-[#e2e8f0] max-[640px]:w-full"
           >
             Volver al listado
           </button>
@@ -176,12 +176,12 @@ export function AdminBuildingEditorPage() {
             Cargando editor...
           </div>
         ) : (
-          <section className="grid grid-cols-1 items-start gap-[22px] xl:grid-cols-[300px_1fr]">
-            <aside className="rounded-[18px] border border-[#334155] bg-[#1e293b] p-[22px] shadow-[0_4px_24px_rgba(0,0,0,0.3)] xl:sticky xl:top-6">
+          <section className="grid grid-cols-1 items-start gap-[22px] xl:grid-cols-[300px_1fr] max-[640px]:gap-4">
+            <aside className="rounded-[18px] border border-[#334155] bg-[#1e293b] p-[22px] shadow-[0_4px_24px_rgba(0,0,0,0.3)] xl:sticky xl:top-6 max-[640px]:rounded-[14px] max-[640px]:p-4">
               <p className="m-0 mb-3 text-[11px] font-bold uppercase tracking-wider text-[#f97316]">
                 Vista del edificio
               </p>
-              <div className="overflow-hidden rounded-[14px] border border-[#334155] bg-[#0f172a]">
+              <div className="overflow-hidden rounded-[14px] border border-[#334155] bg-[#0f172a] max-[640px]:hidden">
                 {coverUrl ? (
                   <img
                     src={coverUrl}
@@ -195,13 +195,13 @@ export function AdminBuildingEditorPage() {
                 )}
               </div>
 
-              <div className="mt-4">
+              <div className="mt-4 max-[640px]:mt-0">
                 <h2 className="m-0 mb-1 text-[18px] font-bold text-[#f1f5f9]">
                   {safeText(building?.name) || "Nuevo edificio"}
                 </h2>
                 <p className="m-0 text-[13px] leading-relaxed text-[#94a3b8]">
                   {safeText(building?.description) ||
-                    "La foto de portada se mostrara aqui al registrar imagenes."}
+                    "La foto de portada se mostrará aquí al registrar imágenes."}
                 </p>
               </div>
 
@@ -209,7 +209,7 @@ export function AdminBuildingEditorPage() {
                 <button
                   type="button"
                   onClick={() => setShowImages(true)}
-                  className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-[10px] border border-[rgba(139,92,246,0.35)] bg-[rgba(139,92,246,0.12)] px-4 text-[13px] font-bold text-[#c4b5fd] transition-colors duration-[180ms] hover:bg-[rgba(139,92,246,0.2)]"
+                  className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-[10px] border border-[rgba(139,92,246,0.35)] bg-[rgba(139,92,246,0.12)] px-4 text-[13px] font-bold text-[#c4b5fd] transition-colors duration-[180ms] hover:bg-[rgba(139,92,246,0.2)] max-[640px]:min-h-12 max-[640px]:bg-[rgba(139,92,246,0.18)]"
                 >
                   Administrar fotos
                 </button>
