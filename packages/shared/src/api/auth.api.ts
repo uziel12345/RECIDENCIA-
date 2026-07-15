@@ -60,3 +60,14 @@ export async function updateAdminUserStatusApi(
   );
   return response.user;
 }
+
+export async function resetAdminUserPasswordApi(
+  userId: string,
+  password: string
+): Promise<AuthUser> {
+  const response = await apiPatch<AdminUserResponse, { password: string }>(
+    `/auth/admin-users/${userId}/password`,
+    { password }
+  );
+  return response.user;
+}

@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { useBuildingStore } from "../../../store/building-store";
 import { useBuildingGlbStore } from "../../../store/building-glb-store";
+import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { CategoryBadge } from "../../../components/ui/CategoryBadge";
 import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
@@ -10,6 +12,13 @@ import { getBuildingImagesApi } from "@ito-map/shared";
 import type { BuildingImage } from "@ito-map/shared";
 import type { Building } from "../types/building";
 import { setSimulatedPosition } from "../../location/services/geolocation";
+import { useBuildingFullDetails } from "../hooks/useBuildingFullDetails";
+import { BuildingStatusBadge } from "./details/BuildingStatusBadge";
+import { BuildingClassroomsInfo } from "./details/BuildingClassroomsInfo";
+import { BuildingDepartmentsInfo } from "./details/BuildingDepartmentsInfo";
+import { BuildingCubiclesInfo } from "./details/BuildingCubiclesInfo";
+import { BuildingHeadquartersInfo } from "./details/BuildingHeadquartersInfo";
+import { BuildingProceduresInfo } from "./details/BuildingProceduresInfo";
 
 type BuildingInfoCardProps = {
   building: Building;
@@ -32,7 +41,18 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
   );
   const routeError = useBuildingStore((state) => state.routeError);
   const routeDestination = useBuildingStore((state) => state.routeDestination);
+  const highlightedSection = useBuildingStore((state) => state.highlightedSection);
   const glbPosition = useBuildingGlbStore((state) => state.positions[building.id]);
+  // "Cómo llegar" y "Estoy aquí" dependen de x/z calibrados por edificio;
+  // mientras el campus no esté totalmente calibrado, solo el superadmin
+  // las ve para poder probarlas.
+  const canUseNavTools = useAdminAuthStore(
+    (state) => state.isAuthenticated && state.user?.role === "superadmin"
+  );
+
+  function highlightFor(section: string): string | undefined {
+    return highlightedSection?.section === section ? highlightedSection.targetId : undefined;
+  }
 
   const [galleryImages, setGalleryImages] = useState<BuildingImage[]>([]);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
@@ -54,6 +74,8 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
   }, [building.id]);
 
   const visibleImages = galleryImages.filter((img) => !failedImages.has(img.id));
+  const { data: details, loading: detailsLoading, error: detailsError } =
+    useBuildingFullDetails(building.id);
 
   const accent = getCategoryAccent(building.category_name);
   const buildingName = normalizeDisplayText(building.name);
@@ -69,7 +91,11 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
       : null);
 
   return (
-    <article
+    <motion.article
+      key={building.id}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
       className="ito-building-info-card flex flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-maps)]"
       aria-label={`Información de ${buildingName}`}
     >
@@ -86,7 +112,10 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
             <div className="text-[11px] font-bold uppercase tracking-wider text-white/85">
               Edificio {buildingCode || "Sin código"}
             </div>
-            <h3 className="mt-0.5 text-balance text-[17px] font-bold leading-tight text-white">
+            <h3
+              className="mt-0.5 text-balance text-[19px] font-semibold leading-tight text-white"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
               {buildingName}
             </h3>
           </div>
@@ -116,7 +145,10 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
             <div className="text-[11px] font-bold uppercase tracking-wider opacity-90">
               Edificio {buildingCode || "Sin código"}
             </div>
-            <h3 className="mt-0.5 text-balance text-[17px] font-bold leading-tight">
+            <h3
+              className="mt-0.5 text-balance text-[19px] font-semibold leading-tight"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
               {buildingName}
             </h3>
           </div>
@@ -131,7 +163,7 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
         </div>
       )}
 
-      <div className="flex flex-col gap-3.5 p-4">
+      <div className="ito-building-info-card__body flex flex-col gap-3.5 p-4">
         <div className="flex items-center justify-between gap-2.5">
           <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
             Categoría
@@ -157,6 +189,33 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
           </div>
         )}
 
+        {detailsLoading && !details && (
+          <div className="flex items-center justify-center gap-2 py-3 text-[12.5px] text-[var(--color-text-muted)]">
+            <div
+              className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-border)] border-t-[var(--color-brand-600)]"
+              aria-hidden="true"
+            />
+            Cargando información del edificio…
+          </div>
+        )}
+
+        {detailsError && !details && (
+          <div className="text-[12.5px] italic text-[var(--color-text-subtle)]">
+            No se pudo cargar la información adicional de este edificio.
+          </div>
+        )}
+
+        {details && (
+          <>
+            <BuildingStatusBadge status={details.status} week={details.schedule.week} />
+            <BuildingClassroomsInfo classrooms={details.classrooms} highlightId={highlightFor("aulas")} />
+            <BuildingDepartmentsInfo departments={details.departments} highlightId={highlightFor("departamentos")} />
+            <BuildingCubiclesInfo cubicles={details.teacherCubicles} highlightId={highlightFor("cubiculos")} />
+            <BuildingHeadquartersInfo headquarters={details.headquarters} highlightId={highlightFor("jefaturas")} />
+            <BuildingProceduresInfo procedures={details.procedures} highlightId={highlightFor("tramites")} />
+          </>
+        )}
+
         {routeError && routeDestination?.id === building.id && (
           <div
             className="flex items-start gap-2 rounded-lg border border-[#fecaca] bg-[#fef2f2] px-2.5 py-2 text-[12px] font-medium leading-snug text-[#dc2626]"
@@ -173,7 +232,7 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
               Imágenes
             </span>
             <div
-              className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="ito-building-gallery flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               aria-label="Galería de imágenes del edificio"
             >
               {visibleImages.slice(0, 6).map((img) => (
@@ -185,40 +244,44 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
                   onError={() =>
                     setFailedImages((prev) => new Set([...prev, img.id]))
                   }
-                  className="h-[60px] w-20 flex-shrink-0 rounded-lg object-cover ring-1 ring-inset ring-black/5"
+                  className="ito-building-gallery__image h-[60px] w-20 flex-shrink-0 rounded-lg object-cover ring-1 ring-inset ring-black/5"
                 />
               ))}
             </div>
           </div>
         )}
 
-        <div className="flex flex-col gap-2 pt-1">
-          <button
-            type="button"
-            className="ito-btn-nav-primary inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--color-brand-600)] px-4 text-[13px] font-bold text-white shadow-[0_2px_6px_rgba(234,88,12,0.25)] transition hover:-translate-y-px hover:bg-[var(--color-brand-700)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2"
-            onClick={() => setRouteDestination(building)}
-          >
-            <Icon name="route" size={16} />
-            <span>Cómo llegar</span>
-          </button>
+        <div className="ito-building-info-card__actions flex flex-col gap-2 pt-1">
+          {canUseNavTools && (
+            <button
+              type="button"
+              className="ito-btn-nav-primary inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--color-brand-600)] px-4 text-[13px] font-bold text-white shadow-[0_2px_6px_rgba(234,88,12,0.25)] transition hover:-translate-y-px hover:bg-[var(--color-brand-700)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2"
+              onClick={() => setRouteDestination(building)}
+            >
+              <Icon name="route" size={16} />
+              <span>Cómo llegar</span>
+            </button>
+          )}
 
-          <button
-            type="button"
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 text-[13px] font-bold text-[var(--color-text)] transition hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => {
-              if (!locationPosition) return;
-              setSimulatedPosition({
-                buildingId: building.id,
-                buildingName,
-                x: locationPosition.x,
-                z: locationPosition.z,
-              });
-            }}
-            disabled={!locationPosition}
-          >
-            <Icon name="crosshair" size={16} />
-            <span>Estoy aquí</span>
-          </button>
+          {canUseNavTools && (
+            <button
+              type="button"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 text-[13px] font-bold text-[var(--color-text)] transition hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => {
+                if (!locationPosition) return;
+                setSimulatedPosition({
+                  buildingId: building.id,
+                  buildingName,
+                  x: locationPosition.x,
+                  z: locationPosition.z,
+                });
+              }}
+              disabled={!locationPosition}
+            >
+              <Icon name="crosshair" size={16} />
+              <span>Estoy aquí</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -230,6 +293,6 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
           </button>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }

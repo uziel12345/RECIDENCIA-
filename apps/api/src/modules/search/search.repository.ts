@@ -1,6 +1,6 @@
 import type { Pool } from "mysql2/promise";
 import { pool } from "../../db/connection.js";
-import type { SearchResultRow } from "./search.types.js";
+import type { GateSearchResultRow, SearchResultRow } from "./search.types.js";
 
 // Búsqueda con LIKE %word% sobre columnas clave.
 // Estrategia elegida: LIKE en lugar de FULLTEXT porque el volumen de datos del
@@ -61,9 +61,14 @@ export class SearchRepository {
   }
 
   async searchClassrooms(words: string[]): Promise<SearchResultRow[]> {
+    // c.type se incluye para que palabras genéricas como "aula" o
+    // "laboratorio" (que no aparecen en el código/nombre del espacio, solo
+    // clasifican su tipo) sigan encontrando resultados cuando se combinan
+    // con otra palabra específica, ej. "aula C1".
     const { clause, params } = buildWordsClause(words, [
       "c.name",
       "c.code",
+      "c.type",
       "b.name",
     ]);
     const [rows] = await this.db.query<SearchResultRow[]>(
@@ -120,6 +125,107 @@ export class SearchRepository {
        ORDER BY p.name ASC
        LIMIT ?`,
       [resultKind, kindLabel, procedureKind, ...params, RESULT_LIMIT]
+    );
+    return rows;
+  }
+
+  async searchDepartments(words: string[]): Promise<SearchResultRow[]> {
+    const { clause, params } = buildWordsClause(words, [
+      "d.name",
+      "d.description",
+    ]);
+    const [rows] = await this.db.query<SearchResultRow[]>(
+      `SELECT
+         d.id,
+         'department'                        AS kind,
+         d.name                              AS title,
+         CONCAT('Departamento · ', b.name) AS subtitle,
+         d.building_id                       AS buildingId,
+         b.name                              AS buildingName
+       FROM departments d
+       INNER JOIN buildings b ON d.building_id = b.id
+       WHERE d.deleted_at IS NULL
+         AND d.is_active = TRUE
+         AND ${clause}
+       ORDER BY d.name ASC
+       LIMIT ?`,
+      [...params, RESULT_LIMIT]
+    );
+    return rows;
+  }
+
+  // teacher_cubicles no tiene columna "name" (solo `code`) — se empareja por
+  // código de cubículo y por el nombre del profesor asignado (si existe).
+  async searchCubicles(words: string[]): Promise<SearchResultRow[]> {
+    const { clause, params } = buildWordsClause(words, [
+      "tc.code",
+      "p.full_name",
+    ]);
+    const [rows] = await this.db.query<SearchResultRow[]>(
+      `SELECT
+         tc.id,
+         'cubicle'                                    AS kind,
+         tc.code                                       AS title,
+         CONCAT(COALESCE(p.full_name, 'Cubículo'), ' · ', b.name) AS subtitle,
+         tc.building_id                                AS buildingId,
+         b.name                                        AS buildingName
+       FROM teacher_cubicles tc
+       INNER JOIN buildings b ON tc.building_id = b.id
+       LEFT JOIN professors p ON tc.professor_id = p.id AND p.deleted_at IS NULL
+       WHERE tc.deleted_at IS NULL
+         AND tc.is_active = TRUE
+         AND ${clause}
+       ORDER BY b.name ASC, tc.code ASC
+       LIMIT ?`,
+      [...params, RESULT_LIMIT]
+    );
+    return rows;
+  }
+
+  async searchHeadquarters(words: string[]): Promise<SearchResultRow[]> {
+    const { clause, params } = buildWordsClause(words, ["h.name"]);
+    const [rows] = await this.db.query<SearchResultRow[]>(
+      `SELECT
+         h.id,
+         'headquarters'                    AS kind,
+         h.name                            AS title,
+         CONCAT('Jefatura · ', b.name)    AS subtitle,
+         h.building_id                     AS buildingId,
+         b.name                            AS buildingName
+       FROM headquarters h
+       INNER JOIN buildings b ON h.building_id = b.id
+       WHERE h.deleted_at IS NULL
+         AND h.is_active = TRUE
+         AND ${clause}
+       ORDER BY h.name ASC
+       LIMIT ?`,
+      [...params, RESULT_LIMIT]
+    );
+    return rows;
+  }
+
+  async searchGates(words: string[]): Promise<GateSearchResultRow[]> {
+    const { clause, params } = buildWordsClause(words, [
+      "g.name",
+      "g.description",
+    ]);
+    const [rows] = await this.db.query<GateSearchResultRow[]>(
+      `SELECT
+         g.id,
+         'gate'      AS kind,
+         g.name      AS title,
+         'Acceso al campus' AS subtitle,
+         NULL        AS buildingId,
+         NULL        AS buildingName,
+         g.x         AS x,
+         g.z         AS z
+       FROM gates g
+       WHERE g.deleted_at IS NULL
+         AND g.is_active = TRUE
+         AND ${clause}
+       ORDER BY g.name ASC
+       LIMIT ?`,
+      [...params, RESULT_LIMIT]
     );
     return rows;
   }

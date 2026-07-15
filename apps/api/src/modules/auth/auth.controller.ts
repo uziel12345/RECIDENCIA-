@@ -5,9 +5,14 @@ import {
   invalidateAdminToken,
   listAdminUsers,
   loginAdmin,
+  resetAdminUserPassword,
   updateAdminUserStatus,
 } from "./auth.service.js";
-import type { CreateAdminUserInput, LoginInput } from "./auth.schema.js";
+import type {
+  CreateAdminUserInput,
+  LoginInput,
+  ResetAdminUserPasswordInput,
+} from "./auth.schema.js";
 import { auditLog } from "../../shared/services/audit.service.js";
 
 const SESSION_COOKIE = "admin_session";
@@ -95,6 +100,15 @@ export async function createAdminUserController(
 ) {
   const user = await createAdminUser(req.body);
 
+  auditLog({
+    req,
+    action: "CREATE_ADMIN_USER",
+    userId: req.authUser?.id,
+    resourceType: "admin_user",
+    resourceId: user.id,
+    details: { username: user.username, role: user.role },
+  });
+
   return res.status(201).json({
     success: true,
     data: {
@@ -117,6 +131,46 @@ export async function updateAdminUserStatusController(
       message: "Usuario administrador no encontrado",
     });
   }
+
+  auditLog({
+    req,
+    action: "UPDATE_ADMIN_USER_STATUS",
+    userId: req.authUser?.id,
+    resourceType: "admin_user",
+    resourceId: user.id,
+    details: { is_active: user.is_active },
+  });
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      user,
+    },
+  });
+}
+
+export async function resetAdminUserPasswordController(
+  req: Request,
+  res: Response
+) {
+  const id = String(req.params.id);
+  const { password } = req.body as ResetAdminUserPasswordInput;
+  const user = await resetAdminUserPassword(id, password);
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "Usuario administrador no encontrado",
+    });
+  }
+
+  auditLog({
+    req,
+    action: "RESET_ADMIN_USER_PASSWORD",
+    userId: req.authUser?.id,
+    resourceType: "admin_user",
+    resourceId: user.id,
+  });
 
   return res.status(200).json({
     success: true,

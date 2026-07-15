@@ -2,20 +2,32 @@ import type { RowDataPacket } from "mysql2";
 
 export type ProcedureKind = "tramite" | "servicio";
 
+export type ProcedureRequirementType = "requisito" | "documento";
+
 export interface ProcedureRow extends RowDataPacket {
   id: string;
   name: string;
   slug: string;
   description: string | null;
+  resource_url: string | null;
   kind: ProcedureKind;
+  department_id: string | null;
+  department_name: string | null;
+  internal_location: string | null;
+  schedule_text: string | null;
   is_active: boolean | number;
   deleted_at: string | null;
+}
+
+export interface ProcedureForAdminRow extends ProcedureRow {
+  building_count: number;
 }
 
 export interface ProcedureRequirementRow extends RowDataPacket {
   id: string;
   procedure_id: string;
   description: string;
+  type: ProcedureRequirementType;
   is_mandatory: boolean | number;
   display_order: number;
 }
@@ -32,7 +44,12 @@ export interface ProcedureForBuildingRow extends RowDataPacket {
   name: string;
   slug: string;
   description: string | null;
+  resource_url: string | null;
   kind: ProcedureKind;
+  department_id: string | null;
+  department_name: string | null;
+  internal_location: string | null;
+  schedule_text: string | null;
   is_active: boolean | number;
   notes: string | null;
 }

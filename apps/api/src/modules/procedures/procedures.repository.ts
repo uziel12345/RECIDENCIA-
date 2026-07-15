@@ -3,6 +3,7 @@ import type { Pool, RowDataPacket } from "mysql2/promise";
 import { pool } from "../../db/connection.js";
 import type {
   BuildingForProcedureRow,
+  ProcedureForAdminRow,
   ProcedureForBuildingRow,
   ProcedureRequirementRow,
   ProcedureRow,
@@ -18,9 +19,15 @@ export class ProceduresRepository {
     const params: unknown[] = [];
     let sql: string;
 
+    const PROCEDURE_COLUMNS_NO_DEPT_JOIN = `
+      p.id, p.name, p.slug, p.description, p.resource_url, p.kind,
+      p.department_id, NULL AS department_name, p.internal_location, p.schedule_text,
+      p.is_active, p.deleted_at
+    `;
+
     if (filters.buildingId) {
       sql = `
-        SELECT p.id, p.name, p.slug, p.description, p.kind, p.is_active, p.deleted_at
+        SELECT ${PROCEDURE_COLUMNS_NO_DEPT_JOIN}
         FROM procedures p
         INNER JOIN building_procedures bp ON bp.procedure_id = p.id
         WHERE p.deleted_at IS NULL AND p.is_active = TRUE AND bp.building_id = ?
@@ -28,7 +35,7 @@ export class ProceduresRepository {
       params.push(filters.buildingId);
     } else {
       sql = `
-        SELECT p.id, p.name, p.slug, p.description, p.kind, p.is_active, p.deleted_at
+        SELECT ${PROCEDURE_COLUMNS_NO_DEPT_JOIN}
         FROM procedures p
         WHERE p.deleted_at IS NULL AND p.is_active = TRUE
       `;
@@ -45,17 +52,45 @@ export class ProceduresRepository {
     return rows;
   }
 
+  async findAllForAdmin(filters: { kind?: string }): Promise<ProcedureForAdminRow[]> {
+    const params: unknown[] = [];
+    let sql = `
+      SELECT p.id, p.name, p.slug, p.description, p.resource_url, p.kind,
+        p.department_id, NULL AS department_name, p.internal_location, p.schedule_text,
+        p.is_active, p.deleted_at,
+        (SELECT COUNT(*) FROM building_procedures bp WHERE bp.procedure_id = p.id) AS building_count
+      FROM procedures p
+      WHERE p.deleted_at IS NULL
+    `;
+
+    if (filters.kind) {
+      sql += " AND p.kind = ?";
+      params.push(filters.kind);
+    }
+
+    sql += " ORDER BY p.is_active DESC, p.kind ASC, p.name ASC";
+
+    const [rows] = await this.db.query<ProcedureForAdminRow[]>(sql, params);
+    return rows;
+  }
+
   async findById(id: string): Promise<ProcedureRow | null> {
     const [rows] = await this.db.query<ProcedureRow[]>(
-      `SELECT id, name, slug, description, kind, is_active, deleted_at
-       FROM procedures WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
+      `SELECT p.id, p.name, p.slug, p.description, p.resource_url, p.kind,
+              p.department_id, dep.name AS department_name, p.internal_location, p.schedule_text,
+              p.is_active, p.deleted_at
+       FROM procedures p
+       LEFT JOIN departments dep ON dep.id = p.department_id AND dep.deleted_at IS NULL
+       WHERE p.id = ? AND p.deleted_at IS NULL LIMIT 1`,
       [id]
     );
     return rows[0] ?? null;
   }
 
   async findBySlug(slug: string, excludeId?: string): Promise<ProcedureRow | null> {
-    let sql = `SELECT id, name, slug, description, kind, is_active, deleted_at
+    let sql = `SELECT id, name, slug, description, resource_url, kind,
+                      department_id, NULL AS department_name, internal_location, schedule_text,
+                      is_active, deleted_at
                FROM procedures WHERE slug = ? AND deleted_at IS NULL`;
     const params: unknown[] = [slug];
     if (excludeId) {
@@ -71,7 +106,7 @@ export class ProceduresRepository {
     procedureId: string
   ): Promise<ProcedureRequirementRow[]> {
     const [rows] = await this.db.query<ProcedureRequirementRow[]>(
-      `SELECT id, procedure_id, description, is_mandatory, display_order
+      `SELECT id, procedure_id, description, type, is_mandatory, display_order
        FROM procedure_requirements
        WHERE procedure_id = ?
        ORDER BY display_order ASC, id ASC`,
@@ -85,7 +120,7 @@ export class ProceduresRepository {
   ): Promise<ProcedureRequirementRow[]> {
     if (ids.length === 0) return [];
     const [rows] = await this.db.query<ProcedureRequirementRow[]>(
-      `SELECT id, procedure_id, description, is_mandatory, display_order
+      `SELECT id, procedure_id, description, type, is_mandatory, display_order
        FROM procedure_requirements
        WHERE procedure_id IN (?)
        ORDER BY procedure_id, display_order ASC, id ASC`,
@@ -110,9 +145,12 @@ export class ProceduresRepository {
 
   async findByBuilding(buildingId: string): Promise<ProcedureForBuildingRow[]> {
     const [rows] = await this.db.query<ProcedureForBuildingRow[]>(
-      `SELECT p.id, p.name, p.slug, p.description, p.kind, p.is_active, bp.notes
+      `SELECT p.id, p.name, p.slug, p.description, p.resource_url, p.kind,
+              p.department_id, dep.name AS department_name, p.internal_location, p.schedule_text,
+              p.is_active, bp.notes
        FROM building_procedures bp
        INNER JOIN procedures p ON bp.procedure_id = p.id
+       LEFT JOIN departments dep ON dep.id = p.department_id AND dep.deleted_at IS NULL
        WHERE bp.building_id = ? AND p.deleted_at IS NULL AND p.is_active = TRUE
        ORDER BY p.kind ASC, p.name ASC`,
       [buildingId]
@@ -124,32 +162,54 @@ export class ProceduresRepository {
     name: string;
     slug: string;
     description: string | null;
+    resource_url: string | null;
     kind: string;
+    department_id: string | null;
+    internal_location: string | null;
+    schedule_text: string | null;
     is_active: boolean;
   }): Promise<string> {
     const id = crypto.randomUUID();
     await this.db.query(
-      `INSERT INTO procedures (id, name, slug, description, kind, is_active)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [id, input.name, input.slug, input.description, input.kind, input.is_active]
+      `INSERT INTO procedures
+         (id, name, slug, description, resource_url, kind, department_id, internal_location, schedule_text, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        input.name,
+        input.slug,
+        input.description,
+        input.resource_url,
+        input.kind,
+        input.department_id,
+        input.internal_location,
+        input.schedule_text,
+        input.is_active,
+      ]
     );
     return id;
   }
 
   async createRequirements(
     procedureId: string,
-    reqs: Array<{ description: string; is_mandatory?: boolean; display_order?: number }>
+    reqs: Array<{
+      description: string;
+      type?: string;
+      is_mandatory?: boolean;
+      display_order?: number;
+    }>
   ): Promise<void> {
     if (reqs.length === 0) return;
     const values = reqs.map((r) => [
       crypto.randomUUID(),
       procedureId,
       r.description,
+      r.type ?? "requisito",
       r.is_mandatory ?? true,
       r.display_order ?? 0,
     ]);
     await this.db.query(
-      `INSERT INTO procedure_requirements (id, procedure_id, description, is_mandatory, display_order)
+      `INSERT INTO procedure_requirements (id, procedure_id, description, type, is_mandatory, display_order)
        VALUES ?`,
       [values]
     );
@@ -161,21 +221,42 @@ export class ProceduresRepository {
       name: string;
       slug: string;
       description: string | null;
+      resource_url: string | null;
       kind: string;
+      department_id: string | null;
+      internal_location: string | null;
+      schedule_text: string | null;
       is_active: boolean;
     }
   ): Promise<void> {
     await this.db.query(
       `UPDATE procedures
-       SET name = ?, slug = ?, description = ?, kind = ?, is_active = ?
+       SET name = ?, slug = ?, description = ?, resource_url = ?, kind = ?,
+           department_id = ?, internal_location = ?, schedule_text = ?, is_active = ?
        WHERE id = ? AND deleted_at IS NULL`,
-      [input.name, input.slug, input.description, input.kind, input.is_active, id]
+      [
+        input.name,
+        input.slug,
+        input.description,
+        input.resource_url,
+        input.kind,
+        input.department_id,
+        input.internal_location,
+        input.schedule_text,
+        input.is_active,
+        id,
+      ]
     );
   }
 
   async replaceRequirements(
     procedureId: string,
-    reqs: Array<{ description: string; is_mandatory?: boolean; display_order?: number }>
+    reqs: Array<{
+      description: string;
+      type?: string;
+      is_mandatory?: boolean;
+      display_order?: number;
+    }>
   ): Promise<void> {
     await this.db.query(
       `DELETE FROM procedure_requirements WHERE procedure_id = ?`,
@@ -201,7 +282,7 @@ export class ProceduresRepository {
 
   async findRequirementById(id: string): Promise<ProcedureRequirementRow | null> {
     const [rows] = await this.db.query<ProcedureRequirementRow[]>(
-      `SELECT id, procedure_id, description, is_mandatory, display_order
+      `SELECT id, procedure_id, description, type, is_mandatory, display_order
        FROM procedure_requirements WHERE id = ? LIMIT 1`,
       [id]
     );
@@ -210,16 +291,22 @@ export class ProceduresRepository {
 
   async addRequirement(
     procedureId: string,
-    input: { description: string; is_mandatory?: boolean; display_order?: number }
+    input: {
+      description: string;
+      type?: string;
+      is_mandatory?: boolean;
+      display_order?: number;
+    }
   ): Promise<string> {
     const id = crypto.randomUUID();
     await this.db.query(
-      `INSERT INTO procedure_requirements (id, procedure_id, description, is_mandatory, display_order)
-       VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO procedure_requirements (id, procedure_id, description, type, is_mandatory, display_order)
+       VALUES (?, ?, ?, ?, ?, ?)`,
       [
         id,
         procedureId,
         input.description,
+        input.type ?? "requisito",
         input.is_mandatory ?? true,
         input.display_order ?? 0,
       ]
@@ -229,13 +316,22 @@ export class ProceduresRepository {
 
   async updateRequirement(
     id: string,
-    input: { description?: string; is_mandatory?: boolean; display_order?: number }
+    input: {
+      description?: string;
+      type?: string;
+      is_mandatory?: boolean;
+      display_order?: number;
+    }
   ): Promise<void> {
     const fields: string[] = [];
     const params: unknown[] = [];
     if (input.description !== undefined) {
       fields.push("description = ?");
       params.push(input.description);
+    }
+    if (input.type !== undefined) {
+      fields.push("type = ?");
+      params.push(input.type);
     }
     if (input.is_mandatory !== undefined) {
       fields.push("is_mandatory = ?");
@@ -293,6 +389,14 @@ export class ProceduresRepository {
   async buildingExists(id: string): Promise<boolean> {
     const [rows] = await this.db.query<RowDataPacket[]>(
       `SELECT id FROM buildings WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
+      [id]
+    );
+    return rows.length > 0;
+  }
+
+  async departmentExists(id: string): Promise<boolean> {
+    const [rows] = await this.db.query<RowDataPacket[]>(
+      `SELECT id FROM departments WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
       [id]
     );
     return rows.length > 0;

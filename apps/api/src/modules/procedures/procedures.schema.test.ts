@@ -75,6 +75,40 @@ describe("createProcedureSchema", () => {
     }
   });
 
+  it("accepts department_id/internal_location/schedule_text", () => {
+    const result = createProcedureSchema.safeParse({
+      name: "Constancia",
+      slug: "constancia",
+      kind: "servicio",
+      department_id: VALID_UUID,
+      internal_location: "Planta baja, oficina 3",
+      schedule_text: "Lunes a viernes 9:00-14:00",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid department_id (not UUID)", () => {
+    const result = createProcedureSchema.safeParse({
+      name: "Constancia",
+      slug: "constancia",
+      kind: "servicio",
+      department_id: "not-a-uuid",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts null department_id/internal_location/schedule_text", () => {
+    const result = createProcedureSchema.safeParse({
+      name: "Constancia",
+      slug: "constancia",
+      kind: "servicio",
+      department_id: null,
+      internal_location: null,
+      schedule_text: null,
+    });
+    expect(result.success).toBe(true);
+  });
+
   it("rejects slug with uppercase letters", () => {
     const result = createProcedureSchema.safeParse({
       name: "X",

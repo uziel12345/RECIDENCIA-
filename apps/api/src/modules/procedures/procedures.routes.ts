@@ -7,6 +7,7 @@ import {
   getProcedureById,
   getProcedures,
   getProceduresByBuilding,
+  getProceduresForAdmin,
   linkProcedureToBuilding,
   unlinkProcedureFromBuilding,
   updateProcedure,
@@ -41,6 +42,13 @@ proceduresRouter.get(
   "/",
   validateQuery(proceduresQuerySchema),
   getProcedures
+);
+
+proceduresRouter.get(
+  "/admin/all",
+  authenticate,
+  authorizePermission("can_view_buildings"),
+  getProceduresForAdmin
 );
 
 proceduresRouter.get(

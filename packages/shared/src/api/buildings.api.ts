@@ -3,9 +3,7 @@ import type {
   Building,
   BuildingCategory,
   BuildingImage,
-  BuildingService,
   CreateBuildingInput,
-  CreateBuildingServiceInput,
   UpdateBuildingInput,
   UpdateBuildingStatusInput,
 } from "../types/building.types.js";
@@ -123,25 +121,4 @@ export function deleteBuildingApi(
   id: string
 ): Promise<{ id: string; deleted: boolean }> {
   return apiDelete<{ id: string; deleted: boolean }>(`/buildings/${id}`);
-}
-
-export function getBuildingServicesApi(buildingId: string): Promise<BuildingService[]> {
-  return apiGet<BuildingService[]>(`/buildings/${buildingId}/services`);
-}
-
-export function addBuildingServiceApi(
-  buildingId: string,
-  input: CreateBuildingServiceInput
-): Promise<BuildingService> {
-  return apiPost<BuildingService, CreateBuildingServiceInput>(
-    `/buildings/${buildingId}/services`,
-    input
-  );
-}
-
-export function deleteBuildingServiceApi(
-  buildingId: string,
-  serviceId: string
-): Promise<{ id: string }> {
-  return apiDelete<{ id: string }>(`/buildings/${buildingId}/services/${serviceId}`);
 }

@@ -15,6 +15,10 @@ export class ProceduresService {
     return this.repository.findAllActive(filters);
   }
 
+  async getAllForAdmin(filters: { kind?: string }) {
+    return this.repository.findAllForAdmin(filters);
+  }
+
   async getById(id: string) {
     const procedure = await this.repository.findById(id);
     if (!procedure) throw new ApiError(404, "Trámite/servicio no encontrado");
@@ -49,11 +53,22 @@ export class ProceduresService {
       throw new ApiError(409, `Ya existe un trámite/servicio con el slug '${input.slug}'`);
     }
 
+    if (input.department_id) {
+      const departmentExists = await this.repository.departmentExists(input.department_id);
+      if (!departmentExists) {
+        throw new ApiError(404, "El departamento indicado no existe");
+      }
+    }
+
     const id = await this.repository.create({
       name: input.name,
       slug: input.slug,
       description: input.description ?? null,
+      resource_url: input.resource_url ?? null,
       kind: input.kind,
+      department_id: input.department_id ?? null,
+      internal_location: input.internal_location ?? null,
+      schedule_text: input.schedule_text ?? null,
       is_active: input.is_active ?? true,
     });
 
@@ -77,12 +92,33 @@ export class ProceduresService {
       }
     }
 
+    if (
+      input.department_id !== undefined &&
+      input.department_id !== null &&
+      input.department_id !== current.department_id
+    ) {
+      const departmentExists = await this.repository.departmentExists(input.department_id);
+      if (!departmentExists) {
+        throw new ApiError(404, "El departamento indicado no existe");
+      }
+    }
+
     await this.repository.update(id, {
       name: input.name ?? current.name,
       slug,
       description:
         input.description !== undefined ? input.description : current.description,
+      resource_url:
+        input.resource_url !== undefined ? input.resource_url : current.resource_url,
       kind: input.kind ?? current.kind,
+      department_id:
+        input.department_id !== undefined ? input.department_id : current.department_id,
+      internal_location:
+        input.internal_location !== undefined
+          ? input.internal_location
+          : current.internal_location,
+      schedule_text:
+        input.schedule_text !== undefined ? input.schedule_text : current.schedule_text,
       is_active:
         input.is_active !== undefined ? input.is_active : Boolean(current.is_active),
     });

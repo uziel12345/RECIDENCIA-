@@ -1,12 +1,9 @@
 import { Router } from "express";
 import {
-  addBuildingService,
   createBuilding,
   deleteBuilding,
-  deleteBuildingService,
   getBuildingById,
   getBuildingImages,
-  getBuildingServices,
   getBuildings,
   getBuildingsForAdmin,
   getBuildingsForAdminPaginated,
@@ -17,7 +14,7 @@ import {
 import { authenticate } from "../auth/middlewares/authenticate.middleware.js";
 import { authorizePermission } from "../auth/middlewares/authorize.middleware.js";
 import { validateBody, validateParams } from "../../shared/middlewares/validator.js";
-import { createBuildingSchema, updateBuildingSchema, buildingIdSchema, createBuildingServiceSchema } from "./buildings.schema.js";
+import { createBuildingSchema, updateBuildingSchema, buildingIdSchema } from "./buildings.schema.js";
 
 const router = Router();
 
@@ -39,24 +36,6 @@ router.get(
 );
 
 router.get("/:id/images", validateParams(buildingIdSchema), getBuildingImages);
-router.get("/:id/services", validateParams(buildingIdSchema), getBuildingServices);
-
-router.post(
-  "/:id/services",
-  authenticate,
-  authorizePermission("can_edit_buildings"),
-  validateParams(buildingIdSchema),
-  validateBody(createBuildingServiceSchema),
-  addBuildingService
-);
-
-router.delete(
-  "/:id/services/:serviceId",
-  authenticate,
-  authorizePermission("can_edit_buildings"),
-  validateParams(buildingIdSchema),
-  deleteBuildingService
-);
 
 router.get("/:id", validateParams(buildingIdSchema), getBuildingById);
 

@@ -1,12 +1,14 @@
 import { z } from "zod";
 
 const procedureKindSchema = z.enum(["tramite", "servicio"]);
+const requirementTypeSchema = z.enum(["requisito", "documento"]);
 
 const requirementItemSchema = z.object({
   description: z
     .string({ required_error: "La descripción del requisito es obligatoria" })
     .min(1, "La descripción no puede estar vacía")
     .max(1000),
+  type: requirementTypeSchema.optional(),
   is_mandatory: z.boolean().optional(),
   display_order: z.number().int("El orden debe ser un entero").min(0).optional(),
 });
@@ -25,7 +27,11 @@ export const createProcedureSchema = z.object({
       "El slug solo puede contener letras minúsculas, dígitos y guiones (sin guión al inicio ni al final)"
     ),
   description: z.string().max(5000).nullable().optional(),
+  resource_url: z.string().max(1024).url("La URL no es válida").nullable().optional(),
   kind: procedureKindSchema,
+  department_id: z.string().uuid("El department_id debe ser un UUID válido").nullable().optional(),
+  internal_location: z.string().max(255).nullable().optional(),
+  schedule_text: z.string().max(255).nullable().optional(),
   is_active: z.boolean().optional(),
   requirements: z.array(requirementItemSchema).optional(),
 });

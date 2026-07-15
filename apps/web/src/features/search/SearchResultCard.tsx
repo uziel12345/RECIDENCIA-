@@ -13,6 +13,21 @@ const KIND_BADGE: Record<SearchResult["kind"], string> = {
   classroom: "bg-[#7c3aed1a] text-[#7c3aed]",
   procedure: "bg-[#0891b21a] text-[#0891b2]",
   service: "bg-[#16a34a1a] text-[#16a34a]",
+  department: "bg-[#4f46e51a] text-[#4f46e5]",
+  cubicle: "bg-[#db27771a] text-[#db2777]",
+  headquarters: "bg-[#d977061a] text-[#d97706]",
+  gate: "bg-[#0d94881a] text-[#0d9488]",
+};
+
+const KIND_LABEL: Record<SearchResult["kind"], string> = {
+  building: "Edificio",
+  classroom: "Aula",
+  procedure: "Trámite",
+  service: "Servicio",
+  department: "Departamento",
+  cubicle: "Cubículo",
+  headquarters: "Jefatura",
+  gate: "Acceso",
 };
 
 export function SearchResultCard({ result, onClose }: SearchResultCardProps) {
@@ -41,14 +56,7 @@ export function SearchResultCard({ result, onClose }: SearchResultCardProps) {
     };
   }, [result.id, isProcedure]);
 
-  const kindLabel =
-    result.kind === "building"
-      ? "Edificio"
-      : result.kind === "classroom"
-        ? "Aula"
-        : result.kind === "procedure"
-          ? "Trámite"
-          : "Servicio";
+  const kindLabel = KIND_LABEL[result.kind];
 
   return (
     <article
@@ -138,10 +146,19 @@ export function SearchResultCard({ result, onClose }: SearchResultCardProps) {
           </div>
         )}
 
-        {result.kind === "classroom" && (
+        {(result.kind === "classroom" ||
+          result.kind === "department" ||
+          result.kind === "cubicle" ||
+          result.kind === "headquarters") && (
           <p className="m-0 text-[12px] leading-relaxed text-[var(--color-text-muted)]">
             Selecciona "Como llegar" en el edificio para navegar hasta este
             espacio.
+          </p>
+        )}
+
+        {result.kind === "gate" && (
+          <p className="m-0 text-[12px] leading-relaxed text-[var(--color-text-muted)]">
+            El mapa enfocará este acceso al campus.
           </p>
         )}
       </div>

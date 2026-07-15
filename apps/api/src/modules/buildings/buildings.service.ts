@@ -220,24 +220,4 @@ export class BuildingsService {
   async getCategories() {
     return this.repository.findAllCategories();
   }
-
-  // ── Services ──────────────────────────────────────────────────────────────────
-
-  async getServices(buildingId: string) {
-    const building = await this.repository.findById(buildingId);
-    if (!building) throw new ApiError(404, "Edificio no encontrado");
-    return this.repository.findServicesByBuildingId(buildingId);
-  }
-
-  async addService(buildingId: string, name: string, description: string | null) {
-    const building = await this.repository.findById(buildingId);
-    if (!building) throw new ApiError(404, "Edificio no encontrado");
-    const id = await this.repository.insertService(buildingId, name, description);
-    const services = await this.repository.findServicesByBuildingId(buildingId);
-    return services.find((s) => s.id === id) ?? null;
-  }
-
-  async removeService(serviceId: string) {
-    await this.repository.deleteService(serviceId);
-  }
 }

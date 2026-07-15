@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, type ReactNode, type CSSProperties } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuthStore } from "../../store/auth-store";
 import { useAdminAuthStore } from "../../store/admin-auth-store";
 import { ROUTES } from "../../types/routes";
@@ -8,6 +9,59 @@ import {
   UsersIcon,
   BuildingIcon,
 } from "../../components/ui/Icons";
+
+// Tokens globales definidos en styles/index.css (:root) — Fraunces para
+// títulos/momentos de marca, Public Sans para el resto del texto.
+const FONT_DISPLAY = "var(--font-display)";
+const FONT_BODY = "var(--font-body)";
+
+// Patrón de curvas de nivel (topográfico) muy sutil detrás de la tarjeta —
+// referencia visual al propio producto (un mapa), no decoración genérica.
+function TopographicPattern() {
+  return (
+    <svg
+      className="pointer-events-none absolute -right-24 -top-24 z-0 h-[420px] w-[420px] opacity-[0.14] sm:-right-16 sm:-top-16"
+      viewBox="0 0 400 400"
+      fill="none"
+      aria-hidden="true"
+    >
+      {[60, 100, 140, 180, 220, 260].map((r) => (
+        <circle
+          key={r}
+          cx="200"
+          cy="200"
+          r={r}
+          stroke="white"
+          strokeWidth="1.25"
+          strokeDasharray={r % 120 === 0 ? undefined : "2 5"}
+        />
+      ))}
+    </svg>
+  );
+}
+
+const EASE_OUT = [0.16, 1, 0.3, 1] as const;
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 22 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: EASE_OUT },
+  },
+};
+
+const listVariants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.07, delayChildren: 0.22 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.36, ease: EASE_OUT } },
+};
 
 // Adelanta la descarga (no el parseo) del modelo 3D del campus tan pronto el
 // usuario elige un rol, para que ya esté en caché HTTP cuando el visor
@@ -107,8 +161,14 @@ export function WelcomePage() {
   return (
     <div className="theme-light-lock relative flex min-h-screen items-center justify-center overflow-hidden bg-[url('/Portada.jpeg')] bg-cover bg-center p-5 sm:p-8">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(67,20,7,0.96)_0%,rgba(124,45,18,0.9)_18%,rgba(194,65,12,0.72)_40%,rgba(234,88,12,0.36)_58%,rgba(255,247,237,0.08)_78%,transparent_100%),linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.12))]" />
+      <TopographicPattern />
 
-      <div className="relative z-[1] flex w-full max-w-[460px] animate-[ito-slide-in-up_0.3s_ease-out] flex-col overflow-hidden rounded-3xl border border-[rgba(255,237,213,0.72)] bg-white/95 shadow-[0_28px_70px_rgba(67,20,7,0.34)] backdrop-blur-xl">
+      <motion.div
+        initial="hidden"
+        animate="show"
+        variants={cardVariants}
+        className="relative z-[1] flex w-full max-w-[460px] flex-col overflow-hidden rounded-3xl border border-[rgba(255,237,213,0.72)] bg-white/95 shadow-[0_28px_70px_rgba(67,20,7,0.34)] backdrop-blur-xl"
+      >
         <header className="relative overflow-hidden bg-[linear-gradient(135deg,#ea580c_0%,#7c2d12_100%)] px-7 pb-6 pt-8">
           <div className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/[0.06]" />
           <div className="relative z-[1] flex items-center gap-3.5">
@@ -120,10 +180,16 @@ export function WelcomePage() {
               />
             </div>
             <div>
-              <h1 className="m-0 text-[22px] font-extrabold tracking-tight text-white">
+              <h1
+                className="m-0 text-[26px] font-semibold leading-none tracking-tight text-white"
+                style={{ fontFamily: FONT_DISPLAY }}
+              >
                 Mapa ITO
               </h1>
-              <p className="m-0 mt-0.5 text-[12px] text-white/75">
+              <p
+                className="m-0 mt-1 text-[12px] text-white/75"
+                style={{ fontFamily: FONT_BODY }}
+              >
                 Instituto Tecnológico de Oaxaca
               </p>
             </div>
@@ -132,18 +198,30 @@ export function WelcomePage() {
 
         <main className="flex flex-col">
           <div className="px-7 pb-2 pt-6">
-            <h2 className="m-0 mb-1 text-[13px] font-bold uppercase tracking-wider text-[var(--color-brand-600)]">
+            <h2
+              className="m-0 mb-1 text-[12px] font-bold uppercase tracking-[0.14em] text-[var(--color-brand-600)]"
+              style={{ fontFamily: FONT_BODY }}
+            >
               Acceso al campus
             </h2>
-            <p className="m-0 text-[15px] font-semibold leading-snug text-[var(--color-text)]">
+            <p
+              className="m-0 text-[16px] font-medium leading-snug text-[var(--color-text)]"
+              style={{ fontFamily: FONT_DISPLAY }}
+            >
               ¿Cómo deseas explorar el campus hoy?
             </p>
           </div>
 
-          <div className="flex flex-col gap-1 px-5 pb-2 pt-3">
+          <motion.div
+            variants={listVariants}
+            initial="hidden"
+            animate="show"
+            className="flex flex-col gap-1 px-5 pb-2 pt-3"
+          >
             {roleCards.map((card) => (
-              <button
+              <motion.button
                 key={card.id}
+                variants={itemVariants}
                 onClick={() => handleRoleSelect(card)}
                 className="group relative flex min-h-11 w-full items-center gap-3.5 rounded-2xl border border-transparent bg-transparent p-3.5 text-left transition hover:translate-x-0.5 hover:border-[color:var(--role-border)] hover:bg-[color:var(--role-bg)] hover:shadow-[var(--shadow-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2"
                 style={
@@ -165,10 +243,16 @@ export function WelcomePage() {
                   {card.icon}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="m-0 mb-0.5 text-[15px] font-bold tracking-tight text-[var(--color-text)]">
+                  <h3
+                    className="m-0 mb-0.5 text-[16px] font-semibold tracking-tight text-[var(--color-text)]"
+                    style={{ fontFamily: FONT_DISPLAY }}
+                  >
                     {card.title}
                   </h3>
-                  <p className="m-0 text-[12px] leading-snug text-[var(--color-text-muted)]">
+                  <p
+                    className="m-0 text-[12px] leading-snug text-[var(--color-text-muted)]"
+                    style={{ fontFamily: FONT_BODY }}
+                  >
                     {card.description}
                   </p>
                 </div>
@@ -192,51 +276,72 @@ export function WelcomePage() {
                     <path d="M9 18l6-6-6-6" />
                   </svg>
                 </div>
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
         </main>
 
         <footer className="mt-1 border-t border-[rgba(229,229,229,0.74)] bg-white/50 px-7 pb-5 pt-4">
-          <p className="m-0 text-center text-[11px] tracking-wide text-[var(--color-text-subtle)]">
+          <p
+            className="m-0 text-center text-[11px] tracking-wide text-[var(--color-text-subtle)]"
+            style={{ fontFamily: FONT_BODY }}
+          >
             Mapa 3D interactivo · ITO Campus
           </p>
         </footer>
-      </div>
+      </motion.div>
 
-      {showAdminSessionModal ? (
-        <div
-          className="fixed inset-0 z-50 grid place-items-center bg-[rgba(15,23,42,0.55)] p-5"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="w-[min(420px,100%)] rounded-2xl bg-white p-5 shadow-[0_22px_50px_rgba(15,23,42,0.25)]">
-            <h2 className="m-0 mb-2 text-[22px] font-bold text-[var(--color-text)]">
-              Sesión administrativa activa
-            </h2>
-            <p className="m-0 mb-4 leading-relaxed text-[var(--color-text-muted)]">
-              Puedes continuar como {adminUser?.username ?? "administrador"} o
-              cambiar de usuario.
-            </p>
-            <div className="flex flex-wrap gap-2.5">
-              <button
-                type="button"
-                onClick={() => navigate(ROUTES.ADMIN_BUILDINGS)}
-                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--color-brand-700)] bg-[var(--color-brand-600)] px-3.5 font-extrabold text-white transition hover:bg-[var(--color-brand-700)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2"
+      <AnimatePresence>
+        {showAdminSessionModal ? (
+          <motion.div
+            className="fixed inset-0 z-50 grid place-items-center bg-[rgba(15,23,42,0.55)] p-5"
+            role="dialog"
+            aria-modal="true"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+          >
+            <motion.div
+              className="w-[min(420px,100%)] rounded-2xl bg-white p-5 shadow-[0_22px_50px_rgba(15,23,42,0.25)]"
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ duration: 0.22, ease: EASE_OUT }}
+            >
+              <h2
+                className="m-0 mb-2 text-[20px] font-semibold text-[var(--color-text)]"
+                style={{ fontFamily: FONT_DISPLAY }}
               >
-                Continuar
-              </button>
-              <button
-                type="button"
-                onClick={handleChangeAdminUser}
-                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--color-border-strong)] bg-white px-3.5 font-extrabold text-[var(--color-text)] transition hover:bg-[var(--color-surface-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2"
+                Sesión administrativa activa
+              </h2>
+              <p
+                className="m-0 mb-4 leading-relaxed text-[var(--color-text-muted)]"
+                style={{ fontFamily: FONT_BODY }}
               >
-                Cambiar usuario
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+                Puedes continuar como {adminUser?.username ?? "administrador"} o
+                cambiar de usuario.
+              </p>
+              <div className="flex flex-wrap gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => navigate(ROUTES.ADMIN_BUILDINGS)}
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--color-brand-700)] bg-[var(--color-brand-600)] px-3.5 font-extrabold text-white transition hover:bg-[var(--color-brand-700)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2"
+                >
+                  Continuar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleChangeAdminUser}
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--color-border-strong)] bg-white px-3.5 font-extrabold text-[var(--color-text)] transition hover:bg-[var(--color-surface-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2"
+                >
+                  Cambiar usuario
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

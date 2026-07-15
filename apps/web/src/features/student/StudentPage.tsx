@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { useLocation, useNavigate } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
 import { CampusViewer } from "../../components/viewer/CampusViewer";
 import { BuildingSidebar } from "../buildings/components/BuildingSidebar";
 import { MapSearchOverlay } from "../buildings/components/MapSearchOverlay";
@@ -13,20 +13,20 @@ import {
   MobileBottomSheet,
   type SheetState,
 } from "../campus/components/MobileBottomSheet";
+import { MobileActionModal } from "../campus/components/MobileActionModal";
 import { MobileQuickActions } from "../campus/components/MobileQuickActions";
 import { ROUTES } from "../../types/routes";
 import {
   LogOutIcon,
-  MapIcon,
+  Icon,
   InfoIcon,
-  BookOpenIcon,
   ClockIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "../../components/ui/Icons";
 import { ThemeToggle } from "../../components/ui/ThemeToggle";
 import { StudentTopBar } from "./components/StudentTopBar";
-import { NewStudentGuide } from "./components/NewStudentGuide";
+import { StudentFirstVisitTip } from "./components/StudentFirstVisitTip";
 import { SchedulePanel } from "./components/SchedulePanel";
 import {
   CampusServicesPanel,
@@ -34,11 +34,12 @@ import {
 } from "../shared/components/CampusServicesPanel";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
-type ViewMode = "map" | "guide" | "services" | "schedule";
+type ViewMode = "map" | "services" | "schedule";
 
 export function StudentPage() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout, user } = useAuthStore();
 
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
@@ -55,9 +56,11 @@ export function StudentPage() {
       : requestedSheetState;
   const [totalBuildings, setTotalBuildings] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("map");
-  const [showGuide, setShowGuide] = useState(false);
   const [showServices, setShowServices] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [showFirstVisitTip, setShowFirstVisitTip] = useState(
+    () => Boolean((location.state as { firstVisit?: boolean } | null)?.firstVisit)
+  );
 
   useEffect(() => {
     getBuildings()
@@ -69,13 +72,27 @@ export function StudentPage() {
       .catch(() => setTotalBuildings(0));
   }, []);
 
+  // Evita que un back/forward del navegador reactive la guía: la marca de
+  // "primera visita" solo debe consumirse una vez, no vivir en el historial.
+  useEffect(() => {
+    if (location.state && (location.state as { firstVisit?: boolean }).firstVisit) {
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Si el estudiante ya selecciona un edificio, ya está explorando por su
+  // cuenta: no hace falta seguir mostrando la guía de bienvenida encima.
+  useEffect(() => {
+    if (selectedBuilding) setShowFirstVisitTip(false);
+  }, [selectedBuilding]);
+
   const handleLogout = () => {
     logout();
     navigate(ROUTES.WELCOME);
   };
 
   const closeMobilePanels = useCallback(() => {
-    setShowGuide(false);
     setShowServices(false);
     setShowSchedule(false);
     setSheetState("closed");
@@ -104,11 +121,6 @@ export function StudentPage() {
     }, 360);
   }, [closeMobilePanels]);
 
-  const openGuide = useCallback(() => {
-    closeMobilePanels();
-    setShowGuide(true);
-  }, [closeMobilePanels]);
-
   const openServices = useCallback(() => {
     closeMobilePanels();
     setShowServices(true);
@@ -125,21 +137,8 @@ export function StudentPage() {
     setSheetState("full");
   }, [closeMobilePanels]);
 
-  const handleGuideSearch = useCallback(() => {
-    closeMobilePanels();
-    setViewMode("map");
-    setSheetState("full");
-  }, [closeMobilePanels]);
-
   const mobileActions = useMemo(() => {
     return [
-      {
-        id: "guide",
-        label: "Guía",
-        icon: "book-open" as const,
-        onClick: openGuide,
-        active: showGuide,
-      },
       {
         id: "services",
         label: "Servicios",
@@ -159,27 +158,18 @@ export function StudentPage() {
         label: "Edificios",
         icon: "list" as const,
         onClick: openBuildings,
-        active: sheetState !== "closed" && !showGuide && !showServices && !showSchedule,
+        active: sheetState !== "closed" && !showServices && !showSchedule,
         primary: true,
       },
     ];
-  }, [openBuildings, openGuide, openServices, openSchedule, sheetState, showGuide, showServices, showSchedule]);
+  }, [openBuildings, openServices, openSchedule, sheetState, showServices, showSchedule]);
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   if (!isMobile) {
     return (
       <div
-        className={`student-page${viewMode === "map" ? " student-page--fullmap" : ""}${sidebarCollapsed ? " is-sidebar-collapsed" : ""}`}
-        style={
-          viewMode !== "map"
-            ? {
-                gridTemplateColumns: sidebarCollapsed
-                  ? "0px minmax(0, 1fr)"
-                  : "var(--desktop-sidebar-width) minmax(0, 1fr)",
-              }
-            : undefined
-        }
+        className={`student-page student-page--fullmap${selectedBuilding ? " has-building-details" : ""}${sidebarCollapsed ? " is-sidebar-collapsed" : ""}`}
       >
         <aside className="student-page__sidebar" style={{ overflow: "hidden", minWidth: 0 }}>
           <div className="student-page__sidebar-header">
@@ -208,6 +198,13 @@ export function StudentPage() {
             </button>
           </div>
 
+          {showFirstVisitTip && (
+            <StudentFirstVisitTip
+              isMobile={false}
+              onDismiss={() => setShowFirstVisitTip(false)}
+            />
+          )}
+
           <nav className="student-page__nav">
             <button
               type="button"
@@ -216,19 +213,8 @@ export function StudentPage() {
               }`}
               onClick={() => setViewMode("map")}
             >
-              <MapIcon size={18} />
-              <span>Mapa</span>
-            </button>
-
-            <button
-              type="button"
-              className={`student-page__nav-item ${
-                viewMode === "guide" ? "is-active" : ""
-              }`}
-              onClick={() => setViewMode("guide")}
-            >
-              <BookOpenIcon size={18} />
-              <span>Guía</span>
+              <Icon name="home" size={18} />
+              <span>Inicio</span>
             </button>
 
             <button
@@ -265,14 +251,6 @@ export function StudentPage() {
             </div>
           )}
 
-          {viewMode === "guide" && (
-            <div key="side-guide" className="student-page__sidebar-content ito-tab-panel">
-              <NewStudentGuide
-                onSearchActivated={() => setViewMode("map")}
-              />
-            </div>
-          )}
-
           {viewMode === "services" && (
             <div key="side-services" className="student-page__sidebar-content ito-tab-panel">
               <CampusServicesPanel
@@ -292,14 +270,13 @@ export function StudentPage() {
         <main className="student-page__main">
           {/* El visor 3D se mantiene siempre montado (solo oculto con CSS) al
               cambiar de pestaña, para no recargar el GLB ni resetear la
-              cámara/ubicación cada vez que se vuelve a "Mapa". */}
-          <div
-            className="student-page__viewer"
-            style={{
-              position: "relative",
-              display: viewMode === "map" ? undefined : "none",
-            }}
-          >
+              cámara/ubicación cada vez que se vuelve a "Mapa". El mapa se
+              muestra en las 3 pestañas (Inicio/Servicios/Horario) para que
+              el layout (ancho de sidebar, panel principal) sea el mismo
+              siempre — antes "Horario" duplicaba SchedulePanel (compacto en
+              el sidebar + expandido en main), lo mismo que le pasaba a
+              Servicios. */}
+          <div className="student-page__viewer" style={{ position: "relative" }}>
             <button
               type="button"
               className="ito-sidebar-toggle"
@@ -311,24 +288,6 @@ export function StudentPage() {
             <MapSearchOverlay userName={user?.name || "Estudiante"} />
             <CampusViewer isMobile={false} mobilePanelOpen={false} mapXOffset={sidebarCollapsed ? 0 : -75} />
           </div>
-
-          {viewMode === "guide" && (
-            <div key="main-guide" className="student-page__schedule-full ito-tab-main">
-              <NewStudentGuide onSearchActivated={() => setViewMode("map")} />
-            </div>
-          )}
-
-          {viewMode === "services" && (
-            <div key="main-services" className="student-page__schedule-full ito-tab-main">
-              <CampusServicesPanel onSelectService={handleSelectService} />
-            </div>
-          )}
-
-          {viewMode === "schedule" && (
-            <div key="main-schedule" className="student-page__schedule-full ito-tab-main">
-              <SchedulePanel expanded onNavigateToClass={handleNavigateToClass} />
-            </div>
-          )}
         </main>
       </div>
     );
@@ -359,6 +318,13 @@ export function StudentPage() {
         onLogout={handleLogout}
       />
 
+      {showFirstVisitTip && (
+        <StudentFirstVisitTip
+          isMobile
+          onDismiss={() => setShowFirstVisitTip(false)}
+        />
+      )}
+
       <AnimatePresence>
         {showQuickCard && (
           <BuildingQuickCard
@@ -368,107 +334,21 @@ export function StudentPage() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showGuide && (
-          <motion.div
-            className="student-mobile__schedule-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="student-mobile__schedule-modal"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            >
-              <div className="student-mobile__schedule-header">
-                <h2>Guía de nuevo ingreso</h2>
+      <MobileActionModal
+        open={showServices}
+        title="Servicios del campus"
+        onClose={() => setShowServices(false)}
+      >
+        <CampusServicesPanel onSelectService={handleSelectService} />
+      </MobileActionModal>
 
-                <button type="button" onClick={() => setShowGuide(false)}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="student-mobile__schedule-body">
-                <NewStudentGuide onSearchActivated={handleGuideSearch} />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showServices && (
-          <motion.div
-            className="student-mobile__schedule-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="student-mobile__schedule-modal"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            >
-              <div className="student-mobile__schedule-header">
-                <h2>Servicios del campus</h2>
-
-                <button type="button" onClick={() => setShowServices(false)}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="student-mobile__schedule-body">
-                <CampusServicesPanel onSelectService={handleSelectService} />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showSchedule && (
-          <motion.div
-            className="student-mobile__schedule-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="student-mobile__schedule-modal"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            >
-              <div className="student-mobile__schedule-header">
-                <h2>Tu horario</h2>
-
-                <button type="button" onClick={() => setShowSchedule(false)}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="student-mobile__schedule-body">
-                <SchedulePanel expanded onNavigateToClass={handleNavigateToClass} />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <MobileActionModal
+        open={showSchedule}
+        title="Tu horario"
+        onClose={() => setShowSchedule(false)}
+      >
+        <SchedulePanel expanded onNavigateToClass={handleNavigateToClass} />
+      </MobileActionModal>
 
       <MobileQuickActions actions={mobileActions} />
 

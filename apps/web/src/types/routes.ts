@@ -12,6 +12,8 @@ export const ROUTES = {
   ADMIN_BUILDING_NEW: "/admin/buildings/new",
   ADMIN_BUILDING_EDIT: "/admin/buildings/:id/edit",
   ADMIN_CATEGORIES: "/admin/categories",
+  ADMIN_SERVICES: "/admin/services",
+  ADMIN_GATES: "/admin/gates",
   ADMIN_NAVIGATION: "/admin/navigation",
   ADMIN_USERS: "/admin/users",
   ADMIN_STUDENT_LOCATION: "/admin/alumnos/ubicacion",

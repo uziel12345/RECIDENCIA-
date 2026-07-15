@@ -6,12 +6,17 @@ import {
   loginController,
   logoutController,
   meController,
+  resetAdminUserPasswordController,
   updateAdminUserStatusController,
 } from "./auth.controller.js";
 import { authenticate } from "./middlewares/authenticate.middleware.js";
 import { authorizePermission } from "./middlewares/authorize.middleware.js";
 import { validateBody, validateParams } from "../../shared/middlewares/validator.js";
-import { createAdminUserSchema, loginSchema } from "./auth.schema.js";
+import {
+  createAdminUserSchema,
+  loginSchema,
+  resetAdminUserPasswordSchema,
+} from "./auth.schema.js";
 import { z } from "zod";
 import { asyncHandler } from "../../shared/utils/async-handler.js";
 
@@ -63,6 +68,15 @@ router.patch(
   validateParams(adminUserIdSchema),
   validateBody(updateAdminUserStatusSchema),
   asyncHandler(updateAdminUserStatusController)
+);
+
+router.patch(
+  "/admin-users/:id/password",
+  authenticate,
+  authorizePermission("can_manage_admin_users"),
+  validateParams(adminUserIdSchema),
+  validateBody(resetAdminUserPasswordSchema),
+  asyncHandler(resetAdminUserPasswordController)
 );
 
 router.get(

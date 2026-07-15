@@ -36,6 +36,16 @@ const AdminCategoriesPage = lazy(async () => {
   return { default: AdminCategoriesPage };
 });
 
+const AdminServicesPage = lazy(async () => {
+  const { AdminServicesPage } = await import("../features/admin/pages/AdminServicesPage");
+  return { default: AdminServicesPage };
+});
+
+const AdminGatesPage = lazy(async () => {
+  const { AdminGatesPage } = await import("../features/admin/pages/AdminGatesPage");
+  return { default: AdminGatesPage };
+});
+
 const AdminNavigationPage = lazy(async () => {
   const { AdminNavigationPage } = await import("../features/admin/pages/AdminNavigationPage");
   return { default: AdminNavigationPage };
@@ -311,6 +321,30 @@ export default function App() {
               <ErrorBoundary>
                 <Suspense fallback={<AdminLoadingFallback />}>
                   <AdminCategoriesPage />
+                </Suspense>
+              </ErrorBoundary>
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_SERVICES}
+          element={
+            <AdminProtectedRoute permission="can_view_buildings">
+              <ErrorBoundary>
+                <Suspense fallback={<AdminLoadingFallback />}>
+                  <AdminServicesPage />
+                </Suspense>
+              </ErrorBoundary>
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_GATES}
+          element={
+            <AdminProtectedRoute permission="can_view_buildings">
+              <ErrorBoundary>
+                <Suspense fallback={<AdminLoadingFallback />}>
+                  <AdminGatesPage />
                 </Suspense>
               </ErrorBoundary>
             </AdminProtectedRoute>

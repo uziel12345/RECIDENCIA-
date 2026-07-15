@@ -265,6 +265,45 @@ export async function createAdminUser(
   return mapAdminUserToAuthUser((rows as AdminUserRow[])[0]);
 }
 
+export async function resetAdminUserPassword(
+  userId: string,
+  newPassword: string
+): Promise<AuthUser | null> {
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+
+  await pool.query(
+    `
+      UPDATE admin_users
+      SET password_hash = ?,
+          token_version = token_version + 1,
+          failed_login_attempts = 0,
+          locked_until = NULL
+      WHERE id = ?
+    `,
+    [passwordHash, userId]
+  );
+
+  const [rows] = await pool.query(
+    `
+      SELECT
+        id,
+        username,
+        full_name,
+        email,
+        password_hash,
+        role,
+        is_active
+      FROM admin_users
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [userId]
+  );
+
+  const users = rows as AdminUserRow[];
+  return users[0] ? mapAdminUserToAuthUser(users[0]) : null;
+}
+
 export async function updateAdminUserStatus(
   userId: string,
   isActive: boolean

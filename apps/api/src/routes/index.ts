@@ -18,6 +18,12 @@ import {
   schedulesRouter,
   classroomScheduleRouter,
 } from "../modules/schedules/schedules.routes.js";
+import departmentsRoutes from "../modules/departments/departments.routes.js";
+import teacherCubiclesRoutes from "../modules/teacher-cubicles/teacher-cubicles.routes.js";
+import headquartersRoutes from "../modules/headquarters/headquarters.routes.js";
+import buildingSchedulesRoutes from "../modules/building-schedules/building-schedules.routes.js";
+import { buildingDetailsRouter } from "../modules/building-details/building-details.routes.js";
+import gatesRoutes from "../modules/gates/gates.routes.js";
 
 const router = Router();
 
@@ -36,5 +42,11 @@ router.use("/students", studentsRoutes);
 router.use("/professors", professorsRoutes);
 router.use("/schedules", schedulesRouter);
 router.use("/geolocation", geolocationRoutes);
+router.use("/departments", departmentsRoutes);
+router.use("/teacher-cubicles", teacherCubiclesRoutes);
+router.use("/headquarters", headquartersRoutes);
+router.use("/building-schedules", buildingSchedulesRoutes);
+router.use("/buildings", buildingDetailsRouter); // /buildings/:id/full-details
+router.use("/gates", gatesRoutes);
 
 export default router;

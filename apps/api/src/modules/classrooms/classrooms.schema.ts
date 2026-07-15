@@ -14,6 +14,7 @@ export const createClassroomSchema = z.object({
     .string({ required_error: "El nombre es obligatorio" })
     .min(1, "El nombre no puede estar vacío")
     .max(255),
+  description: z.string().nullable().optional(),
   floor: z.number().int("El piso debe ser un entero").min(-5).max(100).optional(),
   capacity: z
     .number()

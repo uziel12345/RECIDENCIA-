@@ -37,3 +37,18 @@ export const createAdminUserSchema = z.object({
 });
 
 export type CreateAdminUserInput = z.infer<typeof createAdminUserSchema>;
+
+export const resetAdminUserPasswordSchema = z.object({
+  password: z
+    .string({ required_error: "La contraseña es obligatoria" })
+    .min(12, "La contraseña debe tener al menos 12 caracteres")
+    .max(128)
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      "La contraseña debe incluir al menos una mayúscula, una minúscula y un dígito"
+    ),
+});
+
+export type ResetAdminUserPasswordInput = z.infer<
+  typeof resetAdminUserPasswordSchema
+>;

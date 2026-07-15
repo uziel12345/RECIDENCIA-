@@ -111,23 +111,6 @@ CREATE TABLE IF NOT EXISTS building_images (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- 5. building_services
--- ============================================================
-CREATE TABLE IF NOT EXISTS building_services (
-  id           VARCHAR(36)   NOT NULL,
-  building_id  VARCHAR(36)   NOT NULL,
-  name         VARCHAR(255)  NOT NULL,
-  description  VARCHAR(500)  NULL,
-  created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-  PRIMARY KEY (id),
-  KEY idx_building_services_building (building_id),
-  CONSTRAINT fk_building_services_building
-    FOREIGN KEY (building_id) REFERENCES buildings (id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ============================================================
 -- 6. navigation_nodes
 -- ============================================================
 CREATE TABLE IF NOT EXISTS navigation_nodes (
@@ -209,6 +192,7 @@ CREATE TABLE IF NOT EXISTS classrooms (
   building_id VARCHAR(36)   NOT NULL,
   code        VARCHAR(32)   NOT NULL,
   name        VARCHAR(255)  NOT NULL,
+  description TEXT          NULL,
   floor       INT           NOT NULL DEFAULT 0,
   capacity    INT UNSIGNED  NULL,
   type        ENUM('aula','laboratorio','taller','oficina','otro') NOT NULL DEFAULT 'aula',
@@ -231,21 +215,27 @@ CREATE TABLE IF NOT EXISTS classrooms (
 -- (de migration-procedures-20260608.sql)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS procedures (
-  id           VARCHAR(36)   NOT NULL,
-  name         VARCHAR(255)  NOT NULL,
-  slug         VARCHAR(255)  NOT NULL,
-  description  TEXT          NULL,
-  kind         ENUM('tramite','servicio') NOT NULL,
-  is_active    TINYINT(1)    NOT NULL DEFAULT 1,
-  created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at   DATETIME      NULL DEFAULT NULL
+  id                VARCHAR(36)   NOT NULL,
+  name              VARCHAR(255)  NOT NULL,
+  slug              VARCHAR(255)  NOT NULL,
+  description       TEXT          NULL,
+  resource_url      VARCHAR(1024) NULL,
+  kind              ENUM('tramite','servicio') NOT NULL,
+  department_id     VARCHAR(36)   NULL
+    COMMENT 'FK a departments; agregada via ALTER TABLE mas abajo (departments se define despues en este archivo)',
+  internal_location VARCHAR(255)  NULL,
+  schedule_text     VARCHAR(255)  NULL,
+  is_active         TINYINT(1)    NOT NULL DEFAULT 1,
+  created_at        DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at        DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at        DATETIME      NULL DEFAULT NULL
     COMMENT 'Timestamp del soft delete; NULL = registro activo',
 
   PRIMARY KEY (id),
-  UNIQUE KEY uq_procedure_slug  (slug),
-  KEY idx_procedures_kind       (kind),
-  KEY idx_procedures_active     (is_active)
+  UNIQUE KEY uq_procedure_slug     (slug),
+  KEY idx_procedures_kind         (kind),
+  KEY idx_procedures_active       (is_active),
+  KEY idx_procedures_department   (department_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -255,6 +245,7 @@ CREATE TABLE IF NOT EXISTS procedure_requirements (
   id             VARCHAR(36)  NOT NULL,
   procedure_id   VARCHAR(36)  NOT NULL,
   description    TEXT         NOT NULL,
+  type           ENUM('requisito','documento') NOT NULL DEFAULT 'requisito',
   is_mandatory   TINYINT(1)   NOT NULL DEFAULT 1,
   display_order  INT          NOT NULL DEFAULT 0,
   created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -393,6 +384,149 @@ CREATE TABLE IF NOT EXISTS student_schedules (
     FOREIGN KEY (student_id)  REFERENCES students  (id),
   CONSTRAINT fk_ss_schedule
     FOREIGN KEY (schedule_id) REFERENCES schedules (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 17. building_schedules
+-- day_of_week: 1=Lunes … 7=Domingo (ISO), igual que `schedules`
+-- (de migration-building-full-details-20260708.sql)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS building_schedules (
+  id          VARCHAR(36)   NOT NULL,
+  building_id VARCHAR(36)   NOT NULL,
+  day_of_week TINYINT UNSIGNED NOT NULL COMMENT '1=Lunes…7=Domingo (ISO)',
+  open_time   TIME          NOT NULL,
+  close_time  TIME          NOT NULL,
+  is_active   TINYINT(1)    NOT NULL DEFAULT 1,
+  created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at  DATETIME      NULL DEFAULT NULL
+    COMMENT 'Timestamp del soft delete; NULL = registro activo',
+
+  PRIMARY KEY (id),
+  KEY idx_building_schedules_building (building_id),
+  KEY idx_building_schedules_active   (is_active),
+  CONSTRAINT fk_building_schedules_building
+    FOREIGN KEY (building_id) REFERENCES buildings (id),
+  CONSTRAINT chk_building_schedules_day   CHECK (day_of_week BETWEEN 1 AND 7),
+  CONSTRAINT chk_building_schedules_times CHECK (open_time < close_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 18. departments
+-- (de migration-building-full-details-20260708.sql)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS departments (
+  id            VARCHAR(36)   NOT NULL,
+  building_id   VARCHAR(36)   NOT NULL,
+  name          VARCHAR(255)  NOT NULL,
+  description   TEXT          NULL,
+  schedule_text VARCHAR(255)  NULL,
+  head_name     VARCHAR(255)  NULL,
+  contact       VARCHAR(255)  NULL,
+  is_active     TINYINT(1)    NOT NULL DEFAULT 1,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at    DATETIME      NULL DEFAULT NULL
+    COMMENT 'Timestamp del soft delete; NULL = registro activo',
+
+  PRIMARY KEY (id),
+  KEY idx_departments_building (building_id),
+  KEY idx_departments_active   (is_active),
+  CONSTRAINT fk_departments_building
+    FOREIGN KEY (building_id) REFERENCES buildings (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- FK diferida de procedures.department_id (departments no existia todavia
+-- cuando se definio la tabla procedures mas arriba en este archivo)
+ALTER TABLE procedures
+  ADD CONSTRAINT fk_procedures_department
+    FOREIGN KEY (department_id) REFERENCES departments (id) ON DELETE SET NULL;
+
+-- ============================================================
+-- 19. teacher_cubicles
+-- (de migration-building-full-details-20260708.sql)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS teacher_cubicles (
+  id            VARCHAR(36)   NOT NULL,
+  building_id   VARCHAR(36)   NOT NULL,
+  code          VARCHAR(32)   NOT NULL,
+  professor_id  VARCHAR(36)   NULL,
+  department_id VARCHAR(36)   NULL,
+  schedule_text VARCHAR(255)  NULL,
+  notes         TEXT          NULL,
+  is_active     TINYINT(1)    NOT NULL DEFAULT 1,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at    DATETIME      NULL DEFAULT NULL
+    COMMENT 'Timestamp del soft delete; NULL = registro activo',
+
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_cubicle_building_code (building_id, code),
+  KEY idx_cubicles_building   (building_id),
+  KEY idx_cubicles_professor  (professor_id),
+  KEY idx_cubicles_department (department_id),
+  KEY idx_cubicles_active     (is_active),
+  CONSTRAINT fk_cubicles_building
+    FOREIGN KEY (building_id) REFERENCES buildings (id),
+  CONSTRAINT fk_cubicles_professor
+    FOREIGN KEY (professor_id) REFERENCES professors (id) ON DELETE SET NULL,
+  CONSTRAINT fk_cubicles_department
+    FOREIGN KEY (department_id) REFERENCES departments (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 20. headquarters (jefaturas)
+-- (de migration-building-full-details-20260708.sql)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS headquarters (
+  id            VARCHAR(36)   NOT NULL,
+  building_id   VARCHAR(36)   NOT NULL,
+  name          VARCHAR(255)  NOT NULL,
+  head_name     VARCHAR(255)  NULL,
+  department_id VARCHAR(36)   NULL,
+  schedule_text VARCHAR(255)  NULL,
+  contact       VARCHAR(255)  NULL,
+  is_active     TINYINT(1)    NOT NULL DEFAULT 1,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at    DATETIME      NULL DEFAULT NULL
+    COMMENT 'Timestamp del soft delete; NULL = registro activo',
+
+  PRIMARY KEY (id),
+  KEY idx_headquarters_building   (building_id),
+  KEY idx_headquarters_department (department_id),
+  KEY idx_headquarters_active     (is_active),
+  CONSTRAINT fk_headquarters_building
+    FOREIGN KEY (building_id) REFERENCES buildings (id),
+  CONSTRAINT fk_headquarters_department
+    FOREIGN KEY (department_id) REFERENCES departments (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 21. gates (puertas / accesos del campus)
+-- Coordenadas crudas x/y/z (igual que navigation_nodes) — no son
+-- objetos nombrados del modelo 3D, no llevan model_node_name.
+-- future: podrán vincularse a navigation_nodes para rutas (no implementado).
+-- (de migration-gates-and-procedure-service-fields-20260708.sql)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS gates (
+  id          VARCHAR(36)   NOT NULL,
+  name        VARCHAR(255)  NOT NULL,
+  description TEXT          NULL,
+  access_type ENUM('peatonal','vehicular','mixto') NOT NULL DEFAULT 'peatonal',
+  status      ENUM('abierta','cerrada','solo_entrada','solo_salida') NOT NULL DEFAULT 'abierta',
+  x           FLOAT         NOT NULL,
+  y           FLOAT         NOT NULL DEFAULT 0,
+  z           FLOAT         NOT NULL,
+  is_active   TINYINT(1)    NOT NULL DEFAULT 1,
+  created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at  DATETIME      NULL DEFAULT NULL
+    COMMENT 'Timestamp del soft delete; NULL = registro activo',
+
+  PRIMARY KEY (id),
+  KEY idx_gates_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================

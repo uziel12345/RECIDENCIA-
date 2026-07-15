@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { CampusViewer } from "../../components/viewer/CampusViewer";
 import { BuildingSidebar } from "../buildings/components/BuildingSidebar";
 import { BuildingQuickCard } from "../buildings/components/BuildingQuickCard";
@@ -12,6 +12,7 @@ import {
   MobileBottomSheet,
   type SheetState,
 } from "../campus/components/MobileBottomSheet";
+import { MobileActionModal } from "../campus/components/MobileActionModal";
 import { MobileQuickActions } from "../campus/components/MobileQuickActions";
 import { ROUTES } from "../../types/routes";
 import {
@@ -146,7 +147,7 @@ export function VisitorPage() {
   if (!isMobile) {
     return (
       <div
-        className={`visitor-page visitor-page--fullmap${sidebarCollapsed ? " is-sidebar-collapsed" : ""}`}
+        className={`visitor-page visitor-page--fullmap${selectedBuilding ? " has-building-details" : ""}${sidebarCollapsed ? " is-sidebar-collapsed" : ""}`}
       >
         <aside className="visitor-page__sidebar" style={{ overflow: "hidden", minWidth: 0 }}>
           <div className="visitor-page__sidebar-header">
@@ -295,87 +296,21 @@ export function VisitorPage() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showQuickDest && (
-          <motion.div
-            className="visitor-mobile__dest-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="visitor-mobile__dest-modal"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            >
-              <div className="visitor-mobile__dest-header">
-                <h2>Destinos populares</h2>
+      <MobileActionModal
+        open={showQuickDest}
+        title="Destinos populares"
+        onClose={() => setShowQuickDest(false)}
+      >
+        <QuickDestinations onSelect={() => setShowQuickDest(false)} />
+      </MobileActionModal>
 
-                <button type="button" onClick={() => setShowQuickDest(false)}>
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="visitor-mobile__dest-body">
-                <QuickDestinations onSelect={() => setShowQuickDest(false)} />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showServices && (
-          <motion.div
-            className="visitor-mobile__dest-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="visitor-mobile__dest-modal"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            >
-              <div className="visitor-mobile__dest-header">
-                <h2>Servicios del campus</h2>
-
-                <button type="button" onClick={() => setShowServices(false)}>
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="visitor-mobile__dest-body">
-                <CampusServicesPanel onSelectService={handleSelectService} />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <MobileActionModal
+        open={showServices}
+        title="Servicios del campus"
+        onClose={() => setShowServices(false)}
+      >
+        <CampusServicesPanel onSelectService={handleSelectService} />
+      </MobileActionModal>
 
       <MobileQuickActions actions={mobileActions} />
 

@@ -22,6 +22,12 @@ export const getProcedures = asyncHandler(async (req: Request, res: Response) =>
   return sendSuccess(res, data);
 });
 
+export const getProceduresForAdmin = asyncHandler(async (req: Request, res: Response) => {
+  const raw = req.query as { kind?: string };
+  const data = await proceduresService.getAllForAdmin({ kind: raw.kind });
+  return sendSuccess(res, data);
+});
+
 export const getProcedureById = asyncHandler(async (req: Request, res: Response) => {
   const id = getSingleParam(req.params.id);
   const data = await proceduresService.getById(id);

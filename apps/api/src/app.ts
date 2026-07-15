@@ -28,8 +28,25 @@ app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
-        "script-src": ["'self'", "'wasm-unsafe-eval'"],
-        "connect-src": ["'self'", "https://api.open-meteo.com"],
+        // El hash cubre el <script> inline de index.html que evita el
+        // "flash" de tema claro/oscuro al cargar. Si ese script cambia, hay
+        // que regenerar el hash (el navegador lo muestra en la violación de
+        // CSP en consola) o moverlo a un archivo externo.
+        "script-src": [
+          "'self'",
+          "'wasm-unsafe-eval'",
+          "'sha256-HJu1q3MpGURaA3Z9OSbqopCjzUKjIdsF+O8MtlnwCnA='",
+        ],
+        // El modelo 3D (campus.glb) embebe sus texturas en el binario; Three.js
+        // las extrae como Blob y las carga vía fetch() a una blob: URL (cae bajo
+        // connect-src, no img-src). El KTX2Loader además arranca su transcoder
+        // en un Web Worker creado desde una blob: URL. Sin blob: en estas
+        // directivas, el navegador bloquea todo en silencio: el modelo carga
+        // pero sin texturas y con mallas (como el piso) sin material.
+        "connect-src": ["'self'", "https://api.open-meteo.com", "blob:"],
+        "img-src": ["'self'", "data:", "blob:"],
+        "worker-src": ["'self'", "blob:"],
+        "child-src": ["'self'", "blob:"],
       },
     },
     crossOriginResourcePolicy: {

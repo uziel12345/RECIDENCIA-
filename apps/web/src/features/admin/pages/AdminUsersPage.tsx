@@ -4,6 +4,7 @@ import {
   ROLE_PERMISSIONS,
   createAdminUserApi,
   getAdminUsersApi,
+  resetAdminUserPasswordApi,
   updateAdminUserStatusApi,
   type AuthUser,
   type UserRole,
@@ -46,6 +47,10 @@ export function AdminUsersPage() {
   const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [resetTarget, setResetTarget] = useState<AuthUser | null>(null);
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetting, setResetting] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
   const canManageUsers = Boolean(
     user && ROLE_PERMISSIONS[user.role]?.can_manage_admin_users
   );
@@ -93,6 +98,32 @@ export function AdminUsersPage() {
       setError(err instanceof Error ? err.message : "No se pudo crear usuario");
     } finally {
       setCreating(false);
+    }
+  }
+
+  function openResetPassword(target: AuthUser) {
+    setResetTarget(target);
+    setResetPassword("");
+    setResetError(null);
+  }
+
+  async function handleResetPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!resetTarget) return;
+    setResetting(true);
+    setResetError(null);
+    try {
+      await resetAdminUserPasswordApi(resetTarget.id, resetPassword);
+      setSuccess(`Contraseña de ${resetTarget.username} restablecida correctamente.`);
+      setTimeout(() => setSuccess(null), 3000);
+      setResetTarget(null);
+      setResetPassword("");
+    } catch (err) {
+      setResetError(
+        err instanceof Error ? err.message : "No se pudo restablecer la contraseña"
+      );
+    } finally {
+      setResetting(false);
     }
   }
 
@@ -250,18 +281,27 @@ export function AdminUsersPage() {
                       </span>
                     </td>
                     <td style={s.tdAction}>
-                      <button
-                        type="button"
-                        onClick={() => void handleToggle(u)}
-                        disabled={actionId === u.id}
-                        style={u.is_active ? s.btnDeactivate : s.btnActivate}
-                      >
-                        {actionId === u.id
-                          ? "..."
-                          : u.is_active
-                          ? "Desactivar"
-                          : "Activar"}
-                      </button>
+                      <div style={s.actionsCell}>
+                        <button
+                          type="button"
+                          onClick={() => openResetPassword(u)}
+                          style={s.btnReset}
+                        >
+                          Restablecer contraseña
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleToggle(u)}
+                          disabled={actionId === u.id}
+                          style={u.is_active ? s.btnDeactivate : s.btnActivate}
+                        >
+                          {actionId === u.id
+                            ? "..."
+                            : u.is_active
+                            ? "Desactivar"
+                            : "Activar"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -277,6 +317,54 @@ export function AdminUsersPage() {
           </div>
         </div>
       </div>
+
+      {resetTarget ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="reset-password-title"
+          style={s.modalOverlay}
+        >
+          <form onSubmit={handleResetPassword} style={s.modalBox}>
+            <h2 id="reset-password-title" style={s.modalTitle}>
+              Restablecer contraseña
+            </h2>
+            <p style={s.modalText}>
+              Define una nueva contraseña para <strong style={{ color: "#f1f5f9" }}>{resetTarget.username}</strong>.
+              Su sesión actual se cerrará y deberá iniciar sesión con la nueva contraseña.
+            </p>
+
+            {resetError ? <div style={{ ...s.alertError, marginBottom: 14 }}>{resetError}</div> : null}
+
+            <Field label="Nueva contraseña (mín. 12 chars)">
+              <input
+                required
+                autoFocus
+                minLength={12}
+                type="password"
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                placeholder="Contraseña segura"
+                style={s.input}
+              />
+            </Field>
+
+            <div style={s.modalActions}>
+              <button
+                type="button"
+                onClick={() => setResetTarget(null)}
+                disabled={resetting}
+                style={s.btnSecondary}
+              >
+                Cancelar
+              </button>
+              <button type="submit" disabled={resetting} style={s.btnPrimary}>
+                {resetting ? "Guardando..." : "Restablecer"}
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
     </AdminLayout>
   );
 }
@@ -333,6 +421,13 @@ const s: Record<string, CSSProperties> = {
   btnMobile: { minHeight: 44, width: "100%" },
   btnActivate: { border: "1px solid rgba(34,197,94,0.3)", borderRadius: 8, padding: "6px 12px", background: "rgba(34,197,94,0.08)", color: "#86efac", fontWeight: 600, cursor: "pointer", fontSize: 12.5 },
   btnDeactivate: { border: "1px solid #334155", borderRadius: 8, padding: "6px 12px", background: "transparent", color: "#94a3b8", fontWeight: 600, cursor: "pointer", fontSize: 12.5 },
+  actionsCell: { display: "flex", justifyContent: "flex-end", gap: 8 },
+  btnReset: { border: "1px solid rgba(96,165,250,0.3)", borderRadius: 8, padding: "6px 12px", background: "rgba(96,165,250,0.08)", color: "#60a5fa", fontWeight: 600, cursor: "pointer", fontSize: 12.5, whiteSpace: "nowrap" },
+  modalOverlay: { position: "fixed", inset: 0, zIndex: 50, display: "grid", placeItems: "center", background: "rgba(0,0,0,0.65)", padding: 24, backdropFilter: "blur(4px)" },
+  modalBox: { width: "100%", maxWidth: 420, borderRadius: 18, border: "1px solid #334155", background: "#1e293b", padding: "26px 28px", boxShadow: "0 24px 60px rgba(0,0,0,0.5)" },
+  modalTitle: { margin: "0 0 10px", fontSize: 18, fontWeight: 700, color: "#f1f5f9" },
+  modalText: { margin: "0 0 20px", fontSize: 14, lineHeight: 1.5, color: "#94a3b8" },
+  modalActions: { display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 18 },
 };
 
 const sf: Record<string, CSSProperties> = {

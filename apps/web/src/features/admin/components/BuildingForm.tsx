@@ -2,31 +2,42 @@ import type { FormEvent, ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import type {
   BuildingCategory,
-  BuildingService,
   Classroom,
   ClassroomType,
+  Department,
   Procedure,
   ProcedureForBuilding,
   ProcedureKind,
 } from "@ito-map/shared";
 import {
-  addBuildingServiceApi,
   createClassroomApi,
   createProcedureApi,
-  deleteBuildingServiceApi,
   deleteClassroomApi,
   getClassroomsApi,
-  getBuildingServicesApi,
+  getDepartmentsApi,
   getProceduresApi,
   getProceduresByBuildingApi,
   linkProcedureToBuildingApi,
   unlinkProcedureFromBuildingApi,
+  updateClassroomApi,
 } from "@ito-map/shared";
 import type { BuildingFormState } from "../hooks/useBuildingForm";
+import { BuildingDepartmentsSection } from "./building-form/BuildingDepartmentsSection";
+import { BuildingCubiclesSection } from "./building-form/BuildingCubiclesSection";
+import { BuildingHeadquartersSection } from "./building-form/BuildingHeadquartersSection";
+import { BuildingSchedulesSection } from "./building-form/BuildingSchedulesSection";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type Tab = "datos" | "servicios" | "aulas" | "tramites";
+type Tab =
+  | "datos"
+  | "servicios"
+  | "aulas"
+  | "tramites"
+  | "departamentos"
+  | "cubiculos"
+  | "jefaturas"
+  | "horarios";
 
 type BuildingFormProps = {
   form: BuildingFormState;
@@ -74,123 +85,82 @@ function slugify(value: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-// ─── Subsection: Servicios / Departamentos ───────────────────────────────────
+// ─── Subsection: Aulas / Espacios ────────────────────────────────────────────
 
-function BuildingServicesSection({ buildingId }: { buildingId: string }) {
-  const [services, setServices] = useState<BuildingService[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newDesc, setNewDesc] = useState("");
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+const FLOOR_OPTIONS = [
+  { value: -1, label: "Sótano" },
+  { value: 0, label: "Planta baja" },
+  { value: 1, label: "Piso 1" },
+  { value: 2, label: "Piso 2" },
+  { value: 3, label: "Piso 3" },
+  { value: 4, label: "Piso 4" },
+];
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    getBuildingServicesApi(buildingId)
-      .then((data) => { if (!cancelled) setServices(data); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [buildingId]);
+function floorLabel(floor: number): string {
+  return FLOOR_OPTIONS.find((f) => f.value === floor)?.label ?? `Piso ${floor}`;
+}
 
-  async function handleAdd() {
-    const name = newName.trim();
-    if (!name) return;
-    setAdding(true);
-    try {
-      const created = await addBuildingServiceApi(buildingId, {
-        name,
-        description: newDesc.trim() || null,
-      });
-      setServices((prev) => [...prev, created]);
-      setNewName("");
-      setNewDesc("");
-    } finally {
-      setAdding(false);
-    }
-  }
+type ClassroomDraft = {
+  code: string;
+  name: string;
+  type: ClassroomType;
+  floor: number;
+};
 
-  async function handleDelete(serviceId: string) {
-    setDeletingId(serviceId);
-    try {
-      await deleteBuildingServiceApi(buildingId, serviceId);
-      setServices((prev) => prev.filter((s) => s.id !== serviceId));
-    } finally {
-      setDeletingId(null);
-    }
-  }
+const EMPTY_DRAFT: ClassroomDraft = { code: "", name: "", type: "aula", floor: 0 };
+
+function ClassroomFields({
+  draft,
+  onChange,
+  disabled,
+}: {
+  draft: ClassroomDraft;
+  onChange: (next: ClassroomDraft) => void;
+  disabled: boolean;
+}) {
+  const fieldCls = "min-h-11 rounded-lg border border-[#334155] bg-[#0f172a] px-3 text-[13px] text-[#e2e8f0] placeholder:text-[#475569] outline-none focus:border-[#ea580c]";
 
   return (
-    <div>
-      <p className="m-0 mb-4 text-[13px] text-[#64748b]">
-        Agrega los departamentos o servicios que ofrece este edificio. Aparecen en el detalle público.
-      </p>
-
-      {loading ? (
-        <p className="m-0 mb-4 flex items-center gap-2 text-[12.5px] italic text-[#475569]">
-          <span className="h-3 w-3 animate-spin rounded-full border-2 border-[#334155] border-t-[#ea580c]" aria-hidden="true" />
-          Cargando servicios…
-        </p>
-      ) : services.length === 0 ? (
-        <p className="m-0 mb-4 text-[12.5px] italic text-[#475569]">Sin servicios registrados.</p>
-      ) : (
-        <ul className="m-0 mb-4 flex list-none flex-col gap-1.5 p-0">
-          {services.map((s) => (
-            <li
-              key={s.id}
-              className="flex items-center justify-between gap-2.5 rounded-lg border border-[#334155] bg-[#1e293b] px-3 py-2.5"
-            >
-              <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="truncate text-[13px] font-semibold text-[#e2e8f0]">{s.name}</span>
-                {s.description ? (
-                  <span className="truncate text-[11.5px] text-[#64748b]">{s.description}</span>
-                ) : null}
-              </div>
-              <button
-                type="button"
-                disabled={deletingId === s.id}
-                onClick={() => void handleDelete(s.id)}
-                aria-label={`Eliminar ${s.name}`}
-                className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-md border border-[rgba(239,68,68,0.25)] bg-transparent text-[16px] font-bold leading-none text-[#ef4444] transition-colors hover:bg-[rgba(239,68,68,0.12)] disabled:opacity-50"
-              >
-                {deletingId === s.id ? "…" : "×"}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <div className="flex items-center gap-2 max-[640px]:flex-col">
-        <input
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          placeholder="Nombre del servicio"
-          disabled={adding}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleAdd(); } }}
-          className="min-h-11 flex-1 rounded-lg border border-[#334155] bg-[#0f172a] px-3 text-[13px] text-[#e2e8f0] placeholder:text-[#475569] outline-none transition-[border-color] focus:border-[#ea580c] max-[640px]:w-full"
-        />
-        <input
-          value={newDesc}
-          onChange={(e) => setNewDesc(e.target.value)}
-          placeholder="Descripción (opcional)"
-          disabled={adding}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleAdd(); } }}
-          className="min-h-11 flex-[1.5] rounded-lg border border-[#334155] bg-[#0f172a] px-3 text-[13px] text-[#e2e8f0] placeholder:text-[#475569] outline-none transition-[border-color] focus:border-[#ea580c] max-[640px]:w-full"
-        />
-        <button
-          type="button"
-          disabled={adding || !newName.trim()}
-          onClick={() => void handleAdd()}
-          className="inline-flex min-h-11 flex-shrink-0 items-center justify-center rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3.5 text-[13px] font-bold text-white transition-[background-color,transform] hover:-translate-y-px hover:bg-[#c2410c] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 max-[640px]:w-full"
-        >
-          {adding ? "…" : "Agregar"}
-        </button>
-      </div>
+    <div className="grid grid-cols-2 gap-2.5 max-[640px]:grid-cols-1">
+      <input
+        value={draft.code}
+        onChange={(e) => onChange({ ...draft, code: e.target.value })}
+        placeholder="Clave (ej: A-101)"
+        disabled={disabled}
+        className={fieldCls}
+      />
+      <input
+        value={draft.name}
+        onChange={(e) => onChange({ ...draft, name: e.target.value })}
+        placeholder="Nombre del aula"
+        disabled={disabled}
+        className={fieldCls}
+      />
+      <select
+        value={draft.type}
+        onChange={(e) => onChange({ ...draft, type: e.target.value as ClassroomType })}
+        disabled={disabled}
+        className={fieldCls}
+      >
+        <option value="aula">Aula</option>
+        <option value="laboratorio">Laboratorio</option>
+        <option value="taller">Taller</option>
+        <option value="oficina">Oficina</option>
+        <option value="otro">Otro</option>
+      </select>
+      <select
+        value={draft.floor}
+        onChange={(e) => onChange({ ...draft, floor: Number(e.target.value) })}
+        disabled={disabled}
+        className={fieldCls}
+      >
+        {FLOOR_OPTIONS.map((f) => (
+          <option key={f.value} value={f.value}>{f.label}</option>
+        ))}
+      </select>
     </div>
   );
 }
-
-// ─── Subsection: Aulas / Espacios ────────────────────────────────────────────
 
 function BuildingClassroomsSection({ buildingId }: { buildingId: string }) {
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
@@ -200,10 +170,9 @@ function BuildingClassroomsSection({ buildingId }: { buildingId: string }) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [code, setCode] = useState("");
-  const [name, setName] = useState("");
-  const [type, setType] = useState<ClassroomType>("aula");
-  const [floor, setFloor] = useState("0");
+  const [draft, setDraft] = useState<ClassroomDraft>(EMPTY_DRAFT);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<ClassroomDraft>(EMPTY_DRAFT);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -220,8 +189,8 @@ function BuildingClassroomsSection({ buildingId }: { buildingId: string }) {
   useEffect(() => { void load(); }, [load]);
 
   async function handleAdd() {
-    const nextCode = code.trim();
-    const nextName = name.trim();
+    const nextCode = draft.code.trim();
+    const nextName = draft.name.trim();
     if (!nextCode || !nextName) return;
     setSaving(true);
     setSaveError(null);
@@ -230,14 +199,53 @@ function BuildingClassroomsSection({ buildingId }: { buildingId: string }) {
         building_id: buildingId,
         code: nextCode,
         name: nextName,
-        type,
-        floor: Number.isFinite(Number(floor)) ? Number(floor) : 0,
+        type: draft.type,
+        floor: draft.floor,
         is_active: true,
       });
-      setCode(""); setName(""); setType("aula"); setFloor("0");
+      setDraft(EMPTY_DRAFT);
       await load();
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : "Error al guardar el aula");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function startEdit(classroom: Classroom) {
+    setEditingId(classroom.id);
+    setEditDraft({
+      code: classroom.code,
+      name: classroom.name,
+      type: classroom.type,
+      floor: classroom.floor,
+    });
+    setSaveError(null);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditDraft(EMPTY_DRAFT);
+  }
+
+  async function handleSaveEdit() {
+    if (!editingId) return;
+    const nextCode = editDraft.code.trim();
+    const nextName = editDraft.name.trim();
+    if (!nextCode || !nextName) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await updateClassroomApi(editingId, {
+        code: nextCode,
+        name: nextName,
+        type: editDraft.type,
+        floor: editDraft.floor,
+      });
+      cancelEdit();
+      await load();
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Error al actualizar el aula");
     } finally {
       setSaving(false);
     }
@@ -256,12 +264,10 @@ function BuildingClassroomsSection({ buildingId }: { buildingId: string }) {
     }
   }
 
-  const fieldCls = "min-h-11 rounded-lg border border-[#334155] bg-[#0f172a] px-3 text-[13px] text-[#e2e8f0] placeholder:text-[#475569] outline-none focus:border-[#ea580c]";
-
   return (
     <div>
       <p className="m-0 mb-4 text-[13px] text-[#64748b]">
-        Registra aulas, laboratorios, talleres u oficinas dentro de este edificio.
+        Registra aulas, laboratorios, talleres u oficinas dentro de este edificio, indicando en qué piso se encuentran.
       </p>
 
       {loadError ? (
@@ -274,82 +280,91 @@ function BuildingClassroomsSection({ buildingId }: { buildingId: string }) {
         <p className="m-0 mb-4 text-[12.5px] italic text-[#475569]">Sin aulas registradas.</p>
       ) : (
         <ul className="m-0 mb-4 grid list-none gap-1.5 p-0">
-          {classrooms.map((classroom) => (
-            <li
-              key={classroom.id}
-              className="flex items-center justify-between gap-2 rounded-lg border border-[#334155] bg-[#1e293b] px-3 py-2.5"
-            >
-              <div className="min-w-0">
-                <span className="block truncate text-[13px] font-semibold text-[#e2e8f0]">
-                  {classroom.code} — {classroom.name}
-                </span>
-                <span className="text-[11.5px] capitalize text-[#64748b]">
-                  {classroom.type} · piso {classroom.floor}
-                </span>
-              </div>
-              <button
-                type="button"
-                disabled={deletingId === classroom.id}
-                onClick={() => void handleDelete(classroom.id)}
-                className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-md border border-[rgba(239,68,68,0.25)] bg-transparent text-[16px] font-bold leading-none text-[#ef4444] hover:bg-[rgba(239,68,68,0.12)] disabled:opacity-50"
-                aria-label={`Eliminar ${classroom.name}`}
+          {classrooms.map((classroom) =>
+            editingId === classroom.id ? (
+              <li
+                key={classroom.id}
+                className="flex flex-col gap-2.5 rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#1e293b] px-3 py-3"
               >
-                {deletingId === classroom.id ? "..." : "×"}
-              </button>
-            </li>
-          ))}
+                <ClassroomFields draft={editDraft} onChange={setEditDraft} disabled={saving} />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={saving || !editDraft.code.trim() || !editDraft.name.trim()}
+                    onClick={() => void handleSaveEdit()}
+                    className="min-h-9 flex-1 rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3 text-[12.5px] font-bold text-white hover:bg-[#c2410c] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {saving ? "Guardando…" : "Guardar cambios"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={cancelEdit}
+                    className="min-h-9 flex-1 rounded-lg border border-[#334155] bg-transparent px-3 text-[12.5px] font-semibold text-[#94a3b8] hover:bg-[#0f172a]"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </li>
+            ) : (
+              <li
+                key={classroom.id}
+                className="flex items-center justify-between gap-2 rounded-lg border border-[#334155] bg-[#1e293b] px-3 py-2.5"
+              >
+                <div className="min-w-0">
+                  <span className="block truncate text-[13px] font-semibold text-[#e2e8f0]">
+                    {classroom.code} — {classroom.name}
+                  </span>
+                  <span className="text-[11.5px] capitalize text-[#64748b]">
+                    {classroom.type} · {floorLabel(classroom.floor)}
+                  </span>
+                </div>
+                <div className="flex flex-shrink-0 items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => startEdit(classroom)}
+                    className="grid h-7 w-7 place-items-center rounded-md border border-[#334155] bg-transparent text-[13px] text-[#94a3b8] hover:bg-[#0f172a] hover:text-[#e2e8f0]"
+                    aria-label={`Editar ${classroom.name}`}
+                    title="Editar"
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deletingId === classroom.id}
+                    onClick={() => void handleDelete(classroom.id)}
+                    className="grid h-7 w-7 place-items-center rounded-md border border-[rgba(239,68,68,0.25)] bg-transparent text-[16px] font-bold leading-none text-[#ef4444] hover:bg-[rgba(239,68,68,0.12)] disabled:opacity-50"
+                    aria-label={`Eliminar ${classroom.name}`}
+                  >
+                    {deletingId === classroom.id ? "..." : "×"}
+                  </button>
+                </div>
+              </li>
+            )
+          )}
         </ul>
       )}
 
-      <div className="grid grid-cols-2 gap-2.5 max-[640px]:grid-cols-1">
-        <input
-          value={code}
-          onChange={(e) => { setCode(e.target.value); setSaveError(null); }}
-          placeholder="Clave (ej: A-101)"
-          disabled={saving}
-          className={fieldCls}
-        />
-        <input
-          value={name}
-          onChange={(e) => { setName(e.target.value); setSaveError(null); }}
-          placeholder="Nombre del aula"
-          disabled={saving}
-          className={fieldCls}
-        />
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value as ClassroomType)}
-          disabled={saving}
-          className={fieldCls}
-        >
-          <option value="aula">Aula</option>
-          <option value="laboratorio">Laboratorio</option>
-          <option value="taller">Taller</option>
-          <option value="oficina">Oficina</option>
-          <option value="otro">Otro</option>
-        </select>
-        <input
-          value={floor}
-          onChange={(e) => setFloor(e.target.value)}
-          placeholder="Piso (0 = planta baja)"
-          disabled={saving}
-          className={fieldCls}
-        />
+      <div className="flex flex-col gap-2.5">
+        <ClassroomFields draft={draft} onChange={setDraft} disabled={saving} />
         {saveError ? (
-          <p className="col-span-2 m-0 rounded-lg border border-[rgba(239,68,68,0.25)] bg-[rgba(239,68,68,0.08)] px-3 py-2 text-[12px] text-[#f87171]">
+          <p className="m-0 rounded-lg border border-[rgba(239,68,68,0.25)] bg-[rgba(239,68,68,0.08)] px-3 py-2 text-[12px] text-[#f87171]">
             {saveError}
           </p>
         ) : null}
         {deleteError ? (
-          <p className="col-span-2 m-0 rounded-lg border border-[rgba(239,68,68,0.25)] bg-[rgba(239,68,68,0.08)] px-3 py-2 text-[12px] text-[#f87171]">
+          <p className="m-0 rounded-lg border border-[rgba(239,68,68,0.25)] bg-[rgba(239,68,68,0.08)] px-3 py-2 text-[12px] text-[#f87171]">
             {deleteError}
           </p>
         ) : null}
         <button
           type="button"
-          disabled={saving || !code.trim() || !name.trim()}
+          disabled={saving || !draft.code.trim() || !draft.name.trim()}
           onClick={() => void handleAdd()}
-          className="col-span-2 min-h-11 w-full rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3.5 text-[13px] font-bold text-white hover:bg-[#c2410c] disabled:cursor-not-allowed disabled:opacity-50 max-[640px]:col-span-1"
+          className="min-h-11 w-full rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3.5 text-[13px] font-bold text-white hover:bg-[#c2410c] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {saving ? "Guardando…" : "Agregar aula"}
         </button>
@@ -358,31 +373,49 @@ function BuildingClassroomsSection({ buildingId }: { buildingId: string }) {
   );
 }
 
-// ─── Subsection: Trámites vinculados ─────────────────────────────────────────
+// ─── Subsection: Trámites / Servicios vinculados ─────────────────────────────
 
-function BuildingProceduresSection({ buildingId }: { buildingId: string }) {
+const KIND_COPY: Record<ProcedureKind, { noun: string; plural: string; placeholder: string }> = {
+  tramite: { noun: "trámite", plural: "trámites", placeholder: "Nombre del trámite" },
+  servicio: { noun: "servicio", plural: "servicios", placeholder: "Nombre del servicio" },
+};
+
+function BuildingProceduresSection({
+  buildingId,
+  kind,
+}: {
+  buildingId: string;
+  kind: ProcedureKind;
+}) {
   const [linked, setLinked] = useState<ProcedureForBuilding[]>([]);
   const [allProcedures, setAllProcedures] = useState<Procedure[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [newName, setNewName] = useState("");
-  const [newKind, setNewKind] = useState<ProcedureKind>("servicio");
   const [notes, setNotes] = useState("");
+  const [newDepartmentId, setNewDepartmentId] = useState("");
+  const [newInternalLocation, setNewInternalLocation] = useState("");
+  const [newScheduleText, setNewScheduleText] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const copy = KIND_COPY[kind];
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [buildingProcedures, procedures] = await Promise.all([
+      const [buildingProcedures, procedures, buildingDepartments] = await Promise.all([
         getProceduresByBuildingApi(buildingId),
-        getProceduresApi(),
+        getProceduresApi({ kind }),
+        getDepartmentsApi(buildingId),
       ]);
-      setLinked(buildingProcedures);
+      setLinked(buildingProcedures.filter((p) => p.kind === kind));
       setAllProcedures(procedures.filter((p) => p.is_active));
+      setDepartments(buildingDepartments);
     } finally {
       setLoading(false);
     }
-  }, [buildingId]);
+  }, [buildingId, kind]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -409,8 +442,11 @@ function BuildingProceduresSection({ buildingId }: { buildingId: string }) {
       const created = await createProcedureApi({
         name,
         slug: slugify(name),
-        kind: newKind,
+        kind,
         description: notes.trim() || null,
+        department_id: newDepartmentId || null,
+        internal_location: newInternalLocation.trim() || null,
+        schedule_text: newScheduleText.trim() || null,
         is_active: true,
       });
       await linkProcedureToBuildingApi(buildingId, {
@@ -418,6 +454,7 @@ function BuildingProceduresSection({ buildingId }: { buildingId: string }) {
         notes: notes.trim() || null,
       });
       setNewName(""); setNotes("");
+      setNewDepartmentId(""); setNewInternalLocation(""); setNewScheduleText("");
       await load();
     } finally {
       setSaving(false);
@@ -441,23 +478,22 @@ function BuildingProceduresSection({ buildingId }: { buildingId: string }) {
   return (
     <div>
       <p className="m-0 mb-4 text-[13px] text-[#64748b]">
-        Vincula trámites o servicios para que aparezcan en búsqueda y en el detalle del edificio.
+        Vincula {copy.plural} del catálogo para que aparezcan en el buscador y en la ficha del edificio.
       </p>
 
       {loading ? (
         <p className="m-0 mb-4 text-[12.5px] italic text-[#475569]">Cargando vínculos...</p>
       ) : linked.length === 0 ? (
-        <p className="m-0 mb-4 text-[12.5px] italic text-[#475569]">Sin trámites o servicios vinculados.</p>
+        <p className="m-0 mb-4 text-[12.5px] italic text-[#475569]">Sin {copy.plural} vinculados.</p>
       ) : (
         <ul className="m-0 mb-4 grid list-none gap-1.5 p-0">
           {linked.map((procedure) => (
             <li key={procedure.id} className="flex items-center justify-between gap-2 rounded-lg border border-[#334155] bg-[#1e293b] px-3 py-2.5">
               <div className="min-w-0">
                 <span className="block truncate text-[13px] font-semibold text-[#e2e8f0]">{procedure.name}</span>
-                <span className="text-[11.5px] text-[#64748b]">
-                  {procedure.kind === "tramite" ? "Trámite" : "Servicio"}
-                  {procedure.notes ? ` · ${procedure.notes}` : ""}
-                </span>
+                {procedure.notes ? (
+                  <span className="text-[11.5px] text-[#64748b]">{procedure.notes}</span>
+                ) : null}
               </div>
               <button
                 type="button"
@@ -475,13 +511,13 @@ function BuildingProceduresSection({ buildingId }: { buildingId: string }) {
 
       {/* Vincular existente */}
       <div className="mb-5 rounded-xl border border-[#1e3050] bg-[#131e2e] p-4">
-        <p className="m-0 mb-3 text-[11px] font-bold uppercase tracking-wide text-[#475569]">Vincular existente</p>
+        <p className="m-0 mb-3 text-[11px] font-bold uppercase tracking-wide text-[#475569]">Vincular existente del catálogo</p>
         <div className="grid grid-cols-1 gap-2">
           <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} disabled={saving} className={fieldCls}>
-            <option value="">Seleccionar trámite o servicio...</option>
+            <option value="">Seleccionar {copy.noun}...</option>
             {available.map((procedure) => (
               <option key={procedure.id} value={procedure.id}>
-                {procedure.kind === "tramite" ? "Trámite" : "Servicio"} — {procedure.name}
+                {procedure.name}
               </option>
             ))}
           </select>
@@ -494,14 +530,37 @@ function BuildingProceduresSection({ buildingId }: { buildingId: string }) {
 
       {/* Crear y vincular */}
       <div className="rounded-xl border border-[#1e3050] bg-[#131e2e] p-4">
-        <p className="m-0 mb-3 text-[11px] font-bold uppercase tracking-wide text-[#475569]">Crear nuevo y vincular</p>
-        <div className="grid grid-cols-2 gap-2 max-[640px]:grid-cols-1">
-          <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Nombre del trámite o servicio" disabled={saving} className={`col-span-2 ${fieldCls}`} />
-          <select value={newKind} onChange={(e) => setNewKind(e.target.value as ProcedureKind)} disabled={saving} className={fieldCls}>
-            <option value="servicio">Servicio</option>
-            <option value="tramite">Trámite</option>
+        <p className="m-0 mb-3 text-[11px] font-bold uppercase tracking-wide text-[#475569]">Crear nuevo en el catálogo y vincular</p>
+        <div className="grid grid-cols-1 gap-2">
+          <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={copy.placeholder} disabled={saving} className={fieldCls} />
+          <select
+            value={newDepartmentId}
+            onChange={(e) => setNewDepartmentId(e.target.value)}
+            disabled={saving}
+            className={fieldCls}
+          >
+            <option value="">Departamento responsable (opcional)</option>
+            {departments.map((department) => (
+              <option key={department.id} value={department.id}>
+                {department.name}
+              </option>
+            ))}
           </select>
-          <button type="button" disabled={saving || !newName.trim()} onClick={() => void handleCreateAndLink()} className="min-h-11 rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3.5 text-[13px] font-bold text-white hover:bg-[#c2410c] disabled:cursor-not-allowed disabled:opacity-50">
+          <input
+            value={newScheduleText}
+            onChange={(e) => setNewScheduleText(e.target.value)}
+            placeholder="Horario de atención (opcional)"
+            disabled={saving}
+            className={fieldCls}
+          />
+          <input
+            value={newInternalLocation}
+            onChange={(e) => setNewInternalLocation(e.target.value)}
+            placeholder="Ubicación interna (opcional, ej. Planta baja, oficina 3)"
+            disabled={saving}
+            className={fieldCls}
+          />
+          <button type="button" disabled={saving || !newName.trim()} onClick={() => void handleCreateAndLink()} className="min-h-11 w-full rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3.5 text-[13px] font-bold text-white hover:bg-[#c2410c] disabled:cursor-not-allowed disabled:opacity-50">
             Crear y vincular
           </button>
         </div>
@@ -595,6 +654,47 @@ const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
         <rect x="9" y="3" width="6" height="4" rx="2" />
         <line x1="9" y1="12" x2="15" y2="12" />
         <line x1="9" y1="16" x2="13" y2="16" />
+      </svg>
+    ),
+  },
+  {
+    id: "departamentos",
+    label: "Deptos",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4" y="3" width="16" height="18" rx="1" />
+        <line x1="8" y1="7" x2="12" y2="7" />
+        <line x1="8" y1="11" x2="16" y2="11" />
+        <line x1="8" y1="15" x2="16" y2="15" />
+      </svg>
+    ),
+  },
+  {
+    id: "cubiculos",
+    label: "Cubículos",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21v-2a6 6 0 0116 0v2" />
+      </svg>
+    ),
+  },
+  {
+    id: "jefaturas",
+    label: "Jefaturas",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2l3 5 5 .7-3.6 3.5.9 5-4.3-2.3-4.3 2.3.9-5L3 7.7 8 7z" />
+      </svg>
+    ),
+  },
+  {
+    id: "horarios",
+    label: "Horarios",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="9" />
+        <polyline points="12 7 12 12 16 14" />
       </svg>
     ),
   },
@@ -827,11 +927,11 @@ export function BuildingForm({
           </form>
         )}
 
-        {/* ── Servicios / Departamentos ── */}
+        {/* ── Servicios ── */}
         {activeTab === "servicios" && (
           hasBuilding
-            ? <BuildingServicesSection buildingId={buildingId!} />
-            : <LockedSection label="servicios y departamentos" />
+            ? <BuildingProceduresSection buildingId={buildingId!} kind="servicio" />
+            : <LockedSection label="servicios vinculados" />
         )}
 
         {/* ── Aulas / Espacios ── */}
@@ -844,8 +944,36 @@ export function BuildingForm({
         {/* ── Trámites ── */}
         {activeTab === "tramites" && (
           hasBuilding
-            ? <BuildingProceduresSection buildingId={buildingId!} />
+            ? <BuildingProceduresSection buildingId={buildingId!} kind="tramite" />
             : <LockedSection label="trámites vinculados" />
+        )}
+
+        {/* ── Departamentos ── */}
+        {activeTab === "departamentos" && (
+          hasBuilding
+            ? <BuildingDepartmentsSection buildingId={buildingId!} />
+            : <LockedSection label="departamentos" />
+        )}
+
+        {/* ── Cubículos de maestros ── */}
+        {activeTab === "cubiculos" && (
+          hasBuilding
+            ? <BuildingCubiclesSection buildingId={buildingId!} />
+            : <LockedSection label="cubículos de maestros" />
+        )}
+
+        {/* ── Jefaturas ── */}
+        {activeTab === "jefaturas" && (
+          hasBuilding
+            ? <BuildingHeadquartersSection buildingId={buildingId!} />
+            : <LockedSection label="jefaturas" />
+        )}
+
+        {/* ── Horarios ── */}
+        {activeTab === "horarios" && (
+          hasBuilding
+            ? <BuildingSchedulesSection buildingId={buildingId!} />
+            : <LockedSection label="horarios de atención" />
         )}
       </div>
     </div>

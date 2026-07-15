@@ -2,7 +2,9 @@ import type { CSSProperties } from "react";
 import {
   BuildingIcon,
   CalendarIcon,
+  CoffeeIcon,
   CompassIcon,
+  GraduationCapIcon,
   InfoIcon,
   MapIcon,
   SearchIcon,
@@ -21,7 +23,9 @@ export type CampusService = {
   icon:
     | "building"
     | "calendar"
+    | "coffee"
     | "compass"
+    | "graduation-cap"
     | "info"
     | "map"
     | "search"
@@ -39,39 +43,56 @@ const SERVICES: CampusService[] = [
     id: "control-escolar",
     title: "Control Escolar",
     description:
-      "Constancias, kardex, seguimiento académico y trámites escolares.",
+      "Inscripciones, constancias, kardex y trámites académicos.",
     category: "student",
     locationHint: "Servicios escolares",
     searchTerm: "servicios escolares",
     icon: "calendar",
   },
   {
-    id: "servicios-escolares",
-    title: "Servicios Escolares",
-    description:
-      "Inscripciones, reinscripciones, documentos y atención a estudiantes.",
+    id: "aulas",
+    title: "Aulas",
+    description: "Localiza tu salón de clases dentro del campus.",
+    category: "campus",
+    locationHint: "Edificios de aulas",
+    searchTerm: "aula",
+    icon: "graduation-cap",
+  },
+  {
+    id: "biblioteca",
+    title: "Biblioteca",
+    description: "Libros, recursos académicos y espacios de estudio.",
+    category: "academic",
+    locationHint: "Biblioteca",
+    searchTerm: "biblioteca",
+    icon: "search",
+  },
+  {
+    id: "cafeteria",
+    title: "Cafetería",
+    description: "Servicio de alimentos dentro del campus.",
+    category: "campus",
+    locationHint: "Cafetería",
+    searchTerm: "cafetería",
+    icon: "coffee",
+  },
+  {
+    id: "laboratorios",
+    title: "Laboratorios",
+    description: "Espacios de práctica, cómputo e investigación.",
+    category: "campus",
+    locationHint: "Edificios de laboratorio",
+    searchTerm: "laboratorio",
+    icon: "map",
+  },
+  {
+    id: "becas",
+    title: "Becas",
+    description: "Información sobre apoyos, convocatorias y seguimiento.",
     category: "student",
-    locationHint: "Área de servicios escolares",
-    searchTerm: "servicios escolares",
-    icon: "users",
-  },
-  {
-    id: "finanzas",
-    title: "Finanzas",
-    description: "Pagos, comprobantes, cuotas y aclaraciones administrativas.",
-    category: "administrative",
-    locationHint: "Área administrativa",
-    searchTerm: "finanzas",
-    icon: "shield",
-  },
-  {
-    id: "direccion",
-    title: "Dirección",
-    description: "Atención institucional, gestión directiva y asuntos generales.",
-    category: "administrative",
-    locationHint: "Edificio de dirección",
-    searchTerm: "direccion",
-    icon: "building",
+    locationHint: "Área de becas o servicios escolares",
+    searchTerm: "becas",
+    icon: "info",
   },
   {
     id: "coordinacion",
@@ -84,31 +105,22 @@ const SERVICES: CampusService[] = [
     icon: "compass",
   },
   {
-    id: "becas",
-    title: "Becas",
-    description: "Información sobre apoyos, convocatorias y seguimiento.",
-    category: "student",
-    locationHint: "Área de becas o servicios escolares",
-    searchTerm: "becas",
-    icon: "info",
+    id: "direccion",
+    title: "Dirección",
+    description: "Atención institucional, gestión directiva y asuntos generales.",
+    category: "administrative",
+    locationHint: "Edificio de dirección",
+    searchTerm: "direccion",
+    icon: "building",
   },
   {
-    id: "biblioteca",
-    title: "Biblioteca",
-    description: "Libros, recursos académicos y espacios de estudio.",
-    category: "academic",
-    locationHint: "Biblioteca",
-    searchTerm: "biblioteca",
-    icon: "search",
-  },
-  {
-    id: "laboratorios",
-    title: "Laboratorios",
-    description: "Espacios de práctica, cómputo e investigación.",
-    category: "campus",
-    locationHint: "Edificios de laboratorio",
-    searchTerm: "laboratorio",
-    icon: "map",
+    id: "finanzas",
+    title: "Finanzas",
+    description: "Pagos, comprobantes, cuotas y aclaraciones administrativas.",
+    category: "administrative",
+    locationHint: "Área administrativa",
+    searchTerm: "finanzas",
+    icon: "shield",
   },
 ];
 
@@ -121,8 +133,8 @@ const CATEGORY_LABELS: Record<CampusService["category"], string> = {
 
 const CATEGORY_STYLES: Record<CampusService["category"], CSSProperties> = {
   administrative: {
-    background: "#eff6ff",
-    color: "#c2410c",
+    background: "#e2e8f0",
+    color: "#475569",
   },
   student: {
     background: "#ecfdf5",
@@ -143,7 +155,9 @@ function ServiceIcon({ name }: { name: CampusService["icon"] }) {
 
   if (name === "building") return <BuildingIcon {...props} />;
   if (name === "calendar") return <CalendarIcon {...props} />;
+  if (name === "coffee") return <CoffeeIcon {...props} />;
   if (name === "compass") return <CompassIcon {...props} />;
+  if (name === "graduation-cap") return <GraduationCapIcon {...props} />;
   if (name === "info") return <InfoIcon {...props} />;
   if (name === "map") return <MapIcon {...props} />;
   if (name === "search") return <SearchIcon {...props} />;
@@ -190,7 +204,9 @@ export function CampusServicesPanel({
             style={compact ? styles.compactCard : styles.card}
             onClick={() => handleSelectService(service)}
           >
-            <span style={styles.iconBox}>
+            <span
+              style={{ ...styles.iconBox, ...CATEGORY_STYLES[service.category] }}
+            >
               <ServiceIcon name={service.icon} />
             </span>
 
@@ -316,13 +332,11 @@ const styles: Record<string, CSSProperties> = {
     width: "42px",
     height: "42px",
     borderRadius: "15px",
-    background: "#ffedd5",
-    color: "#c2410c",
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
-    boxShadow: "inset 0 0 0 1px rgba(234, 88, 12, 0.08)",
+    boxShadow: "inset 0 0 0 1px rgba(15, 23, 42, 0.06)",
   },
   cardContent: {
     minWidth: 0,

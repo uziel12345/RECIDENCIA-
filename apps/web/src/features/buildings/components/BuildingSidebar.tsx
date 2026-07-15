@@ -4,6 +4,7 @@ import { useLocationStore } from "../../../store/location-store";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { RoutePanel } from "./RoutePanel";
 import { useBuildings } from "../../../hooks/useBuildings";
+import { useGates } from "../../../hooks/useGates";
 import { useBuildingCategories } from "../hooks/useBuildingCategories";
 import { BuildingSearch } from "./BuildingSearch";
 import { BuildingInfoCard } from "./BuildingInfoCard";
@@ -15,7 +16,6 @@ import { AppFooter } from "../../../components/ui/AppFooter";
 import { normalizeDisplayText } from "../../../utils/text";
 import { matchesSearchWords } from "../../../utils/search-match";
 import type { Building } from "../types/building";
-import type { SearchResult } from "@ito-map/shared";
 
 function normalizeSearchText(value: string | null | undefined): string {
   return value
@@ -62,7 +62,7 @@ function getBuildingSearchAliases(building: Building): string {
 
 type BuildingSidebarProps = {
   isMobile?: boolean;
-  onItemSelected?: (building: Building) => void;
+  onItemSelected?: () => void;
   onClearSelection?: () => void;
   showGreeting?: boolean;
   showSearchPanel?: boolean;
@@ -102,6 +102,7 @@ export function BuildingSidebar({
   const isPublicDesktop = !isMobile && !canUseRoutes;
 
   const { buildings, loading, error: loadError } = useBuildings();
+  const { gates } = useGates();
   const [showAllBuildings, setShowAllBuildings] = useState(false);
   const { categories, totalActive } = useBuildingCategories(buildings);
 
@@ -153,27 +154,18 @@ export function BuildingSidebar({
 
   function handleSelectBuilding(building: Building) {
     setSelectedBuilding(building);
-    onItemSelected?.(building);
+    onItemSelected?.();
   }
   function handleClearSelection() {
     setSelectedBuilding(null);
     onClearSelection?.();
   }
-  function handleSelectSearchResult(result: SearchResult) {
-    if (result.kind === "building") {
-      setSelectedSearchResult(null);
-    } else {
-      setSelectedSearchResult(result);
-    }
-
-    // Igual que al elegir un edificio de la lista: colapsa el panel móvil
-    // (onItemSelected -> sheet "peek") para que el mapa, ya enfocado en el
-    // edificio, quede visible en vez de tapado por la búsqueda.
-    const buildingId = result.kind === "building" ? result.id : result.buildingId;
-    const building = buildingId
-      ? buildings.find((b) => b.id === buildingId)
-      : undefined;
-    if (building) onItemSelected?.(building);
+  function handleSelectSearchResult() {
+    // La selección (edificio/puerta, ruta, sección a resaltar) ya la resolvió
+    // selectSearchResult() en el store, dentro de BuildingSearch.handleSelect.
+    // Aquí solo colapsamos el panel móvil para que el mapa, ya enfocado,
+    // quede visible en vez de tapado por la búsqueda.
+    onItemSelected?.();
   }
 
   return (
@@ -290,6 +282,7 @@ export function BuildingSidebar({
 
         <BuildingSearch
           buildings={buildings}
+          gates={gates}
           onSelectResult={handleSelectSearchResult}
         />
 
@@ -372,7 +365,10 @@ export function BuildingSidebar({
         </div>
       )}
 
-      {(selectedBuilding || routeDestination) && (
+      {/* Solo se entrega localización, no ruteo — el panel de ruta se
+          reserva a superadmin (mismo check que canUseDemo) para pruebas
+          de calibración; student/visitor no lo ven. */}
+      {canUseRoutes && (selectedBuilding || routeDestination) && (
         <div className={SECTION}>
           <RoutePanel compact={isMobile} canUseDemo={canUseDemo} />
         </div>

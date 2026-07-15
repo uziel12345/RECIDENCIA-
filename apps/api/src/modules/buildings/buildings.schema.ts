@@ -34,12 +34,5 @@ export const buildingIdSchema = z.object({
   id: z.string({ required_error: "El ID del edificio es obligatorio" }).uuid("El ID debe ser un UUID válido"),
 });
 
-export const createBuildingServiceSchema = z.object({
-  name: z.string({ required_error: "El nombre del servicio es obligatorio" })
-    .min(1, "El nombre no puede estar vacío")
-    .max(255),
-  description: z.string().max(500).optional().nullable(),
-});
-
 export type CreateBuildingInput = z.infer<typeof createBuildingSchema>;
 export type UpdateBuildingInput = z.infer<typeof updateBuildingSchema>;

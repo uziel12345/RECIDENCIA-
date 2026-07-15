@@ -60,5 +60,30 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+
+    // Sirve el build de producción (dist/) sin dev server ni HMR — usar esto
+    // para tunelear (ngrok/cloudflared) en vez de `server` de arriba. El dev
+    // server mantiene un WebSocket de HMR abierto; los túneles gratuitos
+    // (ej. trycloudflare.com) lo cortan de vez en cuando, y Vite responde a
+    // esa reconexión con un recargado completo de la página — con `preview`
+    // no hay WebSocket que se pueda caer, así que ese síntoma desaparece.
+    preview: {
+      host: "0.0.0.0",
+      port: 8080,
+      strictPort: true,
+      allowedHosts: allowedHost ? [allowedHost] : true,
+      proxy: {
+        "/api": {
+          target: "http://localhost:3001",
+          changeOrigin: true,
+          secure: false,
+        },
+        "/uploads": {
+          target: "http://localhost:3001",
+          changeOrigin: true,
+          secure: false,
+        },
+      },
+    },
   };
 });

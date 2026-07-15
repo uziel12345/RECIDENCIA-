@@ -1,7 +1,7 @@
-import { Suspense, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, OrbitControls, useProgress } from "@react-three/drei";
-import { Box3, Vector3, type Object3D } from "three";
+import { ACESFilmicToneMapping, Box3, MOUSE, SRGBColorSpace, TOUCH, Vector3, type Object3D } from "three";
 import type { Building } from "../../features/buildings/types/building";
 import { useLocationStore } from "../../store/location-store";
 import { useBuildingStore } from "../../store/building-store";
@@ -31,15 +31,22 @@ import {
 import { NavigationEditorModal } from "./NavigationEditorModal";
 import { NavigationDebugLayer } from "./NavigationDebugLayer";
 import { DestinationBuildingHighlight } from "./DestinationBuildingHighlight";
+import { GateMarkers } from "./GateMarkers";
+import {
+  GatePlacementLayer,
+  type GatePlacementPosition,
+} from "./GatePlacementLayer";
 import { resolveGlbName, toRuntimeGlbName } from "./glb-utils";
 import { useBuildingGlbStore } from "../../store/building-glb-store";
 import { CameraAnimator, type CameraAnim } from "./CameraAnimator";
 import { CampusModel } from "./CampusModel";
 import { useCampusGltf } from "./useCampusGltf";
+import { useSharedPointerDownTracker } from "./useDragAwareClick";
 import { CategoryLegend } from "./CategoryLegend";
 import { UserLocationMarker } from "./UserLocationMarker";
 import { ViewerLoading } from "./ViewerLoading";
 import { ViewerToolbar, type NavigationDebugMode } from "./ViewerToolbar";
+import { useInputProfile } from "../../hooks/useInputProfile";
 
 const CAMPUS_ROTATION_Y = Math.PI / 2;
 const DEFAULT_CAMPUS_POSITION = new Vector3(0, 0, 0);
@@ -277,6 +284,11 @@ type FocusPoint = {
   worldZ: number;
 };
 
+type HoveredBuilding = {
+  buildingId: string;
+  position: [number, number, number];
+};
+
 type CampusViewerProps = {
   isMobile?: boolean;
   mobilePanelOpen?: boolean;
@@ -285,6 +297,8 @@ type CampusViewerProps = {
   /** Pan horizontal (world-X) para centrar el campus en el área visible
    *  cuando un sidebar lo cubre. Negativo = desplaza campus a la derecha en pantalla. */
   mapXOffset?: number;
+  gatePlacementPosition?: GatePlacementPosition | null;
+  onGatePlacementChange?: (position: GatePlacementPosition) => void;
 };
 
 function getCenteredCampusPosition(scene: Object3D) {
@@ -312,6 +326,11 @@ function CampusBoundsSync({
   onPositionChange: (position: Vector3) => void;
   controlsRef: React.RefObject<any>;
   isMobile: boolean;
+  // El padre pasa initialXOffsetRef.current (congelado al montar), no el
+  // mapXOffset en vivo — este efecto hace un camera.position.set() sin
+  // animar, así que si reaccionara al offset en vivo, cada vez que se
+  // colapsa/expande el sidebar la cámara "saltaría" de vuelta a la pose
+  // canónica en lugar de solo desplazarse (se veía como un zoom errático).
   mapXOffset?: number;
   viewMode: ViewMode;
 }) {
@@ -368,6 +387,17 @@ function createFocusPoint(
 
 function nearlyEqual(a: number, b: number) {
   return Math.abs(a - b) < 0.001;
+}
+
+function isEditableTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+  const tagName = target.tagName.toLowerCase();
+  return (
+    tagName === "input" ||
+    tagName === "textarea" ||
+    tagName === "select" ||
+    target.isContentEditable
+  );
 }
 
 // Posa la cámara mirando a un punto del mundo, conservando la dirección
@@ -433,6 +463,9 @@ type BuildingLabelEntry = {
   x: number;
   y: number;
   z: number;
+  worldX: number;
+  worldY: number;
+  worldZ: number;
 };
 
 function getBuildingAlias(building: Building): string {
@@ -484,32 +517,47 @@ function findSceneObjectByModelName(scene: Object3D, modelName: string) {
 // 400 = el usuario aún puede leer etiquetas; 560 = vista general inicial.
 const LABEL_LOD_FAR_Y = 400;
 
+// Distancia 3D (mundo) cámara↔edificio por debajo de la cual esa etiqueta en
+// particular expande a nombre completo. Es POR EDIFICIO (no por altura global
+// de cámara): en una vista inmersiva la cámara puede estar baja pero mirando
+// a lo lejos, y esos edificios lejanos deben seguir mostrando solo su código.
+// 42 = distancia de auto-foco al seleccionar un edificio (BUILDING_FOCUS_*_DISTANCE);
+// 90 da un pequeño margen para revelar el par de vecinos más próximos también.
+const LABEL_LAYOUT_RECHECK_DISTANCE = 3;
+
+// Solo recalcula el set de "cercanos" si la cámara se movió al menos esto
+// desde la última revisión — evita recorrer todas las etiquetas cada frame
+// mientras la cámara está quieta o se mueve por debajo del umbral útil.
+// Aire mínimo (px) entre dos etiquetas expandidas para que no se sientan
+// pegadas, además de no solaparse literalmente.
+const LABEL_COLLISION_MARGIN = 16;
+
+// Compara los rects REALES del DOM (no una estimación de tamaño) — así se
+// adapta automáticamente a nombres largos que rompen en 2-3 líneas.
+function rectsCollide(a: DOMRect, b: DOMRect, margin: number): boolean {
+  return !(
+    a.right + margin < b.left ||
+    a.left - margin > b.right ||
+    a.bottom + margin < b.top ||
+    a.top - margin > b.bottom
+  );
+}
+
 const BuildingLabels = memo(function BuildingLabels({
   buildings,
   isMobile = false,
   hidden = false,
+  hoverHiddenBuildingId = null,
 }: {
   buildings: Building[];
   isMobile?: boolean;
   hidden?: boolean;
+  hoverHiddenBuildingId?: string | null;
 }) {
   const selectedBuilding = useBuildingStore((s) => s.selectedBuilding);
   const setSelectedBuilding = useBuildingStore((s) => s.setSelectedBuilding);
   const setGlbPositions = useBuildingGlbStore((s) => s.setPositions);
   const { scene } = useCampusGltf();
-
-  // LOD por distancia: desactivar interacción y bajar opacidad cuando la cámara está lejos.
-  // useThree y useFrame son seguros aquí porque BuildingLabels siempre renderiza dentro del Canvas.
-  const { camera } = useThree();
-  const [labelsFaded, setLabelsFaded] = useState(false);
-  const prevFadedRef = useRef(false);
-  useFrame(() => {
-    const isFar = camera.position.y > LABEL_LOD_FAR_Y;
-    if (isFar !== prevFadedRef.current) {
-      prevFadedRef.current = isFar;
-      setLabelsFaded(isFar);
-    }
-  });
 
   const labels = useMemo<BuildingLabelEntry[]>(() => {
     // No calcular cuando las etiquetas no se van a mostrar
@@ -554,6 +602,10 @@ const BuildingLabels = memo(function BuildingLabels({
         _box.max.y,
         (_box.min.z + _box.max.z) / 2,
       );
+      // Capturar coords de mundo ANTES de worldToLocal, que muta _topWorld in-place.
+      const worldX = _topWorld.x;
+      const worldY = _topWorld.y;
+      const worldZ = _topWorld.z;
       const local = scene.worldToLocal(_topWorld);
       const accent = getCategoryAccent(building.category_name);
 
@@ -562,6 +614,9 @@ const BuildingLabels = memo(function BuildingLabels({
         name: building.name,
         alias: getBuildingAlias(building),
         accentColor: building.category_color || accent.fg,
+        worldX,
+        worldY,
+        worldZ,
         x: local.x,
         y: local.y + 4,
         z: local.z,
@@ -571,15 +626,175 @@ const BuildingLabels = memo(function BuildingLabels({
     return result;
   }, [scene, buildings, hidden]);
 
-  // Publica las posiciones GLB (centro real del mesh) al store compartido
-  useEffect(() => {
-    if (labels.length === 0) return;
-    const positions: Record<string, { x: number; z: number }> = {};
-    for (const label of labels) {
-      positions[label.buildingId] = { x: label.x, z: label.z };
+  // LOD: desactivar interacción y bajar opacidad cuando la cámara está lejos
+  // de TODO el campus (altura global). Independiente de esto, cada etiqueta
+  // decide su propio nombre-vs-código según su distancia 3D a la cámara
+  // (nearBuildingIds) — así en una vista inmersiva solo los edificios
+  // realmente cercanos expanden a nombre completo, no todos los visibles.
+  // useThree y useFrame son seguros aquí porque BuildingLabels siempre renderiza dentro del Canvas.
+  const { camera } = useThree();
+  const [labelsFaded, setLabelsFaded] = useState(false);
+  const prevFadedRef = useRef(false);
+  const [labelLayoutRevision, setLabelLayoutRevision] = useState(0);
+  const lastNearCheckPosRef = useRef<Vector3 | null>(null);
+  useFrame(() => {
+    const isFar = camera.position.y > LABEL_LOD_FAR_Y;
+    if (isFar !== prevFadedRef.current) {
+      prevFadedRef.current = isFar;
+      setLabelsFaded(isFar);
     }
-    setGlbPositions(positions);
-  }, [labels, setGlbPositions]);
+
+    const lastPos = lastNearCheckPosRef.current;
+    if (
+      lastPos &&
+      lastPos.distanceToSquared(camera.position) <
+        LABEL_LAYOUT_RECHECK_DISTANCE * LABEL_LAYOUT_RECHECK_DISTANCE
+    ) {
+      return;
+    }
+    lastNearCheckPosRef.current = camera.position.clone();
+    setLabelLayoutRevision((revision) => revision + 1);
+
+    // Candidatos dentro del radio de "cerca" — solo distancia 3D. La
+    // colisión visual entre ellos se resuelve aparte, con medidas reales
+    // del DOM (ver el useLayoutEffect de abajo), no con una estimación.
+  });
+
+  // Segunda pasada: de los candidatos "cercanos" (arriba), algunos pueden
+  // seguir viéndose amontonados entre sí en pantalla (edificios contiguos,
+  // nombres largos que rompen en varias líneas). En vez de adivinar el
+  // tamaño de cada etiqueta, se mide su rect REAL del DOM ya renderizado
+  // (útil porque el ancho/alto varía según el nombre) y se oculta el nombre
+  // (vuelve a código) de la que colisiona con una de mayor prioridad ya
+  // aceptada. Corre en useLayoutEffect (antes del paint) para que el
+  // usuario nunca vea el estado sin corregir.
+  const labelElsRef = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const [hiddenLabelIds, setHiddenLabelIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const hiddenLabelIdsRef = useRef<Set<string>>(new Set());
+  useLayoutEffect(() => {
+    if (labels.length === 0) {
+      hiddenLabelIdsRef.current = new Set();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setHiddenLabelIds(new Set());
+      return;
+    }
+
+    const measured: { buildingId: string; distSq: number; rect: DOMRect }[] = [];
+    for (const label of labels) {
+      if (hoverHiddenBuildingId === label.buildingId) continue;
+      const el = labelElsRef.current.get(label.buildingId);
+      if (!el || !label) continue;
+      const dx = camera.position.x - label.worldX;
+      const dy = camera.position.y - label.worldY;
+      const dz = camera.position.z - label.worldZ;
+      measured.push({
+        buildingId: label.buildingId,
+        distSq: dx * dx + dy * dy + dz * dz,
+        rect: el.getBoundingClientRect(),
+      });
+    }
+
+    // Prioridad: el más cerca de la cámara gana su lugar primero. Antes el
+    // edificio seleccionado siempre iba primero (para proteger su nombre
+    // largo de colisionar con un vecino) — pero `showName` está deshabilitado
+    // (siempre `false`, solo se muestra el código corto), así que esa regla
+    // ya no protegía nada real y solo causaba un bug: el vecino que perdía la
+    // colisión quedaba con `pointerEvents:none` (ver más abajo), es decir,
+    // imposible de seleccionar mientras siguiera colisionando en pantalla
+    // con el edificio ya seleccionado (bug real, ronda 2026-07-15).
+    measured.sort((a, b) => a.distSq - b.distSq);
+
+    const accepted: DOMRect[] = [];
+    const hidden = new Set<string>();
+    for (const m of measured) {
+      const collides = accepted.some((r) =>
+        rectsCollide(r, m.rect, LABEL_COLLISION_MARGIN),
+      );
+      if (collides) {
+        hidden.add(m.buildingId);
+      } else {
+        accepted.push(m.rect);
+      }
+    }
+
+    const updateSet = (
+      prev: Set<string>,
+      next: Set<string>,
+      commit: (value: Set<string>) => void,
+    ) => {
+      let changed = next.size !== prev.size;
+      if (!changed) {
+        for (const id of next) {
+          if (!prev.has(id)) {
+            changed = true;
+            break;
+          }
+        }
+      }
+      if (changed) commit(next);
+    };
+
+    updateSet(hiddenLabelIdsRef.current, hidden, (next) => {
+      hiddenLabelIdsRef.current = next;
+      setHiddenLabelIds(next);
+    });
+  }, [
+    labels,
+    camera,
+    labelLayoutRevision,
+    hoverHiddenBuildingId,
+  ]);
+
+  // Publica las posiciones GLB (centro real del mesh) al store compartido —
+  // para TODOS los buildings activos con model_node_name, no solo el que
+  // "gana" la etiqueta 2D en el useMemo de arriba. Dos buildings que
+  // comparten el mismo nodo físico (ej. un aula y un cubículo en el mismo
+  // edificio) deben resolver a la MISMA posición real para pin/beacon/foco
+  // de cámara, sin importar cuál "ganó" el nodeWinner — antes el que perdía
+  // nunca se cacheaba aquí y su selección caía al x/z crudo de BD, sin
+  // calibrar (bug real de AUD-POS/CUB-DOC, ronda 2026-07-15). Efecto
+  // independiente de `hidden`/`labels` a propósito: el foco de cámara y el
+  // pin de selección deben funcionar aunque las etiquetas 2D estén ocultas.
+  useEffect(() => {
+    scene.updateMatrixWorld(true);
+    const positions: Record<string, { x: number; z: number }> = {};
+    const nodePositionCache = new Map<string, { x: number; z: number } | null>();
+    const box = new Box3();
+    const topWorld = new Vector3();
+
+    for (const building of buildings) {
+      if (!building.is_active || !building.model_node_name) continue;
+      const glbName = resolveGlbName(building.model_node_name);
+
+      let nodePos = nodePositionCache.get(glbName);
+      if (nodePos === undefined) {
+        const node = findSceneObjectByModelName(scene, glbName);
+        if (node) {
+          box.setFromObject(node);
+          if (!box.isEmpty()) {
+            topWorld.set(
+              (box.min.x + box.max.x) / 2,
+              box.max.y,
+              (box.min.z + box.max.z) / 2,
+            );
+            const local = scene.worldToLocal(topWorld.clone());
+            nodePos = { x: local.x, z: local.z };
+          } else {
+            nodePos = null;
+          }
+        } else {
+          nodePos = null;
+        }
+        nodePositionCache.set(glbName, nodePos);
+      }
+
+      if (nodePos) positions[building.id] = nodePos;
+    }
+
+    if (Object.keys(positions).length > 0) setGlbPositions(positions);
+  }, [scene, buildings, setGlbPositions]);
 
   const handleSelect = useCallback(
     (buildingId: string) => {
@@ -595,6 +810,10 @@ const BuildingLabels = memo(function BuildingLabels({
     <>
       {labels.map((label) => {
         const isSelected = selectedBuilding?.id === label.buildingId;
+        if (hoverHiddenBuildingId === label.buildingId) return null;
+        const isCollisionHidden = hiddenLabelIds.has(label.buildingId);
+
+        const showName = false;
         // Código del edificio: cortar si es muy largo para que nunca rompa en la pill
         const displayCode = label.alias.length > 16
           ? label.alias.slice(0, 15) + "…"
@@ -607,9 +826,13 @@ const BuildingLabels = memo(function BuildingLabels({
             zIndexRange={[isSelected ? 6 : 5, 0]}
           >
             <button
+              ref={(el) => {
+                if (el) labelElsRef.current.set(label.buildingId, el);
+                else labelElsRef.current.delete(label.buildingId);
+              }}
               type="button"
               aria-label={label.name}
-              title={label.name}
+              className={`ito-building-label${isSelected ? " is-selected" : ""}${showName ? " has-name" : ""}`}
               onClick={() => handleSelect(label.buildingId)}
               style={{
                 transform: "translateX(-50%) translateY(-100%)",
@@ -617,34 +840,40 @@ const BuildingLabels = memo(function BuildingLabels({
                 flexDirection: "column",
                 alignItems: "center",
                 gap: 4,
-                // Ancho explícito en seleccionado — evita que inline-flex colapse
-                // al ancho del código chip y fuerce el nombre a romper letra a letra
-                width: isSelected ? 175 : "auto",
-                padding: isSelected
-                  ? "8px 13px"
-                  : isMobile ? "7px 12px" : "5px 11px",
-                borderRadius: isSelected ? 12 : 999,
+                position: "relative",
+                // Ancho explícito cuando se muestra el nombre — evita que
+                // inline-flex colapse al ancho del código chip y fuerce el
+                // nombre a romper letra a letra
+                width: showName ? (isMobile ? 150 : 168) : "auto",
+                padding: showName
+                  ? "7px 11px"
+                  : isMobile ? "7px 12px" : "5px 10px",
+                borderRadius: showName ? 10 : 999,
                 border: `1.5px solid ${
-                  isSelected ? label.accentColor : "rgba(255,255,255,0.22)"
+                  isSelected ? label.accentColor : "rgba(148,163,184,0.32)"
                 }`,
                 background: isSelected
-                  ? label.accentColor
-                  : "rgba(10,16,32,0.84)",
-                backdropFilter: "blur(8px)",
-                WebkitBackdropFilter: "blur(8px)",
-                color: "#ffffff",
+                  ? "rgba(255,255,255,0.97)"
+                  : "rgba(255,255,255,0.92)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                color: "#111827",
                 cursor: labelsFaded ? "default" : "pointer",
                 boxShadow: isSelected
-                  ? `0 6px 24px ${label.accentColor}55, 0 0 0 3px ${label.accentColor}22`
-                  : "0 2px 8px rgba(0,0,0,0.5)",
+                  ? `0 10px 28px ${label.accentColor}24, 0 0 0 3px ${label.accentColor}18`
+                  : "0 8px 22px rgba(15,23,42,0.16)",
                 fontFamily: "Inter, system-ui, sans-serif",
                 userSelect: "none",
-                // LOD: cuando la cámara está lejos, las etiquetas son decorativas (no interactivas)
-                opacity: labelsFaded ? 0.38 : 1,
+                // LOD: cuando la cámara está lejos, las etiquetas son decorativas (no interactivas).
+                // Ojo: `isCollisionHidden` usa opacity (no `visibility:hidden`) a propósito — un
+                // elemento con visibility:hidden nunca recibe clics sin importar pointerEvents, y
+                // eso volvía imposible seleccionar un edificio mientras su etiqueta colisionara en
+                // pantalla con la del ya seleccionado (bug real, ronda 2026-07-15).
+                opacity: isCollisionHidden ? 0 : labelsFaded ? 0.38 : 1,
                 pointerEvents: labelsFaded ? "none" : "auto",
                 touchAction: "manipulation",
                 outline: "none",
-                transition: "padding 0.18s ease, border-radius 0.18s ease, box-shadow 0.18s ease, opacity 0.3s ease",
+                transition: "padding 0.18s ease, border-radius 0.18s ease, box-shadow 0.18s ease, opacity 0.3s ease, transform 0.18s ease",
               }}
             >
               {/* Código — siempre visible, nunca rompe */}
@@ -652,26 +881,35 @@ const BuildingLabels = memo(function BuildingLabels({
                 style={{
                   fontSize: isMobile ? 10 : 11,
                   fontWeight: 800,
-                  letterSpacing: "0.05em",
+                  letterSpacing: 0,
                   lineHeight: 1,
                   textTransform: "uppercase",
                   whiteSpace: "nowrap",
+                  padding: showName ? "3px 7px" : "0",
+                  borderRadius: 999,
+                  background: showName ? `${label.accentColor}22` : "transparent",
+                  color: showName ? label.accentColor : "#1f2937",
                 }}
               >
                 {displayCode}
               </span>
 
-              {/* Nombre completo — solo cuando el edificio está seleccionado.
-                  wordBreak "normal" + overflowWrap "break-word" = rompe solo en
-                  espacios/guiones; solo rompe mid-word si una palabra sola no cabe. */}
-              {isSelected && (
+              {/* Nombre completo — cuando el edificio está seleccionado o la
+                  cámara está cerca (showAllNames). wordBreak "normal" +
+                  overflowWrap "break-word" = rompe solo en espacios/guiones;
+                  solo rompe mid-word si una palabra sola no cabe. */}
+              {showName && (
                 <span
                   style={{
-                    fontSize: 11,
-                    fontWeight: 500,
-                    lineHeight: 1.4,
+                    display: "-webkit-box",
+                    WebkitBoxOrient: "vertical",
+                    WebkitLineClamp: 2,
+                    overflow: "hidden",
+                    fontSize: isMobile ? 10 : 10.5,
+                    fontWeight: 600,
+                    lineHeight: 1.28,
                     textAlign: "center",
-                    opacity: 0.94,
+                    opacity: 0.92,
                     whiteSpace: "normal",
                     wordBreak: "normal",
                     overflowWrap: "break-word",
@@ -681,6 +919,7 @@ const BuildingLabels = memo(function BuildingLabels({
                   {label.name}
                 </span>
               )}
+
             </button>
           </Html>
         );
@@ -689,12 +928,164 @@ const BuildingLabels = memo(function BuildingLabels({
   );
 });
 
+function BuildingModelHoverCard({
+  hover,
+  buildings,
+}: {
+  hover: HoveredBuilding | null;
+  buildings: Building[];
+}) {
+  if (!hover) return null;
+
+  const building = buildings.find((item) => item.id === hover.buildingId);
+  if (!building) return null;
+
+  const accent = building.category_color || getCategoryAccent(building.category_name).fg;
+  const code = (building.code.trim() || building.name).slice(0, 18);
+
+  return (
+    <Html position={hover.position} zIndexRange={[10, 0]}>
+      <div
+        className="ito-building-hover-card"
+        style={{ "--label-accent": accent } as CSSProperties}
+      >
+        <span className="ito-building-hover-card__code">{code}</span>
+        <span className="ito-building-hover-card__name">{building.name}</span>
+      </div>
+    </Html>
+  );
+}
+
+type BuildingHoverTarget = {
+  buildingId: string;
+  center: [number, number, number];
+  size: [number, number, number];
+  cardPosition: [number, number, number];
+};
+
+function BuildingHoverLayer({
+  buildings,
+  active,
+  onHoverBuilding,
+}: {
+  buildings: Building[];
+  active: boolean;
+  onHoverBuilding: (hover: HoveredBuilding | null) => void;
+}) {
+  const { scene } = useCampusGltf();
+  const setSelectedBuilding = useBuildingStore((s) => s.setSelectedBuilding);
+  const { handlePointerDown, wasDrag } = useSharedPointerDownTracker();
+
+  const targets = useMemo<BuildingHoverTarget[]>(() => {
+    if (!active) return [];
+
+    scene.updateMatrixWorld(true);
+    const result: BuildingHoverTarget[] = [];
+    const nodeWinner = new Map<string, string>();
+    const worldBox = new Box3();
+    const worldCenter = new Vector3();
+    const worldTop = new Vector3();
+    const localCenter = new Vector3();
+    const localTop = new Vector3();
+    const worldSize = new Vector3();
+
+    for (const building of buildings) {
+      if (!building.is_active || !building.model_node_name) continue;
+      const glbName = resolveGlbName(building.model_node_name);
+      const existing = nodeWinner.get(glbName);
+      if (!existing) {
+        nodeWinner.set(glbName, building.id);
+      } else if (building.is_priority) {
+        const prevBuilding = buildings.find((b) => b.id === existing);
+        if (!prevBuilding?.is_priority) nodeWinner.set(glbName, building.id);
+      }
+    }
+
+    for (const building of buildings) {
+      if (!building.is_active || !building.model_node_name) continue;
+      const glbName = resolveGlbName(building.model_node_name);
+      if (nodeWinner.get(glbName) !== building.id) continue;
+
+      const node = findSceneObjectByModelName(scene, glbName);
+      if (!node) continue;
+
+      worldBox.setFromObject(node);
+      if (worldBox.isEmpty()) continue;
+
+      worldBox.getCenter(worldCenter);
+      worldBox.getSize(worldSize);
+      worldTop.set(worldCenter.x, worldBox.max.y + 12, worldCenter.z);
+      localCenter.copy(worldCenter);
+      localTop.copy(worldTop);
+      scene.worldToLocal(localCenter);
+      scene.worldToLocal(localTop);
+
+      result.push({
+        buildingId: building.id,
+        center: [localCenter.x, localCenter.y, localCenter.z],
+        size: [
+          Math.max(worldSize.x, 12),
+          Math.max(worldSize.y, 10),
+          Math.max(worldSize.z, 12),
+        ],
+        cardPosition: [localTop.x, localTop.y, localTop.z],
+      });
+    }
+
+    return result;
+  }, [active, buildings, scene]);
+
+  if (!active) return null;
+
+  return (
+    <>
+      {targets.map((target) => {
+        const building = buildings.find((item) => item.id === target.buildingId);
+
+        return (
+          <mesh
+            key={target.buildingId}
+            position={target.center}
+            onPointerDown={handlePointerDown}
+            onPointerOver={(event) => {
+              event.stopPropagation();
+              onHoverBuilding({
+                buildingId: target.buildingId,
+                position: target.cardPosition,
+              });
+            }}
+            onPointerMove={(event) => {
+              event.stopPropagation();
+            }}
+            onPointerOut={() => onHoverBuilding(null)}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (wasDrag(event)) return;
+              if (building) setSelectedBuilding(building);
+            }}
+          >
+            <boxGeometry args={target.size} />
+            <meshBasicMaterial
+              transparent
+              opacity={0}
+              depthWrite={false}
+              color="#ffffff"
+            />
+          </mesh>
+        );
+      })}
+    </>
+  );
+}
+
 export function CampusViewer({
   isMobile = false,
   mobilePanelOpen = false,
   enableAdminTools = false,
   hideCategoryLegend = false,
   mapXOffset = 0,
+  gatePlacementPosition,
+  onGatePlacementChange,
 }: CampusViewerProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const controlsRef = useRef<any>(null);
@@ -704,15 +1095,22 @@ export function CampusViewer({
     x: number;
     z: number;
   } | null>(null);
+  const lastSelectedGateRef = useRef<string | null>(null);
   // Congela el offset al montar para no saltar la cámara si cambia el sidebar
   const initialXOffsetRef = useRef(mapXOffset);
 
   const mapPosition = useLocationStore((state) => state.mapPosition);
 
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
+  const selectedGate = useBuildingStore((state) => state.selectedGate);
   const routeDestination = useBuildingStore((state) => state.routeDestination);
+  const clearSelection = useBuildingStore((state) => state.clearSelection);
+  const clearRoute = useBuildingStore((state) => state.clearRoute);
   const prevRouteRef = useRef<typeof routeDestination | undefined>(undefined);
   const glbPositions = useBuildingGlbStore((s) => s.positions);
+  const inputProfile = useInputProfile();
+  const touchOptimized = inputProfile.kind === "phone" || inputProfile.kind === "tablet";
+  const gatePlacementActive = Boolean(onGatePlacementChange);
 
   const adminUser = useAdminAuthStore((state) => state.user);
   const isAdminAuthenticated = useAdminAuthStore((state) => state.isAuthenticated);
@@ -725,6 +1123,7 @@ export function CampusViewer({
   const { buildings } = useBuildings({ admin: canUseAdvancedTools, version: buildingsVersion });
   const [focus, setFocus] = useState<FocusPoint | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("immersive");
+  const [hoveredBuilding, setHoveredBuilding] = useState<HoveredBuilding | null>(null);
   const [campusPosition, setCampusPosition] = useState(() =>
     DEFAULT_CAMPUS_POSITION.clone()
   );
@@ -828,7 +1227,12 @@ export function CampusViewer({
       lastSelectedFocusRef.current = null;
       return;
     }
-    if (routeDestination) return;
+    // Solo cede el control de la cámara a la ruta activa cuando su destino
+    // ES el edificio recién seleccionado (flujo normal: seleccionar → "Cómo
+    // llegar"). Si difieren -por ejemplo, una nueva búsqueda seleccionó otro
+    // edificio mientras había una ruta previa- igual debe enfocar el
+    // edificio nuevo en vez de quedarse "trabado" mirando el destino viejo.
+    if (routeDestination && routeDestination.id === selectedBuilding.id) return;
     const glbPos = glbPositions[selectedBuilding.id];
     const x = glbPos?.x ?? selectedBuilding.x;
     const z = glbPos?.z ?? selectedBuilding.z;
@@ -855,8 +1259,22 @@ export function CampusViewer({
   }, [selectedBuilding, routeDestination, campusPosition]);
 
   useEffect(() => {
-    if (!routeDestination || !mapPosition) return;
-    if (routeDestination === prevRouteRef.current) return;
+    if (!selectedGate) {
+      lastSelectedGateRef.current = null;
+      return;
+    }
+    if (lastSelectedGateRef.current === selectedGate.id) return;
+    lastSelectedGateRef.current = selectedGate.id;
+    setViewMode("immersive");
+    setFocus(createFocusPoint(selectedGate.x, selectedGate.z, campusPosition));
+  }, [selectedGate, campusPosition]);
+
+  useEffect(() => {
+    if (!routeDestination || !mapPosition) {
+      if (!routeDestination) prevRouteRef.current = null;
+      return;
+    }
+    if (routeDestination.id === prevRouteRef.current?.id) return;
     prevRouteRef.current = routeDestination;
 
     const userWorld = campusLocalToWorld(mapPosition.x, mapPosition.z, campusPosition);
@@ -969,8 +1387,65 @@ export function CampusViewer({
     controls.update();
   };
 
+  useEffect(() => {
+    if (!inputProfile.hasKeyboard || mobilePanelOpen || draftEditorActive) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        isEditableTarget(event.target)
+      ) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+      if (key === "+" || key === "=") {
+        event.preventDefault();
+        handleZoom(-1);
+        return;
+      }
+      if (key === "-" || key === "_") {
+        event.preventDefault();
+        handleZoom(1);
+        return;
+      }
+      if (key === "0" || key === "home") {
+        event.preventDefault();
+        handleResetView();
+        return;
+      }
+      if (key === "v") {
+        event.preventDefault();
+        handleToggleViewMode();
+        return;
+      }
+      if (key === "l" && hasLocation) {
+        event.preventDefault();
+        handleFocusUser();
+        return;
+      }
+      if (key === "escape") {
+        event.preventDefault();
+        clearSelection();
+        clearRoute();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  });
+
   const hasLocation = mapPosition !== null;
   const showNavigationDebug = navigationDebugMode !== "hidden";
+  const canShowHoverDetails = !isMobile && inputProfile.hasFinePointer;
+
+  useEffect(() => {
+    if (canShowHoverDetails && !draftEditorActive && !mobilePanelOpen) return;
+    setHoveredBuilding(null);
+  }, [canShowHoverDetails, draftEditorActive, mobilePanelOpen]);
 
   return (
     <div
@@ -1071,21 +1546,52 @@ export function CampusViewer({
       <Canvas
         frameloop="demand"
         dpr={[1, isMobile ? 1.25 : 2]}
-        gl={{ antialias: !isMobile, powerPreference: "high-performance", alpha: true }}
+        onCreated={({ gl, invalidate }) => {
+          gl.outputColorSpace = SRGBColorSpace;
+          // ACES conserva detalle en blancos y colores intensos sin "lavar"
+          // las texturas bajo varias luces. Una exposición neutra evita que
+          // paredes claras pierdan todo su contraste.
+          gl.toneMapping = ACESFilmicToneMapping;
+          gl.toneMappingExposure = 0.95;
+          invalidate();
+        }}
+        gl={{
+          antialias: !isMobile,
+          powerPreference: "high-performance",
+          alpha: true,
+        }}
         camera={{
           position: isMobile
             ? MOBILE_IMMERSIVE_CAMERA_POSITION.toArray()
             : DESKTOP_IMMERSIVE_CAMERA_POSITION.toArray(),
           fov: 45,
           near: 1,
-          far: 5000,
+          far: 2000,
         }}
       >
-        <ambientLight intensity={1.4} />
-        <hemisphereLight args={["#ffedd5", "#94a3b8", 0.75]} />
+        {/* Prioridad: legibilidad del mapa, no relieve fotorrealista — todo
+            edificio debe verse bien iluminado sin importar desde qué ángulo
+            se mire, no solo el lado que da al "sol". La ambiental (pareja en
+            toda cara, sin importar orientación) hace el trabajo pesado; la
+            direccional se deja solo como acento mínimo para que el modelo no
+            se vea completamente sin volumen. */}
+        <ambientLight intensity={1.05} />
+        <hemisphereLight args={["#fff7ed", "#cbd5e1", 0.65]} />
         <directionalLight
           position={[160, 280, 120]}
-          intensity={2.1}
+          intensity={1.35}
+          castShadow={false}
+        />
+        <directionalLight
+          position={[-180, 180, -160]}
+          intensity={0.32}
+          color="#e0f2fe"
+          castShadow={false}
+        />
+        <directionalLight
+          position={[0, 120, -260]}
+          intensity={0.2}
+          color="#fff7ed"
           castShadow={false}
         />
 
@@ -1097,7 +1603,19 @@ export function CampusViewer({
           maxDistance={700}
           enableDamping
           dampingFactor={0.08}
-          rotateSpeed={0.75}
+          rotateSpeed={touchOptimized ? 0.58 : 0.75}
+          zoomSpeed={touchOptimized ? 0.74 : 1}
+          panSpeed={touchOptimized ? 0.72 : 1}
+          screenSpacePanning={inputProfile.hasFinePointer}
+          mouseButtons={{
+            LEFT: MOUSE.ROTATE,
+            MIDDLE: MOUSE.DOLLY,
+            RIGHT: MOUSE.PAN,
+          }}
+          touches={{
+            ONE: TOUCH.ROTATE,
+            TWO: TOUCH.DOLLY_PAN,
+          }}
         />
         <CameraAnimator animRef={cameraAnimRef} controlsRef={controlsRef} />
         <CameraConstraints controlsRef={controlsRef} />
@@ -1105,25 +1623,39 @@ export function CampusViewer({
           active={viewMode === "aerial" && !draftEditorActive}
           onTeleport={handleAerialTeleport}
         />
-
         <Suspense fallback={null}>
           <CampusBoundsSync
             onPositionChange={handleCampusPositionChange}
             controlsRef={controlsRef}
             isMobile={isMobile}
-            mapXOffset={mapXOffset}
+            mapXOffset={initialXOffsetRef.current}
             viewMode={viewMode}
           />
           <group
             rotation={[0, CAMPUS_ROTATION_Y, 0]}
             position={campusPosition}
           >
-            <CampusModel buildings={buildings} selectionDisabled={draftEditorActive} />
+            <CampusModel
+              buildings={buildings}
+              selectionDisabled={draftEditorActive || gatePlacementActive}
+            />
+            <BuildingHoverLayer
+              buildings={buildings}
+              active={canShowHoverDetails && !draftEditorActive && !gatePlacementActive && !mobilePanelOpen}
+              onHoverBuilding={setHoveredBuilding}
+            />
+            {canShowHoverDetails && (
+              <BuildingModelHoverCard
+                hover={hoveredBuilding}
+                buildings={buildings}
+              />
+            )}
             <ModelLoadedSignal onLoaded={handleModelLoaded} />
             <BuildingLabels
               buildings={buildings}
               isMobile={isMobile}
               hidden={mobilePanelOpen}
+              hoverHiddenBuildingId={hoveredBuilding?.buildingId ?? null}
             />
             {canUseAdvancedTools && showNavigationDebug && !draftEditorActive && (
               <NavigationDebugLayer showOnlyIssues={navigationDebugMode === "issues"} />
@@ -1136,6 +1668,13 @@ export function CampusViewer({
             )}
             <RouteLine />
             <DestinationBuildingHighlight />
+            {!gatePlacementActive && <GateMarkers />}
+            {gatePlacementActive && onGatePlacementChange && (
+              <GatePlacementLayer
+                position={gatePlacementPosition ?? null}
+                onPositionChange={onGatePlacementChange}
+              />
+            )}
             <UserLocationMarker />
           </group>
         </Suspense>

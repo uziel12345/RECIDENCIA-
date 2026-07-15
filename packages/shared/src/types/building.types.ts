@@ -68,16 +68,3 @@ export type DeleteBuildingResult = {
   id: string;
   deleted: boolean;
 };
-
-export type BuildingService = {
-  id: string;
-  building_id: string;
-  name: string;
-  description: string | null;
-  created_at: string;
-};
-
-export type CreateBuildingServiceInput = {
-  name: string;
-  description?: string | null;
-};

@@ -31,11 +31,3 @@ export interface BuildingImageRow extends RowDataPacket {
   sort_order: number;
   is_active: boolean | number;
 }
-
-export interface BuildingServiceRow extends RowDataPacket {
-  id: string;
-  building_id: string;
-  name: string;
-  description: string | null;
-  created_at: string;
-}

@@ -3,59 +3,82 @@ import { useBuildingStore } from "../../../store/building-store";
 import { Icon } from "../../../components/ui/Icons";
 import { searchAll } from "../../../services/search.service";
 import type { Building } from "../types/building";
-import type { SearchResult, SearchResultKind } from "@ito-map/shared";
+import type { Gate, SearchResult, SearchResultKind } from "@ito-map/shared";
 
 const DEBOUNCE_MS = 350;
 const MIN_QUERY_LEN = 2;
 
 const KIND_LABEL: Record<SearchResultKind, string> = {
-  building:  "Edificios",
-  classroom: "Aulas",
-  procedure: "Trámites",
-  service:   "Servicios",
+  building:     "Edificios",
+  classroom:    "Aulas",
+  procedure:    "Trámites",
+  service:      "Servicios",
+  department:   "Departamentos",
+  cubicle:      "Cubículos",
+  headquarters: "Jefaturas",
+  gate:         "Accesos",
 };
 
-const KIND_ICON: Record<SearchResultKind, "building" | "list" | "book-open" | "info"> = {
-  building:  "building",
-  classroom: "list",
-  procedure: "book-open",
-  service:   "info",
+const KIND_ICON: Record<
+  SearchResultKind,
+  "building" | "list" | "book-open" | "info" | "users" | "user" | "shield" | "map-pin"
+> = {
+  building:     "building",
+  classroom:    "list",
+  procedure:    "book-open",
+  service:      "info",
+  department:   "users",
+  cubicle:      "user",
+  headquarters: "shield",
+  gate:         "map-pin",
 };
 
 type GroupedResults = { kind: SearchResultKind; label: string; items: SearchResult[] }[];
 
+const RESULT_ORDER: SearchResultKind[] = [
+  "building",
+  "classroom",
+  "procedure",
+  "service",
+  "department",
+  "cubicle",
+  "headquarters",
+  "gate",
+];
+
 function groupResults(results: SearchResult[]): GroupedResults {
-  const order: SearchResultKind[] = ["building", "classroom", "procedure", "service"];
   const map = new Map<SearchResultKind, SearchResult[]>();
   for (const r of results) {
     const arr = map.get(r.kind) ?? [];
     arr.push(r);
     map.set(r.kind, arr);
   }
-  return order
+  return RESULT_ORDER
     .filter((k) => map.has(k))
     .map((k) => ({ kind: k, label: KIND_LABEL[k], items: map.get(k)! }));
 }
 
 type BuildingSearchProps = {
   buildings?: Building[];
+  gates?: Gate[];
   onSelectResult?: (result: SearchResult) => void;
 };
 
 export function BuildingSearch({
   buildings = [],
+  gates = [],
   onSelectResult,
 }: BuildingSearchProps) {
   const searchTerm = useBuildingStore((state) => state.searchTerm);
   const setSearchTerm = useBuildingStore((state) => state.setSearchTerm);
-  const setSelectedBuilding = useBuildingStore((state) => state.setSelectedBuilding);
-  const setRouteDestination = useBuildingStore((state) => state.setRouteDestination);
+  const selectSearchResult = useBuildingStore((state) => state.selectSearchResult);
 
   const [inputValue, setInputValue] = useState(searchTerm);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -93,16 +116,23 @@ export function BuildingSearch({
     }
 
     const timer = setTimeout(async () => {
+      const requestId = ++requestIdRef.current;
       setIsLoading(true);
       try {
         const data = await searchAll(term);
+        // Una búsqueda más nueva ya se disparó mientras esta esperaba
+        // respuesta del servidor: descartarla evita que una respuesta
+        // lenta y desactualizada sobreescriba los resultados correctos
+        // de la búsqueda más reciente (el buscador se sentía "trabado").
+        if (requestIdRef.current !== requestId) return;
         setResults(data);
         setIsOpen(data.length > 0);
       } catch {
+        if (requestIdRef.current !== requestId) return;
         setResults([]);
         setIsOpen(false);
       } finally {
-        setIsLoading(false);
+        if (requestIdRef.current === requestId) setIsLoading(false);
       }
     }, DEBOUNCE_MS);
 
@@ -123,15 +153,10 @@ export function BuildingSearch({
 
   function handleSelect(result: SearchResult) {
     setIsOpen(false);
-
-    if (result.kind === "building") {
-      const building = buildings.find((b) => b.id === result.id);
-      if (building) setSelectedBuilding(building);
-    } else if (result.buildingId) {
-      const building = buildings.find((b) => b.id === result.buildingId);
-      if (building) setRouteDestination(building);
-    }
-
+    // Decide edificio vs. puerta, ruta y sección a resaltar en un solo lugar
+    // (el store), para no repetir esta lógica aquí / en BuildingSidebar / en
+    // MapSearchOverlay.
+    selectSearchResult(result, buildings, gates);
     onSelectResult?.(result);
   }
 

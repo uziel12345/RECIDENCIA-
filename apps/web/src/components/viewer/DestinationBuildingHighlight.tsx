@@ -280,6 +280,11 @@ export function DestinationBuildingHighlight() {
   useBuildingGlow(glowTarget?.model_node_name, scene as unknown as THREE.Group, glowColor, isMobile);
 
   // ── Beacon/Pin ─────────────────────────────────────────────────────────────
+  // glbPositions (useBuildingGlbStore, publicado por BuildingLabels en
+  // CampusViewer.tsx) ya cubre a TODOS los buildings activos con
+  // model_node_name, no solo al que "gana" la etiqueta 2D cuando dos
+  // comparten el mismo nodo físico — building.x/z solo es fallback para el
+  // instante antes de que cargue la escena.
 
   if (routeDestination) {
     const glbPos = glbPositions[routeDestination.id];

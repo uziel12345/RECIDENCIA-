@@ -2,6 +2,18 @@ import { SearchRepository } from "./search.repository.js";
 import type { SearchType } from "./search.schema.js";
 import type { SearchResultRow } from "./search.types.js";
 
+// Solo las filas de kind="gate" llevan coordenadas — el resto de kinds
+// resuelve su posición a través del edificio ya cargado en el frontend.
+function withGateCoordinates(
+  rows: Array<SearchResultRow & { x?: number; z?: number }>
+): SearchResultRow[] {
+  return rows.map((row) => {
+    if (row.kind !== "gate") return row;
+    const { x, z, ...rest } = row;
+    return { ...rest, coordinates: { x, z } } as SearchResultRow;
+  });
+}
+
 export class SearchService {
   constructor(private readonly repository = new SearchRepository()) {}
 
@@ -16,14 +28,32 @@ export class SearchService {
     if (type === "classroom") return this.repository.searchClassrooms(words);
     if (type === "procedure") return this.repository.searchProcedures(words, "tramite");
     if (type === "service") return this.repository.searchProcedures(words, "servicio");
+    if (type === "department") return this.repository.searchDepartments(words);
+    if (type === "cubicle") return this.repository.searchCubicles(words);
+    if (type === "headquarters") return this.repository.searchHeadquarters(words);
+    if (type === "gate") return withGateCoordinates(await this.repository.searchGates(words));
 
-    const [buildings, classrooms, procedures, services] = await Promise.all([
-      this.repository.searchBuildings(words),
-      this.repository.searchClassrooms(words),
-      this.repository.searchProcedures(words, "tramite"),
-      this.repository.searchProcedures(words, "servicio"),
-    ]);
+    const [buildings, classrooms, procedures, services, departments, cubicles, headquarters, gates] =
+      await Promise.all([
+        this.repository.searchBuildings(words),
+        this.repository.searchClassrooms(words),
+        this.repository.searchProcedures(words, "tramite"),
+        this.repository.searchProcedures(words, "servicio"),
+        this.repository.searchDepartments(words),
+        this.repository.searchCubicles(words),
+        this.repository.searchHeadquarters(words),
+        this.repository.searchGates(words),
+      ]);
 
-    return [...buildings, ...classrooms, ...procedures, ...services];
+    return [
+      ...buildings,
+      ...classrooms,
+      ...procedures,
+      ...services,
+      ...departments,
+      ...cubicles,
+      ...headquarters,
+      ...withGateCoordinates(gates),
+    ];
   }
 }

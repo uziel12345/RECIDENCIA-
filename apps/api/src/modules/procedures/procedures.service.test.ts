@@ -7,7 +7,12 @@ const mockProcedure = {
   name: "Constancia de estudios",
   slug: "constancia-estudios",
   description: "Obtén tu constancia de estudios",
+  resource_url: null,
   kind: "tramite" as const,
+  department_id: null,
+  department_name: null,
+  internal_location: null,
+  schedule_text: null,
   is_active: true,
   deleted_at: null,
 };
@@ -16,6 +21,7 @@ const mockRequirement = {
   id: "req-1",
   procedure_id: "proc-1",
   description: "CURP",
+  type: "requisito" as const,
   is_mandatory: true,
   display_order: 0,
 };
@@ -45,6 +51,7 @@ function createMockRepository() {
     unlinkBuilding: vi.fn(),
     findBuildingProcedure: vi.fn(),
     buildingExists: vi.fn(),
+    departmentExists: vi.fn(),
   };
 }
 
@@ -176,7 +183,11 @@ describe("ProceduresService", () => {
         name: "Constancia",
         slug: "constancia",
         description: null,
+        resource_url: null,
         kind: "tramite",
+        department_id: null,
+        internal_location: null,
+        schedule_text: null,
         is_active: true,
       });
       expect(repository.createRequirements).not.toHaveBeenCalled();
@@ -200,6 +211,57 @@ describe("ProceduresService", () => {
       expect(repository.createRequirements).toHaveBeenCalledWith("proc-1", [
         { description: "CURP", is_mandatory: true, display_order: 0 },
       ]);
+    });
+
+    it("throws 404 when department_id does not exist", async () => {
+      const { service, repository } = createService();
+      repository.findBySlug.mockResolvedValue(null);
+      repository.departmentExists.mockResolvedValue(false);
+
+      await expect(
+        service.create({
+          name: "Constancia",
+          slug: "constancia",
+          kind: "tramite",
+          department_id: "dept-x",
+        })
+      ).rejects.toMatchObject({
+        statusCode: 404,
+        message: "El departamento indicado no existe",
+      });
+
+      expect(repository.create).not.toHaveBeenCalled();
+    });
+
+    it("passes department_id/internal_location/schedule_text through on create", async () => {
+      const { service, repository } = createService();
+      repository.findBySlug.mockResolvedValue(null);
+      repository.departmentExists.mockResolvedValue(true);
+      repository.create.mockResolvedValue("proc-1");
+      repository.findById.mockResolvedValue(mockProcedure);
+      repository.findRequirementsByProcedure.mockResolvedValue([]);
+      repository.findBuildingsByProcedure.mockResolvedValue([]);
+
+      await service.create({
+        name: "Constancia",
+        slug: "constancia",
+        kind: "servicio",
+        department_id: "dept-1",
+        internal_location: "Planta baja, oficina 3",
+        schedule_text: "Lunes a viernes 9:00-14:00",
+      });
+
+      expect(repository.create).toHaveBeenCalledWith({
+        name: "Constancia",
+        slug: "constancia",
+        description: null,
+        resource_url: null,
+        kind: "servicio",
+        department_id: "dept-1",
+        internal_location: "Planta baja, oficina 3",
+        schedule_text: "Lunes a viernes 9:00-14:00",
+        is_active: true,
+      });
     });
   });
 
@@ -241,6 +303,35 @@ describe("ProceduresService", () => {
       await service.update("proc-1", { name: "Nuevo nombre" });
 
       expect(repository.findBySlug).not.toHaveBeenCalled();
+    });
+
+    it("throws 404 when new department_id does not exist", async () => {
+      const { service, repository } = createService();
+      repository.findById.mockResolvedValue(mockProcedure);
+      repository.departmentExists.mockResolvedValue(false);
+
+      await expect(
+        service.update("proc-1", { department_id: "dept-x" })
+      ).rejects.toMatchObject({
+        statusCode: 404,
+        message: "El departamento indicado no existe",
+      });
+
+      expect(repository.update).not.toHaveBeenCalled();
+    });
+
+    it("does not check department existence when department_id is unchanged", async () => {
+      const { service, repository } = createService();
+      repository.findById
+        .mockResolvedValueOnce(mockProcedure)
+        .mockResolvedValueOnce(mockProcedure);
+      repository.update.mockResolvedValue(undefined);
+      repository.findRequirementsByProcedure.mockResolvedValue([]);
+      repository.findBuildingsByProcedure.mockResolvedValue([]);
+
+      await service.update("proc-1", { name: "Nuevo nombre" });
+
+      expect(repository.departmentExists).not.toHaveBeenCalled();
     });
 
     it("replaces requirements when requirements key is present", async () => {

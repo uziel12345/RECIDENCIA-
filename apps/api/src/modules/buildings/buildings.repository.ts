@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import type { Pool, RowDataPacket } from "mysql2/promise";
 import { pool } from "../../db/connection.js";
-import type { BuildingImageRow, BuildingRow, BuildingServiceRow } from "./buildings.types.js";
+import type { BuildingImageRow, BuildingRow } from "./buildings.types.js";
 
 interface CategoryIdRow extends RowDataPacket {
   id: string;
@@ -268,33 +268,4 @@ export class BuildingsRepository {
     return rows;
   }
 
-  // ── Services ──────────────────────────────────────────────────────────────────
-
-  async findServicesByBuildingId(buildingId: string): Promise<BuildingServiceRow[]> {
-    const [rows] = await this.db.query<BuildingServiceRow[]>(
-      `SELECT id, building_id, name, description, created_at
-       FROM building_services
-       WHERE building_id = ?
-       ORDER BY created_at ASC`,
-      [buildingId]
-    );
-    return rows;
-  }
-
-  async insertService(
-    buildingId: string,
-    name: string,
-    description: string | null
-  ): Promise<string> {
-    const id = crypto.randomUUID();
-    await this.db.query(
-      `INSERT INTO building_services (id, building_id, name, description) VALUES (?, ?, ?, ?)`,
-      [id, buildingId, name, description]
-    );
-    return id;
-  }
-
-  async deleteService(serviceId: string): Promise<void> {
-    await this.db.query(`DELETE FROM building_services WHERE id = ?`, [serviceId]);
-  }
 }

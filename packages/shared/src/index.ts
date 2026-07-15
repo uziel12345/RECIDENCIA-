@@ -7,6 +7,12 @@ export * from "./types/academic.types.js";
 export * from "./types/navigation.types.js";
 export * from "./types/auth.types.js";
 export * from "./types/geolocation.types.js";
+export * from "./types/department.types.js";
+export * from "./types/teacher-cubicle.types.js";
+export * from "./types/headquarters.types.js";
+export * from "./types/building-schedule.types.js";
+export * from "./types/building-details.types.js";
+export * from "./types/gate.types.js";
 
 export * from "./utils/navigation.utils.js";
 
@@ -19,3 +25,10 @@ export * from "./api/auth.api.js";
 export * from "./api/search.api.js";
 export * from "./api/academic.api.js";
 export * from "./api/geolocation.api.js";
+export * from "./api/departments.api.js";
+export * from "./api/teacher-cubicles.api.js";
+export * from "./api/headquarters.api.js";
+export * from "./api/building-schedules.api.js";
+export * from "./api/building-details.api.js";
+export * from "./api/professors.api.js";
+export * from "./api/gates.api.js";

@@ -38,6 +38,7 @@ export class ClassroomsService {
       building_id: input.building_id,
       code: input.code,
       name: input.name,
+      description: input.description ?? null,
       floor: input.floor ?? 0,
       capacity: input.capacity ?? null,
       type: input.type ?? "aula",
@@ -81,6 +82,8 @@ export class ClassroomsService {
       building_id: buildingId,
       code,
       name: input.name ?? current.name,
+      description:
+        input.description !== undefined ? input.description : current.description,
       floor: input.floor ?? current.floor,
       capacity: input.capacity !== undefined ? input.capacity : current.capacity,
       type: input.type ?? current.type,

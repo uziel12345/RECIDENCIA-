@@ -11,6 +11,7 @@ const CLASSROOM_SELECT_BASE = `
     b.name  AS building_name,
     c.code,
     c.name,
+    c.description,
     c.floor,
     c.capacity,
     c.type,
@@ -70,6 +71,7 @@ export class ClassroomsRepository {
     building_id: string;
     code: string;
     name: string;
+    description: string | null;
     floor: number;
     capacity: number | null;
     type: string;
@@ -77,13 +79,14 @@ export class ClassroomsRepository {
   }): Promise<string> {
     const id = crypto.randomUUID();
     await this.db.query(
-      `INSERT INTO classrooms (id, building_id, code, name, floor, capacity, type, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO classrooms (id, building_id, code, name, description, floor, capacity, type, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.building_id,
         input.code,
         input.name,
+        input.description,
         input.floor,
         input.capacity,
         input.type,
@@ -99,6 +102,7 @@ export class ClassroomsRepository {
       building_id: string;
       code: string;
       name: string;
+      description: string | null;
       floor: number;
       capacity: number | null;
       type: string;
@@ -107,12 +111,13 @@ export class ClassroomsRepository {
   ): Promise<void> {
     await this.db.query(
       `UPDATE classrooms
-       SET building_id = ?, code = ?, name = ?, floor = ?, capacity = ?, type = ?, is_active = ?
+       SET building_id = ?, code = ?, name = ?, description = ?, floor = ?, capacity = ?, type = ?, is_active = ?
        WHERE id = ? AND deleted_at IS NULL`,
       [
         input.building_id,
         input.code,
         input.name,
+        input.description,
         input.floor,
         input.capacity,
         input.type,

@@ -9,6 +9,7 @@ export interface ClassroomRow extends RowDataPacket {
   building_name: string;
   code: string;
   name: string;
+  description: string | null;
   floor: number;
   capacity: number | null;
   type: ClassroomType;
