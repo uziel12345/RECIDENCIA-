@@ -15,15 +15,24 @@ function easeInOutCubic(t: number): number {
 export function CameraAnimator({
   animRef,
   controlsRef,
+  onAnimatingChange,
 }: {
   animRef: { current: CameraAnim | null };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   controlsRef: { current: any };
+  onAnimatingChange?: (isAnimating: boolean) => void;
 }) {
   const startPosRef  = useRef<Vector3 | null>(null);
   const startLookRef = useRef<Vector3 | null>(null);
   const elapsedRef   = useRef(0);
   const prevAnimRef  = useRef<CameraAnim | null>(null);
+  const isAnimatingRef = useRef(false);
+
+  const reportAnimating = (isAnimating: boolean) => {
+    if (isAnimatingRef.current === isAnimating) return;
+    isAnimatingRef.current = isAnimating;
+    onAnimatingChange?.(isAnimating);
+  };
 
   useFrame((state, delta) => {
     const anim = animRef.current;
@@ -31,6 +40,7 @@ export function CameraAnimator({
 
     if (!anim || !ctrl) {
       if (ctrl && !ctrl.enabled) ctrl.enabled = true;
+      reportAnimating(false);
       startPosRef.current  = null;
       startLookRef.current = null;
       prevAnimRef.current  = null;
@@ -44,6 +54,7 @@ export function CameraAnimator({
     // Usar referencia al objeto anim (no coordenadas) para detectar cambio de destino
     // aunque la animación esté a mitad — así la cámara siempre arranca desde donde está.
     if (prevAnimRef.current !== anim) {
+      reportAnimating(true);
       startPosRef.current  = ctrl.object.position.clone();
       startLookRef.current = ctrl.target.clone();
       elapsedRef.current   = 0;
@@ -68,6 +79,7 @@ export function CameraAnimator({
       startPosRef.current  = null;
       startLookRef.current = null;
       prevAnimRef.current  = null;
+      reportAnimating(false);
     }
   }, -2); // priority -2: antes de OrbitControls de drei (priority -1)
 

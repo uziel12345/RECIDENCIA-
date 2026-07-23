@@ -31,14 +31,16 @@ function readInputProfile(): InputProfile {
     getMatch("(any-pointer: coarse)");
   const hasFinePointer = getMatch("(pointer: fine)") || getMatch("(any-pointer: fine)");
   const hasHover = getMatch("(hover: hover)") || getMatch("(any-hover: hover)");
-  const hasKeyboard = hasFinePointer || hasHover || window.innerWidth >= 900;
-  const isTabletWidth = window.innerWidth >= 768;
+  const hasKeyboard = hasFinePointer || hasHover;
+  // El lado corto no cambia al rotar: un teléfono de 915×412 sigue siendo
+  // teléfono y no pasa a tratarse como tableta solo por quedar más ancho.
+  const isTabletSize = Math.min(window.innerWidth, window.innerHeight) >= 600;
 
   let kind: InputProfileKind = "desktop";
   if (hasTouch && hasFinePointer) {
     kind = "hybrid";
   } else if (hasTouch) {
-    kind = isTabletWidth ? "tablet" : "phone";
+    kind = isTabletSize ? "tablet" : "phone";
   }
 
   return {

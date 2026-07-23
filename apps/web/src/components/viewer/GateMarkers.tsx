@@ -13,7 +13,6 @@ const GATE_COLOR = "#0d9488";
 const MARKER_Y = 10;
 
 const INVALIDATE_FPS_DESKTOP = 24;
-const INVALIDATE_FPS_MOBILE = 15;
 
 function GateMarker({ gate, isSelected }: { gate: Gate; isSelected: boolean }) {
   const setSelectedGate = useBuildingStore((s) => s.setSelectedGate);
@@ -23,14 +22,14 @@ function GateMarker({ gate, isSelected }: { gate: Gate; isSelected: boolean }) {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    if (!isSelected) return;
-    const fps = isMobile ? INVALIDATE_FPS_MOBILE : INVALIDATE_FPS_DESKTOP;
+    if (!isSelected || isMobile) return;
+    const fps = INVALIDATE_FPS_DESKTOP;
     const id = setInterval(() => invalidate(), 1000 / fps);
     return () => clearInterval(id);
   }, [isSelected, isMobile, invalidate]);
 
   useFrame((_, delta) => {
-    if (!isSelected || !ringRef.current) return;
+    if (isMobile || !isSelected || !ringRef.current) return;
     elapsed.current += delta;
     const t = (Math.sin(elapsed.current * 2.5) + 1) / 2;
     const scale = 1 + t * 0.3;

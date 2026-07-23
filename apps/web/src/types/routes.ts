@@ -14,7 +14,6 @@ export const ROUTES = {
   ADMIN_CATEGORIES: "/admin/categories",
   ADMIN_SERVICES: "/admin/services",
   ADMIN_GATES: "/admin/gates",
-  ADMIN_NAVIGATION: "/admin/navigation",
   ADMIN_USERS: "/admin/users",
   ADMIN_STUDENT_LOCATION: "/admin/alumnos/ubicacion",
   ADMIN_PROFESSOR_LOCATION: "/admin/profesores/ubicacion",

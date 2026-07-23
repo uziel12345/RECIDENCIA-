@@ -62,12 +62,14 @@ type BuildingSearchProps = {
   buildings?: Building[];
   gates?: Gate[];
   onSelectResult?: (result: SearchResult) => void;
+  autoFocus?: boolean;
 };
 
 export function BuildingSearch({
   buildings = [],
   gates = [],
   onSelectResult,
+  autoFocus = false,
 }: BuildingSearchProps) {
   const searchTerm = useBuildingStore((state) => state.searchTerm);
   const setSearchTerm = useBuildingStore((state) => state.setSearchTerm);
@@ -126,7 +128,9 @@ export function BuildingSearch({
         // de la búsqueda más reciente (el buscador se sentía "trabado").
         if (requestIdRef.current !== requestId) return;
         setResults(data);
-        setIsOpen(data.length > 0);
+        // Mantiene abierto el panel también cuando no hay coincidencias para
+        // que el usuario reciba una respuesta clara en vez de una ventana vacía.
+        setIsOpen(true);
       } catch {
         if (requestIdRef.current !== requestId) return;
         setResults([]);
@@ -189,6 +193,7 @@ export function BuildingSearch({
         autoComplete="off"
         role="combobox"
         aria-controls="search-listbox"
+        autoFocus={autoFocus}
       />
 
       {inputValue.trim() && (
@@ -202,7 +207,7 @@ export function BuildingSearch({
         </button>
       )}
 
-      {isOpen && groups.length > 0 && (
+      {isOpen && (groups.length > 0 || (isSearchActive && !isLoading)) && (
         <div
           id="search-listbox"
           role="listbox"

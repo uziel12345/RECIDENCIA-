@@ -49,7 +49,7 @@ export function OnboardingPage() {
   const handleContinue = () => {
     completeOnboarding();
     if (user?.role === "student") {
-      navigate(ROUTES.STUDENT, { state: { firstVisit: true } });
+      navigate(ROUTES.STUDENT);
       return;
     }
     if (user?.role === "visitor") {

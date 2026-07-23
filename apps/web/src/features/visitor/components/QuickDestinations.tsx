@@ -1,5 +1,4 @@
 ﻿import { useBuildingStore } from "../../../store/building-store";
-import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { getBuildings } from "../../../services/buildings.service";
 import { useEffect, useRef, useState } from "react";
 import type { Building } from "../../buildings/types/building";
@@ -80,12 +79,6 @@ export function QuickDestinations({ compact = false, onSelect }: QuickDestinatio
   const [failedId, setFailedId] = useState<string | null>(null);
   const failedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const setSelectedBuilding = useBuildingStore((s) => s.setSelectedBuilding);
-  const setRouteDestination = useBuildingStore((s) => s.setRouteDestination);
-  // Solo se entrega localización, no ruteo — igual que RoutePanel/
-  // BuildingInfoCard, trazar ruta se reserva a superadmin.
-  const canUseRoutes = useAdminAuthStore(
-    (state) => state.isAuthenticated && state.user?.role === "superadmin"
-  );
 
   useEffect(() => {
     getBuildings().then(setBuildings);
@@ -108,7 +101,6 @@ export function QuickDestinations({ compact = false, onSelect }: QuickDestinatio
     }
 
     setSelectedBuilding(building);
-    if (canUseRoutes) setRouteDestination(building);
     onSelect?.();
   };
 

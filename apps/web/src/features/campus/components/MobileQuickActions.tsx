@@ -49,7 +49,8 @@ export function MobileQuickActions({ actions }: MobileQuickActionsProps) {
             disabled={action.disabled}
             className={getButtonClassName(action)}
             aria-pressed={action.active}
-            aria-label={action.label}
+            aria-label={`${action.active ? "Cerrar" : "Abrir"} ${action.label}`}
+            title={`${action.active ? "Cerrar" : "Abrir"} ${action.label}`}
           >
             <span className="ito-mobile-bar__btn-icon" aria-hidden="true">
               <Icon name={action.icon} size={action.primary ? 22 : 19} />

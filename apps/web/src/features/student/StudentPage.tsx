@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { CampusViewer } from "../../components/viewer/CampusViewer";
 import { BuildingSidebar } from "../buildings/components/BuildingSidebar";
@@ -26,7 +26,6 @@ import {
 } from "../../components/ui/Icons";
 import { ThemeToggle } from "../../components/ui/ThemeToggle";
 import { StudentTopBar } from "./components/StudentTopBar";
-import { StudentFirstVisitTip } from "./components/StudentFirstVisitTip";
 import { SchedulePanel } from "./components/SchedulePanel";
 import {
   CampusServicesPanel,
@@ -39,28 +38,20 @@ type ViewMode = "map" | "services" | "schedule";
 export function StudentPage() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const location = useLocation();
   const { logout, user } = useAuthStore();
 
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
-  const routeDestination = useBuildingStore((state) => state.routeDestination);
   const setSelectedBuilding = useBuildingStore(
     (state) => state.setSelectedBuilding
   );
   const setSearchTerm = useBuildingStore((state) => state.setSearchTerm);
 
-  const [requestedSheetState, setSheetState] = useState<SheetState>("closed");
-  const sheetState: SheetState =
-    isMobile && routeDestination && requestedSheetState === "closed"
-      ? "peek"
-      : requestedSheetState;
+  const [sheetState, setSheetState] = useState<SheetState>("closed");
   const [totalBuildings, setTotalBuildings] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("map");
+  const [showSearch, setShowSearch] = useState(false);
   const [showServices, setShowServices] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
-  const [showFirstVisitTip, setShowFirstVisitTip] = useState(
-    () => Boolean((location.state as { firstVisit?: boolean } | null)?.firstVisit)
-  );
 
   useEffect(() => {
     getBuildings()
@@ -72,27 +63,13 @@ export function StudentPage() {
       .catch(() => setTotalBuildings(0));
   }, []);
 
-  // Evita que un back/forward del navegador reactive la guía: la marca de
-  // "primera visita" solo debe consumirse una vez, no vivir en el historial.
-  useEffect(() => {
-    if (location.state && (location.state as { firstVisit?: boolean }).firstVisit) {
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Si el estudiante ya selecciona un edificio, ya está explorando por su
-  // cuenta: no hace falta seguir mostrando la guía de bienvenida encima.
-  useEffect(() => {
-    if (selectedBuilding) setShowFirstVisitTip(false);
-  }, [selectedBuilding]);
-
   const handleLogout = () => {
     logout();
     navigate(ROUTES.WELCOME);
   };
 
   const closeMobilePanels = useCallback(() => {
+    setShowSearch(false);
     setShowServices(false);
     setShowSchedule(false);
     setSheetState("closed");
@@ -112,37 +89,52 @@ export function StudentPage() {
     setSheetState("full");
   }, [closeMobilePanels, setSearchTerm]);
 
-  const openBuildingSearch = useCallback(() => {
-    closeMobilePanels();
-    setViewMode("map");
-    setSheetState("full");
-    window.setTimeout(() => {
-      document.getElementById("building-search")?.focus();
-    }, 360);
-  }, [closeMobilePanels]);
-
   const openServices = useCallback(() => {
+    if (showServices) {
+      closeMobilePanels();
+      return;
+    }
     closeMobilePanels();
     setShowServices(true);
-  }, [closeMobilePanels]);
+  }, [closeMobilePanels, showServices]);
 
   const openSchedule = useCallback(() => {
+    if (showSchedule) {
+      closeMobilePanels();
+      return;
+    }
     closeMobilePanels();
     setShowSchedule(true);
-  }, [closeMobilePanels]);
+  }, [closeMobilePanels, showSchedule]);
+
+  const openBuildingSearch = useCallback(() => {
+    if (showSearch) {
+      closeMobilePanels();
+      return;
+    }
+    closeMobilePanels();
+    setViewMode("map");
+    setShowSearch(true);
+  }, [closeMobilePanels, showSearch]);
 
   const openBuildings = useCallback(() => {
+    const buildingsAreOpen =
+      sheetState !== "closed" && !showSearch && !showServices && !showSchedule;
+    if (buildingsAreOpen) {
+      closeMobilePanels();
+      return;
+    }
     closeMobilePanels();
     setViewMode("map");
     setSheetState("full");
-  }, [closeMobilePanels]);
+  }, [closeMobilePanels, sheetState, showSchedule, showSearch, showServices]);
 
   const mobileActions = useMemo(() => {
     return [
       {
         id: "services",
         label: "Servicios",
-        icon: "info" as const,
+        icon: "sparkles" as const,
         onClick: openServices,
         active: showServices,
       },
@@ -158,11 +150,22 @@ export function StudentPage() {
         label: "Edificios",
         icon: "list" as const,
         onClick: openBuildings,
-        active: sheetState !== "closed" && !showServices && !showSchedule,
-        primary: true,
+        active:
+          sheetState !== "closed" &&
+          !showSearch &&
+          !showServices &&
+          !showSchedule,
       },
     ];
-  }, [openBuildings, openServices, openSchedule, sheetState, showServices, showSchedule]);
+  }, [
+    openBuildings,
+    openServices,
+    openSchedule,
+    sheetState,
+    showSearch,
+    showServices,
+    showSchedule,
+  ]);
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -197,13 +200,6 @@ export function StudentPage() {
               <LogOutIcon size={18} />
             </button>
           </div>
-
-          {showFirstVisitTip && (
-            <StudentFirstVisitTip
-              isMobile={false}
-              onDismiss={() => setShowFirstVisitTip(false)}
-            />
-          )}
 
           <nav className="student-page__nav">
             <button
@@ -293,37 +289,35 @@ export function StudentPage() {
     );
   }
 
-  const sheetTitle = routeDestination
-    ? "Tu ruta"
-    : selectedBuilding
-      ? selectedBuilding.name
-      : "Explorar campus";
+  const sheetTitle = selectedBuilding
+    ? selectedBuilding.name
+    : "Catálogo de edificios";
 
-  const sheetSubtitle = routeDestination
-    ? "Sigue las indicaciones en el mapa"
-    : selectedBuilding
-      ? "Detalles del edificio"
-      : `${totalBuildings} edificios`;
+  const sheetSubtitle = selectedBuilding
+    ? "Detalles del edificio"
+    : `${totalBuildings} edificios para explorar`;
 
   const showQuickCard =
-    !!selectedBuilding && !routeDestination && sheetState === "closed";
+    !!selectedBuilding &&
+    sheetState === "closed" &&
+    !showSearch &&
+    !showServices &&
+    !showSchedule;
+
+  const hasOpenMobileWindow =
+    sheetState === "full" || showSearch || showServices || showSchedule;
 
   return (
     <div className="ito-campus--mobile student-mobile">
-      <CampusViewer isMobile mobilePanelOpen={sheetState === "full"} />
+      <CampusViewer isMobile mobilePanelOpen={hasOpenMobileWindow} />
 
       <StudentTopBar
         userName={user?.name || "Estudiante"}
         onSearchClick={openBuildingSearch}
         onLogout={handleLogout}
+        searchOpen={showSearch}
+        onCloseSearch={closeMobilePanels}
       />
-
-      {showFirstVisitTip && (
-        <StudentFirstVisitTip
-          isMobile
-          onDismiss={() => setShowFirstVisitTip(false)}
-        />
-      )}
 
       <AnimatePresence>
         {showQuickCard && (
@@ -337,7 +331,7 @@ export function StudentPage() {
       <MobileActionModal
         open={showServices}
         title="Servicios del campus"
-        onClose={() => setShowServices(false)}
+        onClose={closeMobilePanels}
       >
         <CampusServicesPanel onSelectService={handleSelectService} />
       </MobileActionModal>
@@ -345,7 +339,7 @@ export function StudentPage() {
       <MobileActionModal
         open={showSchedule}
         title="Tu horario"
-        onClose={() => setShowSchedule(false)}
+        onClose={closeMobilePanels}
       >
         <SchedulePanel expanded onNavigateToClass={handleNavigateToClass} />
       </MobileActionModal>
@@ -354,20 +348,15 @@ export function StudentPage() {
 
       <MobileBottomSheet
         state={sheetState}
-        onChangeState={(next) => {
-          if (next === "closed" && selectedBuilding && !routeDestination) {
-            setSheetState("closed");
-            return;
-          }
-
-          setSheetState(next);
-        }}
+        onChangeState={setSheetState}
         title={sheetTitle}
         subtitle={sheetSubtitle}
       >
         <BuildingSidebar
           isMobile
-          onItemSelected={() => setSheetState("peek")}
+          showSearchPanel={false}
+          browseOnly
+          onItemSelected={() => setSheetState("closed")}
           onClearSelection={() => setSelectedBuilding(null)}
         />
       </MobileBottomSheet>

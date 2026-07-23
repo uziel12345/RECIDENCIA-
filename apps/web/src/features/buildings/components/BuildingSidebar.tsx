@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { useBuildingStore } from "../../../store/building-store";
 import { useLocationStore } from "../../../store/location-store";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
-import { RoutePanel } from "./RoutePanel";
 import { useBuildings } from "../../../hooks/useBuildings";
 import { useGates } from "../../../hooks/useGates";
 import { useBuildingCategories } from "../hooks/useBuildingCategories";
@@ -66,6 +65,7 @@ type BuildingSidebarProps = {
   onClearSelection?: () => void;
   showGreeting?: boolean;
   showSearchPanel?: boolean;
+  browseOnly?: boolean;
   userName?: string;
 };
 
@@ -77,10 +77,10 @@ export function BuildingSidebar({
   onClearSelection,
   showGreeting = false,
   showSearchPanel = true,
+  browseOnly = false,
   userName,
 }: BuildingSidebarProps) {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
-  const routeDestination = useBuildingStore((state) => state.routeDestination);
   const setSelectedBuilding = useBuildingStore(
     (state) => state.setSelectedBuilding
   );
@@ -98,7 +98,6 @@ export function BuildingSidebar({
   const canUseRoutes = useAdminAuthStore(
     (state) => state.isAuthenticated && state.user?.role === "superadmin"
   );
-  const canUseDemo = canUseRoutes && import.meta.env.DEV;
   const isPublicDesktop = !isMobile && !canUseRoutes;
 
   const { buildings, loading, error: loadError } = useBuildings();
@@ -110,11 +109,11 @@ export function BuildingSidebar({
     const result = buildings
       .filter((building) => building.is_active)
       .filter((building) => {
-        if (!activeCategory) return true;
+        if (browseOnly || !activeCategory) return true;
         return building.category_name === activeCategory;
       })
       .filter((building) => {
-        if (!searchTerm.trim()) return true;
+        if (browseOnly || !searchTerm.trim()) return true;
         const searchableText = [
           building.name,
           building.code,
@@ -135,7 +134,7 @@ export function BuildingSidebar({
       if (b.id === selectedBuilding.id) return 1;
       return 0;
     });
-  }, [buildings, searchTerm, selectedBuilding, activeCategory]);
+  }, [activeCategory, browseOnly, buildings, searchTerm, selectedBuilding]);
 
   const recommendedBuildings = (() => {
     const priority = buildings.filter((b) => b.is_active && b.is_priority);
@@ -144,11 +143,11 @@ export function BuildingSidebar({
   })();
 
   const hasLocation = permission === "granted" && mapPosition !== null;
-  const hasSearchTerm = searchTerm.trim().length > 0;
+  const hasSearchTerm = !browseOnly && searchTerm.trim().length > 0;
 
   const showList =
     hasSearchTerm ||
-    activeCategory !== null ||
+    (!browseOnly && activeCategory !== null) ||
     !isPublicDesktop ||
     showAllBuildings;
 
@@ -176,7 +175,7 @@ export function BuildingSidebar({
           : "flex h-full w-full flex-col gap-4 overflow-y-auto bg-[var(--color-surface)] p-[18px] pt-5"
       }
     >
-      {(canUseRoutes || isMobile) && (
+      {canUseRoutes && !isMobile && (
         <header className="flex items-center gap-3 pb-2">
           <div
             className="grid h-11 w-11 flex-shrink-0 place-items-center overflow-hidden rounded-xl bg-[var(--color-surface-muted)] shadow-[var(--shadow-md)]"
@@ -221,7 +220,7 @@ export function BuildingSidebar({
         </header>
       )}
 
-      {(canUseRoutes || isMobile) && (
+      {canUseRoutes && !isMobile && (
         <div className="grid grid-cols-3 gap-2 px-2 pb-1" role="list">
           {[
             { value: totalActive, label: "Edificios" },
@@ -347,7 +346,7 @@ export function BuildingSidebar({
       </div>
       )}
 
-      {selectedSearchResult && (
+      {!browseOnly && selectedSearchResult && (
         <div className={SECTION}>
           <SearchResultCard
             result={selectedSearchResult}
@@ -362,15 +361,6 @@ export function BuildingSidebar({
             building={selectedBuilding}
             onClose={handleClearSelection}
           />
-        </div>
-      )}
-
-      {/* Solo se entrega localización, no ruteo — el panel de ruta se
-          reserva a superadmin (mismo check que canUseDemo) para pruebas
-          de calibración; student/visitor no lo ven. */}
-      {canUseRoutes && (selectedBuilding || routeDestination) && (
-        <div className={SECTION}>
-          <RoutePanel compact={isMobile} canUseDemo={canUseDemo} />
         </div>
       )}
 

@@ -1,11 +1,6 @@
 import { create } from "zustand";
 import type { Building, Gate, SearchResult, SearchResultKind } from "@ito-map/shared";
 
-export type RouteStats = {
-  totalDistance: number;   // metros
-  estimatedSeconds: number;
-};
-
 export type SectionKind = "aulas" | "tramites" | "departamentos" | "cubiculos" | "jefaturas";
 
 export type HighlightedSection = {
@@ -25,10 +20,6 @@ const SECTION_BY_KIND: Partial<Record<SearchResultKind, SectionKind>> = {
 type BuildingStore = {
   selectedBuilding: Building | null;
   selectedGate: Gate | null;
-  routeDestination: Building | null;
-  currentRouteNodeIds: string[];
-  routeStats: RouteStats | null;
-  routeError: string | null;
   searchTerm: string;
   activeCategory: string | null;
   selectedSearchResult: SearchResult | null;
@@ -36,15 +27,10 @@ type BuildingStore = {
 
   setSelectedBuilding: (building: Building | null) => void;
   setSelectedGate: (gate: Gate | null) => void;
-  setRouteDestination: (building: Building | null) => void;
-  setCurrentRouteNodeIds: (nodeIds: string[]) => void;
-  setRouteStats: (stats: RouteStats | null) => void;
-  setRouteError: (error: string | null) => void;
   setSearchTerm: (value: string) => void;
   setActiveCategory: (category: string | null) => void;
   setSelectedSearchResult: (result: SearchResult | null) => void;
   selectSearchResult: (result: SearchResult, buildings: Building[], gates: Gate[]) => void;
-  clearRoute: () => void;
   clearSelection: () => void;
   resetBuildingState: () => void;
 };
@@ -52,10 +38,6 @@ type BuildingStore = {
 export const useBuildingStore = create<BuildingStore>((set) => ({
   selectedBuilding: null,
   selectedGate: null,
-  routeDestination: null,
-  currentRouteNodeIds: [],
-  routeStats: null,
-  routeError: null,
   searchTerm: "",
   activeCategory: null,
   selectedSearchResult: null,
@@ -79,34 +61,9 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
         : {
             selectedGate: gate,
             selectedBuilding: null,
-            routeDestination: null,
-            currentRouteNodeIds: [],
-            routeStats: null,
-            routeError: null,
             highlightedSection: null,
           }
     ),
-
-  setRouteDestination: (building) =>
-    set({
-      routeDestination: building,
-      routeError: null,
-    }),
-
-  setCurrentRouteNodeIds: (nodeIds) =>
-    set({
-      currentRouteNodeIds: nodeIds,
-    }),
-
-  setRouteStats: (stats) =>
-    set({
-      routeStats: stats,
-    }),
-
-  setRouteError: (error) =>
-    set({
-      routeError: error,
-    }),
 
   setSearchTerm: (value) =>
     set((state) =>
@@ -128,9 +85,9 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
     }),
 
   // Punto único de entrada para "el usuario eligió un resultado de búsqueda".
-  // Decide qué seleccionar (edificio o puerta), si hay que fijar un destino de
-  // ruta, y qué sección de la barra lateral resaltar — para no repetir esta
-  // lógica en BuildingSearch/BuildingSidebar/MapSearchOverlay.
+  // Decide qué seleccionar (edificio o puerta) y qué sección de la barra
+  // lateral resaltar — para no repetir esta lógica en
+  // BuildingSearch/BuildingSidebar/MapSearchOverlay.
   selectSearchResult: (result, buildings, gates) =>
     set((state) => {
       if (result.kind === "gate") {
@@ -155,10 +112,6 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
         return {
           selectedGate: gate,
           selectedBuilding: null,
-          routeDestination: null,
-          currentRouteNodeIds: [],
-          routeStats: null,
-          routeError: null,
           highlightedSection: null,
           selectedSearchResult: null,
         };
@@ -171,10 +124,6 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
         return {
           selectedBuilding: building,
           selectedGate: null,
-          routeDestination: null,
-          currentRouteNodeIds: [],
-          routeStats: null,
-          routeError: null,
           highlightedSection: null,
           selectedSearchResult: null,
         };
@@ -190,19 +139,9 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
       return {
         selectedBuilding: building,
         selectedGate: null,
-        routeDestination: building,
-        routeError: null,
         selectedSearchResult: result,
         highlightedSection: section ? { section, targetId: result.id } : null,
       };
-    }),
-
-  clearRoute: () =>
-    set({
-      routeDestination: null,
-      currentRouteNodeIds: [],
-      routeStats: null,
-      routeError: null,
     }),
 
   clearSelection: () =>
@@ -216,10 +155,6 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
     set({
       selectedBuilding: null,
       selectedGate: null,
-      routeDestination: null,
-      currentRouteNodeIds: [],
-      routeStats: null,
-      routeError: null,
       searchTerm: "",
       activeCategory: null,
       selectedSearchResult: null,

@@ -3424,115 +3424,6 @@ svg {
   padding: 16px;
 }
 
-/* ============================ STUDENT FIRST VISIT TIP ============================ */
-
-.ito-first-visit-tip {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin: 12px 16px 0;
-  padding: 14px;
-  border-radius: 16px;
-  border: 1px solid var(--color-brand-100, #ffedd5);
-  background: var(--color-brand-50, #fff7ed);
-  box-shadow: var(--shadow-xs);
-}
-
-.ito-first-visit-tip--mobile {
-  position: fixed;
-  left: var(--mobile-shell-gap);
-  right: var(--mobile-shell-gap);
-  bottom: calc(86px + var(--safe-bottom));
-  z-index: 24;
-  margin: 0;
-  background: var(--color-surface);
-  box-shadow: 0 14px 32px rgba(10, 10, 10, 0.18);
-}
-
-.ito-first-visit-tip__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.ito-first-visit-tip__title {
-  font-size: 13.5px;
-  font-weight: 800;
-  color: var(--color-text);
-  line-height: 1.3;
-}
-
-.ito-first-visit-tip__close {
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  border: none;
-  background: rgba(15, 23, 42, 0.06);
-  color: var(--color-text-muted);
-  cursor: pointer;
-}
-
-.ito-first-visit-tip__list {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.ito-first-visit-tip__row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 12px;
-  line-height: 1.35;
-  color: var(--color-text-muted);
-}
-
-.ito-first-visit-tip__row-icon {
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  margin-top: 1px;
-  display: grid;
-  place-items: center;
-  border-radius: 7px;
-  background: var(--color-brand-100, #ffedd5);
-  color: var(--color-brand-700, #c2410c);
-}
-
-.ito-first-visit-tip__row-text strong {
-  color: var(--color-text);
-}
-
-.ito-first-visit-tip__cta {
-  align-self: stretch;
-  padding: 9px 12px;
-  border: none;
-  border-radius: 12px;
-  background: var(--color-brand-600, #ea580c);
-  color: #ffffff;
-  font-size: 12.5px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-html.dark .ito-first-visit-tip {
-  background: rgba(234, 88, 12, 0.14);
-  border-color: rgba(234, 88, 12, 0.32);
-}
-
-html.dark .ito-first-visit-tip--mobile {
-  background: rgba(15, 23, 42, 0.94);
-}
-
-html.dark .ito-first-visit-tip__close {
-  background: rgba(255, 255, 255, 0.08);
-  color: #94a3b8;
-}
-
 /* ============================ SCHEDULE PANEL ============================ */
 
 .schedule-panel {
@@ -4860,6 +4751,17 @@ html.dark .ito-first-visit-tip__close {
 .visitor-top-bar__actions,
 .student-top-bar__actions {
   flex-shrink: 0;
+}
+
+.student-top-bar--search,
+.visitor-top-bar--search {
+  gap: 10px;
+}
+
+.student-top-bar__search,
+.visitor-top-bar__search {
+  flex: 1;
+  min-width: 0;
 }
 
 .visitor-top-bar__button {
@@ -6970,6 +6872,17 @@ html.dark .ito-first-visit-tip__close {
   z-index: 140;
 }
 
+/* La regla compartida de "liquid glass" (~línea 6361) pone position:relative en
+   .ito-quick-card junto con muchos otros componentes para anclar sus pseudo-
+   elementos decorativos — pero esta tarjeta necesita position:absolute para
+   flotar sobre el mapa y por encima de .ito-mobile-bar. Sin este reset gana la
+   regla de glass (misma especificidad, definida después) y la tarjeta cae al
+   flujo normal del documento, quedando tapada detrás de la barra inferior. */
+.ito-campus--mobile .ito-quick-card {
+  position: absolute;
+  z-index: 130;
+}
+
 .ito-campus--mobile .ito-mobile-bar__inner {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -8637,170 +8550,6 @@ html.dark .ito-sheet__body {
   isolation: isolate;
 }
 
-.ito-building-label:hover {
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.32);
-}
-
-.ito-building-label__hover-card {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 10px);
-  transform: translateX(-50%) translateY(4px);
-  width: max-content;
-  max-width: 240px;
-  display: grid;
-  gap: 5px;
-  padding: 10px 12px 11px;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--label-accent, #f97316) 55%, #ffffff 45%);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
-  color: #0f172a;
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.24);
-  opacity: 0;
-  pointer-events: none;
-  text-align: left;
-  transition: opacity 0.14s ease, transform 0.14s ease;
-}
-
-.ito-building-label__hover-card::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -6px;
-  width: 12px;
-  height: 12px;
-  transform: translateX(-50%) rotate(45deg);
-  border-right: 1px solid color-mix(in srgb, var(--label-accent, #f97316) 45%, #ffffff 55%);
-  border-bottom: 1px solid color-mix(in srgb, var(--label-accent, #f97316) 45%, #ffffff 55%);
-  background: rgba(248, 250, 252, 0.98);
-}
-
-.ito-building-label:hover .ito-building-label__hover-card,
-.ito-building-label.is-hovered .ito-building-label__hover-card {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-.ito-building-label__hover-code {
-  width: fit-content;
-  max-width: 100%;
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--label-accent, #f97316) 16%, #ffffff 84%);
-  color: color-mix(in srgb, var(--label-accent, #f97316) 80%, #111827 20%);
-  font-size: 10px;
-  font-weight: 900;
-  line-height: 1;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ito-building-label__hover-name {
-  max-width: 100%;
-  color: #111827;
-  font-size: 13px;
-  font-weight: 850;
-  line-height: 1.25;
-  overflow-wrap: anywhere;
-  white-space: normal;
-}
-
-html.dark .ito-building-label__hover-card {
-  border-color: color-mix(in srgb, var(--label-accent, #f97316) 55%, #1e293b 45%);
-  background:
-    linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(12, 15, 20, 0.96));
-  color: #f8fafc;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.52);
-}
-
-html.dark .ito-building-label__hover-card::after {
-  border-color: color-mix(in srgb, var(--label-accent, #f97316) 45%, #334155 55%);
-  background: rgba(12, 15, 20, 0.98);
-}
-
-html.dark .ito-building-label__hover-name {
-  color: #f8fafc;
-}
-
-.ito-building-hover-card {
-  position: relative;
-  transform: translate(-50%, -100%);
-  min-width: 150px;
-  max-width: 260px;
-  display: grid;
-  gap: 6px;
-  padding: 10px 12px 11px;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--label-accent, #f97316) 55%, #ffffff 45%);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
-  color: #0f172a;
-  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.26);
-  pointer-events: none;
-  text-align: left;
-}
-
-.ito-building-hover-card::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -6px;
-  width: 12px;
-  height: 12px;
-  transform: translateX(-50%) rotate(45deg);
-  border-right: 1px solid color-mix(in srgb, var(--label-accent, #f97316) 45%, #ffffff 55%);
-  border-bottom: 1px solid color-mix(in srgb, var(--label-accent, #f97316) 45%, #ffffff 55%);
-  background: rgba(248, 250, 252, 0.98);
-}
-
-.ito-building-hover-card__code {
-  width: fit-content;
-  max-width: 100%;
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--label-accent, #f97316) 16%, #ffffff 84%);
-  color: color-mix(in srgb, var(--label-accent, #f97316) 80%, #111827 20%);
-  font-size: 10px;
-  font-weight: 900;
-  line-height: 1;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ito-building-hover-card__name {
-  max-width: 100%;
-  color: #111827;
-  font-size: 13px;
-  font-weight: 850;
-  line-height: 1.25;
-  overflow-wrap: anywhere;
-  white-space: normal;
-}
-
-html.dark .ito-building-hover-card {
-  border-color: color-mix(in srgb, var(--label-accent, #f97316) 55%, #1e293b 45%);
-  background:
-    linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(12, 15, 20, 0.96));
-  color: #f8fafc;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.52);
-}
-
-html.dark .ito-building-hover-card::after {
-  border-color: color-mix(in srgb, var(--label-accent, #f97316) 45%, #334155 55%);
-  background: rgba(12, 15, 20, 0.98);
-}
-
-html.dark .ito-building-hover-card__name {
-  color: #f8fafc;
-}
-
 /* ── Shared mobile action modal ───────────────────────────────────────────── */
 .campus-mobile-modal {
   position: fixed;
@@ -8939,6 +8688,11 @@ html.dark .campus-mobile-modal__close:hover {
     border-color: rgba(15, 23, 42, 0.10);
   }
 
+  .ito-toolbar--mobile-compact .ito-toolbar__group {
+    border-color: rgba(15, 23, 42, 0.10);
+    box-shadow: none;
+  }
+
   .ito-calibration-panel {
     position: absolute;
     top: auto;
@@ -9034,6 +8788,294 @@ html.dark .campus-mobile-modal__close:hover {
   }
 }
 
+/* El tutorial es un flujo modal completo: debe cubrir barras y controles del
+   mapa, no quedar intercalado entre capas de la interfaz. */
+.map-tutorial-overlay {
+  z-index: 200 !important;
+}
+
+/* Teléfonos en horizontal. Aunque el ancho supere 768px, useIsMobile mantiene
+   el flujo móvil cuando la pantalla es táctil y tiene poca altura. Este bloque
+   aprovecha el ancho disponible y reduce el espacio vertical ocupado. */
+@media (orientation: landscape) and (max-height: 600px) {
+  .ito-campus--mobile {
+    --mobile-floating-top: max(6px, var(--safe-top));
+    --mobile-floating-bar: 52px;
+    --mobile-bar-height: 58px;
+    --mobile-shell-gap: 6px;
+    --sheet-peek-height: 58px;
+  }
+
+  .ito-campus--mobile .student-top-bar,
+  .ito-campus--mobile .visitor-top-bar {
+    top: var(--mobile-floating-top);
+    right: auto;
+    left: max(8px, env(safe-area-inset-left, 0px));
+    /* El toolbar horizontal incluye ahora zoom +/-; reservar su ancho evita
+       que ambos controles se encimen en teléfonos pequeños apaisados. */
+    width: min(390px, calc(100vw - 310px));
+    min-height: 52px;
+    padding: 5px 8px;
+    border-radius: 16px;
+  }
+
+  .ito-campus--mobile .student-top-bar__left,
+  .ito-campus--mobile .visitor-top-bar__brand {
+    flex: 1 1 auto;
+    gap: 8px;
+    overflow: hidden;
+  }
+
+  .ito-campus--mobile .student-top-bar__avatar,
+  .ito-campus--mobile .visitor-top-bar__brand-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .ito-campus--mobile .student-top-bar__logo,
+  .ito-campus--mobile .visitor-top-bar__logo-img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .ito-campus--mobile .student-top-bar__greeting,
+  .ito-campus--mobile .visitor-top-bar__subtitle {
+    display: none;
+  }
+
+  .ito-campus--mobile .student-top-bar__name,
+  .ito-campus--mobile .visitor-top-bar__title {
+    font-size: 13px;
+  }
+
+  .ito-campus--mobile .student-top-bar__actions,
+  .ito-campus--mobile .visitor-top-bar__actions {
+    gap: 5px;
+  }
+
+  .ito-campus--mobile .student-top-bar__btn,
+  .ito-campus--mobile .visitor-top-bar__button {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+  }
+
+  .ito-campus--mobile .ito-theme-toggle {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+  }
+
+  .ito-campus--mobile .ito-toolbar--mobile,
+  .ito-campus--mobile .ito-toolbar--mobile-compact {
+    top: var(--mobile-floating-top);
+    right: max(8px, env(safe-area-inset-right, 0px));
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+    padding: 5px;
+    border-radius: 16px;
+  }
+
+  .ito-campus--mobile .ito-toolbar--mobile .ito-toolbar__btn,
+  .ito-campus--mobile .ito-toolbar--mobile-compact .ito-toolbar__btn {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+  }
+
+  .ito-campus--mobile .ito-toolbar--mobile .ito-toolbar__group,
+  .ito-campus--mobile .ito-toolbar--mobile-compact .ito-toolbar__group {
+    flex-direction: row;
+    border-radius: 12px;
+  }
+
+  .ito-campus--mobile .ito-toolbar--mobile .ito-toolbar__divider,
+  .ito-campus--mobile .ito-toolbar--mobile-compact .ito-toolbar__divider {
+    width: 1px;
+    height: auto;
+    margin: 8px 0;
+  }
+
+  .ito-campus--mobile .ito-mobile-bar {
+    right: auto;
+    bottom: calc(4px + var(--safe-bottom));
+    left: 50%;
+    width: min(440px, calc(100vw - 16px));
+    padding: 0;
+    transform: translateX(-50%);
+  }
+
+  .ito-campus--mobile .ito-mobile-bar__inner {
+    width: 100%;
+    min-height: 52px;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 16px;
+  }
+
+  .ito-campus--mobile .ito-mobile-bar__btn {
+    min-height: 44px;
+    min-width: 0;
+    flex-direction: row;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 12px;
+  }
+
+  .ito-campus--mobile .ito-mobile-bar__btn-icon {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+  }
+
+  .ito-campus--mobile .ito-mobile-bar__btn-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 10.5px;
+  }
+
+  .ito-campus--mobile .ito-sheet {
+    top: calc(var(--mobile-floating-top) + var(--mobile-floating-bar) + 5px);
+    right: 6px;
+    bottom: calc(var(--mobile-bar-height) + var(--safe-bottom) + 4px);
+    left: 6px;
+    max-height: none;
+    border-radius: 18px;
+  }
+
+  .ito-campus--mobile .ito-sheet--full {
+    top: calc(4px + var(--safe-top));
+    right: 6px;
+    bottom: calc(var(--mobile-bar-height) + var(--safe-bottom) + 4px);
+    left: 6px;
+    border-radius: 18px;
+  }
+
+  .ito-campus--mobile .ito-sheet__handle-tap {
+    padding: 4px 0 2px;
+  }
+
+  .ito-campus--mobile .ito-sheet__handle-bar {
+    width: 34px;
+    height: 4px;
+  }
+
+  .ito-campus--mobile .ito-sheet__head {
+    min-height: 46px;
+    padding: 5px 10px 7px;
+  }
+
+  .ito-campus--mobile .ito-sheet__title {
+    font-size: 14px;
+  }
+
+  .ito-campus--mobile .ito-sheet__subtitle {
+    font-size: 11px;
+  }
+
+  .ito-campus--mobile .ito-sheet__icon-btn {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+  }
+
+  .ito-campus--mobile .ito-sheet__body {
+    padding: 8px 10px 12px;
+  }
+
+  .ito-campus--mobile .ito-quick-card {
+    right: auto;
+    bottom: calc(62px + var(--safe-bottom));
+    left: max(8px, env(safe-area-inset-left, 0px));
+    width: min(400px, calc(100vw - 72px));
+  }
+
+  .ito-campus--mobile .campus-mobile-modal {
+    align-items: center;
+    justify-content: center;
+    padding: 6px 6px calc(62px + var(--safe-bottom));
+  }
+
+  .ito-campus--mobile .campus-mobile-modal__panel {
+    width: min(720px, 100%);
+    max-height: calc(100dvh - var(--safe-top) - var(--safe-bottom) - 72px);
+    border-radius: 18px;
+  }
+
+  .ito-campus--mobile .campus-mobile-modal__handle {
+    margin-top: 6px;
+  }
+
+  .ito-campus--mobile .campus-mobile-modal__header {
+    padding: 7px 10px 8px;
+  }
+
+  .ito-campus--mobile .campus-mobile-modal__header h2 {
+    font-size: 16px;
+  }
+
+  .ito-campus--mobile .campus-mobile-modal__close {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
+
+  .ito-campus--mobile .campus-mobile-modal__body {
+    padding: 9px 10px 12px;
+  }
+
+  .ito-campus--mobile .map-tutorial-overlay {
+    padding: 6px !important;
+  }
+
+  .ito-campus--mobile .map-tutorial-card {
+    display: grid;
+    width: min(720px, calc(100vw - 12px)) !important;
+    max-width: none !important;
+    max-height: calc(100dvh - 12px);
+    grid-template-columns: minmax(170px, 38%) minmax(0, 1fr);
+    border-radius: 18px !important;
+    overflow: auto !important;
+  }
+
+  .ito-campus--mobile .map-tutorial-visual {
+    height: auto !important;
+    min-height: 0;
+    padding: 10px 18px !important;
+  }
+
+  .ito-campus--mobile .map-tutorial-illustration {
+    width: 104px !important;
+    height: 104px !important;
+  }
+
+  .ito-campus--mobile .map-tutorial-content {
+    min-width: 0;
+    padding: 14px 16px 12px !important;
+  }
+
+  .ito-campus--mobile .map-tutorial-content h2 {
+    margin-bottom: 5px !important;
+    font-size: 18px !important;
+  }
+
+  .ito-campus--mobile .map-tutorial-content p {
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+  }
+
+  .ito-campus--mobile .map-tutorial-dots {
+    margin: 10px 0 2px !important;
+  }
+
+  .ito-campus--mobile .map-tutorial-actions {
+    margin-top: 8px !important;
+  }
+}
+
 html.dark .ito-toolbar--mobile-compact {
   background: rgba(15, 23, 42, 0.78);
   border-color: rgba(255, 255, 255, 0.12);
@@ -9101,6 +9143,19 @@ html.dark .ito-toolbar--mobile-compact {
     left: 6px;
     right: 6px;
     max-height: none;
+    border-radius: 22px;
+  }
+
+  /* Las ventanas de Servicios/Horario/Destinos terminan encima del dock, no
+     detrás de él. El dock queda disponible para cambiar de sección o cerrar
+     la activa tocando su botón nuevamente. */
+  .campus-mobile-modal {
+    padding: 0 6px calc(78px + var(--safe-bottom));
+  }
+
+  .campus-mobile-modal__panel {
+    max-height: calc(100dvh - var(--safe-top) - 90px);
+    border: 1px solid rgba(226, 232, 240, 0.92);
     border-radius: 22px;
   }
 
@@ -9403,6 +9458,34 @@ html.dark .ito-toolbar--mobile-compact {
 
   .ito-list-item__chevron {
     display: none;
+  }
+}
+
+/* Estas tres reglas comparten especificidad con los ajustes verticales de
+   arriba; mantenerlas al final garantiza que al rotar siga ganando el layout
+   horizontal también en teléfonos de menos de 768px de ancho. */
+@media (orientation: landscape) and (max-height: 600px) {
+  .ito-campus--mobile .ito-toolbar--mobile,
+  .ito-campus--mobile .ito-toolbar--mobile-compact {
+    top: var(--mobile-floating-top);
+  }
+
+  .ito-campus--mobile .ito-sheet {
+    top: calc(var(--mobile-floating-top) + var(--mobile-floating-bar) + 5px);
+    right: 6px;
+    bottom: calc(var(--mobile-bar-height) + var(--safe-bottom) + 4px);
+    left: 6px;
+    max-height: none;
+    border-radius: 18px;
+  }
+
+  .ito-campus--mobile .ito-sheet--full {
+    top: calc(4px + var(--safe-top));
+    right: 6px;
+    bottom: calc(var(--mobile-bar-height) + var(--safe-bottom) + 4px);
+    left: 6px;
+    max-height: none;
+    border-radius: 18px;
   }
 }
 

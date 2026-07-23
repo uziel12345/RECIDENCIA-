@@ -1,7 +1,5 @@
 import { motion } from "framer-motion";
 import { useBuildingStore } from "../../../store/building-store";
-import { useLocationStore } from "../../../store/location-store";
-import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
 import { resolveBuildingImageUrl } from "../../../utils/resolve-api-asset-url";
@@ -16,20 +14,11 @@ export function BuildingQuickCard({
   building,
   onOpenDetails,
 }: BuildingQuickCardProps) {
-  const setRouteDestination = useBuildingStore((s) => s.setRouteDestination);
   const setSelectedBuilding = useBuildingStore((s) => s.setSelectedBuilding);
-  const permission = useLocationStore((s) => s.permission);
-  const mapPosition = useLocationStore((s) => s.mapPosition);
-  // Solo se entrega localización, no ruteo — igual que RoutePanel/
-  // BuildingInfoCard/QuickDestinations, trazar ruta se reserva a superadmin.
-  const canUseRoutes = useAdminAuthStore(
-    (state) => state.isAuthenticated && state.user?.role === "superadmin"
-  );
 
   const accent = getCategoryAccent(building.category_name);
   const accentColor = building.category_color || accent.fg;
 
-  const canRoute = permission === "granted" && mapPosition !== null;
   const coverUrl = resolveBuildingImageUrl(building.cover_image_url);
 
   return (
@@ -113,26 +102,6 @@ export function BuildingQuickCard({
             <Icon name="info" size={16} />
             <span>Detalles</span>
           </button>
-
-          {canUseRoutes && (
-            <button
-              type="button"
-              onClick={() => {
-                if (!canRoute) {
-                  onOpenDetails();
-                  return;
-                }
-
-                setRouteDestination(building);
-              }}
-              className="ito-quick-action ito-quick-action--primary"
-              style={{ background: accentColor, borderColor: accentColor }}
-            >
-              <Icon name="route" size={16} />
-              <span>Como llegar</span>
-              <Icon name="arrow-right" size={14} />
-            </button>
-          )}
         </div>
       </div>
     </motion.div>

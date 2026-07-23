@@ -1,13 +1,52 @@
-import { SearchIcon, LogOutIcon } from "../../../components/ui/Icons";
+import { ChevronLeftIcon, LogOutIcon, SearchIcon } from "../../../components/ui/Icons";
 import { ThemeToggle } from "../../../components/ui/ThemeToggle";
+import { BuildingSearch } from "../../buildings/components/BuildingSearch";
+import { useBuildings } from "../../../hooks/useBuildings";
+import { useGates } from "../../../hooks/useGates";
 
 interface StudentTopBarProps {
   userName: string;
   onSearchClick: () => void;
   onLogout: () => void;
+  searchOpen: boolean;
+  onCloseSearch: () => void;
 }
 
-export function StudentTopBar({ userName, onSearchClick, onLogout }: StudentTopBarProps) {
+export function StudentTopBar({
+  userName,
+  onSearchClick,
+  onLogout,
+  searchOpen,
+  onCloseSearch,
+}: StudentTopBarProps) {
+  const { buildings } = useBuildings();
+  const { gates } = useGates();
+
+  if (searchOpen) {
+    return (
+      <header className="student-top-bar student-top-bar--search">
+        <button
+          type="button"
+          className="student-top-bar__btn"
+          onClick={onCloseSearch}
+          aria-label="Cerrar búsqueda"
+          title="Cerrar búsqueda"
+        >
+          <ChevronLeftIcon size={20} />
+        </button>
+
+        <div className="student-top-bar__search">
+          <BuildingSearch
+            buildings={buildings}
+            gates={gates}
+            onSelectResult={onCloseSearch}
+            autoFocus
+          />
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header className="student-top-bar">
       <div className="student-top-bar__left">
@@ -25,9 +64,10 @@ export function StudentTopBar({ userName, onSearchClick, onLogout }: StudentTopB
           type="button"
           className="student-top-bar__btn"
           onClick={onSearchClick}
-          aria-label="Buscar edificio"
+          aria-label="Buscar en el campus"
+          title="Buscar en el campus"
         >
-          <SearchIcon size={20} />
+          <SearchIcon size={21} />
         </button>
         <ThemeToggle />
         <button

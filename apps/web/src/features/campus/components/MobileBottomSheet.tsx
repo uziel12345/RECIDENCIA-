@@ -1,10 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { Icon } from "../../../components/ui/Icons";
 
-export type SheetState = "closed" | "peek" | "full";
-
-
+export type SheetState = "closed" | "full";
 
 type MobileBottomSheetProps = {
   state: SheetState;
@@ -31,14 +29,6 @@ export function MobileBottomSheet({
   const isOpen = state !== "closed";
   const bodyRef = useRef<HTMLDivElement | null>(null);
 
-  // Reset scroll when going from full → peek so the user always sees the top
-  // of the list when they collapse the sheet.
-  useEffect(() => {
-    if (state === "peek" && bodyRef.current) {
-      bodyRef.current.scrollTop = 0;
-    }
-  }, [state]);
-
   function handleDragEnd(
     _: MouseEvent | TouchEvent | PointerEvent,
     info: PanInfo,
@@ -46,15 +36,9 @@ export function MobileBottomSheet({
     const { offset, velocity } = info;
     const yOffset = offset.y;
 
-    // Strong swipe down → close
-    if (velocity.y > 800 || yOffset > 220) {
+    // Swipe/drag down → close
+    if (velocity.y > 800 || yOffset > 80) {
       onChangeState("closed");
-      return;
-    }
-
-    // Drag down a bit → collapse to peek
-    if (state === "full" && yOffset > 80) {
-      onChangeState("peek");
       return;
     }
 
@@ -68,29 +52,25 @@ export function MobileBottomSheet({
     <AnimatePresence>
       {isOpen && (
         <>
-          {state === "full" && (
-            <motion.div
-              key="backdrop"
-              className="ito-sheet-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => onChangeState("peek")}
-              aria-hidden="true"
-            />
-          )}
+          <motion.div
+            key="backdrop"
+            className="ito-sheet-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => onChangeState("closed")}
+            aria-hidden="true"
+          />
 
           <motion.div
             key="sheet"
-            className={`ito-sheet ito-sheet--${state}`}
+            className="ito-sheet ito-sheet--full"
             role="dialog"
-            aria-modal={state === "full"}
+            aria-modal="true"
             aria-label={title}
             initial={{ y: "100%" }}
-            animate={{
-              y: state === "full" ? "0%" : "calc(100% - var(--sheet-peek-height))",
-            }}
+            animate={{ y: "0%" }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 320, damping: 32 }}
             drag="y"
@@ -101,12 +81,8 @@ export function MobileBottomSheet({
             <button
               type="button"
               className="ito-sheet__handle-tap"
-              onClick={() =>
-                onChangeState(state === "full" ? "peek" : "full")
-              }
-              aria-label={
-                state === "full" ? "Contraer panel" : "Expandir panel"
-              }
+              onClick={() => onChangeState("closed")}
+              aria-label="Cerrar panel"
             >
               <span className="ito-sheet__handle-bar" aria-hidden="true" />
             </button>
@@ -115,9 +91,7 @@ export function MobileBottomSheet({
               <button
                 type="button"
                 className="ito-sheet__head-text"
-                onClick={() =>
-                  onChangeState(state === "full" ? "peek" : "full")
-                }
+                onClick={() => onChangeState("closed")}
               >
                 <span className="ito-sheet__title">{title}</span>
                 {subtitle && (
@@ -126,25 +100,6 @@ export function MobileBottomSheet({
               </button>
 
               <div className="ito-sheet__head-actions">
-                {state === "peek" ? (
-                  <button
-                    type="button"
-                    onClick={() => onChangeState("full")}
-                    className="ito-sheet__icon-btn"
-                    aria-label="Expandir panel"
-                  >
-                    <Icon name="chevron-up" size={18} />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => onChangeState("peek")}
-                    className="ito-sheet__icon-btn"
-                    aria-label="Contraer panel"
-                  >
-                    <Icon name="chevron-down" size={18} />
-                  </button>
-                )}
                 <button
                   type="button"
                   onClick={() => onChangeState("closed")}

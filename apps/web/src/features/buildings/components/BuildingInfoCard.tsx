@@ -36,16 +36,10 @@ const closeBtn =
   "grid h-10 w-10 place-items-center rounded-full bg-[var(--color-surface)] text-[var(--color-text)] shadow-[0_1px_4px_rgba(10,10,10,0.18)] backdrop-blur-sm transition hover:bg-[var(--color-surface-muted)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2";
 
 export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
-  const setRouteDestination = useBuildingStore(
-    (state) => state.setRouteDestination
-  );
-  const routeError = useBuildingStore((state) => state.routeError);
-  const routeDestination = useBuildingStore((state) => state.routeDestination);
   const highlightedSection = useBuildingStore((state) => state.highlightedSection);
   const glbPosition = useBuildingGlbStore((state) => state.positions[building.id]);
-  // "Cómo llegar" y "Estoy aquí" dependen de x/z calibrados por edificio;
-  // mientras el campus no esté totalmente calibrado, solo el superadmin
-  // las ve para poder probarlas.
+  // "Estoy aquí" depende de x/z calibrados por edificio; mientras el campus
+  // no esté totalmente calibrado, solo el superadmin la ve para probarla.
   const canUseNavTools = useAdminAuthStore(
     (state) => state.isAuthenticated && state.user?.role === "superadmin"
   );
@@ -216,16 +210,6 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
           </>
         )}
 
-        {routeError && routeDestination?.id === building.id && (
-          <div
-            className="flex items-start gap-2 rounded-lg border border-[#fecaca] bg-[#fef2f2] px-2.5 py-2 text-[12px] font-medium leading-snug text-[#dc2626]"
-            role="alert"
-          >
-            <Icon name="alert" size={13} />
-            <span>{routeError}</span>
-          </div>
-        )}
-
         {visibleImages.length > 0 && (
           <div className="flex flex-col gap-1.5">
             <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
@@ -252,17 +236,6 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
         )}
 
         <div className="ito-building-info-card__actions flex flex-col gap-2 pt-1">
-          {canUseNavTools && (
-            <button
-              type="button"
-              className="ito-btn-nav-primary inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--color-brand-600)] px-4 text-[13px] font-bold text-white shadow-[0_2px_6px_rgba(234,88,12,0.25)] transition hover:-translate-y-px hover:bg-[var(--color-brand-700)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2"
-              onClick={() => setRouteDestination(building)}
-            >
-              <Icon name="route" size={16} />
-              <span>Cómo llegar</span>
-            </button>
-          )}
-
           {canUseNavTools && (
             <button
               type="button"

@@ -41,18 +41,14 @@ export function VisitorPage() {
   const { logout } = useAuthStore();
 
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
-  const routeDestination = useBuildingStore((state) => state.routeDestination);
   const setSelectedBuilding = useBuildingStore(
     (state) => state.setSelectedBuilding
   );
   const setSearchTerm = useBuildingStore((state) => state.setSearchTerm);
 
-  const [requestedSheetState, setSheetState] = useState<SheetState>("closed");
-  const sheetState: SheetState =
-    isMobile && routeDestination && requestedSheetState === "closed"
-      ? "peek"
-      : requestedSheetState;
+  const [sheetState, setSheetState] = useState<SheetState>("closed");
   const [totalBuildings, setTotalBuildings] = useState(0);
+  const [showSearch, setShowSearch] = useState(false);
   const [showQuickDest, setShowQuickDest] = useState(false);
   const [showServices, setShowServices] = useState(false);
   const [viewMode, setViewMode] = useState<VisitorViewMode>("map");
@@ -73,6 +69,7 @@ export function VisitorPage() {
   };
 
   const closeMobilePanels = useCallback(() => {
+    setShowSearch(false);
     setShowQuickDest(false);
     setShowServices(false);
     setSheetState("closed");
@@ -85,28 +82,44 @@ export function VisitorPage() {
     setSheetState("full");
   }, [closeMobilePanels, setSearchTerm]);
 
-  const openBuildingSearch = useCallback(() => {
-    closeMobilePanels();
-    setSheetState("full");
-    window.setTimeout(() => {
-      document.getElementById("building-search")?.focus();
-    }, 360);
-  }, [closeMobilePanels]);
-
   const openQuickDestinations = useCallback(() => {
+    if (showQuickDest) {
+      closeMobilePanels();
+      return;
+    }
     closeMobilePanels();
     setShowQuickDest(true);
-  }, [closeMobilePanels]);
+  }, [closeMobilePanels, showQuickDest]);
 
   const openServices = useCallback(() => {
+    if (showServices) {
+      closeMobilePanels();
+      return;
+    }
     closeMobilePanels();
     setShowServices(true);
-  }, [closeMobilePanels]);
+  }, [closeMobilePanels, showServices]);
+
+  const openBuildingSearch = useCallback(() => {
+    if (showSearch) {
+      closeMobilePanels();
+      return;
+    }
+    closeMobilePanels();
+    setViewMode("map");
+    setShowSearch(true);
+  }, [closeMobilePanels, showSearch]);
 
   const openBuildings = useCallback(() => {
+    const buildingsAreOpen =
+      sheetState !== "closed" && !showSearch && !showQuickDest && !showServices;
+    if (buildingsAreOpen) {
+      closeMobilePanels();
+      return;
+    }
     closeMobilePanels();
     setSheetState("full");
-  }, [closeMobilePanels]);
+  }, [closeMobilePanels, sheetState, showQuickDest, showSearch, showServices]);
 
   const mobileActions = useMemo(() => {
     return [
@@ -120,7 +133,7 @@ export function VisitorPage() {
       {
         id: "services",
         label: "Servicios",
-        icon: "info" as const,
+        icon: "sparkles" as const,
         onClick: openServices,
         active: showServices,
       },
@@ -129,8 +142,11 @@ export function VisitorPage() {
         label: "Edificios",
         icon: "list" as const,
         onClick: openBuildings,
-        active: sheetState !== "closed" && !showQuickDest && !showServices,
-        primary: true,
+        active:
+          sheetState !== "closed" &&
+          !showSearch &&
+          !showQuickDest &&
+          !showServices,
       },
     ];
   }, [
@@ -139,6 +155,7 @@ export function VisitorPage() {
     openServices,
     sheetState,
     showQuickDest,
+    showSearch,
     showServices,
   ]);
 
@@ -263,28 +280,33 @@ export function VisitorPage() {
     );
   }
 
-  const sheetTitle = routeDestination
-    ? "Tu ruta"
-    : selectedBuilding
-      ? selectedBuilding.name
-      : "Explorar campus";
+  const sheetTitle = selectedBuilding
+    ? selectedBuilding.name
+    : "Catálogo de edificios";
 
-  const sheetSubtitle = routeDestination
-    ? "Sigue las indicaciones en el mapa"
-    : selectedBuilding
-      ? "Detalles del edificio"
-      : `${totalBuildings} edificios`;
+  const sheetSubtitle = selectedBuilding
+    ? "Detalles del edificio"
+    : `${totalBuildings} edificios para explorar`;
 
   const showQuickCard =
-    !!selectedBuilding && !routeDestination && sheetState === "closed";
+    !!selectedBuilding &&
+    sheetState === "closed" &&
+    !showSearch &&
+    !showQuickDest &&
+    !showServices;
+
+  const hasOpenMobileWindow =
+    sheetState === "full" || showSearch || showQuickDest || showServices;
 
   return (
     <div className="ito-campus--mobile visitor-mobile">
-      <CampusViewer isMobile mobilePanelOpen={sheetState === "full"} />
+      <CampusViewer isMobile mobilePanelOpen={hasOpenMobileWindow} />
 
       <VisitorTopBar
         onSearchClick={openBuildingSearch}
         onLogout={handleLogout}
+        searchOpen={showSearch}
+        onCloseSearch={closeMobilePanels}
       />
 
       <AnimatePresence>
@@ -299,15 +321,15 @@ export function VisitorPage() {
       <MobileActionModal
         open={showQuickDest}
         title="Destinos populares"
-        onClose={() => setShowQuickDest(false)}
+        onClose={closeMobilePanels}
       >
-        <QuickDestinations onSelect={() => setShowQuickDest(false)} />
+        <QuickDestinations onSelect={closeMobilePanels} />
       </MobileActionModal>
 
       <MobileActionModal
         open={showServices}
         title="Servicios del campus"
-        onClose={() => setShowServices(false)}
+        onClose={closeMobilePanels}
       >
         <CampusServicesPanel onSelectService={handleSelectService} />
       </MobileActionModal>
@@ -316,20 +338,15 @@ export function VisitorPage() {
 
       <MobileBottomSheet
         state={sheetState}
-        onChangeState={(next) => {
-          if (next === "closed" && selectedBuilding && !routeDestination) {
-            setSheetState("closed");
-            return;
-          }
-
-          setSheetState(next);
-        }}
+        onChangeState={setSheetState}
         title={sheetTitle}
         subtitle={sheetSubtitle}
       >
         <BuildingSidebar
           isMobile
-          onItemSelected={() => setSheetState("peek")}
+          showSearchPanel={false}
+          browseOnly
+          onItemSelected={() => setSheetState("closed")}
           onClearSelection={() => setSelectedBuilding(null)}
         />
       </MobileBottomSheet>

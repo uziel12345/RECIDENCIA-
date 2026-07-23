@@ -60,17 +60,6 @@ const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
-    label: "Navegación",
-    route: ROUTES.ADMIN_NAVIGATION,
-    permission: "can_edit_navigation",
-    icon: (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10" />
-        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
-      </svg>
-    ),
-  },
-  {
     label: "Usuarios",
     route: ROUTES.ADMIN_USERS,
     permission: "can_manage_admin_users",
@@ -410,8 +399,6 @@ function getMobileHint(label: string) {
       return "Catálogo de servicios asignables a edificios";
     case "Accesos":
       return "Puertas y accesos visibles en el mapa 3D";
-    case "Navegación":
-      return "Editar caminos y rutas del mapa";
     case "Usuarios":
       return "Administrar cuentas del panel";
     case "Alumnos":

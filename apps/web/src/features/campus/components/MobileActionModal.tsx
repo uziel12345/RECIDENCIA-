@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { XIcon } from "../../../components/ui/Icons";
 
@@ -15,6 +15,16 @@ export function MobileActionModal({
   children,
   onClose,
 }: MobileActionModalProps) {
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose, open]);
+
   return (
     <AnimatePresence>
       {open ? (
@@ -23,6 +33,8 @@ export function MobileActionModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          onClick={onClose}
+          role="presentation"
         >
           <motion.div
             className="campus-mobile-modal__panel"
@@ -30,6 +42,10 @@ export function MobileActionModal({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
           >
             <div className="campus-mobile-modal__handle" aria-hidden="true" />
 

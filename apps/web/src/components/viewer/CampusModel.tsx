@@ -3,16 +3,15 @@ import { useThree, type ThreeEvent } from "@react-three/fiber";
 import { Mesh, MeshStandardMaterial, type Object3D } from "three";
 import type { Material } from "three";
 import { useBuildingStore } from "../../store/building-store";
-import { resolveGlbName, toRuntimeGlbName } from "./glb-utils";
 import type { Building } from "../../features/buildings/types/building";
 import { useCampusGltf, MODEL_PATH } from "./useCampusGltf";
 import { useDragAwareClick } from "./useDragAwareClick";
+import {
+  buildNameToBuildingMap,
+  findBuildingForObject,
+} from "./building-picking";
 
 export { MODEL_PATH };
-
-function normalizeNodeName(name: string): string {
-  return name.trim().replace(/\s+/g, " ");
-}
 
 // El GLB contiene varias instancias exportadas dos veces con la misma
 // geometría, material y matriz mundial. La GPU intenta dibujar ambas caras en
@@ -41,61 +40,12 @@ function hideExactDuplicateMeshes(scene: Object3D) {
   });
 }
 
-// Registra un edificio bajo varias formas de su nombre de nodo: la forma
-// "cruda" (puede coincidir si el GLB preservó el nombre exacto, con puntos y
-// espacios), la forma saneada por Three.js/GLTFLoader (espacios -> "_",
-// puntos eliminados — la que realmente tienen los nodos en la escena
-// cargada), y la versión en minúsculas de ambas por si difieren en mayúsculas.
-// Sin esto, cualquier edificio cuyo nombre de nodo tenga puntos o espacios
-// (ej. "D.P.I") nunca se encuentra al recorrer los ancestros de un clic.
-function addBuildingKeys(
-  map: Map<string, Building>,
-  key: string,
-  building: Building
-) {
-  if (!key) return;
-  const existing = map.get(key);
-  if (!existing || (building.is_priority && !existing.is_priority)) {
-    map.set(key, building);
-  }
-}
-
-function buildNameToBuildingMap(buildings: Building[]): Map<string, Building> {
-  const map = new Map<string, Building>();
-  for (const building of buildings) {
-    if (!building.is_active || !building.model_node_name) continue;
-    const glbName = resolveGlbName(building.model_node_name);
-    const trimmed = normalizeNodeName(glbName);
-    const runtime = toRuntimeGlbName(glbName);
-    addBuildingKeys(map, trimmed, building);
-    addBuildingKeys(map, runtime, building);
-    addBuildingKeys(map, trimmed.toLowerCase(), building);
-  }
-  return map;
-}
-
-// Sube por los ancestros del objeto tocado hasta encontrar uno cuyo nombre
-// resuelva a un edificio conocido (el clic puede caer en una malla hija
-// varios niveles debajo del nodo con el nombre del edificio).
-function findBuildingForObject(
-  object: Object3D,
-  nameToBuilding: Map<string, Building>
-): Building | undefined {
-  let node: Object3D | null = object;
-  while (node) {
-    const trimmed = normalizeNodeName(node.name);
-    const match = nameToBuilding.get(trimmed) ?? nameToBuilding.get(trimmed.toLowerCase());
-    if (match) return match;
-    node = node.parent;
-  }
-  return undefined;
-}
-
 export function CampusModel({
   buildings = [],
   selectionDisabled = false,
   hoverEnabled = false,
   onHoverBuilding,
+  onSelectBuilding,
 }: {
   buildings?: Building[];
   /** true mientras el editor de trazado de admin está activo — un tap ahí
@@ -105,6 +55,7 @@ export function CampusModel({
   onHoverBuilding?: (
     hover: { buildingId: string; point: [number, number, number] } | null
   ) => void;
+  onSelectBuilding?: (building: Building) => void;
 }) {
   const { scene } = useCampusGltf();
   const maxAnisotropy = useThree((state) => state.gl.capabilities.getMaxAnisotropy());
@@ -179,7 +130,11 @@ export function CampusModel({
     // teletransporte del modo aéreo) — tocar un edificio siempre selecciona
     // ese edificio, nunca ambas cosas a la vez.
     event.stopPropagation();
-    setSelectedBuilding(building);
+    if (onSelectBuilding) {
+      onSelectBuilding(building);
+    } else {
+      setSelectedBuilding(building);
+    }
   }
 
   const { handlePointerDown, handleClick } = useDragAwareClick(handleBuildingClick);
@@ -213,8 +168,8 @@ export function CampusModel({
       object={scene}
       onClick={handleClick}
       onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerLeave={handlePointerLeave}
+      onPointerMove={hoverEnabled ? handlePointerMove : undefined}
+      onPointerLeave={hoverEnabled ? handlePointerLeave : undefined}
     />
   );
 }
