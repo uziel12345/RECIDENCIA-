@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import type { Pool, RowDataPacket } from "mysql2/promise";
+import type { Pool, RowDataPacket } from "../../db/mysql-compat-types.js";
 import { pool } from "../../db/connection.js";
 import type {
   BuildingForProcedureRow,

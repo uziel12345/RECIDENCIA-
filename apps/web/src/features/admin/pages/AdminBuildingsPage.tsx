@@ -69,7 +69,7 @@ export function AdminBuildingsPage() {
       <div className="admin-page-shell min-h-full px-8 py-7 max-[640px]:px-3.5 max-[640px]:py-4">
         <header className="mb-7 max-[640px]:mb-4">
           <div>
-            <p className="m-0 mb-1.5 text-[11px] font-bold uppercase tracking-wider text-[#f97316]">
+            <p className="m-0 mb-1.5 text-[11px] font-bold uppercase tracking-wider text-[#c15a3e]">
               Gestión de campus
             </p>
             <h1 className="m-0 mb-1.5 text-[28px] font-bold leading-tight text-[#f1f5f9] max-[640px]:text-[23px]">
@@ -134,7 +134,7 @@ export function AdminBuildingsPage() {
         <button
           type="button"
           onClick={handleOpenCreate}
-          className="fixed bottom-7 right-7 z-40 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#ea580c] px-5 py-3.5 text-[14px] font-bold text-white shadow-[0_10px_28px_rgba(234,88,12,0.4)] transition-[transform,background-color] duration-[240ms] hover:-translate-y-0.5 hover:bg-[#c2410c] active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.45)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f172a] max-[640px]:bottom-4 max-[640px]:right-4 max-[640px]:min-h-12 max-[640px]:w-12 max-[640px]:justify-center max-[640px]:rounded-full max-[640px]:p-0"
+          className="fixed bottom-7 right-7 z-40 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#a8442e] px-5 py-3.5 text-[14px] font-bold text-white shadow-[0_10px_28px_rgba(168,68,46,0.4)] transition-[transform,background-color] duration-[240ms] hover:-translate-y-0.5 hover:bg-[#833323] active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(168,68,46,0.45)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f172a] max-[640px]:bottom-4 max-[640px]:right-4 max-[640px]:min-h-12 max-[640px]:w-12 max-[640px]:justify-center max-[640px]:rounded-full max-[640px]:p-0"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
             <line x1="12" y1="5" x2="12" y2="19" />

@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import type { Pool, RowDataPacket } from "mysql2/promise";
+import type { Pool, RowDataPacket } from "../../db/mysql-compat-types.js";
 import { pool } from "../../db/connection.js";
 import type { BuildingImageRow, BuildingRow } from "./buildings.types.js";
 
@@ -240,7 +240,7 @@ export class BuildingsRepository {
     await this.db.query(
       `
       UPDATE buildings
-      SET is_active = ?, deleted_at = IF(? = TRUE, NULL, deleted_at)
+      SET is_active = ?, deleted_at = CASE WHEN ? = TRUE THEN NULL ELSE deleted_at END
       WHERE id = ?
       `,
       [isActive, isActive, id]

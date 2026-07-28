@@ -21,7 +21,7 @@ function slugify(value: string): string {
 }
 
 const fieldCls =
-  "min-h-11 rounded-lg border border-[#334155] bg-[#0f172a] px-3 text-[13px] text-[#e2e8f0] placeholder:text-[#475569] outline-none focus:border-[#ea580c]";
+  "min-h-11 rounded-lg border border-[#334155] bg-[#0f172a] px-3 text-[13px] text-[#e2e8f0] placeholder:text-[#475569] outline-none focus:border-[#a8442e]";
 
 export function AdminServicesPage() {
   const [services, setServices] = useState<ProcedureForAdmin[]>([]);
@@ -166,7 +166,7 @@ export function AdminServicesPage() {
       <div className="admin-page-shell min-h-full px-8 py-7 max-[640px]:px-3.5 max-[640px]:py-4">
         <header className="mb-7 flex items-start justify-between gap-4 max-[640px]:mb-4 max-[640px]:flex-col">
           <div>
-            <p className="m-0 mb-1.5 text-[11px] font-bold uppercase tracking-wider text-[#f97316]">
+            <p className="m-0 mb-1.5 text-[11px] font-bold uppercase tracking-wider text-[#c15a3e]">
               Gestión de campus
             </p>
             <h1 className="m-0 mb-1.5 text-[28px] font-bold leading-tight text-[#f1f5f9] max-[640px]:text-[23px]">
@@ -179,7 +179,7 @@ export function AdminServicesPage() {
           <button
             type="button"
             onClick={() => setCreating((v) => !v)}
-            className="inline-flex min-h-11 flex-shrink-0 items-center gap-2 rounded-[10px] border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-4 text-[13.5px] font-bold text-white transition-[transform,background-color] hover:-translate-y-px hover:bg-[#c2410c] active:translate-y-0"
+            className="inline-flex min-h-11 flex-shrink-0 items-center gap-2 rounded-[10px] border border-[rgba(168,68,46,0.4)] bg-[#a8442e] px-4 text-[13.5px] font-bold text-white transition-[transform,background-color] hover:-translate-y-px hover:bg-[#833323] active:translate-y-0"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
               <line x1="12" y1="5" x2="12" y2="19" />
@@ -239,7 +239,7 @@ export function AdminServicesPage() {
                 type="button"
                 disabled={createSaving || !newName.trim()}
                 onClick={() => void handleCreate()}
-                className="min-h-11 rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3.5 text-[13px] font-bold text-white hover:bg-[#c2410c] disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-11 rounded-lg border border-[rgba(168,68,46,0.4)] bg-[#a8442e] px-3.5 text-[13px] font-bold text-white hover:bg-[#833323] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {createSaving ? "Creando…" : "Crear servicio"}
               </button>
@@ -261,7 +261,7 @@ export function AdminServicesPage() {
         <div className="rounded-[14px] border border-[#334155] bg-[#1e293b] overflow-hidden">
           {loading ? (
             <div className="flex flex-col items-center gap-2.5 py-12">
-              <span className="h-8 w-8 animate-spin rounded-full border-[3px] border-[rgba(255,255,255,0.08)] border-t-[#f97316]" />
+              <span className="h-8 w-8 animate-spin rounded-full border-[3px] border-[rgba(255,255,255,0.08)] border-t-[#c15a3e]" />
               <p className="m-0 text-[14px] text-[#64748b]">Cargando catálogo…</p>
             </div>
           ) : !error && services.length === 0 ? (
@@ -299,7 +299,7 @@ export function AdminServicesPage() {
                           type="button"
                           disabled={editSaving || !editName.trim()}
                           onClick={() => void handleSaveEdit()}
-                          className="min-h-9 flex-1 rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3 text-[12.5px] font-bold text-white hover:bg-[#c2410c] disabled:cursor-not-allowed disabled:opacity-50"
+                          className="min-h-9 flex-1 rounded-lg border border-[rgba(168,68,46,0.4)] bg-[#a8442e] px-3 text-[12.5px] font-bold text-white hover:bg-[#833323] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {editSaving ? "Guardando…" : "Guardar cambios"}
                         </button>

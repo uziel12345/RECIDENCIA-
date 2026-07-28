@@ -31,7 +31,7 @@ function requireSecureSecret(name: string): string {
 export const env = {
   port: Number(process.env.PORT ?? 3001),
   dbHost: requireEnv("DB_HOST"),
-  dbPort: Number(process.env.DB_PORT ?? 3306),
+  dbPort: Number(process.env.DB_PORT ?? 5432),
   dbUser: requireEnv("DB_USER"),
   dbPassword: requireEnv("DB_PASSWORD"),
   dbName: requireEnv("DB_NAME"),

@@ -43,7 +43,7 @@ export function GateLocationPickerModal({
         </div>
         <div className="flex items-center gap-2">
           {position && (
-            <span className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-xs font-semibold text-orange-200">
+            <span className="rounded-lg border border-[#c15a3e]/30 bg-[#c15a3e]/10 px-3 py-2 text-xs font-semibold text-[#eab8a3]">
               X {position.x.toFixed(2)} · Z {position.z.toFixed(2)}
             </span>
           )}
@@ -58,7 +58,7 @@ export function GateLocationPickerModal({
             type="button"
             disabled={!position}
             onClick={() => position && onConfirm(position)}
-            className="min-h-10 rounded-lg border border-orange-500/40 bg-[#ea580c] px-4 text-[13px] font-bold text-white hover:bg-[#c2410c] disabled:cursor-not-allowed disabled:opacity-45"
+            className="min-h-10 rounded-lg border border-[#c15a3e]/40 bg-[#a8442e] px-4 text-[13px] font-bold text-white hover:bg-[#833323] disabled:cursor-not-allowed disabled:opacity-45"
           >
             Usar ubicación
           </button>

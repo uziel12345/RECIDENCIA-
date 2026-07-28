@@ -65,13 +65,13 @@ export function OnboardingPage() {
 
   return (
     <main className="theme-light-lock relative flex min-h-screen items-center justify-center overflow-hidden bg-[url('/Portada.jpeg')] bg-cover bg-center p-6">
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(67,20,7,0.96)_0%,rgba(124,45,18,0.9)_18%,rgba(194,65,12,0.7)_40%,rgba(234,88,12,0.34)_58%,rgba(255,247,237,0.08)_78%,transparent_100%),linear-gradient(180deg,rgba(15,23,42,0.26),rgba(15,23,42,0.12))]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(74,28,19,0.96)_0%,rgba(74,28,19,0.9)_18%,rgba(131,51,35,0.7)_40%,rgba(168,68,46,0.34)_58%,rgba(251,238,233,0.08)_78%,transparent_100%),linear-gradient(180deg,rgba(15,23,42,0.26),rgba(15,23,42,0.12))]" />
 
       <motion.section
         initial="hidden"
         animate="show"
         variants={listVariants}
-        className="relative z-[1] w-full max-w-[480px] rounded-3xl border border-[rgba(255,237,213,0.72)] bg-white/95 p-7 shadow-[0_28px_70px_rgba(67,20,7,0.34)] backdrop-blur-xl"
+        className="relative z-[1] w-full max-w-[480px] rounded-3xl border border-[rgba(245,219,208,0.72)] bg-white/95 p-7 shadow-[0_28px_70px_rgba(74,28,19,0.34)] backdrop-blur-xl"
       >
         <motion.button
           variants={itemVariants}
@@ -96,7 +96,7 @@ export function OnboardingPage() {
 
         <motion.div
           variants={itemVariants}
-          className="mb-4 grid h-[76px] w-[76px] place-items-center overflow-hidden rounded-[18px] border border-[#fed7aa] bg-white shadow-[0_12px_28px_rgba(234,88,12,0.18)]"
+          className="mb-4 grid h-[76px] w-[76px] place-items-center overflow-hidden rounded-[18px] border border-[#eab8a3] bg-white shadow-[0_12px_28px_rgba(168,68,46,0.18)]"
           aria-hidden="true"
         >
           <img
@@ -135,7 +135,7 @@ export function OnboardingPage() {
           type="button"
           onClick={handleContinue}
           style={{ fontFamily: FONT_BODY }}
-          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#ea580c_0%,#7c2d12_100%)] px-5 py-3.5 text-[15px] font-bold tracking-tight text-white shadow-[var(--shadow-brand)] transition hover:-translate-y-px hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2"
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#a8442e_0%,#4a1c13_100%)] px-5 py-3.5 text-[15px] font-bold tracking-tight text-white shadow-[var(--shadow-brand)] transition hover:-translate-y-px hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] focus-visible:ring-offset-2"
         >
           Explorar el campus
           <svg

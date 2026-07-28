@@ -42,7 +42,7 @@ function HeadquartersFields({
   disabled: boolean;
   departments: Department[];
 }) {
-  const fieldCls = "min-h-11 rounded-lg border border-[#334155] bg-[#0f172a] px-3 text-[13px] text-[#e2e8f0] placeholder:text-[#475569] outline-none focus:border-[#ea580c]";
+  const fieldCls = "min-h-11 rounded-lg border border-[#334155] bg-[#0f172a] px-3 text-[13px] text-[#e2e8f0] placeholder:text-[#475569] outline-none focus:border-[#a8442e]";
 
   return (
     <div className="grid grid-cols-2 gap-2.5 max-[640px]:grid-cols-1">
@@ -218,7 +218,7 @@ export function BuildingHeadquartersSection({ buildingId }: { buildingId: string
             editingId === item.id ? (
               <li
                 key={item.id}
-                className="flex flex-col gap-2.5 rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#1e293b] px-3 py-3"
+                className="flex flex-col gap-2.5 rounded-lg border border-[rgba(168,68,46,0.4)] bg-[#1e293b] px-3 py-3"
               >
                 <HeadquartersFields draft={editDraft} onChange={setEditDraft} disabled={saving} departments={departments} />
                 <div className="flex items-center gap-2">
@@ -226,7 +226,7 @@ export function BuildingHeadquartersSection({ buildingId }: { buildingId: string
                     type="button"
                     disabled={saving || !editDraft.name.trim()}
                     onClick={() => void handleSaveEdit()}
-                    className="min-h-9 flex-1 rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3 text-[12.5px] font-bold text-white hover:bg-[#c2410c] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="min-h-9 flex-1 rounded-lg border border-[rgba(168,68,46,0.4)] bg-[#a8442e] px-3 text-[12.5px] font-bold text-white hover:bg-[#833323] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {saving ? "Guardando…" : "Guardar cambios"}
                   </button>
@@ -307,7 +307,7 @@ export function BuildingHeadquartersSection({ buildingId }: { buildingId: string
           type="button"
           disabled={saving || !draft.name.trim()}
           onClick={() => void handleAdd()}
-          className="min-h-11 w-full rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3.5 text-[13px] font-bold text-white hover:bg-[#c2410c] disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-11 w-full rounded-lg border border-[rgba(168,68,46,0.4)] bg-[#a8442e] px-3.5 text-[13px] font-bold text-white hover:bg-[#833323] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {saving ? "Guardando…" : "Agregar jefatura"}
         </button>

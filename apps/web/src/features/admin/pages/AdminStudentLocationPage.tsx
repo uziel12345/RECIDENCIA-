@@ -36,7 +36,7 @@ export function AdminStudentLocationPage() {
       <div style={s.page}>
         <header style={s.header}>
           <div style={s.headerIcon}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c15a3e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
               <path d="M6 12v5c3 3 9 3 12 0v-5" />
             </svg>
@@ -55,7 +55,7 @@ export function AdminStudentLocationPage() {
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
           <span>
-            Disponible para usuarios con rol <strong style={{ color: "#fdba74" }}>Servicios Escolares</strong> o superior.
+            Disponible para usuarios con rol <strong style={{ color: "#c56b52" }}>Servicios Escolares</strong> o superior.
           </span>
         </div>
 
@@ -201,24 +201,24 @@ function DataRow({ label, value, highlight = false }: { label: string; value: st
 const s: Record<string, CSSProperties> = {
   page: { padding: "28px 32px", minHeight: "100%", maxWidth: 680 },
   header: { display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 20 },
-  headerIcon: { width: 44, height: 44, borderRadius: 12, background: "rgba(234,88,12,0.1)", border: "1px solid rgba(234,88,12,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 4 },
-  overline: { margin: "0 0 5px", fontSize: 11, fontWeight: 700, color: "#f97316", textTransform: "uppercase", letterSpacing: "0.08em" },
+  headerIcon: { width: 44, height: 44, borderRadius: 12, background: "rgba(168,68,46,0.1)", border: "1px solid rgba(168,68,46,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 4 },
+  overline: { margin: "0 0 5px", fontSize: 11, fontWeight: 700, color: "#c15a3e", textTransform: "uppercase", letterSpacing: "0.08em" },
   title: { margin: "0 0 5px", fontSize: 26, fontWeight: 700, color: "#f1f5f9", lineHeight: 1.1 },
   subtitle: { margin: 0, fontSize: 14, color: "#64748b" },
-  notice: { display: "flex", alignItems: "flex-start", gap: 9, padding: "11px 14px", background: "rgba(234,88,12,0.07)", border: "1px solid rgba(234,88,12,0.15)", borderRadius: 10, fontSize: 13, color: "#94a3b8", lineHeight: 1.5, marginBottom: 22 },
+  notice: { display: "flex", alignItems: "flex-start", gap: 9, padding: "11px 14px", background: "rgba(168,68,46,0.07)", border: "1px solid rgba(168,68,46,0.15)", borderRadius: 10, fontSize: 13, color: "#94a3b8", lineHeight: 1.5, marginBottom: 22 },
   formCard: { background: "#1e293b", border: "1px solid #334155", borderRadius: 16, padding: "22px 24px", marginBottom: 20 },
   formBody: { display: "flex", flexDirection: "column", gap: 14 },
   fieldGroup: { display: "flex", flexDirection: "column", gap: 6 },
   rowGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
   label: { fontSize: 11.5, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" },
   input: { border: "1px solid #334155", borderRadius: 10, padding: "10px 13px", fontSize: 14, background: "#0f172a", color: "#f1f5f9", outline: "none", width: "100%", boxSizing: "border-box" },
-  btnSearch: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, border: "none", borderRadius: 10, padding: "11px 20px", background: "#f97316", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14 },
+  btnSearch: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, border: "none", borderRadius: 10, padding: "11px 20px", background: "#c15a3e", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14 },
   btnDisabled: { background: "#243b5a", color: "#94a3b8", cursor: "not-allowed", opacity: 0.72 },
   spinner: { width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", display: "inline-block", animation: "spin 0.8s linear infinite" },
   alertError: { display: "flex", alignItems: "center", gap: 9, marginBottom: 18, padding: "12px 15px", borderRadius: 10, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#fca5a5", fontSize: 13.5 },
   resultCard: { background: "#1e293b", border: "1px solid #334155", borderRadius: 16, padding: "22px 24px" },
   resultHeader: { display: "flex", alignItems: "center", gap: 13 },
-  resultAvatar: { width: 40, height: 40, borderRadius: 10, background: "linear-gradient(135deg, #f97316, #c2410c)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#fff", flexShrink: 0 },
+  resultAvatar: { width: 40, height: 40, borderRadius: 10, background: "linear-gradient(135deg, #c15a3e, #833323)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#fff", flexShrink: 0 },
   resultName: { margin: 0, fontSize: 15, fontWeight: 700, color: "#f1f5f9" },
   resultMeta: { margin: "3px 0 0", fontSize: 12.5, color: "#64748b" },
   resultDivider: { height: 1, background: "#334155", margin: "16px 0" },

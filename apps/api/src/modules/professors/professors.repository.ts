@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import type { Pool, RowDataPacket } from "mysql2/promise";
+import type { Pool, RowDataPacket } from "../../db/mysql-compat-types.js";
 import { pool } from "../../db/connection.js";
 import type {
   ProfessorRow,
@@ -53,7 +53,7 @@ export class ProfessorsRepository {
     const words = query.trim().split(/\s+/).filter(Boolean);
     if (words.length === 0) return [];
 
-    const conditions = words.map(() => "full_name LIKE ?").join(" AND ");
+    const conditions = words.map(() => "full_name ILIKE ?").join(" AND ");
     const params = words.map((word) => `%${word}%`);
 
     const [rows] = await this.db.query<ProfessorRow[]>(
@@ -248,8 +248,8 @@ export class ProfessorsRepository {
         s.career_code,
         s.career_name,
         s.day_of_week,
-        TIME_FORMAT(s.start_time, '%H:%i') AS start_time,
-        TIME_FORMAT(s.end_time,   '%H:%i') AS end_time,
+        TO_CHAR(s.start_time, 'HH24:MI') AS start_time,
+        TO_CHAR(s.end_time, 'HH24:MI') AS end_time,
         s.period,
         c.id   AS classroom_id,
         c.code AS classroom_code,
@@ -290,8 +290,8 @@ export class ProfessorsRepository {
         s.career_code,
         s.career_name,
         s.day_of_week,
-        TIME_FORMAT(s.start_time, '%H:%i') AS start_time,
-        TIME_FORMAT(s.end_time,   '%H:%i') AS end_time,
+        TO_CHAR(s.start_time, 'HH24:MI') AS start_time,
+        TO_CHAR(s.end_time, 'HH24:MI') AS end_time,
         s.period,
         c.id   AS classroom_id,
         c.code AS classroom_code,

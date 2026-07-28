@@ -144,11 +144,11 @@ async function onLoginFailure(userId: string): Promise<void> {
     `
       UPDATE admin_users
       SET failed_login_attempts = failed_login_attempts + 1,
-          locked_until = IF(
-            failed_login_attempts + 1 >= ?,
-            DATE_ADD(NOW(), INTERVAL ? MINUTE),
-            NULL
-          )
+          locked_until = CASE
+            WHEN failed_login_attempts + 1 >= ?
+            THEN NOW() + make_interval(mins => ?)
+            ELSE NULL
+          END
       WHERE id = ?
     `,
     [MAX_FAILED_ATTEMPTS, LOCKOUT_MINUTES, userId]

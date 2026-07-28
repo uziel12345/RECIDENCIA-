@@ -65,7 +65,7 @@ const hintCls = "mt-1 block text-[11.5px] text-[#475569]";
 const baseInput =
   "w-full min-h-11 rounded-[10px] border bg-[#0f172a] px-3.5 text-[13.5px] font-normal normal-case tracking-normal text-[#e2e8f0] placeholder:text-[#475569] outline-none transition-[border-color,box-shadow] duration-[180ms] focus:ring-2";
 const okInput =
-  "border-[#334155] focus:border-[#ea580c] focus:ring-[rgba(234,88,12,0.35)]";
+  "border-[#334155] focus:border-[#a8442e] focus:ring-[rgba(168,68,46,0.35)]";
 const errInput =
   "border-[#ef4444] ring-2 ring-[rgba(239,68,68,0.18)] focus:border-[#ef4444] focus:ring-[rgba(239,68,68,0.25)]";
 const errText =
@@ -118,7 +118,7 @@ function ClassroomFields({
   onChange: (next: ClassroomDraft) => void;
   disabled: boolean;
 }) {
-  const fieldCls = "min-h-11 rounded-lg border border-[#334155] bg-[#0f172a] px-3 text-[13px] text-[#e2e8f0] placeholder:text-[#475569] outline-none focus:border-[#ea580c]";
+  const fieldCls = "min-h-11 rounded-lg border border-[#334155] bg-[#0f172a] px-3 text-[13px] text-[#e2e8f0] placeholder:text-[#475569] outline-none focus:border-[#a8442e]";
 
   return (
     <div className="grid grid-cols-2 gap-2.5 max-[640px]:grid-cols-1">
@@ -284,7 +284,7 @@ function BuildingClassroomsSection({ buildingId }: { buildingId: string }) {
             editingId === classroom.id ? (
               <li
                 key={classroom.id}
-                className="flex flex-col gap-2.5 rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#1e293b] px-3 py-3"
+                className="flex flex-col gap-2.5 rounded-lg border border-[rgba(168,68,46,0.4)] bg-[#1e293b] px-3 py-3"
               >
                 <ClassroomFields draft={editDraft} onChange={setEditDraft} disabled={saving} />
                 <div className="flex items-center gap-2">
@@ -292,7 +292,7 @@ function BuildingClassroomsSection({ buildingId }: { buildingId: string }) {
                     type="button"
                     disabled={saving || !editDraft.code.trim() || !editDraft.name.trim()}
                     onClick={() => void handleSaveEdit()}
-                    className="min-h-9 flex-1 rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3 text-[12.5px] font-bold text-white hover:bg-[#c2410c] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="min-h-9 flex-1 rounded-lg border border-[rgba(168,68,46,0.4)] bg-[#a8442e] px-3 text-[12.5px] font-bold text-white hover:bg-[#833323] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {saving ? "Guardando…" : "Guardar cambios"}
                   </button>
@@ -364,7 +364,7 @@ function BuildingClassroomsSection({ buildingId }: { buildingId: string }) {
           type="button"
           disabled={saving || !draft.code.trim() || !draft.name.trim()}
           onClick={() => void handleAdd()}
-          className="min-h-11 w-full rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3.5 text-[13px] font-bold text-white hover:bg-[#c2410c] disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-11 w-full rounded-lg border border-[rgba(168,68,46,0.4)] bg-[#a8442e] px-3.5 text-[13px] font-bold text-white hover:bg-[#833323] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {saving ? "Guardando…" : "Agregar aula"}
         </button>
@@ -473,7 +473,7 @@ function BuildingProceduresSection({
 
   const linkedIds = new Set(linked.map((p) => p.id));
   const available = allProcedures.filter((p) => !linkedIds.has(p.id));
-  const fieldCls = "min-h-11 rounded-lg border border-[#334155] bg-[#0f172a] px-3 text-[13px] text-[#e2e8f0] outline-none focus:border-[#ea580c]";
+  const fieldCls = "min-h-11 rounded-lg border border-[#334155] bg-[#0f172a] px-3 text-[13px] text-[#e2e8f0] outline-none focus:border-[#a8442e]";
 
   return (
     <div>
@@ -522,7 +522,7 @@ function BuildingProceduresSection({
             ))}
           </select>
           <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notas (opcional)" disabled={saving} className={fieldCls} />
-          <button type="button" disabled={saving || !selectedId} onClick={() => void handleLinkExisting()} className="min-h-11 w-full rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3.5 text-[13px] font-bold text-white hover:bg-[#c2410c] disabled:cursor-not-allowed disabled:opacity-50">
+          <button type="button" disabled={saving || !selectedId} onClick={() => void handleLinkExisting()} className="min-h-11 w-full rounded-lg border border-[rgba(168,68,46,0.4)] bg-[#a8442e] px-3.5 text-[13px] font-bold text-white hover:bg-[#833323] disabled:cursor-not-allowed disabled:opacity-50">
             Vincular
           </button>
         </div>
@@ -560,7 +560,7 @@ function BuildingProceduresSection({
             disabled={saving}
             className={fieldCls}
           />
-          <button type="button" disabled={saving || !newName.trim()} onClick={() => void handleCreateAndLink()} className="min-h-11 w-full rounded-lg border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-3.5 text-[13px] font-bold text-white hover:bg-[#c2410c] disabled:cursor-not-allowed disabled:opacity-50">
+          <button type="button" disabled={saving || !newName.trim()} onClick={() => void handleCreateAndLink()} className="min-h-11 w-full rounded-lg border border-[rgba(168,68,46,0.4)] bg-[#a8442e] px-3.5 text-[13px] font-bold text-white hover:bg-[#833323] disabled:cursor-not-allowed disabled:opacity-50">
             Crear y vincular
           </button>
         </div>
@@ -771,7 +771,7 @@ export function BuildingForm({
               className={[
                 "flex min-h-12 items-center justify-center gap-1.5 rounded-[10px] border border-transparent px-3 py-2.5 text-[13px] font-semibold transition-colors duration-[180ms]",
                 active
-                  ? "border-[#ea580c] bg-[rgba(234,88,12,0.14)] text-[#f1f5f9]"
+                  ? "border-[#a8442e] bg-[rgba(168,68,46,0.14)] text-[#f1f5f9]"
                   : "text-[#64748b] hover:bg-[#0f172a] hover:text-[#94a3b8]",
                 locked ? "cursor-default opacity-40" : "cursor-pointer",
               ].join(" ")}
@@ -899,7 +899,7 @@ export function BuildingForm({
                   type="checkbox"
                   checked={form.is_priority}
                   onChange={(e) => onUpdateFormField("is_priority", e.target.checked)}
-                  className="h-4 w-4 accent-[#ea580c]"
+                  className="h-4 w-4 accent-[#a8442e]"
                 />
                 Marcar como edificio prioritario
                 <span className="ml-1 text-[11.5px] font-normal text-[#475569] max-[640px]:block">
@@ -911,7 +911,7 @@ export function BuildingForm({
             <button
               type="submit"
               disabled={saving}
-              className="mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[10px] border border-[rgba(234,88,12,0.4)] bg-[#ea580c] px-4 text-[14px] font-bold text-white shadow-[0_6px_18px_rgba(234,88,12,0.25)] transition-[transform,background-color] duration-[180ms] hover:-translate-y-px hover:bg-[#c2410c] active:translate-y-0 disabled:cursor-not-allowed disabled:bg-[#475569] disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.45)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1e293b] max-[640px]:sticky max-[640px]:bottom-3 max-[640px]:z-10 max-[640px]:min-h-12"
+              className="mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[10px] border border-[rgba(168,68,46,0.4)] bg-[#a8442e] px-4 text-[14px] font-bold text-white shadow-[0_6px_18px_rgba(168,68,46,0.25)] transition-[transform,background-color] duration-[180ms] hover:-translate-y-px hover:bg-[#833323] active:translate-y-0 disabled:cursor-not-allowed disabled:bg-[#475569] disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(168,68,46,0.45)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1e293b] max-[640px]:sticky max-[640px]:bottom-3 max-[640px]:z-10 max-[640px]:min-h-12"
             >
               {saving ? (
                 <>

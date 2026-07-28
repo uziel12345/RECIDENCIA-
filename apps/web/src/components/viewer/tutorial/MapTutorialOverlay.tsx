@@ -164,7 +164,7 @@ export function MapTutorialOverlay({
           className="map-tutorial-visual"
           style={{
             height: 150,
-            background: "linear-gradient(160deg,#fff7ed 0%,#ffedd5 100%)",
+            background: "linear-gradient(160deg,#fbeee9 0%,#f5dbd0 100%)",
             display: "grid",
             placeItems: "center",
             padding: "0 24px",
@@ -235,7 +235,7 @@ export function MapTutorialOverlay({
                   borderRadius: 999,
                   border: "none",
                   padding: 0,
-                  background: i === stepIndex ? "#ea580c" : "#e2e8f0",
+                  background: i === stepIndex ? "#a8442e" : "#e2e8f0",
                   transition: "width 0.22s ease, background-color 0.22s ease",
                   cursor: "pointer",
                 }}
@@ -293,7 +293,7 @@ export function MapTutorialOverlay({
                 border: "none",
                 borderRadius: 999,
                 padding: "11px 20px",
-                background: "linear-gradient(135deg,#ea580c,#c2410c)",
+                background: "linear-gradient(135deg,#a8442e,#833323)",
                 color: "#fff",
                 fontSize: 14,
                 fontWeight: 700,
@@ -301,7 +301,7 @@ export function MapTutorialOverlay({
                 alignItems: "center",
                 gap: 6,
                 cursor: "pointer",
-                boxShadow: "0 8px 20px rgba(234,88,12,0.32)",
+                boxShadow: "0 8px 20px rgba(168,68,46,0.32)",
               }}
             >
               {isLastStep ? "Empezar a explorar" : "Siguiente"}

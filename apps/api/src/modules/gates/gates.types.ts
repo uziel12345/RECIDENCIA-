@@ -1,4 +1,4 @@
-import type { RowDataPacket } from "mysql2";
+import type { RowDataPacket } from "../../db/mysql-compat-types.js";
 
 export type GateAccessType = "peatonal" | "vehicular" | "mixto";
 export type GateStatus = "abierta" | "cerrada" | "solo_entrada" | "solo_salida";

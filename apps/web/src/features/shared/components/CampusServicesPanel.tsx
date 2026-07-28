@@ -260,7 +260,7 @@ const styles: Record<string, CSSProperties> = {
   },
   overline: {
     margin: "0 0 4px",
-    color: "#ea580c",
+    color: "#a8442e",
     fontSize: "11px",
     fontWeight: 900,
     textTransform: "uppercase",
@@ -387,7 +387,7 @@ const styles: Record<string, CSSProperties> = {
   },
   actionText: {
     flexShrink: 0,
-    color: "#ea580c",
+    color: "#a8442e",
     fontSize: "11px",
     fontWeight: 900,
     textTransform: "uppercase",

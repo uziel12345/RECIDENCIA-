@@ -1,11 +1,13 @@
-import type { Pool } from "mysql2/promise";
+import type { Pool } from "../../db/mysql-compat-types.js";
 import { pool } from "../../db/connection.js";
 import type { GateSearchResultRow, SearchResultRow } from "./search.types.js";
 
-// Búsqueda con LIKE %word% sobre columnas clave.
-// Estrategia elegida: LIKE en lugar de FULLTEXT porque el volumen de datos del
-// campus es pequeño (<10k filas por tabla) y no requiere cambios de schema.
-// El índice de PK cubre los lookups de ID; los LIKE con comodín inicial
+// Búsqueda con ILIKE %word% sobre columnas clave (ILIKE = case-insensitive;
+// en MySQL esto era LIKE porque la collation utf8mb4_unicode_ci ya
+// comparaba sin distinguir mayúsculas — Postgres sí distingue con LIKE).
+// Estrategia elegida: ILIKE en lugar de FULLTEXT porque el volumen de datos
+// del campus es pequeño (<10k filas por tabla) y no requiere cambios de schema.
+// El índice de PK cubre los lookups de ID; los ILIKE con comodín inicial
 // hacen full-scan de tabla, aceptable a esta escala.
 const RESULT_LIMIT = 20;
 
@@ -24,7 +26,7 @@ function buildWordsClause(
     const like = `%${word}%`;
     const columnChecks = columns.map((col) => {
       params.push(like);
-      return `${col} LIKE ?`;
+      return `${col} ILIKE ?`;
     });
     return `(${columnChecks.join(" OR ")})`;
   });
@@ -46,8 +48,8 @@ export class SearchRepository {
          'building'                         AS kind,
          b.name                             AS title,
          CONCAT(b.code, ' · ', bc.name)    AS subtitle,
-         b.id                               AS buildingId,
-         b.name                             AS buildingName
+         b.id                               AS "buildingId",
+         b.name                             AS "buildingName"
        FROM buildings b
        INNER JOIN building_categories bc ON b.category_id = bc.id
        WHERE b.deleted_at IS NULL
@@ -77,8 +79,8 @@ export class SearchRepository {
          'classroom'                            AS kind,
          c.name                                 AS title,
          CONCAT(c.code, ' · ', b.name)         AS subtitle,
-         c.building_id                          AS buildingId,
-         b.name                                 AS buildingName
+         c.building_id                          AS "buildingId",
+         b.name                                 AS "buildingName"
        FROM classrooms c
        INNER JOIN buildings b ON c.building_id = b.id
        WHERE c.deleted_at IS NULL
@@ -112,11 +114,11 @@ export class SearchRepository {
          ?                                                                  AS subtitle,
          (SELECT bp.building_id FROM building_procedures bp
             WHERE bp.procedure_id = p.id
-            ORDER BY bp.created_at ASC LIMIT 1)                            AS buildingId,
+            ORDER BY bp.created_at ASC LIMIT 1)                            AS "buildingId",
          (SELECT b2.name FROM building_procedures bp2
             INNER JOIN buildings b2 ON bp2.building_id = b2.id
             WHERE bp2.procedure_id = p.id
-            ORDER BY bp2.created_at ASC LIMIT 1)                           AS buildingName
+            ORDER BY bp2.created_at ASC LIMIT 1)                           AS "buildingName"
        FROM procedures p
        WHERE p.deleted_at IS NULL
          AND p.is_active = TRUE
@@ -140,8 +142,8 @@ export class SearchRepository {
          'department'                        AS kind,
          d.name                              AS title,
          CONCAT('Departamento · ', b.name) AS subtitle,
-         d.building_id                       AS buildingId,
-         b.name                              AS buildingName
+         d.building_id                       AS "buildingId",
+         b.name                              AS "buildingName"
        FROM departments d
        INNER JOIN buildings b ON d.building_id = b.id
        WHERE d.deleted_at IS NULL
@@ -167,8 +169,8 @@ export class SearchRepository {
          'cubicle'                                    AS kind,
          tc.code                                       AS title,
          CONCAT(COALESCE(p.full_name, 'Cubículo'), ' · ', b.name) AS subtitle,
-         tc.building_id                                AS buildingId,
-         b.name                                        AS buildingName
+         tc.building_id                                AS "buildingId",
+         b.name                                        AS "buildingName"
        FROM teacher_cubicles tc
        INNER JOIN buildings b ON tc.building_id = b.id
        LEFT JOIN professors p ON tc.professor_id = p.id AND p.deleted_at IS NULL
@@ -190,8 +192,8 @@ export class SearchRepository {
          'headquarters'                    AS kind,
          h.name                            AS title,
          CONCAT('Jefatura · ', b.name)    AS subtitle,
-         h.building_id                     AS buildingId,
-         b.name                            AS buildingName
+         h.building_id                     AS "buildingId",
+         b.name                            AS "buildingName"
        FROM headquarters h
        INNER JOIN buildings b ON h.building_id = b.id
        WHERE h.deleted_at IS NULL
@@ -215,8 +217,8 @@ export class SearchRepository {
          'gate'      AS kind,
          g.name      AS title,
          'Acceso al campus' AS subtitle,
-         NULL        AS buildingId,
-         NULL        AS buildingName,
+         NULL        AS "buildingId",
+         NULL        AS "buildingName",
          g.x         AS x,
          g.z         AS z
        FROM gates g

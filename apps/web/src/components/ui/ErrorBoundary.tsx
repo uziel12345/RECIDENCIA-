@@ -33,7 +33,7 @@ export class ErrorBoundary extends Component<Props, State> {
             inset: 0,
             display: "grid",
             placeItems: "center",
-            background: "linear-gradient(160deg,#0f172a 0%,#1e293b 55%,#7c2d12 100%)",
+            background: "linear-gradient(160deg,#0f172a 0%,#1e293b 55%,#4a1c13 100%)",
             padding: 24,
           }}
         >
@@ -50,7 +50,7 @@ export class ErrorBoundary extends Component<Props, State> {
               style={{
                 padding: "10px 24px",
                 borderRadius: 8,
-                background: "#ea580c",
+                background: "#a8442e",
                 color: "#fff",
                 border: "none",
                 fontWeight: 600,

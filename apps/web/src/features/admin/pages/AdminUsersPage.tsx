@@ -163,7 +163,7 @@ export function AdminUsersPage() {
         {canManageUsers ? (
           <form onSubmit={handleCreate} style={{ ...s.formCard, ...(isMobile ? s.cardMobile : {}) }}>
             <h2 style={s.cardTitle}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c15a3e" strokeWidth="2">
                 <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
               </svg>
               Crear administrador
@@ -242,7 +242,7 @@ export function AdminUsersPage() {
         <div style={{ ...s.tableCard, ...(isMobile ? s.cardMobile : {}) }}>
           <div style={{ ...s.tableHeader, ...(isMobile ? s.tableHeaderMobile : {}) }}>
             <h2 style={s.cardTitle}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c15a3e" strokeWidth="2">
                 <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
                 <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
               </svg>
@@ -383,7 +383,7 @@ const s: Record<string, CSSProperties> = {
   pageMobile: { padding: "16px 14px 24px" },
   header: { marginBottom: 28 },
   headerMobile: { marginBottom: 18 },
-  overline: { margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: "#f97316", textTransform: "uppercase", letterSpacing: "0.08em" },
+  overline: { margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: "#c15a3e", textTransform: "uppercase", letterSpacing: "0.08em" },
   title: { margin: "0 0 6px", fontSize: 28, fontWeight: 700, color: "#f1f5f9", lineHeight: 1.1 },
   titleMobile: { fontSize: 23 },
   subtitle: { margin: 0, fontSize: 14, color: "#64748b" },
@@ -399,7 +399,7 @@ const s: Record<string, CSSProperties> = {
   input: { width: "100%", boxSizing: "border-box", border: "1px solid #334155", borderRadius: 10, padding: "9px 12px", fontSize: 13.5, background: "#0f172a", color: "#f1f5f9", outline: "none" },
   checkboxField: { display: "flex", alignItems: "flex-end", paddingBottom: 2 },
   checkboxLabel: { display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, color: "#94a3b8", cursor: "pointer" },
-  checkbox: { width: 16, height: 16, accentColor: "#f97316" },
+  checkbox: { width: 16, height: 16, accentColor: "#c15a3e" },
   tableHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 },
   tableHeaderMobile: { flexDirection: "column", alignItems: "stretch", gap: 12 },
   tableWrap: { overflowX: "auto" },
@@ -410,13 +410,13 @@ const s: Record<string, CSSProperties> = {
   td: { padding: "12px 14px", fontSize: 13.5, color: "#cbd5e1", display: undefined },
   tdAction: { padding: "12px 14px", textAlign: "right" },
   emptyTd: { padding: "28px", textAlign: "center", color: "#475569", fontSize: 14 },
-  userChip: { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 24, height: 24, borderRadius: 6, background: "rgba(234,88,12,0.15)", color: "#60a5fa", fontSize: 11, fontWeight: 700, marginRight: 8 },
-  roleBadge: { display: "inline-block", padding: "3px 9px", borderRadius: 99, background: "rgba(234,88,12,0.1)", border: "1px solid rgba(234,88,12,0.2)", color: "#fdba74", fontSize: 11.5, fontWeight: 600 },
+  userChip: { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 24, height: 24, borderRadius: 6, background: "rgba(168,68,46,0.15)", color: "#60a5fa", fontSize: 11, fontWeight: 700, marginRight: 8 },
+  roleBadge: { display: "inline-block", padding: "3px 9px", borderRadius: 99, background: "rgba(168,68,46,0.1)", border: "1px solid rgba(168,68,46,0.2)", color: "#c56b52", fontSize: 11.5, fontWeight: 600 },
   statusActive: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "#86efac", fontWeight: 600 },
   statusInactive: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "#94a3b8", fontWeight: 500 },
   dotActive: { width: 6, height: 6, borderRadius: "50%", background: "#22c55e" },
   dotInactive: { width: 6, height: 6, borderRadius: "50%", background: "#475569" },
-  btnPrimary: { border: "none", borderRadius: 10, padding: "10px 20px", background: "#f97316", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13.5 },
+  btnPrimary: { border: "none", borderRadius: 10, padding: "10px 20px", background: "#c15a3e", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13.5 },
   btnSecondary: { border: "1px solid #334155", borderRadius: 10, padding: "8px 16px", background: "transparent", color: "#94a3b8", fontWeight: 600, cursor: "pointer", fontSize: 13 },
   btnMobile: { minHeight: 44, width: "100%" },
   btnActivate: { border: "1px solid rgba(34,197,94,0.3)", borderRadius: 8, padding: "6px 12px", background: "rgba(34,197,94,0.08)", color: "#86efac", fontWeight: 600, cursor: "pointer", fontSize: 12.5 },

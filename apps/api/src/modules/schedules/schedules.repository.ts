@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import type { Pool, RowDataPacket } from "mysql2/promise";
+import type { Pool, RowDataPacket } from "../../db/mysql-compat-types.js";
 import { pool } from "../../db/connection.js";
 import type { ScheduleRow, ClassroomScheduleRow } from "./schedules.types.js";
 
@@ -15,8 +15,8 @@ const SCHEDULE_SELECT_BASE = `
     c.building_id,
     b.name      AS building_name,
     s.day_of_week,
-    TIME_FORMAT(s.start_time, '%H:%i') AS start_time,
-    TIME_FORMAT(s.end_time,   '%H:%i') AS end_time,
+    TO_CHAR(s.start_time, 'HH24:MI') AS start_time,
+    TO_CHAR(s.end_time, 'HH24:MI') AS end_time,
     s.period
   FROM schedules s
   JOIN professors p ON s.professor_id  = p.id
@@ -58,8 +58,8 @@ export class SchedulesRepository {
         id,
         subject,
         day_of_week,
-        TIME_FORMAT(start_time, '%H:%i') AS start_time,
-        TIME_FORMAT(end_time,   '%H:%i') AS end_time,
+        TO_CHAR(start_time, 'HH24:MI') AS start_time,
+        TO_CHAR(end_time, 'HH24:MI') AS end_time,
         period
       FROM schedules
       WHERE classroom_id = ?

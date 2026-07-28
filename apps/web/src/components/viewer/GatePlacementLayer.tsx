@@ -68,7 +68,7 @@ export function GatePlacementLayer({
           <mesh rotation={[-Math.PI / 2, 0, 0]}>
             <ringGeometry args={[2.5, 4.2, 32]} />
             <meshBasicMaterial
-              color="#f97316"
+              color="#c15a3e"
               transparent
               opacity={0.85}
               side={THREE.DoubleSide}
@@ -77,14 +77,14 @@ export function GatePlacementLayer({
           </mesh>
           <mesh position={[0, 4.5, 0]}>
             <cylinderGeometry args={[0.28, 0.28, 9, 10]} />
-            <meshBasicMaterial color="#f97316" depthTest={false} />
+            <meshBasicMaterial color="#c15a3e" depthTest={false} />
           </mesh>
           <mesh position={[0, 9.2, 0]}>
             <sphereGeometry args={[1.5, 18, 18]} />
-            <meshBasicMaterial color="#fb923c" depthTest={false} />
+            <meshBasicMaterial color="#c56b52" depthTest={false} />
           </mesh>
           <Html position={[0, 13, 0]} center distanceFactor={85} zIndexRange={[30, 20]}>
-            <div className="whitespace-nowrap rounded-full border border-orange-300/40 bg-[#c2410c] px-3 py-1.5 text-xs font-bold text-white shadow-xl">
+            <div className="whitespace-nowrap rounded-full border border-[#c56b52]/40 bg-[#833323] px-3 py-1.5 text-xs font-bold text-white shadow-xl">
               X {position.x.toFixed(2)} · Z {position.z.toFixed(2)}
             </div>
           </Html>

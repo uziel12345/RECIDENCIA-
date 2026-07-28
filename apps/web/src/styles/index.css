@@ -1,27 +1,37 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 /* ==========================================================================
-   SISTEMA DE DISEÃ‘O - Mapa 3D ITO
-   Paleta: Naranja institucional + blancos y negros
+   SISTEMA DE DISEÑO - Mapa 3D ITO
+   Paleta: Terracota + verde bosque (antes naranja institucional) + blancos y negros
    ========================================================================== */
 
 :root {
-  /* â”€â”€ Marca â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-  --color-brand-50:  #fff7ed;
-  --color-brand-100: #ffedd5;
-  --color-brand-200: #fed7aa;
-  --color-brand-500: #f97316;
-  --color-brand-600: #ea580c;
-  --color-brand-700: #c2410c;
-  --color-brand-800: #9a3412;
-  --color-brand-900: #7c2d12;
+  /* ── Marca (terracota + verde bosque) ── */
+  --color-brand-50:  #fbeee9;
+  --color-brand-100: #f5dbd0;
+  --color-brand-200: #eab8a3;
+  --color-brand-500: #c15a3e;
+  --color-brand-600: #a8442e;
+  --color-brand-700: #833323;
+  --color-brand-800: #6b2a1c;
+  --color-brand-900: #4a1c13;
 
-  /* â”€â”€ Acento â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-  --color-accent-400: #fb923c;
-  --color-accent-500: #f97316;
-  --color-accent-600: #ea580c;
+  /* ── Verde bosque — tono estructural secundario de la marca (tema
+     oscuro de admin, no reemplaza a los neutros claros de estudiante/
+     visitante). ── */
+  --color-forest-900: #17241d;
+  --color-forest-800: #1f2f26;
+  --color-forest-700: #2f4a3c;
+  --color-forest-600: #43594c;
+  --color-forest-100: #f6ece5;
+  --color-forest-muted: #b9ab9f;
 
-  /* â”€â”€ Neutros â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Acento ── */
+  --color-accent-400: #c56b52;
+  --color-accent-500: #c15a3e;
+  --color-accent-600: #a8442e;
+
+  /* ── Neutros ── */
   --color-bg:            #f5f5f5;
   --color-surface:       #ffffff;
   --color-surface-muted: #fafafa;
@@ -32,7 +42,7 @@
   --color-text-muted:    #525252;
   --color-text-subtle:   #a3a3a3;
 
-  /* â”€â”€ Estados â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Estados ── */
   --color-success-bg:     #ecfdf5;
   --color-success-border: #a7f3d0;
   --color-success-text:   #065f46;
@@ -43,42 +53,42 @@
   --color-danger-border:  #fecaca;
   --color-danger-text:    #991b1b;
 
-  /* â”€â”€ Sombras â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Sombras ── */
   --shadow-xs:   0 1px 2px rgba(10, 10, 10, 0.04);
   --shadow-sm:   0 1px 4px rgba(10, 10, 10, 0.06), 0 1px 2px rgba(10, 10, 10, 0.04);
   --shadow-md:   0 4px 16px rgba(10, 10, 10, 0.08), 0 1px 4px rgba(10, 10, 10, 0.04);
   --shadow-lg:   0 12px 32px rgba(10, 10, 10, 0.12), 0 4px 8px rgba(10, 10, 10, 0.06);
   --shadow-xl:   0 24px 56px rgba(10, 10, 10, 0.16), 0 8px 16px rgba(10, 10, 10, 0.08);
-  --shadow-brand: 0 4px 20px rgba(234, 88, 12, 0.30);
+  --shadow-brand: 0 4px 20px rgba(168, 68, 46, 0.30);
   --shadow-card:  0 2px 12px rgba(10, 10, 10, 0.07), 0 0 1px rgba(10, 10, 10, 0.08);
   --shadow-maps:    0 1px 2px rgba(10,10,10,0.06), 0 4px 16px rgba(10,10,10,0.08);
   --shadow-maps-lg: 0 2px 6px rgba(10,10,10,0.08), 0 12px 32px rgba(10,10,10,0.14);
-  --ring-brand: rgba(234, 88, 12, 0.45);
+  --ring-brand: rgba(168, 68, 46, 0.45);
 
-  /* â”€â”€ Gradientes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Gradientes ── */
   --gradient-brand:    linear-gradient(135deg, var(--color-brand-600) 0%, var(--color-brand-900) 100%);
-  --gradient-brand-soft: linear-gradient(135deg, var(--color-brand-50) 0%, #fde8d0 100%);
+  --gradient-brand-soft: linear-gradient(135deg, var(--color-brand-50) 0%, #f0d6c8 100%);
   --gradient-surface:  linear-gradient(180deg, #ffffff 0%, var(--color-surface-muted) 100%);
 
-  /* â”€â”€ Radios â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Radios ── */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
   --radius-2xl: 24px;
 
-  /* â”€â”€ Mobile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Mobile ── */
   --sheet-peek-height: 92px;
   --mobile-bar-height: 76px;
   --mobile-top-height: 64px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top:    env(safe-area-inset-top, 0px);
 
-  /* â”€â”€ TipografÃ­a (skill frontend-design, piloto WelcomePage aprobado) â”€â”€
-     Fraunces para momentos de marca/heading (usar donde de verdad importe
-     una voz editorial, no en toda etiqueta), Public Sans en vez de Inter
-     para el resto del texto de toda la app. Cargadas en index.html. */
-  --font-display: 'Fraunces', Georgia, serif;
+  /* ── Tipografía (skill frontend-design, rebrand terracota/verde bosque) ──
+     Space Grotesk para momentos de marca/heading (usar donde de verdad
+     importe una voz editorial, no en toda etiqueta), Public Sans en vez de
+     Inter para el resto del texto de toda la app. Cargadas en index.html. */
+  --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -390,7 +400,7 @@ input {
 .ito-search__input:focus {
   border-color: var(--color-brand-600);
   background: var(--color-surface);
-  box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.12);
+  box-shadow: 0 0 0 4px rgba(168, 68, 46, 0.12);
 }
 
 .ito-search__clear {
@@ -775,13 +785,13 @@ input {
   background: var(--color-brand-600);
   color: #ffffff;
   border-color: var(--color-brand-700);
-  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.25);
+  box-shadow: 0 2px 6px rgba(168, 68, 46, 0.25);
 }
 
 .ito-btn--primary:hover:not(:disabled) {
   background: var(--color-brand-700);
   transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(234, 88, 12, 0.3);
+  box-shadow: 0 6px 14px rgba(168, 68, 46, 0.3);
 }
 
 .ito-btn--primary:disabled {
@@ -1084,7 +1094,7 @@ input {
   min-width: 0;
 }
 
-/* BotÃ³n de toggle del panel lateral */
+/* Botón de toggle del panel lateral */
 .ito-sidebar-toggle {
   position: absolute;
   left: 12px;
@@ -1177,7 +1187,7 @@ input {
   background: var(--color-brand-600);
   color: #ffffff;
   border-color: var(--color-brand-700);
-  box-shadow: 0 6px 16px rgba(234, 88, 12, 0.32);
+  box-shadow: 0 6px 16px rgba(168, 68, 46, 0.32);
 }
 
 .ito-toolbar__btn--accent:hover:not(:disabled) {
@@ -1276,11 +1286,11 @@ input {
 }
 
 .ito-nav-debug-label--draft {
-  border-color: rgba(249, 115, 22, 0.34);
+  border-color: rgba(193, 90, 62, 0.34);
 }
 
 .ito-nav-debug-label--draft strong {
-  color: #c2410c;
+  color: #833323;
 }
 
 .ito-nav-debug-label--snap {
@@ -1296,7 +1306,7 @@ input {
   display: grid;
   gap: 6px;
   padding: 10px;
-  border: 1px solid rgba(249, 115, 22, 0.28);
+  border: 1px solid rgba(193, 90, 62, 0.28);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.96);
   color: var(--color-text);
@@ -1395,9 +1405,9 @@ input {
 }
 
 .ito-draft-editor-panel__tabs button.is-active {
-  background: rgba(234, 88, 12, 0.08);
-  border-color: rgba(234, 88, 12, 0.32);
-  color: #c2410c;
+  background: rgba(168, 68, 46, 0.08);
+  border-color: rgba(168, 68, 46, 0.32);
+  color: #833323;
 }
 
 .ito-draft-editor-panel__building-select {
@@ -1747,7 +1757,7 @@ input {
   display: grid;
   place-items: center;
   cursor: pointer;
-  box-shadow: 0 6px 14px rgba(234, 88, 12, 0.36);
+  box-shadow: 0 6px 14px rgba(168, 68, 46, 0.36);
   flex-shrink: 0;
 }
 
@@ -1829,7 +1839,7 @@ input {
 .ito-mobile-bar__btn--primary {
   color: #ffffff;
   background: linear-gradient(180deg, var(--color-brand-600), var(--color-brand-700));
-  box-shadow: 0 8px 18px rgba(234, 88, 12, 0.36);
+  box-shadow: 0 8px 18px rgba(168, 68, 46, 0.36);
   font-size: 11px;
   padding: 10px 16px;
   margin: 0 4px;
@@ -2129,7 +2139,7 @@ input {
 .ito-quick-action--primary {
   color: #ffffff;
   background: var(--color-brand-600);
-  box-shadow: 0 8px 18px rgba(234, 88, 12, 0.32);
+  box-shadow: 0 8px 18px rgba(168, 68, 46, 0.32);
 }
 
 /* ============================ VIEWER LOADING ============================ */
@@ -2371,7 +2381,7 @@ svg {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(105deg, rgba(67, 20, 7, 0.96) 0%, rgba(124, 45, 18, 0.9) 18%, rgba(194, 65, 12, 0.72) 40%, rgba(234, 88, 12, 0.36) 58%, rgba(255, 247, 237, 0.08) 78%, transparent 100%),
+    linear-gradient(105deg, rgba(46, 19, 13, 0.96) 0%, rgba(74, 28, 19, 0.9) 18%, rgba(131, 51, 35, 0.72) 40%, rgba(168, 68, 46, 0.36) 58%, rgba(251, 238, 233, 0.08) 78%, transparent 100%),
     linear-gradient(180deg, rgba(15, 23, 42, 0.28), rgba(15, 23, 42, 0.12));
   pointer-events: none;
 }
@@ -2387,7 +2397,7 @@ svg {
   background: rgba(255, 255, 255, 0.92);
   border-radius: var(--radius-2xl);
   border: 1px solid rgba(255, 237, 213, 0.72);
-  box-shadow: 0 28px 70px rgba(67, 20, 7, 0.34);
+  box-shadow: 0 28px 70px rgba(46, 19, 13, 0.34);
   backdrop-filter: blur(18px) saturate(1.08);
   -webkit-backdrop-filter: blur(18px) saturate(1.08);
   overflow: hidden;
@@ -2626,7 +2636,7 @@ svg {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(105deg, rgba(67, 20, 7, 0.96) 0%, rgba(124, 45, 18, 0.9) 18%, rgba(194, 65, 12, 0.7) 40%, rgba(234, 88, 12, 0.34) 58%, rgba(255, 247, 237, 0.08) 78%, transparent 100%),
+    linear-gradient(105deg, rgba(46, 19, 13, 0.96) 0%, rgba(74, 28, 19, 0.9) 18%, rgba(131, 51, 35, 0.7) 40%, rgba(168, 68, 46, 0.34) 58%, rgba(251, 238, 233, 0.08) 78%, transparent 100%),
     linear-gradient(180deg, rgba(15, 23, 42, 0.26), rgba(15, 23, 42, 0.12));
   pointer-events: none;
 }
@@ -2639,7 +2649,7 @@ svg {
   background: rgba(255, 255, 255, 0.92);
   border-radius: var(--radius-2xl);
   padding: 32px 28px 28px;
-  box-shadow: 0 28px 70px rgba(67, 20, 7, 0.34);
+  box-shadow: 0 28px 70px rgba(46, 19, 13, 0.34);
   border: 1px solid rgba(255, 237, 213, 0.72);
   backdrop-filter: blur(18px) saturate(1.08);
   -webkit-backdrop-filter: blur(18px) saturate(1.08);
@@ -2672,10 +2682,10 @@ svg {
   height: 76px;
   border-radius: 18px;
   background: #ffffff;
-  border: 1px solid #fed7aa;
+  border: 1px solid #eab8a3;
   display: grid;
   place-items: center;
-  box-shadow: 0 12px 28px rgba(234, 88, 12, 0.18);
+  box-shadow: 0 12px 28px rgba(168, 68, 46, 0.18);
   margin-bottom: 16px;
   overflow: hidden;
 }
@@ -2734,7 +2744,7 @@ svg {
 .onboarding-card__cta:hover {
   filter: brightness(1.08);
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(234, 88, 12, 0.36);
+  box-shadow: 0 6px 24px rgba(168, 68, 46, 0.36);
 }
 
 /* ============================ LOGIN PAGE ============================ */
@@ -2903,7 +2913,7 @@ svg {
 .login-card__field input:focus {
   border-color: var(--color-brand-600);
   background: var(--color-surface);
-  box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.12);
+  box-shadow: 0 0 0 4px rgba(168, 68, 46, 0.12);
 }
 
 .login-card__submit {
@@ -3002,12 +3012,12 @@ svg {
     border-bottom: none;
     max-width: 100%;
     min-height: 70dvh;
-    box-shadow: 0 -18px 46px rgba(67, 20, 7, 0.26);
+    box-shadow: 0 -18px 46px rgba(46, 19, 13, 0.26);
   }
 
   .welcome-page::before {
     background:
-      linear-gradient(148deg, rgba(67, 20, 7, 0.86) 0%, rgba(194, 65, 12, 0.64) 34%, rgba(234, 88, 12, 0.24) 58%, transparent 86%),
+      linear-gradient(148deg, rgba(46, 19, 13, 0.86) 0%, rgba(131, 51, 35, 0.64) 34%, rgba(168, 68, 46, 0.24) 58%, transparent 86%),
       linear-gradient(180deg, rgba(15, 23, 42, 0.08), rgba(15, 23, 42, 0.22));
   }
 
@@ -3233,7 +3243,7 @@ svg {
   background: var(--color-brand-600);
   border-color: var(--color-brand-700);
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.22);
+  box-shadow: 0 2px 6px rgba(168, 68, 46, 0.22);
 }
 
 .student-page__sidebar-content {
@@ -4158,21 +4168,21 @@ svg {
 }
 
 .ito-mobile-bar__btn.is-active {
-  background: #fff7ed;
-  color: #c2410c;
-  border-color: #fed7aa;
+  background: #fbeee9;
+  color: #833323;
+  border-color: #eab8a3;
 }
 
 .ito-mobile-bar__btn--primary {
-  background: linear-gradient(135deg, #ea580c 0%, #7c2d12 100%);
+  background: linear-gradient(135deg, #a8442e 0%, #4a1c13 100%);
   color: #ffffff;
-  border-color: rgba(194, 65, 12, 0.6);
-  box-shadow: 0 10px 24px rgba(234, 88, 12, 0.34);
+  border-color: rgba(131, 51, 35, 0.6);
+  box-shadow: 0 10px 24px rgba(168, 68, 46, 0.34);
 }
 
 .ito-mobile-bar__btn--primary:hover:not(:disabled),
 .ito-mobile-bar__btn--primary.is-active {
-  background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%);
+  background: linear-gradient(135deg, #833323 0%, #6b2a1c 100%);
   color: #ffffff;
   border-color: rgba(191, 219, 254, 0.45);
 }
@@ -4250,10 +4260,10 @@ svg {
 .ito-search-summary {
   margin-top: -4px;
   padding: 9px 12px;
-  border: 1px solid #fed7aa;
+  border: 1px solid #eab8a3;
   border-radius: 14px;
-  background: #fff7ed;
-  color: #9a3412;
+  background: #fbeee9;
+  color: #6b2a1c;
   font-size: 12px;
   line-height: 1.3;
 }
@@ -4347,7 +4357,7 @@ svg {
   position: relative;
   min-height: 150px;
   overflow: hidden;
-  background: #7c2d12;
+  background: #4a1c13;
 }
 
 .ito-info-card__image {
@@ -4507,7 +4517,7 @@ svg {
   width: 100%;
   height: 132px;
   overflow: hidden;
-  background: #7c2d12;
+  background: #4a1c13;
 }
 
 .ito-info-card__cover-img {
@@ -5069,7 +5079,7 @@ svg {
 .ito-sidebar--public .ito-search__input:focus {
   background: #ffffff;
   border-color: var(--color-brand-600);
-  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1);
+  box-shadow: 0 0 0 3px rgba(168, 68, 46, 0.1);
 }
 
 .ito-sidebar--public .ito-section-header {
@@ -5669,7 +5679,7 @@ svg {
   border-top: 1px solid var(--color-bg);
 }
 
-.ito-search-group__header--building     { color: #ea580c; }
+.ito-search-group__header--building     { color: #a8442e; }
 .ito-search-group__header--classroom    { color: #7c3aed; }
 .ito-search-group__header--procedure    { color: #0891b2; }
 .ito-search-group__header--service      { color: #16a34a; }
@@ -5710,7 +5720,7 @@ svg {
   justify-content: center;
 }
 
-.ito-search-option__icon--building     { background: #ea580c14; color: #ea580c; }
+.ito-search-option__icon--building     { background: #a8442e14; color: #a8442e; }
 .ito-search-option__icon--classroom    { background: #7c3aed14; color: #7c3aed; }
 .ito-search-option__icon--procedure    { background: #0891b214; color: #0891b2; }
 .ito-search-option__icon--service      { background: #16a34a14; color: #16a34a; }
@@ -5793,7 +5803,7 @@ svg {
   flex-shrink: 0;
 }
 
-.ito-kind-badge--building  { background: #ea580c18; color: #ea580c; }
+.ito-kind-badge--building  { background: #a8442e18; color: #a8442e; }
 .ito-kind-badge--classroom { background: #7c3aed18; color: #7c3aed; }
 .ito-kind-badge--procedure { background: #0891b218; color: #0891b2; }
 .ito-kind-badge--service   { background: #16a34a18; color: #16a34a; }
@@ -5956,7 +5966,7 @@ svg {
 .ito-viewer-loading__dot:nth-child(2) { animation-delay: 0.18s; }
 .ito-viewer-loading__dot:nth-child(3) { animation-delay: 0.36s; }
 
-/* Entrada de paneles de pestaÃ±a (sidebar) */
+/* Entrada de paneles de pestaña (sidebar) */
 @keyframes ito-slide-in-up {
   from { opacity: 0; transform: translateY(7px); }
   to   { opacity: 1; transform: translateY(0);   }
@@ -5966,7 +5976,7 @@ svg {
   animation: ito-slide-in-up 0.22s ease-out;
 }
 
-/* Entrada del Ã¡rea principal de contenido (pestaÃ±as no-mapa) */
+/* Entrada del área principal de contenido (pestañas no-mapa) */
 .ito-tab-main {
   animation: ito-fade-in 0.2s ease-out;
 }
@@ -5986,7 +5996,7 @@ svg {
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* Glassmorphism: botÃ³n toggle del panel lateral (flota sobre el canvas) */
+/* Glassmorphism: botón toggle del panel lateral (flota sobre el canvas) */
 .ito-sidebar-toggle {
   background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(10px);
@@ -6486,7 +6496,7 @@ svg {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.42),
     inset 0 -10px 18px rgba(10, 10, 10, 0.1),
-    0 10px 24px rgba(234, 88, 12, 0.24);
+    0 10px 24px rgba(168, 68, 46, 0.24);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -6631,8 +6641,8 @@ svg {
 .visitor-page__nav-item.is-active {
   color: #ffffff;
   border-color: transparent;
-  background: linear-gradient(135deg, #ea580c, #c2410c);
-  box-shadow: 0 10px 22px rgba(234, 88, 12, 0.26);
+  background: linear-gradient(135deg, #a8442e, #833323);
+  box-shadow: 0 10px 22px rgba(168, 68, 46, 0.26);
 }
 
 .visitor-page__nav-item.is-active {
@@ -6709,9 +6719,9 @@ svg {
 
 .ito-list-item__chevron,
 .schedule-class__navigate {
-  color: #ea580c;
-  background: #fff7ed;
-  border-color: #fed7aa;
+  color: #a8442e;
+  background: #fbeee9;
+  border-color: #eab8a3;
 }
 
 .student-page__logout:hover,
@@ -6765,7 +6775,7 @@ svg {
 .ito-mobile-bar__btn--primary,
 .ito-mobile-bar__btn--primary.is-active {
   color: #ffffff;
-  background: linear-gradient(135deg, #ea580c, #c2410c);
+  background: linear-gradient(135deg, #a8442e, #833323);
 }
 
 .student-page__sidebar-content section[style],
@@ -7228,14 +7238,14 @@ svg {
 }
 
 .ito-weather-control__btn--active {
-  background: rgba(249, 115, 22, 0.22);
-  border-color: rgba(249, 115, 22, 0.45);
+  background: rgba(193, 90, 62, 0.22);
+  border-color: rgba(193, 90, 62, 0.45);
   color: #fdba74;
-  box-shadow: 0 0 10px rgba(249, 115, 22, 0.25);
+  box-shadow: 0 0 10px rgba(193, 90, 62, 0.25);
 }
 
 .ito-weather-control__btn--active:hover {
-  background: rgba(249, 115, 22, 0.30);
+  background: rgba(193, 90, 62, 0.30);
   transform: translateY(-1px);
 }
 
@@ -7297,7 +7307,7 @@ svg {
   background: var(--color-brand-600);
   border-color: var(--color-brand-700);
   color: #fff;
-  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
+  box-shadow: 0 2px 8px rgba(168, 68, 46, 0.3);
 }
 .visitor-page__nav-item.is-active {
   background: #059669;
@@ -7308,7 +7318,7 @@ svg {
 .student-page__nav-item:focus-visible,
 .visitor-page__nav-item:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--ring-brand, rgba(234, 88, 12, 0.45));
+  box-shadow: 0 0 0 2px var(--ring-brand, rgba(168, 68, 46, 0.45));
 }
 
 /* --- Role pill --- */
@@ -7357,7 +7367,7 @@ svg {
 .ito-sidebar-toggle:active { transform: translateY(-50%) scale(0.97); }
 .ito-sidebar-toggle:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--ring-brand, rgba(234, 88, 12, 0.45));
+  box-shadow: 0 0 0 2px var(--ring-brand, rgba(168, 68, 46, 0.45));
 }
 
 .student-page--fullmap.is-sidebar-collapsed .student-page__sidebar,
@@ -7398,7 +7408,7 @@ svg {
   to   { transform: translateY(0);    opacity: 1; }
 }
 
-/* â”€â”€â”€ ESTRUCTURALES (activos en ambos temas) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── ESTRUCTURALES (activos en ambos temas) ── */
 
 .ito-route-timeline {
   position: relative;
@@ -7416,7 +7426,7 @@ svg {
   border-radius: 2px;
   background: linear-gradient(
     180deg,
-    rgba(234, 88, 12, 0.70) 0%,
+    rgba(168, 68, 46, 0.70) 0%,
     rgba(251, 191, 36, 0.35) 100%
   );
   pointer-events: none;
@@ -7424,8 +7434,8 @@ svg {
 
 .ito-bic-cover { height: 180px; }
 
-/* AmplÃ­a la ficha seleccionada en escritorio y aprovecha el espacio extra
-   para mostrar la galerÃ­a y las acciones con una distribuciÃ³n mÃ¡s clara.
+/* Amplía la ficha seleccionada en escritorio y aprovecha el espacio extra
+   para mostrar la galería y las acciones con una distribución más clara.
    El ancho del sidebar YA NO cambia aquí (--desktop-sidebar-width se dejó
    fijo) para que Inicio/Servicios/Horario tengan siempre el mismo ancho de
    panel lateral, sin importar si hay un edificio seleccionado. */
@@ -7467,11 +7477,11 @@ svg {
   min-height: 48px;
   font-size: 14px;
   border-radius: var(--radius-lg);
-  box-shadow: 0 4px 20px rgba(234, 88, 12, 0.36);
+  box-shadow: 0 4px 20px rgba(168, 68, 46, 0.36);
   letter-spacing: -0.01em;
 }
 .ito-btn-nav-primary:hover:not(:disabled) {
-  box-shadow: 0 8px 28px rgba(234, 88, 12, 0.50);
+  box-shadow: 0 8px 28px rgba(168, 68, 46, 0.50);
   transform: translateY(-2px);
 }
 
@@ -7483,7 +7493,7 @@ svg {
 }
 .ito-list-item:hover { transform: translateY(-3px) scale(1.005); }
 
-/* â”€â”€â”€ 26. THEME TOGGLE BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 26. THEME TOGGLE BUTTON ── */
 .ito-theme-toggle {
   display: grid;
   place-items: center;
@@ -7506,10 +7516,10 @@ svg {
 .ito-theme-toggle:active { transform: scale(0.95); }
 .ito-theme-toggle:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.35);
+  box-shadow: 0 0 0 3px rgba(168, 68, 46, 0.35);
 }
 
-/* â”€â”€â”€ 1. TOKENS OSCUROS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 1. TOKENS OSCUROS ── */
 html.dark {
   --color-bg:            #0c0f14;
   --color-surface:       #141820;
@@ -7520,8 +7530,8 @@ html.dark {
   --color-text:          #f1f5f9;
   --color-text-muted:    #94a3b8;
   --color-text-subtle:   #4b5871;
-  --color-brand-50:  rgba(234, 88, 12, 0.12);
-  --color-brand-100: rgba(234, 88, 12, 0.20);
+  --color-brand-50:  rgba(168, 68, 46, 0.12);
+  --color-brand-100: rgba(168, 68, 46, 0.20);
   --color-success-bg:     rgba(6, 78, 59, 0.28);
   --color-success-border: rgba(16, 185, 129, 0.25);
   --color-success-text:   #34d399;
@@ -7539,9 +7549,9 @@ html.dark {
   --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.45), 0 0 1px rgba(255, 255, 255, 0.04);
   --shadow-maps:    0 1px 2px rgba(0, 0, 0, 0.50), 0 4px 16px rgba(0, 0, 0, 0.55);
   --shadow-maps-lg: 0 2px 6px rgba(0, 0, 0, 0.55), 0 12px 32px rgba(0, 0, 0, 0.60);
-  --shadow-brand: 0 4px 20px rgba(234, 88, 12, 0.38);
+  --shadow-brand: 0 4px 20px rgba(168, 68, 46, 0.38);
   --gradient-surface:    linear-gradient(180deg, #1a1f2a 0%, #141820 100%);
-  --gradient-brand-soft: linear-gradient(135deg, rgba(194, 65, 12, 0.16) 0%, rgba(120, 53, 15, 0.10) 100%);
+  --gradient-brand-soft: linear-gradient(135deg, rgba(131, 51, 35, 0.16) 0%, rgba(74, 28, 19, 0.10) 100%);
 }
 
 html.dark body {
@@ -7556,7 +7566,7 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.18);
 }
 
-/* â”€â”€â”€ 2. RESET BG-WHITE EN CONTENEDORES PRINCIPALES â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 2. RESET BG-WHITE EN CONTENEDORES PRINCIPALES ── */
 html.dark .visitor-page__sidebar .bg-white,
 html.dark .ito-sheet .bg-white {
   background-color: var(--color-surface);
@@ -7571,7 +7581,7 @@ html.dark .visitor-page__sidebar-content > aside {
   background: var(--color-surface);
 }
 
-/* â”€â”€â”€ 3. MOBILE TOP BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 3. MOBILE TOP BAR ── */
 html.dark .ito-mobile-top {
   background: linear-gradient(
     180deg,
@@ -7602,7 +7612,7 @@ html.dark .ito-mobile-top__live-dot {
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.22);
 }
 
-/* â”€â”€â”€ 4. MOBILE BOTTOM SHEET â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 4. MOBILE BOTTOM SHEET ── */
 html.dark .ito-sheet {
   background: rgba(14, 17, 24, 0.97);
   border-top-color: rgba(255, 255, 255, 0.10);
@@ -7644,7 +7654,7 @@ html.dark .ito-sheet__icon-btn:hover {
   color: #e2e8f0;
 }
 
-/* â”€â”€â”€ 5. QUICK ACTIONS DOCK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 5. QUICK ACTIONS DOCK ── */
 html.dark .ito-mobile-bar__inner {
   background: rgba(14, 17, 24, 0.92);
   border-color: rgba(255, 255, 255, 0.10);
@@ -7660,25 +7670,25 @@ html.dark .ito-mobile-bar__btn:hover:not(:disabled) {
 }
 
 html.dark .ito-mobile-bar__btn.is-active {
-  background: rgba(234, 88, 12, 0.18);
-  border-color: rgba(234, 88, 12, 0.32);
-  color: #fb923c;
+  background: rgba(168, 68, 46, 0.18);
+  border-color: rgba(168, 68, 46, 0.32);
+  color: #c56b52;
 }
 
 html.dark .ito-mobile-bar__btn--primary {
-  background: linear-gradient(135deg, #ea580c 0%, #9a3412 100%);
-  border-color: rgba(234, 88, 12, 0.50);
-  box-shadow: 0 8px 24px rgba(234, 88, 12, 0.38);
+  background: linear-gradient(135deg, #a8442e 0%, #6b2a1c 100%);
+  border-color: rgba(168, 68, 46, 0.50);
+  box-shadow: 0 8px 24px rgba(168, 68, 46, 0.38);
   color: #fff;
 }
 
 html.dark .ito-mobile-bar__btn--primary:hover:not(:disabled),
 html.dark .ito-mobile-bar__btn--primary.is-active {
-  background: linear-gradient(135deg, #c2410c 0%, #7c2d12 100%);
+  background: linear-gradient(135deg, #833323 0%, #4a1c13 100%);
   color: #fff;
 }
 
-/* â”€â”€â”€ 6. BUILDING QUICK CARD (sobre el mapa) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 6. BUILDING QUICK CARD (sobre el mapa) ── */
 html.dark .ito-quick-card {
   background: rgba(14, 17, 24, 0.94);
   border-color: rgba(255, 255, 255, 0.10);
@@ -7710,7 +7720,7 @@ html.dark .ito-quick-action--ghost:hover {
   background: rgba(255, 255, 255, 0.12);
 }
 
-/* â”€â”€â”€ 7. DESKTOP SIDEBAR VISITOR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 7. DESKTOP SIDEBAR VISITOR ── */
 html.dark .visitor-page__sidebar,
 html.dark .visitor-page--fullmap .visitor-page__sidebar {
   background: rgba(12, 15, 20, 0.98);
@@ -7744,14 +7754,14 @@ html.dark .visitor-page__nav-item.is-active {
   background: var(--color-brand-600);
   border-color: var(--color-brand-700);
   color: #fff;
-  box-shadow: 0 2px 12px rgba(234, 88, 12, 0.38);
+  box-shadow: 0 2px 12px rgba(168, 68, 46, 0.38);
 }
 
 html.dark .visitor-page__user-name { color: #f1f5f9; }
 
 html.dark .visitor-page__user-role {
-  background: rgba(234, 88, 12, 0.14);
-  color: #fb923c;
+  background: rgba(168, 68, 46, 0.14);
+  color: #c56b52;
 }
 
 html.dark .visitor-page__user-avatar {
@@ -7783,11 +7793,11 @@ html.dark .visitor-page__panel-heading h2 { color: #f1f5f9; }
 html.dark .visitor-page__panel-heading p  { color: #64748b; }
 
 html.dark .visitor-page__panel-icon {
-  background: rgba(234, 88, 12, 0.14);
-  color: #fb923c;
+  background: rgba(168, 68, 46, 0.14);
+  color: #c56b52;
 }
 
-/* â”€â”€â”€ 8. ROUTE PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 8. ROUTE PANEL ── */
 html.dark .ito-route-panel {
   background: rgba(20, 24, 32, 0.80);
   border-color: rgba(255, 255, 255, 0.08);
@@ -7803,9 +7813,9 @@ html.dark .ito-route-step__value { color: #e2e8f0; }
 html.dark .ito-route-step__hint  { color: #64748b; }
 
 html.dark .ito-route-step__icon--origin {
-  background: rgba(234, 88, 12, 0.16);
-  color: #fb923c;
-  border-color: rgba(234, 88, 12, 0.28);
+  background: rgba(168, 68, 46, 0.16);
+  color: #c56b52;
+  border-color: rgba(168, 68, 46, 0.28);
 }
 html.dark .ito-route-step__icon--destination {
   background: rgba(251, 191, 36, 0.14);
@@ -7824,7 +7834,7 @@ html.dark .ito-route-stats__sep   { background: rgba(16, 185, 129, 0.18); }
 html.dark .ito-route-stats__item  { gap: 6px; }
 html.dark .ito-route-stats__item svg { color: #34d399; }
 
-/* â”€â”€â”€ 9. BUILDING INFO CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 9. BUILDING INFO CARD ── */
 html.dark .ito-bic-cover {
   background: rgba(20, 24, 32, 0.90);
 }
@@ -7850,16 +7860,16 @@ html.dark .ito-bic-cover button:hover {
   background: rgba(14, 17, 24, 0.90);
 }
 
-/* â”€â”€â”€ 10. HOVER ANIMADO EN CARDS (colores dark) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 10. HOVER ANIMADO EN CARDS (colores dark) ── */
 html.dark .ito-list-item {
   background: rgba(26, 31, 42, 0.75);
   border-color: rgba(255, 255, 255, 0.08);
 }
 html.dark .ito-list-item:hover {
   background: rgba(30, 37, 52, 0.92);
-  border-color: rgba(234, 88, 12, 0.32);
+  border-color: rgba(168, 68, 46, 0.32);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45),
-              0 0 0 1px rgba(234, 88, 12, 0.18);
+              0 0 0 1px rgba(168, 68, 46, 0.18);
 }
 html.dark .ito-list-item.is-selected {
   background: rgba(26, 31, 42, 0.90);
@@ -7871,9 +7881,9 @@ html.dark .ito-list-item__code {
 }
 html.dark .ito-list-item__name { color: #f1f5f9; }
 html.dark .ito-list-item__chevron { color: #4b5871; }
-html.dark .ito-list-item:hover .ito-list-item__chevron { color: #fb923c; }
+html.dark .ito-list-item:hover .ito-list-item__chevron { color: #c56b52; }
 
-/* â”€â”€â”€ 11. ESTADO VACÃO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 11. ESTADO VACÍO ── */
 html.dark .ito-empty {
   background: rgba(255, 255, 255, 0.02);
   border-radius: var(--radius-lg);
@@ -7883,7 +7893,7 @@ html.dark .ito-empty {
 html.dark .ito-empty p    { color: #e2e8f0; }
 html.dark .ito-empty span { color: #64748b; }
 
-/* â”€â”€â”€ 12. SEARCH INPUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 12. SEARCH INPUT ── */
 html.dark .ito-search__input {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.10);
@@ -7897,7 +7907,7 @@ html.dark .ito-search__input:hover {
 html.dark .ito-search__input:focus {
   border-color: var(--color-brand-500);
   background: rgba(255, 255, 255, 0.07);
-  box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.16);
+  box-shadow: 0 0 0 4px rgba(168, 68, 46, 0.16);
 }
 html.dark .ito-search__icon  { color: #4b5871; }
 html.dark .ito-search__clear { color: #64748b; }
@@ -7906,7 +7916,7 @@ html.dark .ito-search__clear:hover {
   color: #e2e8f0;
 }
 
-/* â”€â”€â”€ 13. CHIPS / FILTROS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 13. CHIPS / FILTROS ── */
 html.dark .ito-chip {
   background: rgba(26, 31, 42, 0.80);
   border-color: rgba(255, 255, 255, 0.10);
@@ -7917,19 +7927,19 @@ html.dark .ito-chip:hover {
   color: #e2e8f0;
 }
 html.dark .ito-chip.is-active {
-  background: rgba(234, 88, 12, 0.16);
-  color: #fb923c;
-  border-color: rgba(234, 88, 12, 0.32);
+  background: rgba(168, 68, 46, 0.16);
+  color: #c56b52;
+  border-color: rgba(168, 68, 46, 0.32);
 }
 
-/* â”€â”€â”€ 14. BADGES CATEGORÃA (dark contrast) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 14. BADGES CATEGORÍA (dark contrast) ── */
 html.dark .ito-sheet .ito-badge,
 html.dark .visitor-page__sidebar .ito-badge,
 html.dark .ito-quick-card .ito-badge {
   filter: saturate(0.88) brightness(1.12);
 }
 
-/* â”€â”€â”€ 15. BOTONES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 15. BOTONES ── */
 html.dark .ito-btn--ghost {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.12);
@@ -7940,7 +7950,7 @@ html.dark .ito-btn--ghost:hover {
   border-color: rgba(255, 255, 255, 0.18);
 }
 
-/* â”€â”€â”€ 16. TOOLBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 16. TOOLBAR ── */
 html.dark .ito-toolbar__btn {
   background: rgba(20, 24, 32, 0.88);
   border-color: rgba(255, 255, 255, 0.10);
@@ -7955,7 +7965,7 @@ html.dark .ito-toolbar__group {
 }
 html.dark .ito-toolbar__divider { background: rgba(255, 255, 255, 0.10); }
 
-/* â”€â”€â”€ 17. SECTION HEADERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 17. SECTION HEADERS ── */
 html.dark .ito-section-header__title { color: #e2e8f0; }
 html.dark .ito-section-header__count {
   background: rgba(255, 255, 255, 0.05);
@@ -7963,7 +7973,7 @@ html.dark .ito-section-header__count {
   color: #64748b;
 }
 
-/* â”€â”€â”€ 18. BRAND MARK / STATS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 18. BRAND MARK / STATS ── */
 html.dark .ito-brand__mark     { background: rgba(255, 255, 255, 0.07); }
 html.dark .ito-brand__title    { color: #f1f5f9; }
 html.dark .ito-brand__subtitle { color: #64748b; }
@@ -7979,7 +7989,7 @@ html.dark .ito-brand__stat.is-live {
   border-color: rgba(16, 185, 129, 0.22);
 }
 
-/* â”€â”€â”€ 19. QUICK STATS SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 19. QUICK STATS SIDEBAR ── */
 html.dark .ito-quick-stat {
   background: rgba(26, 31, 42, 0.80);
   border-color: rgba(255, 255, 255, 0.08);
@@ -7987,20 +7997,20 @@ html.dark .ito-quick-stat {
 html.dark .ito-quick-stat__value { color: #f1f5f9; }
 html.dark .ito-quick-stat__label { color: #64748b; }
 
-/* â”€â”€â”€ 20. FAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 20. FAB ── */
 html.dark .ito-fab {
   background: rgba(20, 24, 32, 0.90);
   border-color: rgba(255, 255, 255, 0.10);
   color: #e2e8f0;
 }
 
-/* â”€â”€â”€ 21. BACKDROPS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 21. BACKDROPS ── */
 html.dark .ito-backdrop,
 html.dark .ito-sheet-backdrop {
   background: rgba(0, 0, 0, 0.52);
 }
 
-/* â”€â”€â”€ 22. MOBILE DRAWER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 22. MOBILE DRAWER ── */
 html.dark .ito-mobile-drawer {
   background: rgba(14, 17, 24, 0.97);
   border-top-color: rgba(255, 255, 255, 0.08);
@@ -8014,7 +8024,7 @@ html.dark .ito-mobile-drawer__close {
   color: #94a3b8;
 }
 
-/* â”€â”€â”€ 23. MOBILE OVERLAYS (destinos / servicios) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 23. MOBILE OVERLAYS (destinos / servicios) ── */
 html.dark .student-mobile__schedule-modal,
 html.dark .visitor-mobile__dest-modal {
   background: rgba(14, 17, 24, 0.97);
@@ -8042,7 +8052,7 @@ html.dark .visitor-mobile__dest-modal::before {
   background: var(--color-brand-600);
 }
 
-/* â”€â”€â”€ 24. VIEWER BACKGROUND â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 24. VIEWER BACKGROUND ── */
 html.dark .ito-campus__viewer {
   background: linear-gradient(180deg, #0d1117 0%, #0c1020 60%, #0f1525 100%);
 }
@@ -8057,7 +8067,7 @@ html.dark .ito-viewer-loading__inner {
 html.dark .ito-viewer-loading__title    { color: #f1f5f9; }
 html.dark .ito-viewer-loading__subtitle { color: #64748b; }
 
-/* â”€â”€â”€ 25. LEGEND â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 25. LEGEND ── */
 html.dark .ito-legend {
   background: rgba(14, 17, 24, 0.92);
   border-color: rgba(255, 255, 255, 0.08);
@@ -8065,11 +8075,11 @@ html.dark .ito-legend {
 html.dark .ito-legend__title { color: #64748b; }
 html.dark .ito-legend__item  { color: #e2e8f0; }
 
-/* â”€â”€â”€ 27. RESET LIQUID-GLASS + STUDENT PAGE DARK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 27. RESET LIQUID-GLASS + STUDENT PAGE DARK ── */
 /* El bloque "liquid glass" (~6252â€“6680) aplica fondos blancos
-   hardcodeados. AquÃ­ los cancelamos para html.dark.              */
+   hardcodeados. Aquí los cancelamos para html.dark.              */
 
-/* Cancelar animaciÃ³n en elementos con glass flow */
+/* Cancelar animación en elementos con glass flow */
 html.dark .student-page__sidebar,
 html.dark .visitor-page__sidebar,
 html.dark .student-top-bar,
@@ -8114,7 +8124,7 @@ html.dark .visitor-mobile__dest-modal::after {
   animation: none;
 }
 
-/* â”€â”€ Student sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Student sidebar ── */
 html.dark .student-page__sidebar,
 html.dark .student-page--fullmap .student-page__sidebar {
   background: rgba(12, 15, 20, 0.98);
@@ -8155,14 +8165,14 @@ html.dark .student-page__nav-item.is-active {
   background: var(--color-brand-600);
   border-color: var(--color-brand-700);
   color: #fff;
-  box-shadow: 0 2px 12px rgba(234, 88, 12, 0.38);
+  box-shadow: 0 2px 12px rgba(168, 68, 46, 0.38);
 }
 
 html.dark .student-page__user-name { color: #f1f5f9; }
 
 html.dark .student-page__user-role {
-  background: rgba(234, 88, 12, 0.14);
-  color: #fb923c;
+  background: rgba(168, 68, 46, 0.14);
+  color: #c56b52;
 }
 
 html.dark .student-page__user-avatar {
@@ -8214,10 +8224,10 @@ html.dark .student-page__sidebar-content .ito-list-item {
 
 html.dark .student-page__sidebar-content .ito-list-item:hover {
   background: rgba(30, 37, 52, 0.92);
-  border-color: rgba(234, 88, 12, 0.32);
+  border-color: rgba(168, 68, 46, 0.32);
 }
 
-/* â”€â”€ Mobile top bars â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Mobile top bars ── */
 html.dark .student-top-bar,
 html.dark .visitor-top-bar {
   background: rgba(12, 15, 20, 0.92);
@@ -8243,13 +8253,13 @@ html.dark .student-top-bar__btn:hover {
   color: #e2e8f0;
 }
 
-/* â”€â”€ ito-toolbar (reset glass) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── ito-toolbar (reset glass) ── */
 html.dark .ito-toolbar {
   background: rgba(20, 24, 32, 0.88);
   border-color: rgba(255, 255, 255, 0.10);
 }
 
-/* â”€â”€ Sheet + modal body/header (glass reset) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Sheet + modal body/header (glass reset) ── */
 html.dark .student-mobile__schedule-header,
 html.dark .visitor-mobile__dest-header,
 html.dark .ito-sheet__head {
@@ -8264,17 +8274,17 @@ html.dark .ito-sheet__body {
 
 /* Keep public entry screens visually stable regardless of the app theme. */
 .theme-light-lock {
-  --color-brand-50:  #fff7ed;
-  --color-brand-100: #ffedd5;
-  --color-brand-200: #fed7aa;
-  --color-brand-500: #f97316;
-  --color-brand-600: #ea580c;
-  --color-brand-700: #c2410c;
-  --color-brand-800: #9a3412;
-  --color-brand-900: #7c2d12;
-  --color-accent-400: #fb923c;
-  --color-accent-500: #f97316;
-  --color-accent-600: #ea580c;
+  --color-brand-50:  #fbeee9;
+  --color-brand-100: #f5dbd0;
+  --color-brand-200: #eab8a3;
+  --color-brand-500: #c15a3e;
+  --color-brand-600: #a8442e;
+  --color-brand-700: #833323;
+  --color-brand-800: #6b2a1c;
+  --color-brand-900: #4a1c13;
+  --color-accent-400: #c56b52;
+  --color-accent-500: #c15a3e;
+  --color-accent-600: #a8442e;
   --color-bg:            #f5f5f5;
   --color-surface:       #ffffff;
   --color-surface-muted: #fafafa;
@@ -8294,8 +8304,8 @@ html.dark .ito-sheet__body {
   --color-danger-border:  #fecaca;
   --color-danger-text:    #991b1b;
   --shadow-card:  0 2px 12px rgba(10, 10, 10, 0.07), 0 0 1px rgba(10, 10, 10, 0.08);
-  --shadow-brand: 0 4px 20px rgba(234, 88, 12, 0.30);
-  --ring-brand: rgba(234, 88, 12, 0.45);
+  --shadow-brand: 0 4px 20px rgba(168, 68, 46, 0.30);
+  --ring-brand: rgba(168, 68, 46, 0.45);
   color: var(--color-text);
   color-scheme: light;
 }

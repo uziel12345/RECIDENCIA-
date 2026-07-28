@@ -27,11 +27,11 @@ type BuildingTableProps = {
 };
 
 const fieldCls =
-  "min-h-11 w-full rounded-[10px] border border-[#334155] bg-[#0f172a] px-3.5 text-[13.5px] text-[#e2e8f0] outline-none transition-[border-color,box-shadow] duration-[180ms] focus:border-[#ea580c] focus:ring-2 focus:ring-[rgba(234,88,12,0.35)]";
+  "min-h-11 w-full rounded-[10px] border border-[#334155] bg-[#0f172a] px-3.5 text-[13.5px] text-[#e2e8f0] outline-none transition-[border-color,box-shadow] duration-[180ms] focus:border-[#a8442e] focus:ring-2 focus:ring-[rgba(168,68,46,0.35)]";
 const ghostBtn =
-  "inline-flex min-h-11 items-center justify-center rounded-[10px] border border-[#334155] bg-transparent px-3.5 text-[13px] font-semibold text-[#94a3b8] transition-[background-color,color,transform] duration-[180ms] hover:-translate-y-px hover:bg-[#0f172a] hover:text-[#e2e8f0] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.35)]";
+  "inline-flex min-h-11 items-center justify-center rounded-[10px] border border-[#334155] bg-transparent px-3.5 text-[13px] font-semibold text-[#94a3b8] transition-[background-color,color,transform] duration-[180ms] hover:-translate-y-px hover:bg-[#0f172a] hover:text-[#e2e8f0] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(168,68,46,0.35)]";
 const rowBtn =
-  "inline-flex items-center justify-center rounded-lg px-2.5 py-1.5 text-[12.5px] font-semibold transition-[background-color,transform] duration-[180ms] hover:-translate-y-px active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.35)]";
+  "inline-flex items-center justify-center rounded-lg px-2.5 py-1.5 text-[12.5px] font-semibold transition-[background-color,transform] duration-[180ms] hover:-translate-y-px active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(168,68,46,0.35)]";
 
 export function BuildingTable({
   buildings,
@@ -73,7 +73,7 @@ export function BuildingTable({
           {canEditNavigation ? (
             <a
               href="/admin/navigation"
-              className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-[10px] border border-[rgba(234,88,12,0.4)] bg-[rgba(234,88,12,0.15)] px-3.5 text-[13px] font-bold text-[#fdba74] no-underline transition-[background-color,transform] duration-[180ms] hover:-translate-y-px hover:bg-[rgba(234,88,12,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.45)] max-[640px]:flex-1"
+              className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-[10px] border border-[rgba(168,68,46,0.4)] bg-[rgba(168,68,46,0.15)] px-3.5 text-[13px] font-bold text-[#c56b52] no-underline transition-[background-color,transform] duration-[180ms] hover:-translate-y-px hover:bg-[rgba(168,68,46,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(168,68,46,0.45)] max-[640px]:flex-1"
             >
               Mapa de navegación
             </a>
@@ -125,7 +125,7 @@ export function BuildingTable({
             >
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <span className="mb-1 inline-flex rounded-md border border-[rgba(234,88,12,0.28)] bg-[rgba(234,88,12,0.12)] px-2 py-1 text-[12px] font-black uppercase tracking-wide text-[#fdba74]">
+                  <span className="mb-1 inline-flex rounded-md border border-[rgba(168,68,46,0.28)] bg-[rgba(168,68,46,0.12)] px-2 py-1 text-[12px] font-black uppercase tracking-wide text-[#c56b52]">
                     {code}
                   </span>
                   <h3 className="m-0 text-[16px] font-bold leading-snug text-[#f1f5f9]">
@@ -171,7 +171,7 @@ export function BuildingTable({
                         type="button"
                         onClick={() => onStartEdit(building)}
                         disabled={isBusy}
-                        className="min-h-11 rounded-[10px] border border-[rgba(234,88,12,0.32)] bg-[rgba(234,88,12,0.14)] px-3 text-[13px] font-bold text-[#fdba74] disabled:opacity-50"
+                        className="min-h-11 rounded-[10px] border border-[rgba(168,68,46,0.32)] bg-[rgba(168,68,46,0.14)] px-3 text-[13px] font-bold text-[#c56b52] disabled:opacity-50"
                       >
                         Editar
                       </button>
@@ -250,7 +250,7 @@ export function BuildingTable({
               const isActive = Boolean(building.is_active);
               const isCurrentEdit = editingBuilding?.id === building.id;
               const rowBg = isCurrentEdit
-                ? "bg-[rgba(234,88,12,0.08)]"
+                ? "bg-[rgba(168,68,46,0.08)]"
                 : idx % 2 === 1
                   ? "bg-[#1a2744]"
                   : "bg-transparent";
@@ -258,7 +258,7 @@ export function BuildingTable({
               return (
                 <tr
                   key={building.id}
-                  className={`${rowBg} transition-colors duration-[180ms] hover:bg-[rgba(234,88,12,0.06)] ${
+                  className={`${rowBg} transition-colors duration-[180ms] hover:bg-[rgba(168,68,46,0.06)] ${
                     !isActive ? "opacity-55" : ""
                   }`}
                 >
@@ -294,7 +294,7 @@ export function BuildingTable({
                               type="button"
                               onClick={() => onStartEdit(building)}
                               disabled={actionLoadingId === building.id}
-                              className={`${rowBtn} border border-[rgba(234,88,12,0.3)] bg-[rgba(234,88,12,0.12)] text-[#fdba74]`}
+                              className={`${rowBtn} border border-[rgba(168,68,46,0.3)] bg-[rgba(168,68,46,0.12)] text-[#c56b52]`}
                             >
                               Editar
                             </button>

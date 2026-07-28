@@ -5,7 +5,7 @@ import { useAdminAuthStore } from "../../../store/admin-auth-store";
 import { ROUTES } from "../../../types/routes";
 
 const inputCls =
-  "w-full min-h-11 rounded-2xl border border-[#334155] bg-[#0f172a] px-3.5 py-3 text-[15px] text-[#e2e8f0] placeholder:text-[#475569] outline-none transition-[border-color,box-shadow] duration-[180ms] focus:border-[#ea580c] focus:ring-2 focus:ring-[rgba(234,88,12,0.45)]";
+  "w-full min-h-11 rounded-2xl border border-[#2f4a3c] bg-[#17241d] px-3.5 py-3 text-[15px] text-[#f6ece5] placeholder:text-[#43594c] outline-none transition-[border-color,box-shadow] duration-[180ms] focus:border-[#a8442e] focus:ring-2 focus:ring-[rgba(168,68,46,0.45)]";
 
 export function AdminLoginPage() {
   const { login, loadSession, loading, error, isAuthenticated, clearError } =
@@ -40,13 +40,13 @@ export function AdminLoginPage() {
   };
 
   return (
-    <main className="grid min-h-screen place-items-center bg-[#0f172a] p-6">
-      <section className="w-full max-w-[420px] rounded-3xl border border-[#1e293b] bg-[#1e293b] p-7 shadow-[0_24px_70px_rgba(0,0,0,0.45)]">
+    <main className="grid min-h-screen place-items-center bg-[#17241d] p-6">
+      <section className="w-full max-w-[420px] rounded-3xl border border-[#1f2f26] bg-[#1f2f26] p-7 shadow-[0_24px_70px_rgba(0,0,0,0.45)]">
         <div className="mb-5">
           <button
             type="button"
             onClick={() => navigate(ROUTES.WELCOME, { replace: true })}
-            className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[13px] font-semibold text-[#94a3b8] transition-colors duration-[180ms] hover:bg-[#0f172a] hover:text-[#cbd5e1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.45)]"
+            className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[13px] font-semibold text-[#b9ab9f] transition-colors duration-[180ms] hover:bg-[#17241d] hover:text-[#f6ece5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(168,68,46,0.45)]"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
               <polyline points="15 18 9 12 15 6" />
@@ -57,7 +57,7 @@ export function AdminLoginPage() {
 
         <header className="mb-6">
           <div
-            className="mb-4 grid h-[68px] w-[68px] place-items-center overflow-hidden rounded-[18px] border border-[#334155] bg-white"
+            className="mb-4 grid h-[68px] w-[68px] place-items-center overflow-hidden rounded-[18px] border border-[#2f4a3c] bg-white"
             aria-hidden="true"
           >
             <img
@@ -67,13 +67,13 @@ export function AdminLoginPage() {
             />
           </div>
 
-          <p className="mb-2 text-[12px] font-bold uppercase tracking-wider text-[#f97316]">
+          <p className="mb-2 text-[12px] font-bold uppercase tracking-wider text-[#c15a3e]">
             Panel administrativo
           </p>
-          <h1 className="m-0 text-[28px] font-bold leading-tight text-[#f1f5f9]">
+          <h1 className="m-0 text-[28px] font-bold leading-tight text-[#f6ece5]">
             Iniciar sesión
           </h1>
-          <p className="mt-2.5 text-[14px] leading-relaxed text-[#64748b]">
+          <p className="mt-2.5 text-[14px] leading-relaxed text-[#b9ab9f]">
             Accede para administrar edificios del mapa interactivo del ITO.
           </p>
         </header>
@@ -81,7 +81,7 @@ export function AdminLoginPage() {
         <form onSubmit={handleSubmit} className="flex flex-col">
           <label
             htmlFor="username"
-            className="mb-2 text-[12.5px] font-bold uppercase tracking-wide text-[#94a3b8]"
+            className="mb-2 text-[12.5px] font-bold uppercase tracking-wide text-[#b9ab9f]"
           >
             Usuario
           </label>
@@ -98,7 +98,7 @@ export function AdminLoginPage() {
 
           <label
             htmlFor="password"
-            className="mb-2 text-[12.5px] font-bold uppercase tracking-wide text-[#94a3b8]"
+            className="mb-2 text-[12.5px] font-bold uppercase tracking-wide text-[#b9ab9f]"
           >
             Contraseña
           </label>
@@ -117,7 +117,7 @@ export function AdminLoginPage() {
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-              className="absolute right-1.5 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-lg text-[#94a3b8] transition-colors duration-[180ms] hover:bg-[#0f172a] hover:text-[#cbd5e1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.45)]"
+              className="absolute right-1.5 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-lg text-[#b9ab9f] transition-colors duration-[180ms] hover:bg-[#17241d] hover:text-[#f6ece5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(168,68,46,0.45)]"
             >
               {showPassword ? (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -146,7 +146,7 @@ export function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#ea580c] px-4 py-3 text-[15px] font-extrabold text-white shadow-[0_6px_18px_rgba(234,88,12,0.28)] transition-[transform,background-color] duration-[180ms] hover:-translate-y-px hover:bg-[#c2410c] active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#475569] disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(234,88,12,0.45)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1e293b]"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#a8442e] px-4 py-3 text-[15px] font-extrabold text-white shadow-[0_6px_18px_rgba(168,68,46,0.28)] transition-[transform,background-color] duration-[180ms] hover:-translate-y-px hover:bg-[#833323] active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#43594c] disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(168,68,46,0.45)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1f2f26]"
           >
             {loading ? (
               <>

@@ -134,7 +134,7 @@ export function AdminBuildingEditorPage() {
       <div className="min-h-full px-8 py-7 max-[640px]:px-3.5 max-[640px]:py-4">
         <header className="mb-7 flex flex-wrap items-start justify-between gap-4 max-[640px]:mb-4">
           <div>
-            <p className="m-0 mb-1.5 text-[11px] font-bold uppercase tracking-wider text-[#f97316]">
+            <p className="m-0 mb-1.5 text-[11px] font-bold uppercase tracking-wider text-[#c15a3e]">
               Gestion de campus
             </p>
             <h1 className="m-0 mb-1.5 text-[28px] font-bold leading-tight text-[#f1f5f9] max-[640px]:text-[23px]">
@@ -178,7 +178,7 @@ export function AdminBuildingEditorPage() {
         ) : (
           <section className="grid grid-cols-1 items-start gap-[22px] xl:grid-cols-[300px_1fr] max-[640px]:gap-4">
             <aside className="rounded-[18px] border border-[#334155] bg-[#1e293b] p-[22px] shadow-[0_4px_24px_rgba(0,0,0,0.3)] xl:sticky xl:top-6 max-[640px]:rounded-[14px] max-[640px]:p-4">
-              <p className="m-0 mb-3 text-[11px] font-bold uppercase tracking-wider text-[#f97316]">
+              <p className="m-0 mb-3 text-[11px] font-bold uppercase tracking-wider text-[#c15a3e]">
                 Vista del edificio
               </p>
               <div className="overflow-hidden rounded-[14px] border border-[#334155] bg-[#0f172a] max-[640px]:hidden">

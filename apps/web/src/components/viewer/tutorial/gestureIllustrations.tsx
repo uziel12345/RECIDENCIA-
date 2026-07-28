@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 // para verse como un solo set, no iconos sueltos de distinto estilo.
 
 const STROKE = "#475569";
-const BRAND = "#ea580c";
+const BRAND = "#a8442e";
 const LOOP = { duration: 1.8, repeat: Infinity, ease: "easeInOut" as const };
 
 function Stage({ children }: { children: React.ReactNode }) {
@@ -96,7 +96,7 @@ export function PanDragIllustration() {
 export function TapSelectIllustration({ touch }: { touch: boolean }) {
   return (
     <Stage>
-      <rect x={44} y={58} width={32} height={22} rx={3} fill="#fed7aa" stroke={BRAND} strokeWidth={2} />
+      <rect x={44} y={58} width={32} height={22} rx={3} fill="#eab8a3" stroke={BRAND} strokeWidth={2} />
       <rect x={50} y={64} width={6} height={6} fill="#ffffff" />
       <rect x={64} y={64} width={6} height={6} fill="#ffffff" />
       <motion.g

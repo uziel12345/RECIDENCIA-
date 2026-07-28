@@ -148,7 +148,7 @@ const s: Record<string, CSSProperties> = {
     margin: "0 0 6px",
     fontSize: 11,
     fontWeight: 700,
-    color: "#f97316",
+    color: "#c15a3e",
     textTransform: "uppercase",
     letterSpacing: "0.08em",
   },
@@ -260,7 +260,7 @@ const s: Record<string, CSSProperties> = {
     height: 32,
     borderRadius: "50%",
     border: "3px solid rgba(255,255,255,0.08)",
-    borderTopColor: "#f97316",
+    borderTopColor: "#c15a3e",
     animation: "spin 0.8s linear infinite",
   },
   hint: {

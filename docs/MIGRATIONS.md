@@ -2,10 +2,31 @@
 
 Este documento clasifica los archivos de `docs/` por su uso operativo. No certifica el estado real de una base de datos específica; su objetivo es indicar qué ejecutar en una BD nueva y qué conservar solo como historial o referencia.
 
+## Motor de base de datos: MySQL → PostgreSQL (2026-07-23)
+
+El proyecto migró de MySQL a PostgreSQL para facilitar la carga/descarga de la
+BD y el despliegue a un servidor externo. Cambios relevantes:
+
+- `schema.sql` y `seed.sql` ahora usan sintaxis PostgreSQL (antes MySQL — la
+  versión MySQL queda en el historial de git si hace falta consultarla).
+- `apps/api` usa el driver `pg` en vez de `mysql2` (ver `apps/api/src/db/connection.ts`).
+  La capa de compatibilidad ahí adaptada permite que los repositorios sigan
+  escritos con placeholders `?` y `const [rows] = await pool.query(...)`
+  sin reescribir cada archivo.
+- Durante la migración se detectó que la BD MySQL en producción tenía
+  columnas/tablas reales (`building_categories.icon_name`, `buildings.address_reference`,
+  `campus_calibration_points`, `campus_calibration_profiles`, `building_geofences`)
+  que no estaban documentadas en `schema.sql` — ya están incorporadas.
+- Se migraron los datos reales existentes (no solo el seed de ejemplo):
+  edificios, categorías, imágenes, aulas, departamentos, cubículos,
+  jefaturas, calibración GPS y geocercas, preservando IDs y relaciones.
+- `DB_PORT` por defecto cambió de `3306` a `5432`; `DB_USER` típico pasa de
+  `root` a `postgres`.
+
 ## Orden recomendado para BD nueva
 
-1. Ejecutar `schema.sql`.
-2. Ejecutar `seed.sql`.
+1. Ejecutar `schema.sql` con `psql -U <usuario> -d <bd> -f docs/schema.sql`.
+2. Ejecutar `seed.sql` (datos de ejemplo — para una BD con datos reales, migrarlos aparte en vez de usar `seed.sql`).
 3. No ejecutar `migration-*.sql` sobre una BD nueva, salvo que se esté reproduciendo o auditando un cambio histórico específico.
 
 | Archivo | Descripción | Estado | Fecha |
@@ -30,7 +51,7 @@ Este documento clasifica los archivos de `docs/` por su uso operativo. No certif
 | `migration-buildings-nombres-extra-admin-20260612.sql` | Normaliza nombres de edificios administrativos extra y sus nodos de acceso. | Aplicado histórico — normalización adicional de edificios | 2026-06-12 |
 | `migration-buildings-nombres-oficiales-croquis-20260612.sql` | Ajusta nombres oficiales de edificios según el listado del croquis y actualiza nodos relacionados. | Aplicado histórico — normalización oficial de edificios | 2026-06-12 |
 | `migration-lab-quimica-route-20260612.sql` | Repara la ruta del Laboratorio de Química creando o reactivando nodo, aristas y entrada. | Aplicado histórico — hotfix de navegación | 2026-06-12 |
-| `migration-geolocation-calibration-geofences-20260702.sql` | Crea tablas para puntos reales de calibracion, perfiles GPS->modelo y geocercas por edificio. | Pendiente/propuesta - nuevo sistema de geolocalizacion real | 2026-07-02 |
+| `migration-geolocation-calibration-geofences-20260702.sql` | Crea tablas para puntos reales de calibracion, perfiles GPS->modelo y geocercas por edificio. | Aplicado histórico — incorporado en el esquema actual (estaba aplicado en la BD real pero no se había reflejado aquí hasta la migración a PostgreSQL de 2026-07-23) | 2026-07-02 |
 | `migration-building-full-details-20260708.sql` | Crea `building_schedules`, `departments`, `teacher_cubicles`, `headquarters`; agrega `classrooms.description`, `procedures.resource_url`, `procedure_requirements.type`. | Aplicado histórico — incorporado en el esquema actual | 2026-07-08 |
 | `migration-gates-and-procedure-service-fields-20260708.sql` | Crea la tabla `gates` (accesos del campus); agrega `procedures.department_id`/`internal_location`/`schedule_text` para la búsqueda global de servicios. | Aplicado histórico — incorporado en el esquema actual | 2026-07-08 |
 | `migration-navigation-reset-20260518.sql` | Reinicia nodos y aristas de navegación desde la versión anterior de `campusNodes.ts`. | Referencia/backup — navegación legacy reemplazada | 2026-05-18 |

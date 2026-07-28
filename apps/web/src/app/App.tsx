@@ -73,7 +73,7 @@ function MapLoadingFallback() {
         inset: 0,
         display: "grid",
         placeItems: "center",
-        background: "linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #7c2d12 100%)",
+        background: "linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #4a1c13 100%)",
       }}
     >
       <div style={{ textAlign: "center" }}>
@@ -84,7 +84,7 @@ function MapLoadingFallback() {
             height: 44,
             borderRadius: "50%",
             border: "3px solid rgba(255,255,255,0.12)",
-            borderTopColor: "#f97316",
+            borderTopColor: "#c15a3e",
             margin: "0 auto 20px",
           }}
         />

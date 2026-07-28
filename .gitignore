@@ -12,6 +12,10 @@ dist/
 apps/api/uploads/
 uploads/
 
+# Backups combinados (BD + uploads) — contienen datos reales, no versionar
+apps/api/backups/
+backups/
+
 # Build artifacts
 *.tsbuildinfo
 

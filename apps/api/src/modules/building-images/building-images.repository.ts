@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import type { Pool, ResultSetHeader } from "mysql2/promise";
+import type { Pool, ResultSetHeader } from "../../db/mysql-compat-types.js";
 import { pool } from "../../db/connection.js";
 import type {
   BuildingImageRow,

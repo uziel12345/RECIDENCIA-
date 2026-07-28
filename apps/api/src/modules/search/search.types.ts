@@ -1,4 +1,4 @@
-import type { RowDataPacket } from "mysql2";
+import type { RowDataPacket } from "../../db/mysql-compat-types.js";
 
 export type SearchResultKind =
   | "building"

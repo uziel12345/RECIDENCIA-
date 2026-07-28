@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import type { Pool, RowDataPacket } from "mysql2/promise";
+import type { Pool, RowDataPacket } from "../../db/mysql-compat-types.js";
 import { pool } from "../../db/connection.js";
 import type { StudentRow, StudentLocationRow, StudentScheduleRow } from "./students.types.js";
 
@@ -107,8 +107,8 @@ export class StudentsRepository {
         s.id   AS schedule_id,
         s.subject,
         s.day_of_week,
-        TIME_FORMAT(s.start_time, '%H:%i') AS start_time,
-        TIME_FORMAT(s.end_time,   '%H:%i') AS end_time,
+        TO_CHAR(s.start_time, 'HH24:MI') AS start_time,
+        TO_CHAR(s.end_time, 'HH24:MI') AS end_time,
         s.period,
         c.id   AS classroom_id,
         c.code AS classroom_code,
@@ -153,8 +153,8 @@ export class StudentsRepository {
         b.code        AS building_code,
         b.name        AS building_name,
         sc.day_of_week,
-        TIME_FORMAT(sc.start_time, '%H:%i') AS start_time,
-        TIME_FORMAT(sc.end_time,   '%H:%i') AS end_time,
+        TO_CHAR(sc.start_time, 'HH24:MI') AS start_time,
+        TO_CHAR(sc.end_time, 'HH24:MI') AS end_time,
         sc.period
       FROM students st
       JOIN student_schedules ss ON ss.student_id = st.id
@@ -162,7 +162,7 @@ export class StudentsRepository {
       LEFT JOIN professors p ON sc.professor_id = p.id AND p.deleted_at IS NULL
       JOIN classrooms c ON sc.classroom_id = c.id AND c.deleted_at IS NULL
       JOIN buildings  b ON c.building_id   = b.id AND b.deleted_at IS NULL
-      WHERE st.control_number = ? AND st.deleted_at IS NULL AND st.is_active = 1
+      WHERE st.control_number = ? AND st.deleted_at IS NULL AND st.is_active = TRUE
     `;
     if (period) {
       sql += " AND sc.period = ?";

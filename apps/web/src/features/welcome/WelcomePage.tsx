@@ -160,16 +160,16 @@ export function WelcomePage() {
 
   return (
     <div className="theme-light-lock relative flex min-h-screen items-center justify-center overflow-hidden bg-[url('/Portada.jpeg')] bg-cover bg-center p-5 sm:p-8">
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(67,20,7,0.96)_0%,rgba(124,45,18,0.9)_18%,rgba(194,65,12,0.72)_40%,rgba(234,88,12,0.36)_58%,rgba(255,247,237,0.08)_78%,transparent_100%),linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.12))]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(74,28,19,0.96)_0%,rgba(74,28,19,0.9)_18%,rgba(131,51,35,0.72)_40%,rgba(168,68,46,0.36)_58%,rgba(251,238,233,0.08)_78%,transparent_100%),linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.12))]" />
       <TopographicPattern />
 
       <motion.div
         initial="hidden"
         animate="show"
         variants={cardVariants}
-        className="relative z-[1] flex w-full max-w-[460px] flex-col overflow-hidden rounded-3xl border border-[rgba(255,237,213,0.72)] bg-white/95 shadow-[0_28px_70px_rgba(67,20,7,0.34)] backdrop-blur-xl"
+        className="relative z-[1] flex w-full max-w-[460px] flex-col overflow-hidden rounded-3xl border border-[rgba(245,219,208,0.72)] bg-white/95 shadow-[0_28px_70px_rgba(74,28,19,0.34)] backdrop-blur-xl"
       >
-        <header className="relative overflow-hidden bg-[linear-gradient(135deg,#ea580c_0%,#7c2d12_100%)] px-7 pb-6 pt-8">
+        <header className="relative overflow-hidden bg-[linear-gradient(135deg,#a8442e_0%,#4a1c13_100%)] px-7 pb-6 pt-8">
           <div className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/[0.06]" />
           <div className="relative z-[1] flex items-center gap-3.5">
             <div className="grid h-[52px] w-[52px] flex-shrink-0 place-items-center overflow-hidden rounded-2xl border border-white/25 bg-white">

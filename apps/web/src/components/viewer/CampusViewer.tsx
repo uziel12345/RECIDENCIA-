@@ -1012,7 +1012,7 @@ const BuildingLabels = memo(function BuildingLabels({
                   : isAerial
                     ? "0 2px 7px rgba(15,23,42,0.14)"
                     : "0 8px 22px rgba(15,23,42,0.16)",
-                fontFamily: "Inter, system-ui, sans-serif",
+                fontFamily: "var(--font-body)",
                 userSelect: "none",
                 // `isCollisionHidden` usa opacity (no `visibility:hidden`/`display:none`) para
                 // que la transición de aparición/desaparición sea suave en vez de un corte brusco.
@@ -1861,9 +1861,9 @@ export function CampusViewer({
             zIndex: 50,
             padding: "8px 12px",
             borderRadius: 8,
-            border: "1px solid #f97316",
+            border: "1px solid #c15a3e",
             background: "rgba(15,23,42,0.92)",
-            color: "#fdba74",
+            color: "#c56b52",
             fontSize: 12,
             fontWeight: 700,
             cursor: "pointer",
