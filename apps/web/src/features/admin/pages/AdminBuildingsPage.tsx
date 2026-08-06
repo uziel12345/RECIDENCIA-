@@ -67,7 +67,7 @@ export function AdminBuildingsPage() {
   return (
     <AdminLayout>
       <div className="admin-page-shell min-h-full px-8 py-7 max-[640px]:px-3.5 max-[640px]:py-4">
-        <header className="mb-7 max-[640px]:mb-4">
+        <header className="mb-7 flex items-start justify-between gap-4 max-[640px]:mb-4 max-[640px]:flex-col">
           <div>
             <p className="m-0 mb-1.5 text-[11px] font-bold uppercase tracking-wider text-[#c15a3e]">
               Gestión de campus
@@ -79,6 +79,20 @@ export function AdminBuildingsPage() {
               Administra los edificios del mapa interactivo del ITO.
             </p>
           </div>
+
+          {canEditBuildings ? (
+            <button
+              type="button"
+              onClick={handleOpenCreate}
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-[10px] bg-[#a8442e] px-4 py-2.5 text-[13.5px] font-bold text-white shadow-[0_8px_20px_rgba(168,68,46,0.28)] transition-[transform,background-color] duration-[180ms] hover:-translate-y-px hover:bg-[#833323] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(168,68,46,0.45)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f172a] max-[640px]:w-full"
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Agregar edificio
+            </button>
+          ) : null}
         </header>
 
         {error ? (
@@ -129,20 +143,6 @@ export function AdminBuildingsPage() {
           />
         </section>
       </div>
-
-      {canEditBuildings ? (
-        <button
-          type="button"
-          onClick={handleOpenCreate}
-          className="fixed bottom-7 right-7 z-40 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#a8442e] px-5 py-3.5 text-[14px] font-bold text-white shadow-[0_10px_28px_rgba(168,68,46,0.4)] transition-[transform,background-color] duration-[240ms] hover:-translate-y-0.5 hover:bg-[#833323] active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(168,68,46,0.45)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f172a] max-[640px]:bottom-4 max-[640px]:right-4 max-[640px]:min-h-12 max-[640px]:w-12 max-[640px]:justify-center max-[640px]:rounded-full max-[640px]:p-0"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          <span className="max-[640px]:sr-only">Agregar edificio</span>
-        </button>
-      ) : null}
 
       {canEditPhotos && imageModalBuilding ? (
         <BuildingImagesModal

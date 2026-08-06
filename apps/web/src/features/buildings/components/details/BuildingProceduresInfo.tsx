@@ -3,6 +3,7 @@ import { Icon } from "../../../../components/ui/Icons";
 import { normalizeDisplayText } from "../../../../utils/text";
 import { InfoSection } from "./InfoSection";
 import { HIGHLIGHT_FLASH_CLASS, useHighlightFlash } from "./useHighlightFlash";
+import { safeHttpUrl } from "../../../../utils/safe-url";
 
 type BuildingProceduresInfoProps = {
   procedures: ProcedureForBuilding[];
@@ -19,6 +20,7 @@ export function BuildingProceduresInfo({ procedures, highlightId }: BuildingProc
         {procedures.map((procedure) => {
           const requisitos = procedure.requirements.filter((r) => r.type === "requisito");
           const documentos = procedure.requirements.filter((r) => r.type === "documento");
+          const resourceUrl = safeHttpUrl(procedure.resource_url);
 
           return (
             <li
@@ -85,11 +87,11 @@ export function BuildingProceduresInfo({ procedures, highlightId }: BuildingProc
                 </p>
               )}
 
-              {procedure.resource_url && (
+              {resourceUrl && (
                 <a
-                  href={procedure.resource_url}
+                  href={resourceUrl}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="mt-1.5 inline-flex items-center gap-1 text-[12.5px] font-semibold text-[var(--color-brand-700)] hover:underline"
                 >
                   Ver más

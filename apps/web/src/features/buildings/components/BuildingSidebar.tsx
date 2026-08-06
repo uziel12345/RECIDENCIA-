@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { ROLE_PERMISSIONS } from "@ito-map/shared";
 import { useBuildingStore } from "../../../store/building-store";
 import { useLocationStore } from "../../../store/location-store";
 import { useAdminAuthStore } from "../../../store/admin-auth-store";
@@ -15,6 +16,7 @@ import { AppFooter } from "../../../components/ui/AppFooter";
 import { normalizeDisplayText } from "../../../utils/text";
 import { matchesSearchWords } from "../../../utils/search-match";
 import type { Building } from "../types/building";
+import { formatBuildingDisplayName } from "../utils/building-display-name";
 
 function normalizeSearchText(value: string | null | undefined): string {
   return value
@@ -95,9 +97,14 @@ export function BuildingSidebar({
   );
   const permission = useLocationStore((state) => state.permission);
   const mapPosition = useLocationStore((state) => state.mapPosition);
-  const canUseRoutes = useAdminAuthStore(
-    (state) => state.isAuthenticated && state.user?.role === "superadmin"
-  );
+  const canUseRoutes = useAdminAuthStore((state) => {
+    const role = state.user?.role;
+    return Boolean(
+      state.isAuthenticated &&
+        role &&
+        ROLE_PERMISSIONS[role]?.can_edit_buildings,
+    );
+  });
   const isPublicDesktop = !isMobile && !canUseRoutes;
 
   const { buildings, loading, error: loadError } = useBuildings();
@@ -169,11 +176,11 @@ export function BuildingSidebar({
 
   return (
     <aside
-      className={
+      className={`ito-building-panel ${
         isMobile
-          ? "flex h-auto w-full flex-col gap-4 px-1 pb-6 pt-1"
-          : "flex h-full w-full flex-col gap-4 overflow-y-auto bg-[var(--color-surface)] p-[18px] pt-5"
-      }
+          ? "ito-building-panel--mobile flex h-auto w-full flex-col gap-4 px-1 pb-6 pt-1"
+          : "ito-building-panel--desktop flex h-full w-full flex-col gap-4 overflow-y-auto bg-[var(--color-surface)] p-[18px] pt-5"
+      }`}
     >
       {canUseRoutes && !isMobile && (
         <header className="flex items-center gap-3 pb-2">
@@ -209,7 +216,7 @@ export function BuildingSidebar({
               <span
                 className={`h-[7px] w-[7px] rounded-full ${
                   hasLocation
-                    ? "bg-[#10b981] shadow-[0_0_0_4px_rgba(16,185,129,0.18)]"
+                    ? "bg-[var(--color-success-text)] shadow-[0_0_0_4px_var(--color-success-border)]"
                     : "bg-[var(--color-text-subtle)]"
                 }`}
                 aria-hidden="true"
@@ -245,7 +252,9 @@ export function BuildingSidebar({
           >
             <span
               className={`inline-flex items-center gap-1 text-[20px] font-extrabold leading-none ${
-                hasLocation ? "text-[#059669]" : "text-[var(--color-text)]"
+                hasLocation
+                  ? "text-[var(--color-success-text)]"
+                  : "text-[var(--color-text)]"
               }`}
             >
               <Icon name={hasLocation ? "check" : "alert"} size={14} />
@@ -258,7 +267,7 @@ export function BuildingSidebar({
       )}
 
       {showSearchPanel && (
-      <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5 shadow-[var(--shadow-xs)]">
+      <div className="ito-building-panel__search flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5 shadow-[var(--shadow-xs)]">
         {isPublicDesktop && showGreeting && (
           <div className="flex flex-col gap-1 px-0.5">
             <span className="text-balance text-[15px] font-bold leading-tight tracking-tight text-[var(--color-text)]">
@@ -347,7 +356,7 @@ export function BuildingSidebar({
       )}
 
       {!browseOnly && selectedSearchResult && (
-        <div className={SECTION}>
+        <div className={`${SECTION} ito-building-panel__selection`}>
           <SearchResultCard
             result={selectedSearchResult}
             onClose={() => setSelectedSearchResult(null)}
@@ -369,7 +378,7 @@ export function BuildingSidebar({
         !loading &&
         recommendedBuildings.length > 0 && (
           <div className={SECTION}>
-            <div className="flex flex-col gap-1.5">
+            <div className="ito-building-panel__featured flex flex-col gap-1.5">
               <div className="flex items-center justify-between px-0.5">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
                   Lugares destacados
@@ -383,30 +392,24 @@ export function BuildingSidebar({
                   <button
                     key={building.id}
                     type="button"
-                    className="group flex min-h-11 w-full items-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-left transition hover:translate-x-0.5 hover:border-[var(--color-brand-200)] hover:bg-[var(--color-brand-50)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)]"
+                    className="ito-building-panel__featured-item group flex min-h-11 w-full items-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-left"
                     onClick={() => handleSelectBuilding(building)}
                   >
-                    <div
-                      className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg"
-                      style={{ background: accent.bg }}
+                    <span
+                      className="ito-building-panel__category-dot"
+                      style={{ backgroundColor: accentColor }}
                       aria-hidden="true"
-                    >
-                      <Icon
-                        name="building"
-                        size={16}
-                        style={{ color: accentColor }}
-                      />
-                    </div>
+                    />
                     <div className="min-w-0 flex-1">
                       <span className="block truncate text-[13px] font-semibold leading-tight text-[var(--color-text)]">
-                        {normalizeDisplayText(building.name)}
+                        {formatBuildingDisplayName(building.name, building.code)}
                       </span>
                       <span className="mt-0.5 block truncate text-[11px] font-medium text-[var(--color-text-muted)]">
                         {normalizeDisplayText(building.category_name)}
                       </span>
                     </div>
                     <div
-                      className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-full border border-[var(--color-brand-100)] bg-[var(--color-brand-50)] text-[var(--color-brand-700)] transition group-hover:border-[var(--color-brand-700)] group-hover:bg-[var(--color-brand-600)] group-hover:text-white"
+                      className="ito-building-panel__featured-arrow grid h-7 w-7 flex-shrink-0 place-items-center text-[var(--color-text-subtle)]"
                       aria-hidden="true"
                     >
                       <Icon name="chevron-right" size={14} />
@@ -417,10 +420,9 @@ export function BuildingSidebar({
 
               <button
                 type="button"
-                className="mt-1 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-dashed border-[var(--color-border-strong)] bg-transparent px-3.5 text-[13px] font-semibold text-[var(--color-text-muted)] transition hover:border-[var(--color-brand-200)] hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)]"
+                className="ito-building-panel__show-all mt-1 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--color-border-strong)] bg-transparent px-3.5 text-[13px] font-semibold text-[var(--color-text-muted)]"
                 onClick={() => setShowAllBuildings(true)}
               >
-                <Icon name="list" size={14} />
                 <span>Ver todos los edificios ({totalActive})</span>
               </button>
             </div>
@@ -428,9 +430,9 @@ export function BuildingSidebar({
         )}
 
       {showList && (
-        <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-hidden">
+        <div className="ito-building-panel__list flex min-h-0 flex-1 flex-col gap-2.5 overflow-hidden">
           <div className="flex items-center justify-between px-0.5">
-            <h2 className="m-0 text-[13px] font-bold uppercase tracking-wider text-[var(--color-text)]">
+            <h2 className="ito-building-panel__section-title m-0 text-[13px] font-bold uppercase tracking-wider text-[var(--color-text)]">
               {hasSearchTerm
                 ? "Resultados"
                 : activeCategory
@@ -494,7 +496,7 @@ export function BuildingSidebar({
                   <button
                     key={building.id}
                     type="button"
-                    className={`group grid w-full grid-cols-[5px_minmax(0,1fr)_24px] items-center gap-x-3 rounded-2xl border bg-[var(--color-surface)] p-3.5 text-left shadow-[var(--shadow-xs)] transition hover:-translate-y-px hover:bg-[var(--color-surface-muted)] hover:shadow-[var(--shadow-sm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring-brand)] ${
+                    className={`ito-building-panel__list-item group grid w-full grid-cols-[8px_minmax(0,1fr)_24px] items-center gap-x-3 rounded-2xl border bg-[var(--color-surface)] p-3.5 text-left ${
                       isSelected
                         ? "border-transparent"
                         : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
@@ -505,15 +507,15 @@ export function BuildingSidebar({
                       isSelected
                         ? {
                             borderColor: accent.fg,
-                            boxShadow: `0 0 0 3px ${accent.bg}`,
+                            backgroundColor: accent.bg,
                           }
                         : undefined
                     }
                   >
                     <span
-                      className="h-full min-h-12 w-[5px] rounded-full opacity-90"
+                      className="ito-building-panel__list-accent"
                       aria-hidden="true"
-                      style={{ background: accent.fg }}
+                      style={{ backgroundColor: accent.fg }}
                     />
                     <div className="flex min-w-0 flex-col gap-2">
                       <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -523,7 +525,7 @@ export function BuildingSidebar({
                         <CategoryBadge name={normalizeDisplayText(building.category_name)} size="sm" />
                       </div>
                       <div className="text-[15px] font-bold leading-snug tracking-tight text-[var(--color-text)] [overflow-wrap:anywhere]">
-                        {normalizeDisplayText(building.name)}
+                        {formatBuildingDisplayName(building.name, building.code)}
                       </div>
                     </div>
                     <span

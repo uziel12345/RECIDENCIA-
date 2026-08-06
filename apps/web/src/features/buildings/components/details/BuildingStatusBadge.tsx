@@ -43,19 +43,22 @@ export function BuildingStatusBadge({ status, week }: BuildingStatusBadgeProps) 
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
+    <div className="ito-building-detail-section ito-building-status flex flex-col gap-1.5">
+      <span className="ito-building-detail-section__heading flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
         <Icon name="clock" size={13} />
         Estado
       </span>
 
       <div
-        className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12.5px] font-bold ${STATUS_CLASSES[status.status]}`}
+        className={`ito-building-status__badge inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12.5px] font-bold ${STATUS_CLASSES[status.status]}`}
       >
         {status.status !== "sin_horario" && (
           <span
-            className="h-[7px] w-[7px] rounded-full"
-            style={{ background: status.status === "abierto" ? "#10b981" : "#94a3b8" }}
+            className={`h-[7px] w-[7px] rounded-full ${
+              status.status === "abierto"
+                ? "bg-[var(--color-success-text)]"
+                : "bg-[var(--color-text-muted)]"
+            }`}
             aria-hidden="true"
           />
         )}

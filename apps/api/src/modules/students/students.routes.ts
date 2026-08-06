@@ -26,7 +26,8 @@ const scheduleRateLimit = rateLimit({
   max: 8,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => `sched-stu:${ipKeyGenerator(req.ip ?? "unknown")}`,
+  keyGenerator: (req) =>
+    `sched-stu:${req.authUser?.id ?? ipKeyGenerator(req.ip ?? "unknown")}`,
   message: {
     success: false,
     message: "Límite de consultas de horario alcanzado. Intenta en 15 minutos.",
@@ -57,7 +58,9 @@ const router = Router();
 // Schedule lookup — public, rate-limited by IP (internal DB)
 router.get(
   "/:controlNumber/schedules",
+  authenticate,
   scheduleRateLimit,
+  authorizePermission("can_manage_students"),
   validateParams(studentControlNumberSchema),
   getStudentSchedules
 );
@@ -66,7 +69,9 @@ router.get(
 // Retorna 503 si las variables de entorno no están configuradas
 router.get(
   "/:controlNumber/mindbox-schedule",
+  authenticate,
   scheduleRateLimit,
+  authorizePermission("can_manage_students"),
   validateParams(studentControlNumberSchema),
   getMindboxSchedule
 );

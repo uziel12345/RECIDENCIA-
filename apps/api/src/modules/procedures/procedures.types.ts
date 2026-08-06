@@ -15,6 +15,7 @@ export interface ProcedureRow extends RowDataPacket {
   department_name: string | null;
   internal_location: string | null;
   schedule_text: string | null;
+  validation_status: "confirmed" | "pending_validation";
   is_active: boolean | number;
   deleted_at: string | null;
 }
@@ -50,6 +51,7 @@ export interface ProcedureForBuildingRow extends RowDataPacket {
   department_name: string | null;
   internal_location: string | null;
   schedule_text: string | null;
+  validation_status: "confirmed" | "pending_validation";
   is_active: boolean | number;
   notes: string | null;
 }

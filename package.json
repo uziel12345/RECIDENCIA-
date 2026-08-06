@@ -4,17 +4,34 @@
   "private": true,
   "packageManager": "pnpm@10.32.1",
   "scripts": {
-    "dev:web": "pnpm --filter web dev",
-    "dev:api": "pnpm --filter api dev",
-    "dev": "pnpm --parallel --filter web --filter api dev",
-    "build:web": "pnpm --filter web build",
-    "build:api": "pnpm --filter api build",
+    "dev:web": "pnpm --filter @ito-map/shared build && pnpm --filter web dev",
+    "dev:api": "pnpm --filter @ito-map/shared build && pnpm --filter api dev",
+    "dev": "pnpm --filter @ito-map/shared build && pnpm --parallel --filter @ito-map/shared --filter web --filter api dev",
+    "build": "pnpm --filter @ito-map/shared build && pnpm --filter web build && pnpm --filter api build",
+    "build:web": "pnpm --filter @ito-map/shared build && pnpm --filter web build",
+    "build:api": "pnpm --filter @ito-map/shared build && pnpm --filter api build",
+    "start": "pnpm --filter api start:production",
     "preview:web": "pnpm --filter web preview",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
-    "test:api": "pnpm --filter api test"
+    "test:api": "pnpm --filter @ito-map/shared build && pnpm --filter api test",
+    "security:audit:prod": "node scripts/audit-production.mjs"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["sharp"]
+    "onlyBuiltDependencies": ["argon2", "esbuild", "sharp"],
+    "overrides": {
+      "@babel/core@<=7.29.0": "7.29.6",
+      "body-parser@<1.20.6": "1.20.6",
+      "brace-expansion@<1.1.18": "1.1.18",
+      "brace-expansion@>=2.0.0 <2.1.4": "2.1.4",
+      "brace-expansion@>=5.0.0 <5.0.9": "5.0.9",
+      "esbuild@>=0.27.3 <0.28.1": "0.28.1",
+      "flatted@<3.4.2": "3.4.2",
+      "js-yaml@>=4.0.0 <4.3.0": "4.3.0",
+      "postcss@<=8.5.22": "8.5.23",
+      "qs@>=6.11.1 <6.15.2": "6.15.2",
+      "sharp@<0.35.0": "0.35.3",
+      "tar@<=7.5.20": "7.5.21"
+    }
   }
 }

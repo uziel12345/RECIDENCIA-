@@ -26,12 +26,14 @@ import {
 } from "../../components/ui/Icons";
 import { ThemeToggle } from "../../components/ui/ThemeToggle";
 import { VisitorTopBar } from "./components/VisitorTopBar";
-import { QuickDestinations } from "./components/QuickDestinations";
 import {
   CampusServicesPanel,
   type CampusService,
 } from "../shared/components/CampusServicesPanel";
+import { QuickDestinations } from "../shared/components/QuickDestinations";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import { SearchResultCard } from "../search/SearchResultCard";
+import { formatBuildingDisplayName } from "../buildings/utils/building-display-name";
 
 type VisitorViewMode = "map" | "destinations" | "services";
 
@@ -45,6 +47,8 @@ export function VisitorPage() {
     (state) => state.setSelectedBuilding
   );
   const setSearchTerm = useBuildingStore((state) => state.setSearchTerm);
+  const selectedSearchResult = useBuildingStore((state) => state.selectedSearchResult);
+  const setSelectedSearchResult = useBuildingStore((state) => state.setSelectedSearchResult);
 
   const [sheetState, setSheetState] = useState<SheetState>("closed");
   const [totalBuildings, setTotalBuildings] = useState(0);
@@ -281,7 +285,7 @@ export function VisitorPage() {
   }
 
   const sheetTitle = selectedBuilding
-    ? selectedBuilding.name
+    ? formatBuildingDisplayName(selectedBuilding.name, selectedBuilding.code)
     : "Catálogo de edificios";
 
   const sheetSubtitle = selectedBuilding
@@ -290,6 +294,7 @@ export function VisitorPage() {
 
   const showQuickCard =
     !!selectedBuilding &&
+    !selectedSearchResult &&
     sheetState === "closed" &&
     !showSearch &&
     !showQuickDest &&
@@ -317,6 +322,15 @@ export function VisitorPage() {
           />
         )}
       </AnimatePresence>
+
+      {selectedSearchResult && !hasOpenMobileWindow && (
+        <div className="visitor-mobile__search-result">
+          <SearchResultCard
+            result={selectedSearchResult}
+            onClose={() => setSelectedSearchResult(null)}
+          />
+        </div>
+      )}
 
       <MobileActionModal
         open={showQuickDest}

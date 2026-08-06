@@ -6,7 +6,13 @@ export type SearchResultKind =
   | "department"
   | "cubicle"
   | "headquarters"
-  | "gate";
+  | "gate"
+  | "position"
+  | "street"
+  | "person"
+  | "office";
+
+export type SearchValidationStatus = "confirmed" | "pending_validation";
 
 export type SearchResult = {
   id: string;
@@ -15,6 +21,20 @@ export type SearchResult = {
   subtitle: string;
   buildingId: string | null;
   buildingName: string | null;
-  /** Solo presente en resultados kind="gate" (no pertenecen a un edificio). */
+  departmentId?: string | null;
+  departmentName?: string | null;
+  description?: string | null;
+  aliases: string[];
+  keywords: string[];
+  score: number;
+  validationStatus?: SearchValidationStatus;
+  /** Presente en resultados georreferenciados que no pertenecen a un edificio. */
   coordinates?: { x: number; z: number };
+};
+
+export type SearchResponse = {
+  query: string;
+  normalizedQuery: string;
+  results: SearchResult[];
+  suggestions: string[];
 };

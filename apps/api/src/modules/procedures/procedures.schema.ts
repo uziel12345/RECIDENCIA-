@@ -2,6 +2,16 @@ import { z } from "zod";
 
 const procedureKindSchema = z.enum(["tramite", "servicio"]);
 const requirementTypeSchema = z.enum(["requisito", "documento"]);
+const validationStatusSchema = z.enum(["confirmed", "pending_validation"]);
+
+const httpUrlSchema = z
+  .string()
+  .max(1024)
+  .url("La URL no es válida")
+  .refine((value) => {
+    const protocol = new URL(value).protocol;
+    return protocol === "https:" || protocol === "http:";
+  }, "La URL debe usar HTTPS o HTTP");
 
 const requirementItemSchema = z.object({
   description: z
@@ -27,11 +37,13 @@ export const createProcedureSchema = z.object({
       "El slug solo puede contener letras minúsculas, dígitos y guiones (sin guión al inicio ni al final)"
     ),
   description: z.string().max(5000).nullable().optional(),
-  resource_url: z.string().max(1024).url("La URL no es válida").nullable().optional(),
+  resource_url: httpUrlSchema.nullable().optional(),
   kind: procedureKindSchema,
   department_id: z.string().uuid("El department_id debe ser un UUID válido").nullable().optional(),
   internal_location: z.string().max(255).nullable().optional(),
   schedule_text: z.string().max(255).nullable().optional(),
+  building_id: z.string().uuid("El building_id debe ser un UUID válido").nullable().optional(),
+  validation_status: validationStatusSchema.optional(),
   is_active: z.boolean().optional(),
   requirements: z.array(requirementItemSchema).optional(),
 });

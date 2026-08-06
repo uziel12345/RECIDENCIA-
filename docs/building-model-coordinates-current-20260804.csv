@@ -1,0 +1,79 @@
+id,code,name,active,status,model_node_name,glb_node_name,old_x,old_z,current_x,current_z,delta
+75a93b7d-52ec-11f1-a7fc-d843ae05cb18,1007,AULA 1007,false,missing-node,Edificio 3D 1.007,,,,,,
+75a93e30-52ec-11f1-a7fc-d843ae05cb18,1008,AULA 1008,false,missing-node,Edificio 3D 1.008,,,,,,
+75a940da-52ec-11f1-a7fc-d843ae05cb18,1009,AULA 1009,false,missing-node,Edificio 3D 1.009,,,,,,
+7ede66d9-6436-11f1-9da2-d843ae05cb18,A,EDIF. A,true,matched,Edificio_A,Edificio_A,-147.5869,-58.058,-57.6729,-86.4886,94.3018
+75a95e64-52ec-11f1-a7fc-d843ae05cb18,ASE,ASESORÍAS,true,matched,Asesorias,Asesorias,12,-4,100.4604,-112.8155,140.2357
+7ede6894-6436-11f1-9da2-d843ae05cb18,AUD-ING,AUDIOVISUAL DE ING.- BAÑOS,true,matched,Audiovisual_de_Ingeneria,Audiovisual_de_Ingeneria,-168.4785,-40.3551,-81.3508,-83.443,97.1998
+a374c9d7-3f3a-11f1-b497-d843ae05cb18,AUD-LIC,AUDIOVISUAL DE LICENCIATURA,true,matched,Audiovisual_de_Lic,Audiovisual_de_Lic,-47.0252,142.6178,-62.1717,91.2728,53.5325
+75a96085-52ec-11f1-a7fc-d843ae05cb18,AUD-POS,AUDIOVISUAL DE POSGRADO,true,matched,Matria_Docencia_Sala_Educacion_distancia,Matria_Docencia_Sala_Educacion_distancia,-88.5102,-85.5915,-0.969,-87.6481,87.5654
+7ede6929-6436-11f1-9da2-d843ae05cb18,AUL-AC,AULAS AC,true,matched,Aula_AC,Aula_AC,-38.1821,-130.671,68.4692,-42.3353,138.4836
+7ede697e-6436-11f1-9da2-d843ae05cb18,AUL-DOC,AULAS DE DOCTORADO,true,matched,Aulas_Cubiculos_de_Doctorado,Aulas_Cubiculos_de_Doctorado,30.2059,-127.1841,92.0937,-68.6609,85.1767
+c0b580af-6687-11f1-9d41-d843ae05cb18,AUL-P,AULAS P,true,matched,Aula_P,Aula_P,96.394,-29.0863,95.4357,25.1444,54.2392
+a374ca59-3f3a-11f1-b497-d843ae05cb18,AUL-S,EDIF. S,true,matched,Edificio_S,Edificio_S,63.6454,162.0398,1.7978,140.1738,65.5991
+75a9394c-52ec-11f1-a7fc-d843ae05cb18,B,EDIF. B,true,matched,Edificio_B,Edificio_B,-52,-48,-0.2882,-48.1009,51.7119
+ee10ec94-74b0-11f1-8da2-d843ae05cb18,BOD1,BODEGA 1,false,matched,Bodega_1,Bodega_1,,,109.8102,-10.6058,
+ee11c0dd-74b0-11f1-8da2-d843ae05cb18,BOD2,BODEGA 2,false,matched,Bodega_2,Bodega_2,,,105.3231,-0.4078,
+75a93569-52ec-11f1-a7fc-d843ae05cb18,C,EDIF. C,true,matched,Edificio_C,Edificio_C,-58,-14,-16.3646,-32.9542,45.7468
+a374ca07-3f3a-11f1-b497-d843ae05cb18,CAF,CAFETERÍA,true,matched,Cafeteria,Cafeteria,23.6417,63.3715,7.5663,57.906,16.9791
+7ede6c61-6436-11f1-9da2-d843ae05cb18,CAL,CALDERA,true,matched,Caldera,Caldera,-38.1821,-130.671,46.429,-92.8671,92.6724
+7ede6d43-6436-11f1-9da2-d843ae05cb18,CB,CIENCIAS BÁSICAS - BAÑOS,true,matched,Depto_Ciencias_Basicas,Depto_Ciencias_Basicas,-32.0686,103.747,-39.9973,65.9275,38.6417
+a374c93e-3f3a-11f1-b497-d843ae05cb18,CC,CENTRO DE CÓMPUTO,true,matched,Centro_computo_Sistemas_Computacionales,Centro_computo_Sistemas_Computacionales,0.7661,-126.9385,63.2534,-81.7292,77.1268
+7ede6e23-6436-11f1-9da2-d843ae05cb18,CEA,DPTO. CIENCIAS ECON.- ADMVAS.,true,matched,Depto_ciencias_Economico_Admin,Depto_ciencias_Economico_Admin,-27.0091,172.1009,-57.9878,114.851,65.094
+a374c922-3f3a-11f1-b497-d843ae05cb18,Centro,CENTRO DE INFORMACIÓN (BIBLIOTECA),true,matched,Centro_informacion,Centro_informacion,16.3803,12.3014,20.0716,20.5676,9.0529
+ee0ff11d-74b0-11f1-8da2-d843ae05cb18,CI,CENTRO DE INFORMACI??N,false,matched,Centro_informacion,Centro_informacion,,,20.0716,20.5676,
+7ede6e81-6436-11f1-9da2-d843ae05cb18,CONACYT,CONACYT,true,matched,Edificio_Conacyt,Edificio_Conacyt,-183.5494,-89.9616,-66.0583,-123.0124,122.0513
+7ede6ed0-6436-11f1-9da2-d843ae05cb18,COPIAS,COPIAS,false,matched,Lab_Microscopia_Sala_Titulacion_Aula_Dibujo,Lab_Microscopia_Sala_Titulacion_Aula_Dibujo,-107.8888,-37.3687,-34.0998,-58.4886,76.752
+7ede6f19-6436-11f1-9da2-d843ae05cb18,CTIER,DPTO. CIENCIAS DE LA TIERRA,true,matched,Depto_Ciencias_la_tierra,Depto_Ciencias_la_tierra,6.5388,-61.1999,44.5914,-34.4464,46.5161
+75a95a0a-52ec-11f1-a7fc-d843ae05cb18,CUB-DOC,Cubículos Doctorado,true,matched,Aulas_Cubiculos_de_Doctorado,Aulas_Cubiculos_de_Doctorado,30.2059,-127.1841,92.0937,-68.6609,85.1767
+7ede705d-6436-11f1-9da2-d843ae05cb18,CUB-MAE,CUBÍCULO DE MAESTROS,true,matched,Cubiculos_Maestros,Cubiculos_Maestros,-35.2104,18.0883,-7.5412,7.8105,29.5164
+7ede70bc-6436-11f1-9da2-d843ae05cb18,D,EDIF. D,false,missing-node,Aulas D ,,,,,,
+7ede7106-6436-11f1-9da2-d843ae05cb18,DA,DESARROLLO ACADÉMICO,true,matched,Depto_desarrollo_academico,Depto_desarrollo_academico,-134.3633,-2.2849,-69.2501,-46.867,78.9132
+75a95c2e-52ec-11f1-a7fc-d843ae05cb18,DEL,DPTO. ING. ELECTRÓNICA,true,matched,Edif y Depto de Ing. Electronica,Edif y Depto de Ing. Electronica,54,-50,88.3022,-32.9104,38.3236
+7ede7187-6436-11f1-9da2-d843ae05cb18,DEPI,D.E.P.I.,true,matched,D.P.I,D.P.I,71.8895,-114.9923,117.0276,-45.5772,82.8004
+7ede71d4-6436-11f1-9da2-d843ae05cb18,DIE,DPTO. DE ING. ELÉCTRICA,true,matched,Depto_Ing_Electrica,Depto_Ing_Electrica,-120.004,-96.8323,-23.2238,-100.961,96.8682
+a374c8c9-3f3a-11f1-b497-d843ae05cb18,DIR,DIRECCIÓN,true,matched,Depto_servico_escolares_Div_estudios_profecionales_Direccion,Depto_servico_escolares_Div_estudios_profecionales_Direccion,-86.2153,38.0304,-52.0612,0.0448,51.0824
+75a95801-52ec-11f1-a7fc-d843ae05cb18,DQB,Depto. Química y Bioquímica,true,matched,Depto_Quimica_Bioquimica_Depto_Ing_Industrial,Depto_Quimica_Bioquimica_Depto_Ing_Industrial,26,-127,106.8369,-92.356,87.9478
+7ede72a6-6436-11f1-9da2-d843ae05cb18,DQI-DII,DPTO. DE ING. QUÍMICA - DPTO. ING. INDUSTRIAL,true,matched,Depto_Quimica_Bioquimica_Depto_Ing_Industrial,Depto_Quimica_Bioquimica_Depto_Ing_Industrial,26,-127,106.8369,-92.356,87.9478
+a374c992-3f3a-11f1-b497-d843ae05cb18,E,EDIF. E,true,matched,Edificio_E,Edificio_E,12.0946,95.3105,-3.2243,74.7988,25.6008
+75a94357-52ec-11f1-a7fc-d843ae05cb18,ENIE,Aulas ENIE,false,matched,Aula_Ñ,Aula_Ñ,54,-107,116.7182,-75.4928,70.1874
+7ede742d-6436-11f1-9da2-d843ae05cb18,EXTRA,EXTRAESCOLARES,true,matched,Extra_escolares,Extra_escolares,95.9161,-4.2166,93.8987,43.3742,47.6335
+a374c9a4-3f3a-11f1-b497-d843ae05cb18,F,EDIF. F,true,matched,Edificio_F,Edificio_F,9.7073,118.4428,-17.3545,95.7133,35.3408
+75a946e3-52ec-11f1-a7fc-d843ae05cb18,FQ,LAB. DE FÍSICO QUÍMICA,true,matched,Laboratorio_Fisico_Quimica,Laboratorio_Fisico_Quimica,-22,-18,16.2681,-18.1562,38.2684
+a374c9b6-3f3a-11f1-b497-d843ae05cb18,G,EDIF. G,true,matched,Edificio_G,Edificio_G,8.4006,150.592,-31.5576,112.3083,55.338
+75a9492b-52ec-11f1-a7fc-d843ae05cb18,GEO,Geolocalización,false,missing-node,Contenido de geolocalización,,,,,,
+a374ca1b-3f3a-11f1-b497-d843ae05cb18,GIM,GIMNASIO,true,matched,Gimnacio,Gimnacio,61.2421,17.1434,56.6284,43.2168,26.4785
+a374c957-3f3a-11f1-b497-d843ae05cb18,H,EDIF. H,true,matched,Edificio_H_Servicio_Medico,Edificio_H_Servicio_Medico,-44.2055,122.9823,-53.8696,79.0223,45.0097
+a374c96b-3f3a-11f1-b497-d843ae05cb18,I,EDIF. I,true,matched,Edificio_I,Edificio_I,-59.7816,172.2834,-83.214,125.3034,52.4995
+a374c97e-3f3a-11f1-b497-d843ae05cb18,J,Edificio J,false,missing-node,Edificio J,,,,,,
+a374ca70-3f3a-11f1-b497-d843ae05cb18,K,EDIF. K - BAÑOS,true,matched,Edificio_K,Edificio_K,47.8697,148.8787,-2.2033,129.4134,53.7234
+75a92791-52ec-11f1-a7fc-d843ae05cb18,L,Edificio L,true,matched,Edificio_L,Edificio_L,22,-18,42.9656,2.4637,29.2971
+75a950bd-52ec-11f1-a7fc-d843ae05cb18,LAB-CIV,LAB. ING. CIVIL,true,matched,Lab_Ing_Civil,Lab_Ing_Civil,20,-95,55.9127,-47.0509,59.9069
+75a94e80-52ec-11f1-a7fc-d843ae05cb18,LAB-ELE,LAB. ING. ELÉCTRICA,true,matched,Lab_Ing_Electrica,Lab_Ing_Electrica,-72,-116,20.0459,-109.5484,92.2717
+a374ca43-3f3a-11f1-b497-d843ae05cb18,LAB-IND,LAB. ING. INDUSTRIAL,true,matched,Laboratorio_Ing_Industrial,Laboratorio_Ing_Industrial,74.776,114.2696,33.655,117.937,41.2842
+7ede7760-6436-11f1-9da2-d843ae05cb18,LAB-MEC,DPTO. LAB. ING. MECÁNICA,true,matched,Lab_Depto_Ing_Mecanica_Lab_Quimaca_Pesada,Lab_Depto_Ing_Mecanica_Lab_Quimaca_Pesada,-42.2376,-90.0708,26.9331,-68.1119,72.5726
+7ede77d3-6436-11f1-9da2-d843ae05cb18,LAB-MICR,LAB. MICR.- TITULACIÓN - AULA DIBUJO - BAÑOS,true,matched,Lab_Microscopia_Sala_Titulacion_Aula_Dibujo,Lab_Microscopia_Sala_Titulacion_Aula_Dibujo,-107.8888,-37.3687,-34.0998,-58.4886,76.752
+7ede7867-6436-11f1-9da2-d843ae05cb18,LAB-QP,LAB. QUÍMICA PESADA,true,matched,Lab_Depto_Ing_Mecanica_Lab_Quimaca_Pesada,Lab_Depto_Ing_Mecanica_Lab_Quimaca_Pesada,-42.2376,-90.0708,26.9331,-68.1119,72.5726
+75a94c1b-52ec-11f1-a7fc-d843ae05cb18,LAB-QUI,Laboratorio de Química,true,matched,Laboratorio_Fisico_Quimica,Laboratorio_Fisico_Quimica,-22,-18,16.2681,-18.1562,38.2684
+7ede78c3-6436-11f1-9da2-d843ae05cb18,LAB-SIM,LAB. DE SIMULACIÓN,true,matched,Lab_Simulacion,Lab_Simulacion,-54.3715,-148.9236,42.6357,-106.7305,105.7859
+4eb17a7e-7ef8-11f1-8a16-d0460c699407,M,Edificio M,true,matched,Aula_M,Aula_M,74,10,73.6617,16.0164,6.0259
+7ede796d-6436-11f1-9da2-d843ae05cb18,MAE-ADM,M. ADMINISTRACIÓN,true,matched,Maestria_Administracion,Maestria_Administracion,20.8673,173.4258,-28.0887,129.4412,65.8129
+7ede79c3-6436-11f1-9da2-d843ae05cb18,MAE-CON,MAESTRÍA EN CONSTRUCCIÓN,true,matched,Maestria_cosntruccion,Maestria_cosntruccion,-164.2005,-100.3312,-46.211,-123.1921,120.1838
+7ede7a15-6436-11f1-9da2-d843ae05cb18,MAE-DOC,MAESTRÍA EN DOCENCIA,true,matched,Matria_Docencia_Sala_Educacion_distancia,Matria_Docencia_Sala_Educacion_distancia,-88.5102,-85.5915,-0.969,-87.6481,87.5654
+7ede7a69-6436-11f1-9da2-d843ae05cb18,MC,EDIFICIO MULTICARRERA,false,missing-node,Edificios 3D 16 en emplazamiento plano,,,,,,
+7ede7aba-6436-11f1-9da2-d843ae05cb18,N,AULA Ñ,true,matched,Aula_Ñ,Aula_Ñ,57.6345,-151.0679,116.7182,-75.4928,95.9296
+a374c9ee-3f3a-11f1-b497-d843ae05cb18,NEW,Edificio Nuevo,true,matched,Edificio_Nuevo,Edificio_Nuevo,-65.6091,152.9491,-84.739,88.1865,67.5289
+7ede7b10-6436-11f1-9da2-d843ae05cb18,O,AULA O,false,missing-node,Edificios 3D 18 en emplazamiento plano,,,,,,
+75a955eb-52ec-11f1-a7fc-d843ae05cb18,POS,Posgrado,false,missing-node,Edificio de Postgrado.001,,,,,,
+7ede7b96-6436-11f1-9da2-d843ae05cb18,PTR,PLANTA DE TRATAM. DE AGUAS RESID.,false,missing-node,Edificios 3D 10 en emplazamiento plano,,,,,,
+a374ca2e-3f3a-11f1-b497-d843ae05cb18,Q,Edificio Q,true,matched,Edificio_Q,Edificio_Q,66.3532,80.9748,46.6227,83.7022,19.9181
+ee0e59f4-74b0-11f1-8da2-d843ae05cb18,S,EDIF. S,false,matched,Edificio_S,Edificio_S,,,1.7978,140.1738,
+75a952fa-52ec-11f1-a7fc-d843ae05cb18,SAL,Sala de Titulación,true,matched,Lab_Microscopia_Sala_Titulacion_Aula_Dibujo,Lab_Microscopia_Sala_Titulacion_Aula_Dibujo,-107.8888,-37.3687,-34.0998,-58.4886,76.752
+7ede7bfb-6436-11f1-9da2-d843ae05cb18,SAL-MAE,"TITULACIÓN DE M. EN ADMÓN.,",true,matched,Sala_Titulacion_Maestria-Admon,Sala_Titulacion_Maestria-Admon,95.9161,-4.2166,-39.9488,132.1912,192.5263
+7ede790e-6436-11f1-9da2-d843ae05cb18,Sec-61,SECCIÓN 61,false,matched,Seccion_61,Seccion_61,-176.5824,-67.1432,-77.2152,-105.03,106.345
+c0b5c72d-6687-11f1-9d41-d843ae05cb18,SECCIÓN 61,SECCIÓN 61,true,matched,Seccion_61,Seccion_61,-176.5824,-67.1432,-77.2152,-105.03,106.345
+7ede7c5b-6436-11f1-9da2-d843ae05cb18,SERV-ESC,SERV. ESCOLARES - DIV. EST. PROF.,true,matched,Depto_servico_escolares_Div_estudios_profecionales_Direccion,Depto_servico_escolares_Div_estudios_profecionales_Direccion,-89.8816,37.9362,-52.0612,0.0448,53.5364
+d7a1ac1a-bb3b-45b3-a5e3-d85d387ced83,TEMP-DEL,Edificio Temporal Delete,false,missing-node,Edificio_Temporal_Delete,,,,,,
+a08c0a4a-5a39-4a6d-a5a9-6ecea216577f,TMP-20260430124616,Edificio Temporal Delete 20260430124616,false,missing-node,Edificio_Temporal_Delete_20260430124616,,,,,,
+75a92fb7-52ec-11f1-a7fc-d843ae05cb18,X,Edificio X,false,missing-node,Edificio_X,,,,,,
+75a932df-52ec-11f1-a7fc-d843ae05cb18,X001,Edificio X001,false,missing-node,Edificio_X001,,,,,,

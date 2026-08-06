@@ -13,8 +13,14 @@ import {
 } from "./buildings.controller.js";
 import { authenticate } from "../auth/middlewares/authenticate.middleware.js";
 import { authorizePermission } from "../auth/middlewares/authorize.middleware.js";
-import { validateBody, validateParams } from "../../shared/middlewares/validator.js";
-import { createBuildingSchema, updateBuildingSchema, buildingIdSchema } from "./buildings.schema.js";
+import { validateBody, validateParams, validateQuery } from "../../shared/middlewares/validator.js";
+import {
+  createBuildingSchema,
+  updateBuildingSchema,
+  buildingIdSchema,
+  buildingStatusSchema,
+  buildingsPaginationSchema,
+} from "./buildings.schema.js";
 
 const router = Router();
 
@@ -32,6 +38,7 @@ router.get(
   "/admin/paginated",
   authenticate,
   authorizePermission("can_view_buildings"),
+  validateQuery(buildingsPaginationSchema),
   getBuildingsForAdminPaginated
 );
 
@@ -61,6 +68,7 @@ router.patch(
   authenticate,
   authorizePermission("can_edit_buildings"),
   validateParams(buildingIdSchema),
+  validateBody(buildingStatusSchema),
   updateBuildingStatus
 );
 

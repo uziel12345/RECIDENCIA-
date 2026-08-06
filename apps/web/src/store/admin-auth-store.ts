@@ -18,6 +18,27 @@ type AdminAuthState = {
   clearError: () => void;
 };
 
+const ADMIN_SESSION_HINT_COOKIE = "csrf_token";
+let sessionCheckPromise: Promise<boolean> | null = null;
+
+function hasAdminSessionHint(): boolean {
+  if (typeof document === "undefined") return true;
+
+  return document.cookie
+    .split(";")
+    .some(
+      (cookie) =>
+        cookie.trim().split("=", 1)[0] === ADMIN_SESSION_HINT_COOKIE
+    );
+}
+
+function clearAdminSessionHint(): void {
+  if (typeof document === "undefined") return;
+
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${ADMIN_SESSION_HINT_COOKIE}=; Max-Age=0; Path=/; SameSite=Strict${secure}`;
+}
+
 export const useAdminAuthStore = create<AdminAuthState>((set) => ({
   user: null,
   loading: false,
@@ -56,36 +77,59 @@ export const useAdminAuthStore = create<AdminAuthState>((set) => ({
     }
   },
 
-  loadSession: async () => {
-    set({ loading: true, error: null });
+  loadSession: () => {
+    if (sessionCheckPromise) return sessionCheckPromise;
 
-    try {
-      const user = await getMeApi();
-
-      set({
-        user,
-        isAuthenticated: true,
-        loading: false,
-        error: null,
-      });
-
-      return true;
-    } catch {
+    if (!hasAdminSessionHint()) {
       set({
         user: null,
         isAuthenticated: false,
         loading: false,
         error: null,
       });
-
-      return false;
+      return Promise.resolve(false);
     }
+
+    set({ loading: true, error: null });
+
+    const request = (async () => {
+      try {
+        const user = await getMeApi();
+
+        set({
+          user,
+          isAuthenticated: true,
+          loading: false,
+          error: null,
+        });
+
+        return true;
+      } catch {
+        clearAdminSessionHint();
+        set({
+          user: null,
+          isAuthenticated: false,
+          loading: false,
+          error: null,
+        });
+
+        return false;
+      }
+    })();
+
+    sessionCheckPromise = request;
+    void request.finally(() => {
+      if (sessionCheckPromise === request) sessionCheckPromise = null;
+    });
+
+    return request;
   },
 
   logout: async () => {
     try {
       await logoutAdminApi();
     } finally {
+      clearAdminSessionHint();
       set({
         user: null,
         isAuthenticated: false,

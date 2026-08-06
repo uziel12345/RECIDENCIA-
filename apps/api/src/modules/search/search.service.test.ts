@@ -1,380 +1,271 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { SearchService } from "./search.service.js";
+import type { SearchCandidateRow } from "./search.types.js";
 
-const mockBuilding = {
-  id: "b-1",
-  kind: "building" as const,
-  title: "Dirección",
-  subtitle: "DIR · Administrativo",
-  buildingId: "b-1",
-  buildingName: "Dirección",
-};
+const candidates: SearchCandidateRow[] = [
+  {
+    id: "building-direccion",
+    kind: "building",
+    title: "Dirección",
+    subtitle: "DIR · Administrativo",
+    buildingId: "building-direccion",
+    buildingName: "Dirección",
+    description: "Edificio de Dirección",
+    aliases: ["direccion general"],
+    keywords: ["dir", "administracion"],
+    validationStatus: "confirmed",
+  },
+  {
+    id: "position-director",
+    kind: "position",
+    title: "Director del Instituto Tecnológico de Oaxaca",
+    subtitle: "Cargo institucional · Dirección",
+    buildingId: "building-direccion",
+    buildingName: "Dirección",
+    description: null,
+    aliases: ["director", "director del tecnologico"],
+    keywords: ["direccion", "responsable"],
+    validationStatus: "confirmed",
+  },
+  {
+    id: "service-inscripcion",
+    kind: "service",
+    title: "Inscripción",
+    subtitle: "Servicio",
+    buildingId: null,
+    buildingName: null,
+    description: null,
+    aliases: ["inscripcion de estudiantes"],
+    keywords: ["registro escolar"],
+    validationStatus: "pending_validation",
+  },
+  {
+    id: "building-servicios-escolares",
+    kind: "building",
+    title: "Servicios Escolares",
+    subtitle: "SERV-ESC · Servicio",
+    buildingId: "building-servicios-escolares",
+    buildingName: "Servicios Escolares",
+    description: null,
+    aliases: ["control escolar"],
+    keywords: ["servicios escolares"],
+    validationStatus: "confirmed",
+  },
+  {
+    id: "service-constancia-social",
+    kind: "service",
+    title: "Constancia de terminación de servicio social",
+    subtitle: "Servicio",
+    buildingId: null,
+    buildingName: null,
+    description: null,
+    aliases: ["constancia de servicio social"],
+    keywords: ["constancia", "servicio social"],
+    validationStatus: "pending_validation",
+  },
+  {
+    id: "service-constancia-ingles",
+    kind: "service",
+    title: "Constancia de terminación de inglés",
+    subtitle: "Servicio",
+    buildingId: null,
+    buildingName: null,
+    description: null,
+    aliases: ["terminacion de ingles", "constancia de ingles"],
+    keywords: ["constancia", "ingles"],
+    validationStatus: "pending_validation",
+  },
+  {
+    id: "service-actividades",
+    kind: "service",
+    title: "Constancia de actividades complementarias",
+    subtitle: "Servicio",
+    buildingId: null,
+    buildingName: null,
+    description: null,
+    aliases: ["actividades complementarias"],
+    keywords: ["liberacion", "actividades complementarias"],
+    validationStatus: "pending_validation",
+  },
+  {
+    id: "classroom-i4",
+    kind: "classroom",
+    title: "I4",
+    subtitle: "I4 · Edificio I",
+    buildingId: "building-i",
+    buildingName: "Edificio I",
+    description: null,
+    aliases: ["i-4", "aula i4"],
+    keywords: ["aula"],
+    validationStatus: "confirmed",
+  },
+  {
+    id: "department-sistemas",
+    kind: "department",
+    title: "Departamento de Sistemas y Computación",
+    subtitle: "Departamento · Edificio I",
+    buildingId: "building-i",
+    buildingName: "Edificio I",
+    description: null,
+    aliases: ["sistemas y computacion"],
+    keywords: ["sistemas"],
+    validationStatus: "confirmed",
+  },
+  {
+    id: "building-biblioteca",
+    kind: "building",
+    title: "Centro de Información (Biblioteca)",
+    subtitle: "CI · Biblioteca",
+    buildingId: "building-biblioteca",
+    buildingName: "Centro de Información (Biblioteca)",
+    description: null,
+    aliases: ["biblioteca"],
+    keywords: ["centro de informacion"],
+    validationStatus: "confirmed",
+  },
+  {
+    id: "building-computo",
+    kind: "building",
+    title: "Centro de Cómputo",
+    subtitle: "CC · Laboratorio",
+    buildingId: "building-computo",
+    buildingName: "Centro de Cómputo",
+    description: null,
+    aliases: ["centro de computo"],
+    keywords: ["computo"],
+    validationStatus: "confirmed",
+  },
+];
 
-const mockClassroom = {
-  id: "c-1",
-  kind: "classroom" as const,
-  title: "Aula 101",
-  subtitle: "A-101 · Dirección",
-  buildingId: "b-1",
-  buildingName: "Dirección",
-};
-
-const mockProcedure = {
-  id: "p-1",
-  kind: "procedure" as const,
-  title: "Constancia de estudios",
-  subtitle: "Trámite",
-  buildingId: "b-1",
-  buildingName: "Dirección",
-};
-
-const mockService = {
-  id: "s-1",
-  kind: "service" as const,
-  title: "Asesoría estudiantil",
-  subtitle: "Servicio",
-  buildingId: "b-1",
-  buildingName: "Dirección",
-};
-
-const mockDepartment = {
-  id: "d-1",
-  kind: "department" as const,
-  title: "Departamento de Sistemas",
-  subtitle: "Departamento · Dirección",
-  buildingId: "b-1",
-  buildingName: "Dirección",
-};
-
-const mockCubicle = {
-  id: "cub-1",
-  kind: "cubicle" as const,
-  title: "CUB-1",
-  subtitle: "Prof. Juan Pérez · Dirección",
-  buildingId: "b-1",
-  buildingName: "Dirección",
-};
-
-const mockHeadquarters = {
-  id: "hq-1",
-  kind: "headquarters" as const,
-  title: "Jefatura de Sistemas",
-  subtitle: "Jefatura · Dirección",
-  buildingId: "b-1",
-  buildingName: "Dirección",
-};
-
-const mockGate = {
-  id: "g-1",
-  kind: "gate" as const,
-  title: "Puerta Principal",
-  subtitle: "Acceso al campus",
-  buildingId: null,
-  buildingName: null,
-  x: 10,
-  z: 20,
-};
-
-function createMockRepository() {
+function createRepository() {
+  const byKind = (kind: SearchCandidateRow["kind"]) =>
+    candidates.filter((candidate) => candidate.kind === kind);
   return {
-    searchBuildings: vi.fn(),
-    searchClassrooms: vi.fn(),
-    searchProcedures: vi.fn(),
-    searchDepartments: vi.fn().mockResolvedValue([]),
+    searchBuildings: vi.fn().mockResolvedValue(byKind("building")),
+    searchClassrooms: vi.fn().mockResolvedValue(byKind("classroom")),
+    searchProcedures: vi.fn((_terms: string[], kind: "tramite" | "servicio") =>
+      Promise.resolve(kind === "servicio" ? byKind("service") : [])
+    ),
+    searchDepartments: vi.fn().mockResolvedValue(byKind("department")),
     searchCubicles: vi.fn().mockResolvedValue([]),
     searchHeadquarters: vi.fn().mockResolvedValue([]),
     searchGates: vi.fn().mockResolvedValue([]),
+    searchPositions: vi.fn().mockResolvedValue(byKind("position")),
+    searchStreets: vi.fn().mockResolvedValue([]),
   };
 }
 
-function createService() {
-  const repository = createMockRepository();
-  return { repository, service: new SearchService(repository as any) };
-}
-
 describe("SearchService", () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  // ── type = 'all' ─────────────────────────────────────────────
-
-  describe("type = all", () => {
-    it("runs all eight queries in parallel and merges results in order", async () => {
-      const { service, repository } = createService();
-      repository.searchBuildings.mockResolvedValue([mockBuilding]);
-      repository.searchClassrooms.mockResolvedValue([mockClassroom]);
-      repository.searchProcedures
-        .mockResolvedValueOnce([mockProcedure]) // tramite
-        .mockResolvedValueOnce([mockService]); // servicio
-      repository.searchDepartments.mockResolvedValue([mockDepartment]);
-      repository.searchCubicles.mockResolvedValue([mockCubicle]);
-      repository.searchHeadquarters.mockResolvedValue([mockHeadquarters]);
-      repository.searchGates.mockResolvedValue([mockGate]);
-
-      const results = await service.search("dir", "all");
-
-      expect(results).toHaveLength(8);
-      expect(results.map((r) => r.kind)).toEqual([
-        "building",
-        "classroom",
-        "procedure",
-        "service",
-        "department",
-        "cubicle",
-        "headquarters",
-        "gate",
-      ]);
-      expect(repository.searchBuildings).toHaveBeenCalledWith(["dir"]);
-      expect(repository.searchClassrooms).toHaveBeenCalledWith(["dir"]);
-      expect(repository.searchProcedures).toHaveBeenCalledWith(["dir"], "tramite");
-      expect(repository.searchProcedures).toHaveBeenCalledWith(["dir"], "servicio");
-      expect(repository.searchDepartments).toHaveBeenCalledWith(["dir"]);
-      expect(repository.searchCubicles).toHaveBeenCalledWith(["dir"]);
-      expect(repository.searchHeadquarters).toHaveBeenCalledWith(["dir"]);
-      expect(repository.searchGates).toHaveBeenCalledWith(["dir"]);
-    });
-
-    it("attaches coordinates only to gate results", async () => {
-      const { service, repository } = createService();
-      repository.searchBuildings.mockResolvedValue([]);
-      repository.searchClassrooms.mockResolvedValue([]);
-      repository.searchProcedures.mockResolvedValue([]);
-      repository.searchDepartments.mockResolvedValue([]);
-      repository.searchCubicles.mockResolvedValue([]);
-      repository.searchHeadquarters.mockResolvedValue([]);
-      repository.searchGates.mockResolvedValue([mockGate]);
-
-      const results = await service.search("puerta", "all");
-
-      expect(results).toHaveLength(1);
-      expect(results[0]).toMatchObject({
-        kind: "gate",
-        coordinates: { x: 10, z: 20 },
+  it.each(["direccion", "dirección", "DIRECCIÓN", "  dirección  "])(
+    "finds Dirección for %s",
+    async (query) => {
+      const service = new SearchService(createRepository());
+      const response = await service.search(query, "all");
+      expect(response.results[0]).toMatchObject({
+        kind: "building",
+        title: "Dirección",
       });
-      expect((results[0] as any).x).toBeUndefined();
-      expect((results[0] as any).z).toBeUndefined();
-    });
+    }
+  );
 
-    it("returns empty array when all queries return nothing", async () => {
-      const { service, repository } = createService();
-      repository.searchBuildings.mockResolvedValue([]);
-      repository.searchClassrooms.mockResolvedValue([]);
-      repository.searchProcedures.mockResolvedValue([]);
-      repository.searchDepartments.mockResolvedValue([]);
-      repository.searchCubicles.mockResolvedValue([]);
-      repository.searchHeadquarters.mockResolvedValue([]);
-      repository.searchGates.mockResolvedValue([]);
+  it.each(["director", "donde encuentro al director", "dónde encuentro al director del tecnológico"])(
+    "finds and locates the director for %s",
+    async (query) => {
+      const service = new SearchService(createRepository());
+      const response = await service.search(query, "all");
+      expect(response.normalizedQuery).toBe("director");
+      expect(response.results[0]).toMatchObject({
+        kind: "position",
+        buildingName: "Dirección",
+      });
+    }
+  );
 
-      const results = await service.search("xyznotfound", "all");
-      expect(results).toHaveLength(0);
-    });
+  it.each(["inscripcion", "inscripción", "quiero inscribirme"])(
+    "normalizes registration query %s",
+    async (query) => {
+      const service = new SearchService(createRepository());
+      const response = await service.search(query, "all");
+      expect(response.results[0]).toMatchObject({
+        kind: "service",
+        validationStatus: "pending_validation",
+      });
+    }
+  );
 
-    it("passes a single-element word array for a one-word term", async () => {
-      const { service, repository } = createService();
-      repository.searchBuildings.mockResolvedValue([]);
-      repository.searchClassrooms.mockResolvedValue([]);
-      repository.searchProcedures.mockResolvedValue([]);
-      repository.searchDepartments.mockResolvedValue([]);
-      repository.searchCubicles.mockResolvedValue([]);
-      repository.searchHeadquarters.mockResolvedValue([]);
-      repository.searchGates.mockResolvedValue([]);
+  it.each([
+    ["servicios escolares", "building-servicios-escolares"],
+    ["constancia de servicio social", "service-constancia-social"],
+    ["constancia de terminación de inglés", "service-constancia-ingles"],
+    ["actividades complementarias", "service-actividades"],
+  ])("finds the expected catalog entry for %s", async (query, expectedId) => {
+    const response = await new SearchService(createRepository()).search(query, "all");
+    expect(response.results[0]?.id).toBe(expectedId);
+  });
 
-      await service.search("constancia", "all");
+  it.each(["I4", "I-4", "aula i 4"])("finds classroom with %s", async (query) => {
+    const service = new SearchService(createRepository());
+    const response = await service.search(query, "all");
+    expect(response.results[0]).toMatchObject({ id: "classroom-i4", kind: "classroom" });
+  });
 
-      expect(repository.searchBuildings).toHaveBeenCalledWith(["constancia"]);
+  it.each([
+    ["sistemas", "department-sistemas"],
+    ["departamento de sistemas", "department-sistemas"],
+    ["biblioteca", "building-biblioteca"],
+    ["centro de cómputo", "building-computo"],
+  ])("finds the expected campus discovery entry for %s", async (query, expectedId) => {
+    const response = await new SearchService(createRepository()).search(query, "all");
+    expect(response.results[0]?.id).toBe(expectedId);
+  });
+
+  it("still returns classrooms when searching the bare word 'aula'", async () => {
+    const response = await new SearchService(createRepository()).search("aula", "all");
+    expect(response.results.some((result) => result.kind === "classroom")).toBe(true);
+  });
+
+  it("passes only meaningful terms to repositories", async () => {
+    const repository = createRepository();
+    const service = new SearchService(repository);
+    await service.search("¿Dónde encuentro al director del tecnológico?", "all");
+    expect(repository.searchPositions).toHaveBeenCalledWith(["director"]);
+  });
+
+  it("returns a typed empty response for an unknown service", async () => {
+    const repository = createRepository();
+    Object.values(repository).forEach((mock) => mock.mockResolvedValue([]));
+    const service = new SearchService(repository);
+    await expect(service.search("servicio inexistente", "all")).resolves.toMatchObject({
+      results: [],
+      suggestions: [],
     });
   });
 
-  // ── type = 'department' ──────────────────────────────────────
-
-  describe("type = department", () => {
-    it("only calls searchDepartments", async () => {
-      const { service, repository } = createService();
-      repository.searchDepartments.mockResolvedValue([mockDepartment]);
-
-      const results = await service.search("sistemas", "department");
-
-      expect(results).toEqual([mockDepartment]);
-      expect(repository.searchDepartments).toHaveBeenCalledWith(["sistemas"]);
-      expect(repository.searchBuildings).not.toHaveBeenCalled();
-    });
+  it("does not query the repository for an empty string", async () => {
+    const repository = createRepository();
+    const service = new SearchService(repository);
+    const response = await service.search("   ", "all");
+    expect(response.results).toEqual([]);
+    expect(repository.searchBuildings).not.toHaveBeenCalled();
   });
 
-  // ── type = 'cubicle' ──────────────────────────────────────────
-
-  describe("type = cubicle", () => {
-    it("only calls searchCubicles", async () => {
-      const { service, repository } = createService();
-      repository.searchCubicles.mockResolvedValue([mockCubicle]);
-
-      const results = await service.search("cub-1", "cubicle");
-
-      expect(results).toEqual([mockCubicle]);
-      expect(repository.searchCubicles).toHaveBeenCalledWith(["cub-1"]);
-      expect(repository.searchBuildings).not.toHaveBeenCalled();
-    });
-  });
-
-  // ── type = 'headquarters' ─────────────────────────────────────
-
-  describe("type = headquarters", () => {
-    it("only calls searchHeadquarters", async () => {
-      const { service, repository } = createService();
-      repository.searchHeadquarters.mockResolvedValue([mockHeadquarters]);
-
-      const results = await service.search("jefatura", "headquarters");
-
-      expect(results).toEqual([mockHeadquarters]);
-      expect(repository.searchHeadquarters).toHaveBeenCalledWith(["jefatura"]);
-      expect(repository.searchBuildings).not.toHaveBeenCalled();
-    });
-  });
-
-  // ── type = 'gate' ─────────────────────────────────────────────
-
-  describe("type = gate", () => {
-    it("calls searchGates and attaches coordinates", async () => {
-      const { service, repository } = createService();
-      repository.searchGates.mockResolvedValue([mockGate]);
-
-      const results = await service.search("puerta", "gate");
-
-      expect(repository.searchGates).toHaveBeenCalledWith(["puerta"]);
-      expect(results).toEqual([
-        {
-          id: "g-1",
-          kind: "gate",
-          title: "Puerta Principal",
-          subtitle: "Acceso al campus",
-          buildingId: null,
-          buildingName: null,
-          coordinates: { x: 10, z: 20 },
-        },
-      ]);
-    });
-  });
-
-  // ── type = 'building' ────────────────────────────────────────
-
-  describe("type = building", () => {
-    it("only calls searchBuildings", async () => {
-      const { service, repository } = createService();
-      repository.searchBuildings.mockResolvedValue([mockBuilding]);
-
-      const results = await service.search("dir", "building");
-
-      expect(results).toEqual([mockBuilding]);
-      expect(repository.searchBuildings).toHaveBeenCalledWith(["dir"]);
-      expect(repository.searchClassrooms).not.toHaveBeenCalled();
-      expect(repository.searchProcedures).not.toHaveBeenCalled();
-    });
-  });
-
-  // ── type = 'classroom' ───────────────────────────────────────
-
-  describe("type = classroom", () => {
-    it("only calls searchClassrooms", async () => {
-      const { service, repository } = createService();
-      repository.searchClassrooms.mockResolvedValue([mockClassroom]);
-
-      const results = await service.search("101", "classroom");
-
-      expect(results).toEqual([mockClassroom]);
-      expect(repository.searchClassrooms).toHaveBeenCalledWith(["101"]);
-      expect(repository.searchBuildings).not.toHaveBeenCalled();
-      expect(repository.searchProcedures).not.toHaveBeenCalled();
-    });
-  });
-
-  // ── type = 'procedure' ───────────────────────────────────────
-
-  describe("type = procedure", () => {
-    it("calls searchProcedures with kind=tramite", async () => {
-      const { service, repository } = createService();
-      repository.searchProcedures.mockResolvedValue([mockProcedure]);
-
-      const results = await service.search("constancia", "procedure");
-
-      expect(results).toEqual([mockProcedure]);
-      expect(repository.searchProcedures).toHaveBeenCalledWith(
-        ["constancia"],
-        "tramite"
-      );
-      expect(repository.searchBuildings).not.toHaveBeenCalled();
-      expect(repository.searchClassrooms).not.toHaveBeenCalled();
-    });
-  });
-
-  // ── type = 'service' ─────────────────────────────────────────
-
-  describe("type = service", () => {
-    it("calls searchProcedures with kind=servicio", async () => {
-      const { service, repository } = createService();
-      repository.searchProcedures.mockResolvedValue([mockService]);
-
-      const results = await service.search("asesoría", "service");
-
-      expect(results).toEqual([mockService]);
-      expect(repository.searchProcedures).toHaveBeenCalledWith(
-        ["asesoría"],
-        "servicio"
-      );
-      expect(repository.searchBuildings).not.toHaveBeenCalled();
-    });
-  });
-
-  // ── mixed partial results ────────────────────────────────────
-
-  describe("partial results", () => {
-    it("type=all returns results even when some queries return empty", async () => {
-      const { service, repository } = createService();
-      repository.searchBuildings.mockResolvedValue([mockBuilding]);
-      repository.searchClassrooms.mockResolvedValue([]);
-      repository.searchProcedures.mockResolvedValue([]);
-      repository.searchDepartments.mockResolvedValue([]);
-      repository.searchCubicles.mockResolvedValue([]);
-      repository.searchHeadquarters.mockResolvedValue([]);
-      repository.searchGates.mockResolvedValue([]);
-
-      const results = await service.search("dir", "all");
-
-      expect(results).toHaveLength(1);
-      expect(results[0].kind).toBe("building");
-    });
-
-    it("splits a multi-word term into one array element per word, in order", async () => {
-      const { service, repository } = createService();
-      repository.searchBuildings.mockResolvedValue([]);
-      repository.searchClassrooms.mockResolvedValue([]);
-      repository.searchProcedures.mockResolvedValue([]);
-      repository.searchDepartments.mockResolvedValue([]);
-      repository.searchCubicles.mockResolvedValue([]);
-      repository.searchHeadquarters.mockResolvedValue([]);
-      repository.searchGates.mockResolvedValue([]);
-
-      await service.search("control escolar", "all");
-
-      expect(repository.searchBuildings).toHaveBeenCalledWith([
-        "control",
-        "escolar",
-      ]);
-    });
-
-    it("collapses repeated whitespace between words", async () => {
-      const { service, repository } = createService();
-      repository.searchBuildings.mockResolvedValue([]);
-      repository.searchClassrooms.mockResolvedValue([]);
-      repository.searchProcedures.mockResolvedValue([]);
-      repository.searchDepartments.mockResolvedValue([]);
-      repository.searchCubicles.mockResolvedValue([]);
-      repository.searchHeadquarters.mockResolvedValue([]);
-      repository.searchGates.mockResolvedValue([]);
-
-      await service.search("  control   escolar  ", "all");
-
-      expect(repository.searchBuildings).toHaveBeenCalledWith([
-        "control",
-        "escolar",
-      ]);
-    });
+  it("attaches coordinates to streets and gates only", async () => {
+    const repository = createRepository();
+    repository.searchStreets.mockResolvedValue([
+      {
+        id: "street-1",
+        kind: "street",
+        title: "Avenida Constituyentes",
+        subtitle: "Calle cercana al campus",
+        buildingId: null,
+        buildingName: null,
+        aliases: [],
+        keywords: ["avenida"],
+        x: 10,
+        z: 20,
+      },
+    ]);
+    const response = await new SearchService(repository).search("avenida", "street");
+    expect(response.results[0].coordinates).toEqual({ x: 10, z: 20 });
   });
 });

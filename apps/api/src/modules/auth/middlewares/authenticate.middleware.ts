@@ -6,9 +6,6 @@ import type { AuthUser, UserRole } from "../auth.service.js";
 
 type JwtPayload = {
   sub: string;
-  username: string;
-  email: string;
-  role: UserRole;
   tv: number; // token_version
   iat?: number;
   exp?: number;
@@ -82,9 +79,13 @@ export async function authenticate(
       });
     }
 
-    const payload = jwt.verify(token, env.jwtSecret) as JwtPayload;
+    const payload = jwt.verify(token, env.jwtSecret, {
+      algorithms: ["HS256"],
+      issuer: env.jwtIssuer,
+      audience: env.jwtAudience,
+    }) as JwtPayload;
 
-    if (!payload.sub) {
+    if (typeof payload.sub !== "string" || !Number.isInteger(payload.tv)) {
       return res.status(401).json({
         success: false,
         message: "Token inválido",
@@ -93,7 +94,7 @@ export async function authenticate(
 
     const row = await findAdminRowById(payload.sub);
 
-    if (!row || !Boolean(row.is_active)) {
+    if (!row || !row.is_active) {
       return res.status(401).json({
         success: false,
         message: "Usuario no autorizado o inactivo",

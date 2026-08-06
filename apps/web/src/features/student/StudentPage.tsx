@@ -20,20 +20,21 @@ import {
   LogOutIcon,
   Icon,
   InfoIcon,
-  ClockIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "../../components/ui/Icons";
 import { ThemeToggle } from "../../components/ui/ThemeToggle";
 import { StudentTopBar } from "./components/StudentTopBar";
-import { SchedulePanel } from "./components/SchedulePanel";
 import {
   CampusServicesPanel,
   type CampusService,
 } from "../shared/components/CampusServicesPanel";
+import { QuickDestinations } from "../shared/components/QuickDestinations";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import "./student-experience.css";
+import { formatBuildingDisplayName } from "../buildings/utils/building-display-name";
 
-type ViewMode = "map" | "services" | "schedule";
+type ViewMode = "map" | "destinations" | "services";
 
 export function StudentPage() {
   const isMobile = useIsMobile();
@@ -50,8 +51,8 @@ export function StudentPage() {
   const [totalBuildings, setTotalBuildings] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("map");
   const [showSearch, setShowSearch] = useState(false);
+  const [showQuickDest, setShowQuickDest] = useState(false);
   const [showServices, setShowServices] = useState(false);
-  const [showSchedule, setShowSchedule] = useState(false);
 
   useEffect(() => {
     getBuildings()
@@ -70,8 +71,8 @@ export function StudentPage() {
 
   const closeMobilePanels = useCallback(() => {
     setShowSearch(false);
+    setShowQuickDest(false);
     setShowServices(false);
-    setShowSchedule(false);
     setSheetState("closed");
   }, []);
 
@@ -82,12 +83,14 @@ export function StudentPage() {
     setSheetState("full");
   }, [closeMobilePanels, setSearchTerm]);
 
-  const handleNavigateToClass = useCallback((buildingCode: string) => {
-    setSearchTerm(buildingCode);
+  const openQuickDestinations = useCallback(() => {
+    if (showQuickDest) {
+      closeMobilePanels();
+      return;
+    }
     closeMobilePanels();
-    setViewMode("map");
-    setSheetState("full");
-  }, [closeMobilePanels, setSearchTerm]);
+    setShowQuickDest(true);
+  }, [closeMobilePanels, showQuickDest]);
 
   const openServices = useCallback(() => {
     if (showServices) {
@@ -97,15 +100,6 @@ export function StudentPage() {
     closeMobilePanels();
     setShowServices(true);
   }, [closeMobilePanels, showServices]);
-
-  const openSchedule = useCallback(() => {
-    if (showSchedule) {
-      closeMobilePanels();
-      return;
-    }
-    closeMobilePanels();
-    setShowSchedule(true);
-  }, [closeMobilePanels, showSchedule]);
 
   const openBuildingSearch = useCallback(() => {
     if (showSearch) {
@@ -119,7 +113,7 @@ export function StudentPage() {
 
   const openBuildings = useCallback(() => {
     const buildingsAreOpen =
-      sheetState !== "closed" && !showSearch && !showServices && !showSchedule;
+      sheetState !== "closed" && !showSearch && !showQuickDest && !showServices;
     if (buildingsAreOpen) {
       closeMobilePanels();
       return;
@@ -127,23 +121,23 @@ export function StudentPage() {
     closeMobilePanels();
     setViewMode("map");
     setSheetState("full");
-  }, [closeMobilePanels, sheetState, showSchedule, showSearch, showServices]);
+  }, [closeMobilePanels, sheetState, showQuickDest, showSearch, showServices]);
 
   const mobileActions = useMemo(() => {
     return [
+      {
+        id: "quick",
+        label: "Destinos",
+        icon: "compass" as const,
+        onClick: openQuickDestinations,
+        active: showQuickDest,
+      },
       {
         id: "services",
         label: "Servicios",
         icon: "sparkles" as const,
         onClick: openServices,
         active: showServices,
-      },
-      {
-        id: "schedule",
-        label: "Horario",
-        icon: "clock" as const,
-        onClick: openSchedule,
-        active: showSchedule,
       },
       {
         id: "list",
@@ -153,18 +147,18 @@ export function StudentPage() {
         active:
           sheetState !== "closed" &&
           !showSearch &&
-          !showServices &&
-          !showSchedule,
+          !showQuickDest &&
+          !showServices,
       },
     ];
   }, [
     openBuildings,
+    openQuickDestinations,
     openServices,
-    openSchedule,
     sheetState,
+    showQuickDest,
     showSearch,
     showServices,
-    showSchedule,
   ]);
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -216,6 +210,17 @@ export function StudentPage() {
             <button
               type="button"
               className={`student-page__nav-item ${
+                viewMode === "destinations" ? "is-active" : ""
+              }`}
+              onClick={() => setViewMode("destinations")}
+            >
+              <Icon name="compass" size={18} />
+              <span>Destinos</span>
+            </button>
+
+            <button
+              type="button"
+              className={`student-page__nav-item ${
                 viewMode === "services" ? "is-active" : ""
               }`}
               onClick={() => setViewMode("services")}
@@ -224,16 +229,6 @@ export function StudentPage() {
               <span>Servicios</span>
             </button>
 
-            <button
-              type="button"
-              className={`student-page__nav-item ${
-                viewMode === "schedule" ? "is-active" : ""
-              }`}
-              onClick={() => setViewMode("schedule")}
-            >
-              <ClockIcon size={18} />
-              <span>Horario</span>
-            </button>
           </nav>
 
           {viewMode === "map" && (
@@ -247,6 +242,22 @@ export function StudentPage() {
             </div>
           )}
 
+          {viewMode === "destinations" && (
+            <div key="side-dest" className="visitor-page__panel ito-tab-panel">
+              <div className="visitor-page__panel-heading">
+                <div className="visitor-page__panel-icon">
+                  <Icon name="compass" size={20} />
+                </div>
+                <div>
+                  <h2>¿Qué estás buscando?</h2>
+                  <p>Elige una pregunta frecuente para ubicarla en el mapa.</p>
+                </div>
+              </div>
+
+              <QuickDestinations onSelect={() => setViewMode("map")} />
+            </div>
+          )}
+
           {viewMode === "services" && (
             <div key="side-services" className="student-page__sidebar-content ito-tab-panel">
               <CampusServicesPanel
@@ -256,22 +267,11 @@ export function StudentPage() {
             </div>
           )}
 
-          {viewMode === "schedule" && (
-            <div key="side-schedule" className="student-page__sidebar-content ito-tab-panel">
-              <SchedulePanel onNavigateToClass={handleNavigateToClass} />
-            </div>
-          )}
         </aside>
 
         <main className="student-page__main">
-          {/* El visor 3D se mantiene siempre montado (solo oculto con CSS) al
-              cambiar de pestaña, para no recargar el GLB ni resetear la
-              cámara/ubicación cada vez que se vuelve a "Mapa". El mapa se
-              muestra en las 3 pestañas (Inicio/Servicios/Horario) para que
-              el layout (ancho de sidebar, panel principal) sea el mismo
-              siempre — antes "Horario" duplicaba SchedulePanel (compacto en
-              el sidebar + expandido en main), lo mismo que le pasaba a
-              Servicios. */}
+          {/* El visor 3D se mantiene montado al cambiar de pestaña para no
+              recargar el GLB ni resetear cámara/ubicación. */}
           <div className="student-page__viewer" style={{ position: "relative" }}>
             <button
               type="button"
@@ -281,7 +281,7 @@ export function StudentPage() {
             >
               {sidebarCollapsed ? <ChevronRightIcon size={14} /> : <ChevronLeftIcon size={14} />}
             </button>
-            <MapSearchOverlay userName={user?.name || "Estudiante"} />
+            <MapSearchOverlay />
             <CampusViewer isMobile={false} mobilePanelOpen={false} mapXOffset={sidebarCollapsed ? 0 : -75} />
           </div>
         </main>
@@ -290,7 +290,7 @@ export function StudentPage() {
   }
 
   const sheetTitle = selectedBuilding
-    ? selectedBuilding.name
+    ? formatBuildingDisplayName(selectedBuilding.name, selectedBuilding.code)
     : "Catálogo de edificios";
 
   const sheetSubtitle = selectedBuilding
@@ -301,14 +301,16 @@ export function StudentPage() {
     !!selectedBuilding &&
     sheetState === "closed" &&
     !showSearch &&
-    !showServices &&
-    !showSchedule;
+    !showQuickDest &&
+    !showServices;
 
   const hasOpenMobileWindow =
-    sheetState === "full" || showSearch || showServices || showSchedule;
+    sheetState === "full" || showSearch || showQuickDest || showServices;
 
   return (
-    <div className="ito-campus--mobile student-mobile">
+    <div
+      className={`ito-campus--mobile student-mobile${showSearch ? " is-search-open" : ""}`}
+    >
       <CampusViewer isMobile mobilePanelOpen={hasOpenMobileWindow} />
 
       <StudentTopBar
@@ -329,19 +331,19 @@ export function StudentPage() {
       </AnimatePresence>
 
       <MobileActionModal
+        open={showQuickDest}
+        title="¿Qué estás buscando?"
+        onClose={closeMobilePanels}
+      >
+        <QuickDestinations onSelect={closeMobilePanels} />
+      </MobileActionModal>
+
+      <MobileActionModal
         open={showServices}
         title="Servicios del campus"
         onClose={closeMobilePanels}
       >
         <CampusServicesPanel onSelectService={handleSelectService} />
-      </MobileActionModal>
-
-      <MobileActionModal
-        open={showSchedule}
-        title="Tu horario"
-        onClose={closeMobilePanels}
-      >
-        <SchedulePanel expanded onNavigateToClass={handleNavigateToClass} />
       </MobileActionModal>
 
       <MobileQuickActions actions={mobileActions} />

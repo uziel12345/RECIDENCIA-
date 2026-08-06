@@ -24,6 +24,11 @@ const AdminBuildingsPage = lazy(async () => {
   return { default: AdminBuildingsPage };
 });
 
+const AdminMapPage = lazy(async () => {
+  const { AdminMapPage } = await import("../features/admin/pages/AdminMapPage");
+  return { default: AdminMapPage };
+});
+
 const AdminBuildingEditorPage = lazy(async () => {
   const { AdminBuildingEditorPage } = await import(
     "../features/admin/pages/AdminBuildingEditorPage"
@@ -248,6 +253,18 @@ export default function App() {
               <ErrorBoundary>
                 <Suspense fallback={<AdminLoadingFallback />}>
                   <AdminBuildingsPage />
+                </Suspense>
+              </ErrorBoundary>
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_MAP}
+          element={
+            <AdminProtectedRoute permission="can_edit_buildings">
+              <ErrorBoundary>
+                <Suspense fallback={<MapLoadingFallback />}>
+                  <AdminMapPage />
                 </Suspense>
               </ErrorBoundary>
             </AdminProtectedRoute>

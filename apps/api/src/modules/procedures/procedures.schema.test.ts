@@ -15,6 +15,16 @@ import {
 const VALID_UUID = "550e8400-e29b-41d4-a716-446655440000";
 
 describe("createProcedureSchema", () => {
+  it("accepts HTTP(S) resource URLs and rejects executable schemes", () => {
+    for (const resource_url of ["https://www.itoaxaca.edu.mx/tramite", "http://localhost/recurso"]) {
+      expect(createProcedureSchema.safeParse({ name: "X", slug: "x", kind: "tramite", resource_url }).success).toBe(true);
+    }
+
+    for (const resource_url of ["javascript:alert(1)", "data:text/html,test", "file:///etc/passwd"]) {
+      expect(createProcedureSchema.safeParse({ name: "X", slug: "x", kind: "tramite", resource_url }).success).toBe(false);
+    }
+  });
+
   it("accepts valid minimal input", () => {
     const result = createProcedureSchema.safeParse({
       name: "Constancia de estudios",

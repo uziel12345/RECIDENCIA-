@@ -23,6 +23,7 @@ import headquartersRoutes from "../modules/headquarters/headquarters.routes.js";
 import buildingSchedulesRoutes from "../modules/building-schedules/building-schedules.routes.js";
 import { buildingDetailsRouter } from "../modules/building-details/building-details.routes.js";
 import gatesRoutes from "../modules/gates/gates.routes.js";
+import campusCatalogRoutes from "../modules/campus-catalog/campus-catalog.routes.js";
 
 const router = Router();
 
@@ -46,5 +47,6 @@ router.use("/headquarters", headquartersRoutes);
 router.use("/building-schedules", buildingSchedulesRoutes);
 router.use("/buildings", buildingDetailsRouter); // /buildings/:id/full-details
 router.use("/gates", gatesRoutes);
+router.use("/", campusCatalogRoutes);
 
 export default router;

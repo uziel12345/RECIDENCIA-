@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import fs from "node:fs/promises";
 import { asyncHandler } from "../../shared/utils/async-handler.js";
 import { sendSuccess } from "../../shared/http/response.js";
 import { BuildingImagesService } from "./building-images.service.js";
@@ -9,6 +10,7 @@ const buildingImagesService = new BuildingImagesService();
 type RequestWithFile = Request & {
   file?: {
     filename: string;
+    path: string;
   };
 };
 
@@ -21,17 +23,7 @@ function getSingleParam(param: string | string[] | undefined): string {
 }
 
 function parseBoolean(value: unknown): boolean {
-  if (typeof value === "boolean") return value;
-
-  if (typeof value === "string") {
-    return value.toLowerCase() === "true" || value === "1";
-  }
-
-  if (typeof value === "number") {
-    return value === 1;
-  }
-
-  return false;
+  return value === true || value === "true" || value === 1 || value === "1";
 }
 
 export const getBuildingImagesForAdmin = asyncHandler(
@@ -52,15 +44,21 @@ export const uploadBuildingImage = asyncHandler(
   async (req: RequestWithFile, res: Response) => {
     const buildingId = getSingleParam(req.params.buildingId);
 
-    const data = await buildingImagesService.createImage({
-      buildingId,
-      file: req.file,
-      title: req.body?.title,
-      description: req.body?.description,
-      image_type: req.body?.image_type,
-      is_cover: req.body?.is_cover,
-      sort_order: req.body?.sort_order,
-    });
+    let data;
+    try {
+      data = await buildingImagesService.createImage({
+        buildingId,
+        file: req.file,
+        title: req.body?.title,
+        description: req.body?.description,
+        image_type: req.body?.image_type,
+        is_cover: req.body?.is_cover,
+        sort_order: req.body?.sort_order,
+      });
+    } catch (error) {
+      if (req.file?.path) await fs.unlink(req.file.path).catch(() => undefined);
+      throw error;
+    }
 
     auditLog({
       req, action: "UPLOAD_BUILDING_IMAGE", userId: req.authUser?.id,

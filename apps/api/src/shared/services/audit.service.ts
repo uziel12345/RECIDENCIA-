@@ -98,5 +98,16 @@ export function auditLog(opts: AuditOptions): void {
         ip,
       ]
     )
-    .catch(() => undefined); // nunca bloquea ni propaga errores
+    .catch((error: unknown) => {
+      const known = error instanceof Error ? error : new Error("Unknown audit error");
+      const errorCode = (known as Error & { code?: unknown }).code;
+      console.warn(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: "warn",
+        event: "audit_log_write_failed",
+        action: opts.action,
+        error_name: known.name,
+        error_code: typeof errorCode === "string" ? errorCode.slice(0, 80) : undefined,
+      }));
+    }); // nunca bloquea ni propaga errores
 }

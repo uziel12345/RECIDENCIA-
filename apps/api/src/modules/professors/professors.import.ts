@@ -14,6 +14,26 @@ const REQUIRED_COLUMNS = [
   "carrera_nombre",
 ] as const;
 
+const MAX_ZIP_ENTRIES = 200;
+const MAX_ZIP_ENTRY_BYTES = 10 * 1024 * 1024;
+const MAX_ZIP_TOTAL_BYTES = 30 * 1024 * 1024;
+const MAX_COMPRESSION_RATIO = 200;
+const MAX_WORKSHEET_ROWS = 5_000;
+const MAX_WORKSHEET_COLUMNS = 100;
+const MAX_CELL_CHARACTERS = 1_000;
+const MAX_SHARED_STRINGS = 100_000;
+
+function invalidWorkbook(): ApiError {
+  return new ApiError(400, "El archivo Excel no es válido o excede los límites permitidos.");
+}
+
+function ensureRange(buffer: Buffer, offset: number, length: number): void {
+  if (!Number.isSafeInteger(offset) || !Number.isSafeInteger(length) || offset < 0 || length < 0) {
+    throw invalidWorkbook();
+  }
+  if (offset > buffer.length || length > buffer.length - offset) throw invalidWorkbook();
+}
+
 function decodeXml(value: string): string {
   return value
     .replace(/&lt;/g, "<")
@@ -33,6 +53,7 @@ function columnIndex(ref: string): number {
 }
 
 function getZipEntries(buffer: Buffer): Map<string, Buffer> {
+  if (buffer.length < 22) throw invalidWorkbook();
   const entries = new Map<string, Buffer>();
   const eocdSignature = 0x06054b50;
   let eocdOffset = -1;
@@ -44,39 +65,77 @@ function getZipEntries(buffer: Buffer): Map<string, Buffer> {
     }
   }
 
-  if (eocdOffset === -1) throw new ApiError(400, "El archivo Excel no es valido.");
+  if (eocdOffset === -1) throw invalidWorkbook();
 
+  ensureRange(buffer, eocdOffset, 22);
+  const entryCount = buffer.readUInt16LE(eocdOffset + 10);
+  if (entryCount === 0 || entryCount > MAX_ZIP_ENTRIES) throw invalidWorkbook();
   const centralDirectorySize = buffer.readUInt32LE(eocdOffset + 12);
   const centralDirectoryOffset = buffer.readUInt32LE(eocdOffset + 16);
+  ensureRange(buffer, centralDirectoryOffset, centralDirectorySize);
   let offset = centralDirectoryOffset;
   const end = centralDirectoryOffset + centralDirectorySize;
+  let totalUncompressed = 0;
+  let parsedEntries = 0;
 
   while (offset < end) {
-    if (buffer.readUInt32LE(offset) !== 0x02014b50) break;
+    ensureRange(buffer, offset, 46);
+    if (buffer.readUInt32LE(offset) !== 0x02014b50) throw invalidWorkbook();
 
+    const flags = buffer.readUInt16LE(offset + 8);
     const method = buffer.readUInt16LE(offset + 10);
     const compressedSize = buffer.readUInt32LE(offset + 20);
+    const uncompressedSize = buffer.readUInt32LE(offset + 24);
     const fileNameLength = buffer.readUInt16LE(offset + 28);
     const extraLength = buffer.readUInt16LE(offset + 30);
     const commentLength = buffer.readUInt16LE(offset + 32);
     const localHeaderOffset = buffer.readUInt32LE(offset + 42);
+    ensureRange(buffer, offset + 46, fileNameLength + extraLength + commentLength);
     const name = buffer
       .subarray(offset + 46, offset + 46 + fileNameLength)
       .toString("utf8");
 
+    if (
+      (flags & 0x1) !== 0 ||
+      (method !== 0 && method !== 8) ||
+      !name ||
+      name.includes("..") ||
+      name.includes("\\") ||
+      name.startsWith("/") ||
+      uncompressedSize > MAX_ZIP_ENTRY_BYTES ||
+      (compressedSize === 0 && uncompressedSize > 0) ||
+      (compressedSize > 0 && uncompressedSize / compressedSize > MAX_COMPRESSION_RATIO)
+    ) {
+      throw invalidWorkbook();
+    }
+
+    totalUncompressed += uncompressedSize;
+    if (totalUncompressed > MAX_ZIP_TOTAL_BYTES) throw invalidWorkbook();
+
+    ensureRange(buffer, localHeaderOffset, 30);
+    if (buffer.readUInt32LE(localHeaderOffset) !== 0x04034b50) throw invalidWorkbook();
     const localNameLength = buffer.readUInt16LE(localHeaderOffset + 26);
     const localExtraLength = buffer.readUInt16LE(localHeaderOffset + 28);
     const dataStart = localHeaderOffset + 30 + localNameLength + localExtraLength;
+    ensureRange(buffer, dataStart, compressedSize);
     const compressed = buffer.subarray(dataStart, dataStart + compressedSize);
 
-    if (method === 0) {
-      entries.set(name, compressed);
-    } else if (method === 8) {
-      entries.set(name, inflateRawSync(compressed));
+    let content: Buffer;
+    try {
+      content = method === 0
+        ? Buffer.from(compressed)
+        : inflateRawSync(compressed, { maxOutputLength: MAX_ZIP_ENTRY_BYTES });
+    } catch {
+      throw invalidWorkbook();
     }
+    if (content.length !== uncompressedSize) throw invalidWorkbook();
+    entries.set(name, content);
 
     offset += 46 + fileNameLength + extraLength + commentLength;
+    parsedEntries += 1;
   }
+
+  if (offset !== end || parsedEntries !== entryCount) throw invalidWorkbook();
 
   return entries;
 }
@@ -87,10 +146,13 @@ function readSharedStrings(xml: string | undefined): string[] {
   const siMatches = xml.matchAll(/<si\b[\s\S]*?<\/si>/g);
 
   for (const match of siMatches) {
+    if (strings.length >= MAX_SHARED_STRINGS) throw invalidWorkbook();
     const textParts = [...match[0].matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map((part) =>
       decodeXml(part[1] ?? "")
     );
-    strings.push(textParts.join(""));
+    const value = textParts.join("");
+    if (value.length > MAX_CELL_CHARACTERS) throw invalidWorkbook();
+    strings.push(value);
   }
 
   return strings;
@@ -108,18 +170,25 @@ function readCellValue(cellXml: string, sharedStrings: string[]): string {
 
   const value = cellXml.match(/<v>([\s\S]*?)<\/v>/)?.[1] ?? "";
   if (type === "s") return (sharedStrings[Number(value)] ?? "").trim();
-  return decodeXml(value).trim();
+  const decoded = decodeXml(value).trim();
+  if (decoded.length > MAX_CELL_CHARACTERS) throw invalidWorkbook();
+  return decoded;
 }
 
 function parseWorksheet(xml: string, sharedStrings: string[]): string[][] {
   const rows: string[][] = [];
 
   for (const rowMatch of xml.matchAll(/<row\b[^>]*>([\s\S]*?)<\/row>/g)) {
+    if (rows.length >= MAX_WORKSHEET_ROWS) throw invalidWorkbook();
     const row: string[] = [];
     for (const cellMatch of rowMatch[1].matchAll(/<c\b([^>]*)>([\s\S]*?)<\/c>/g)) {
       const ref = cellMatch[1]?.match(/\br="([^"]+)"/)?.[1];
       if (!ref) continue;
-      row[columnIndex(ref)] = readCellValue(cellMatch[0], sharedStrings);
+      const index = columnIndex(ref);
+      if (index < 0 || index >= MAX_WORKSHEET_COLUMNS) throw invalidWorkbook();
+      const value = readCellValue(cellMatch[0], sharedStrings);
+      if (value.length > MAX_CELL_CHARACTERS) throw invalidWorkbook();
+      row[index] = value;
     }
     rows.push(row.map((value) => value ?? ""));
   }

@@ -12,6 +12,7 @@ export * from "./types/headquarters.types.js";
 export * from "./types/building-schedule.types.js";
 export * from "./types/building-details.types.js";
 export * from "./types/gate.types.js";
+export * from "./types/campus-catalog.types.js";
 
 export * from "./api/client.js";
 export * from "./api/buildings.api.js";
@@ -28,3 +29,4 @@ export * from "./api/building-schedules.api.js";
 export * from "./api/building-details.api.js";
 export * from "./api/professors.api.js";
 export * from "./api/gates.api.js";
+export * from "./api/campus-catalog.api.js";

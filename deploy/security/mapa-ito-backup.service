@@ -1,0 +1,16 @@
+[Unit]
+Description=Respaldo de base de datos y archivos de Mapa ITO
+After=postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/mapa-ito-backup
+Environment=MAPA_DATABASE_NAME=campus_3d
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/backups/mapa-ito
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

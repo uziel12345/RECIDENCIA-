@@ -5,7 +5,7 @@ import { searchAll } from "../../../services/search.service";
 import type { Building } from "../types/building";
 import type { Gate, SearchResult, SearchResultKind } from "@ito-map/shared";
 
-const DEBOUNCE_MS = 350;
+const DEBOUNCE_MS = 250;
 const MIN_QUERY_LEN = 2;
 
 const KIND_LABEL: Record<SearchResultKind, string> = {
@@ -17,11 +17,15 @@ const KIND_LABEL: Record<SearchResultKind, string> = {
   cubicle:      "Cubículos",
   headquarters: "Jefaturas",
   gate:         "Accesos",
+  position:     "Cargos institucionales",
+  street:       "Calles",
+  person:       "Personas",
+  office:       "Oficinas",
 };
 
 const KIND_ICON: Record<
   SearchResultKind,
-  "building" | "list" | "book-open" | "info" | "users" | "user" | "shield" | "map-pin"
+  "building" | "list" | "book-open" | "info" | "users" | "user" | "shield" | "map-pin" | "map"
 > = {
   building:     "building",
   classroom:    "list",
@@ -31,31 +35,29 @@ const KIND_ICON: Record<
   cubicle:      "user",
   headquarters: "shield",
   gate:         "map-pin",
+  position:     "user",
+  street:       "map",
+  person:       "user",
+  office:       "building",
 };
 
 type GroupedResults = { kind: SearchResultKind; label: string; items: SearchResult[] }[];
 
-const RESULT_ORDER: SearchResultKind[] = [
-  "building",
-  "classroom",
-  "procedure",
-  "service",
-  "department",
-  "cubicle",
-  "headquarters",
-  "gate",
-];
-
 function groupResults(results: SearchResult[]): GroupedResults {
-  const map = new Map<SearchResultKind, SearchResult[]>();
-  for (const r of results) {
-    const arr = map.get(r.kind) ?? [];
-    arr.push(r);
-    map.set(r.kind, arr);
+  const groups: GroupedResults = [];
+  for (const result of results) {
+    const current = groups.at(-1);
+    if (current?.kind === result.kind) {
+      current.items.push(result);
+    } else {
+      groups.push({
+        kind: result.kind,
+        label: KIND_LABEL[result.kind],
+        items: [result],
+      });
+    }
   }
-  return RESULT_ORDER
-    .filter((k) => map.has(k))
-    .map((k) => ({ kind: k, label: KIND_LABEL[k], items: map.get(k)! }));
+  return groups;
 }
 
 type BuildingSearchProps = {
@@ -63,6 +65,25 @@ type BuildingSearchProps = {
   gates?: Gate[];
   onSelectResult?: (result: SearchResult) => void;
   autoFocus?: boolean;
+  inputId?: string;
+  placeholder?: string;
+  ariaLabel?: string;
+  enableSlashShortcut?: boolean;
+};
+
+const KIND_TYPE_LABEL: Record<SearchResultKind, string> = {
+  building: "Edificio",
+  classroom: "Aula",
+  procedure: "Trámite",
+  service: "Servicio",
+  department: "Departamento",
+  cubicle: "Cubículo",
+  headquarters: "Jefatura",
+  gate: "Acceso",
+  position: "Cargo institucional",
+  street: "Calle",
+  person: "Persona",
+  office: "Oficina",
 };
 
 export function BuildingSearch({
@@ -70,6 +91,10 @@ export function BuildingSearch({
   gates = [],
   onSelectResult,
   autoFocus = false,
+  inputId = "building-search",
+  placeholder = "¿Qué estás buscando?",
+  ariaLabel = "Buscar edificio, aula, departamento, cargo, servicio o trámite",
+  enableSlashShortcut = false,
 }: BuildingSearchProps) {
   const searchTerm = useBuildingStore((state) => state.searchTerm);
   const setSearchTerm = useBuildingStore((state) => state.setSearchTerm);
@@ -79,7 +104,11 @@ export function BuildingSearch({
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const requestIdRef = useRef(0);
 
   useEffect(() => {
@@ -94,6 +123,32 @@ export function BuildingSearch({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!enableSlashShortcut) return;
+
+    function focusSearch(event: KeyboardEvent) {
+      if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
+
+      const target = event.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      inputRef.current?.focus();
+    }
+
+    window.addEventListener("keydown", focusSearch);
+    return () => window.removeEventListener("keydown", focusSearch);
+  }, [enableSlashShortcut]);
 
   // Sincroniza el input SOLO cuando searchTerm cambia desde afuera de este
   // componente (ej. un chip de servicio hace setSearchTerm directo). Comparar
@@ -113,34 +168,47 @@ export function BuildingSearch({
 
     if (term.length < MIN_QUERY_LEN) {
       setResults([]);
+      setSuggestions([]);
+      setError(null);
+      setActiveIndex(-1);
       setIsOpen(false);
       return;
     }
 
+    const controller = new AbortController();
     const timer = setTimeout(async () => {
       const requestId = ++requestIdRef.current;
       setIsLoading(true);
+      setError(null);
       try {
-        const data = await searchAll(term);
+        const data = await searchAll(term, controller.signal);
         // Una búsqueda más nueva ya se disparó mientras esta esperaba
         // respuesta del servidor: descartarla evita que una respuesta
         // lenta y desactualizada sobreescriba los resultados correctos
         // de la búsqueda más reciente (el buscador se sentía "trabado").
         if (requestIdRef.current !== requestId) return;
-        setResults(data);
+        setResults(data.results);
+        setSuggestions(data.suggestions);
+        setActiveIndex(-1);
         // Mantiene abierto el panel también cuando no hay coincidencias para
         // que el usuario reciba una respuesta clara en vez de una ventana vacía.
         setIsOpen(true);
-      } catch {
+      } catch (caught) {
+        if (caught instanceof DOMException && caught.name === "AbortError") return;
         if (requestIdRef.current !== requestId) return;
         setResults([]);
-        setIsOpen(false);
+        setSuggestions([]);
+        setError("No pudimos consultar el campus. Revisa tu conexión e inténtalo de nuevo.");
+        setIsOpen(true);
       } finally {
         if (requestIdRef.current === requestId) setIsLoading(false);
       }
     }, DEBOUNCE_MS);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [inputValue]);
 
   function handleInputChange(value: string) {
@@ -152,6 +220,9 @@ export function BuildingSearch({
     setInputValue("");
     setSearchTerm("");
     setResults([]);
+    setSuggestions([]);
+    setError(null);
+    setActiveIndex(-1);
     setIsOpen(false);
   }
 
@@ -165,6 +236,10 @@ export function BuildingSearch({
   }
 
   const groups = useMemo(() => groupResults(results), [results]);
+  const orderedResults = useMemo(
+    () => groups.flatMap((group) => group.items),
+    [groups]
+  );
   const isSearchActive = inputValue.trim().length >= MIN_QUERY_LEN;
 
   return (
@@ -178,23 +253,58 @@ export function BuildingSearch({
       </span>
 
       <input
-        id="building-search"
+        ref={inputRef}
+        id={inputId}
         type="search"
         className="ito-search__input"
-        placeholder="Buscar aula, trámite o edificio..."
+        placeholder={placeholder}
         value={inputValue}
         onChange={(e) => handleInputChange(e.target.value)}
         onFocus={() => {
-          if (results.length > 0) setIsOpen(true);
+          if (isSearchActive) setIsOpen(true);
         }}
-        aria-label="Buscar edificio, aula, trámite o servicio"
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            setIsOpen(false);
+            setActiveIndex(-1);
+            return;
+          }
+          if (orderedResults.length === 0) return;
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            setIsOpen(true);
+            setActiveIndex((current) => (current + 1) % orderedResults.length);
+          } else if (event.key === "ArrowUp") {
+            event.preventDefault();
+            setIsOpen(true);
+            setActiveIndex((current) =>
+              current <= 0 ? orderedResults.length - 1 : current - 1
+            );
+          } else if (event.key === "Enter" && activeIndex >= 0) {
+            event.preventDefault();
+            const result = orderedResults[activeIndex];
+            if (result) handleSelect(result);
+          }
+        }}
+        aria-label={ariaLabel}
         aria-expanded={isOpen}
         aria-autocomplete="list"
         autoComplete="off"
         role="combobox"
         aria-controls="search-listbox"
+        aria-activedescendant={
+          activeIndex >= 0 ? `search-result-${activeIndex}` : undefined
+        }
         autoFocus={autoFocus}
       />
+
+      <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {isLoading
+          ? "Buscando en el campus"
+          : isOpen && !error
+            ? `${results.length} ${results.length === 1 ? "resultado" : "resultados"}`
+            : ""}
+      </span>
 
       {inputValue.trim() && (
         <button
@@ -207,15 +317,15 @@ export function BuildingSearch({
         </button>
       )}
 
-      {isOpen && (groups.length > 0 || (isSearchActive && !isLoading)) && (
+      {isOpen && (groups.length > 0 || error || (isSearchActive && !isLoading)) && (
         <div
           id="search-listbox"
           role="listbox"
           aria-label="Resultados de búsqueda"
           className="ito-search-dropdown"
         >
-          {groups.map((group) => (
-            <div key={group.kind} className="ito-search-group">
+          {groups.map((group, groupIndex) => (
+            <div key={`${group.kind}-${groupIndex}`} className="ito-search-group">
               <div
                 className={`ito-search-group__header ito-search-group__header--${group.kind}`}
                 aria-hidden="true"
@@ -224,13 +334,19 @@ export function BuildingSearch({
                 {group.label}
               </div>
 
-              {group.items.map((result) => (
+              {group.items.map((result) => {
+                const resultIndex = orderedResults.findIndex(
+                  (item) => item.kind === result.kind && item.id === result.id
+                );
+                return (
                 <button
                   key={result.id}
+                  id={`search-result-${resultIndex}`}
                   type="button"
                   role="option"
-                  aria-selected="false"
+                  aria-selected={activeIndex === resultIndex}
                   onClick={() => handleSelect(result)}
+                  onMouseEnter={() => setActiveIndex(resultIndex)}
                   className="ito-search-option"
                 >
                   <span
@@ -248,6 +364,9 @@ export function BuildingSearch({
                         <> · {result.buildingName}</>
                       )}
                     </span>
+                    <span className="ito-search-option__type">
+                      Tipo: {KIND_TYPE_LABEL[result.kind]}
+                    </span>
                   </span>
 
                   <Icon
@@ -257,13 +376,35 @@ export function BuildingSearch({
                     aria-hidden="true"
                   />
                 </button>
-              ))}
+                );
+              })}
             </div>
           ))}
 
-          {isSearchActive && results.length === 0 && !isLoading && (
+          {error && (
+            <div className="ito-search-empty" role="alert">{error}</div>
+          )}
+
+          {isSearchActive && results.length === 0 && !isLoading && !error && (
             <div className="ito-search-empty">
-              Sin resultados para "{inputValue.trim()}"
+              <strong>No encontramos exactamente lo que buscas.</strong>
+              <span>
+                Prueba con un edificio, aula, departamento, cargo, servicio o trámite.
+              </span>
+              {suggestions.length > 0 && (
+                <div className="ito-search-suggestions" aria-label="Sugerencias relacionadas">
+                  <span>¿Buscabas alguno de estos?</span>
+                  {suggestions.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => handleInputChange(suggestion)}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

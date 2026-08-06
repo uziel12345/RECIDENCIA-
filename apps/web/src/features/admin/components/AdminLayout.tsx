@@ -31,6 +31,18 @@ const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
+    label: "Mapa",
+    route: ROUTES.ADMIN_MAP,
+    permission: "can_edit_buildings",
+    icon: (
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6" />
+        <line x1="9" y1="3" x2="9" y2="18" />
+        <line x1="15" y1="6" x2="15" y2="21" />
+      </svg>
+    ),
+  },
+  {
     label: "Categorías",
     route: ROUTES.ADMIN_CATEGORIES,
     icon: (
@@ -393,6 +405,8 @@ function getMobileHint(label: string) {
   switch (label) {
     case "Edificios":
       return "Agregar, editar o borrar edificios";
+    case "Mapa":
+      return "Navegación 3D y calibración GPS";
     case "Categorías":
       return "Organizar los tipos de edificios";
     case "Servicios":

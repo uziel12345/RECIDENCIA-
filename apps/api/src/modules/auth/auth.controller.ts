@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { createCsrfToken } from "../../shared/middlewares/csrf.middleware.js";
 import {
   createAdminUser,
@@ -14,6 +14,7 @@ import type {
   ResetAdminUserPasswordInput,
 } from "./auth.schema.js";
 import { auditLog } from "../../shared/services/audit.service.js";
+import { InvalidCredentialsError } from "./auth.errors.js";
 
 const SESSION_COOKIE = "admin_session";
 const CSRF_COOKIE = "csrf_token";
@@ -26,7 +27,11 @@ const cookieBase = {
   path: "/",
 };
 
-export async function loginController(req: Request<{}, {}, LoginInput>, res: Response) {
+export async function loginController(
+  req: Request<{}, {}, LoginInput>,
+  res: Response,
+  next: NextFunction
+) {
   try {
     const { usernameOrEmail, password } = req.body;
 
@@ -43,18 +48,20 @@ export async function loginController(req: Request<{}, {}, LoginInput>, res: Res
       data: { user: result.user },
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "No se pudo iniciar sesión";
-
     auditLog({
       req,
       action: "LOGIN_FAILURE",
-      details: { attempted: req.body?.usernameOrEmail },
+      details: { identifier_provided: Boolean(req.body?.usernameOrEmail) },
     });
+
+    if (!(error instanceof InvalidCredentialsError)) {
+      next(error);
+      return;
+    }
 
     return res.status(401).json({
       success: false,
-      message,
+      message: "Credenciales inválidas",
     });
   }
 }

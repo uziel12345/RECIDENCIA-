@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { loginController, logoutController, meController } from "./auth.controller.js";
 import { loginAdmin, invalidateAdminToken } from "./auth.service.js";
 import type { AuthUser } from "./auth.service.js";
 import type { LoginInput } from "./auth.schema.js";
+import { InvalidCredentialsError } from "./auth.errors.js";
 
 vi.mock("./auth.service.js", () => ({
   loginAdmin: vi.fn(),
@@ -41,6 +42,10 @@ function createMockRequest(data: MockRequestData): Request {
   return data as unknown as Request;
 }
 
+function createMockNext() {
+  return vi.fn() as unknown as NextFunction;
+}
+
 const testUser: AuthUser = {
   id: "user-1",
   username: "admin",
@@ -64,8 +69,9 @@ describe("auth controller", () => {
       body: { usernameOrEmail: "admin", password: "secret12345" },
     });
     const res = createMockResponse();
+    const next = createMockNext();
 
-    await loginController(req as Request<{}, {}, LoginInput>, res);
+    await loginController(req as Request<{}, {}, LoginInput>, res, next);
 
     expect(mockedLoginAdmin).toHaveBeenCalledWith({
       usernameOrEmail: "admin",
@@ -93,14 +99,15 @@ describe("auth controller", () => {
   });
 
   it("loginController returns 401 when login fails", async () => {
-    mockedLoginAdmin.mockRejectedValue(new Error("Credenciales inválidas"));
+    mockedLoginAdmin.mockRejectedValue(new InvalidCredentialsError());
 
     const req = createMockRequest({
       body: { usernameOrEmail: "admin", password: "wrong" },
     });
     const res = createMockResponse();
+    const next = createMockNext();
 
-    await loginController(req as Request<{}, {}, LoginInput>, res);
+    await loginController(req as Request<{}, {}, LoginInput>, res, next);
 
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith({
@@ -110,21 +117,20 @@ describe("auth controller", () => {
     expect(res.cookie).not.toHaveBeenCalled();
   });
 
-  it("loginController returns a generic message for unknown errors", async () => {
-    mockedLoginAdmin.mockRejectedValue("unknown-error");
+  it("loginController delegates unexpected errors to the central handler", async () => {
+    const error = new Error("database unavailable");
+    mockedLoginAdmin.mockRejectedValue(error);
 
     const req = createMockRequest({
       body: { usernameOrEmail: "admin", password: "wrong" },
     });
     const res = createMockResponse();
+    const next = createMockNext();
 
-    await loginController(req as Request<{}, {}, LoginInput>, res);
+    await loginController(req as Request<{}, {}, LoginInput>, res, next);
 
-    expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      message: "No se pudo iniciar sesión",
-    });
+    expect(next).toHaveBeenCalledWith(error);
+    expect(res.status).not.toHaveBeenCalled();
   });
 
   // ── logoutController ───────────────────────────────────────────────────────

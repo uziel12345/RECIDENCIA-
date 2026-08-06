@@ -1,11 +1,16 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import bcrypt from "bcryptjs";
+import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 import { pool } from "../../db/connection.js";
 import { invalidateAdminToken, loginAdmin } from "./auth.service.js";
 
 vi.mock("bcryptjs", () => ({
   default: { compare: vi.fn() },
+}));
+
+vi.mock("argon2", () => ({
+  default: { argon2id: 2, verify: vi.fn(), hash: vi.fn() },
 }));
 
 vi.mock("jsonwebtoken", () => ({
@@ -20,6 +25,8 @@ vi.mock("../../config/env.js", () => ({
   env: {
     jwtSecret: "test-secret-that-is-at-least-32chars-long!!",
     jwtExpiresIn: "8h",
+    jwtIssuer: "mapa-ito-api",
+    jwtAudience: "mapa-ito-admin",
   },
 }));
 
@@ -27,6 +34,8 @@ vi.mock("../../config/env.js", () => ({
 const TEST_SECRET = "test-secret-that-is-at-least-32chars-long!!";
 
 const mockedBcryptCompare = vi.mocked(bcrypt.compare);
+const mockedArgonVerify = vi.mocked(argon2.verify);
+const mockedArgonHash = vi.mocked(argon2.hash);
 const mockedJwtSign = vi.mocked(jwt.sign);
 const mockedPoolQuery = vi.mocked(pool.query);
 
@@ -35,7 +44,7 @@ const baseUserRow = {
   username: "admin",
   full_name: "Admin User",
   email: "admin@example.com",
-  password_hash: "hashed-password",
+  password_hash: "$2b$12$legacy-hash-for-testing",
   role: "admin",
   is_active: 1,
   failed_login_attempts: 0,
@@ -46,12 +55,14 @@ const baseUserRow = {
 describe("loginAdmin", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedArgonVerify.mockResolvedValue(false);
+    mockedArgonHash.mockResolvedValue("$argon2id$upgraded");
   });
 
   it("throws when username/email is empty", async () => {
     await expect(
       loginAdmin({ usernameOrEmail: "   ", password: "secret12345" })
-    ).rejects.toThrow("Usuario/correo y contraseña son obligatorios");
+    ).rejects.toThrow("Credenciales inválidas");
 
     expect(mockedPoolQuery).not.toHaveBeenCalled();
   });
@@ -59,7 +70,7 @@ describe("loginAdmin", () => {
   it("throws when password is empty", async () => {
     await expect(
       loginAdmin({ usernameOrEmail: "admin", password: "" })
-    ).rejects.toThrow("Usuario/correo y contraseña son obligatorios");
+    ).rejects.toThrow("Credenciales inválidas");
 
     expect(mockedPoolQuery).not.toHaveBeenCalled();
   });
@@ -93,7 +104,7 @@ describe("loginAdmin", () => {
     expect(mockedJwtSign).not.toHaveBeenCalled();
   });
 
-  it("throws lockout message when account is locked", async () => {
+  it("returns the same generic error when account is locked", async () => {
     const lockedUntil = new Date(Date.now() + 20 * 60 * 1000);
     mockedPoolQuery.mockResolvedValueOnce([
       [{ ...baseUserRow, locked_until: lockedUntil }],
@@ -103,22 +114,9 @@ describe("loginAdmin", () => {
 
     await expect(
       loginAdmin({ usernameOrEmail: "admin", password: "wrong" })
-    ).rejects.toThrow(/Cuenta bloqueada/);
+    ).rejects.toThrow("Credenciales inválidas");
 
     expect(mockedJwtSign).not.toHaveBeenCalled();
-  });
-
-  it("lockout message includes the remaining minutes count", async () => {
-    const lockedUntil = new Date(Date.now() + 20 * 60 * 1000);
-    mockedPoolQuery.mockResolvedValueOnce([
-      [{ ...baseUserRow, locked_until: lockedUntil }],
-      [],
-    ] as any);
-    mockedBcryptCompare.mockResolvedValueOnce(false as never);
-
-    await expect(
-      loginAdmin({ usernameOrEmail: "admin", password: "wrong" })
-    ).rejects.toThrow(/Cuenta bloqueada.*\d+ minuto/);
   });
 
   it("increments failed_login_attempts and throws on wrong password", async () => {
@@ -131,7 +129,7 @@ describe("loginAdmin", () => {
       loginAdmin({ usernameOrEmail: "admin", password: "wrong" })
     ).rejects.toThrow("Credenciales inválidas");
 
-    expect(mockedBcryptCompare).toHaveBeenCalledWith("wrong", "hashed-password");
+    expect(mockedBcryptCompare).toHaveBeenCalledWith("wrong", baseUserRow.password_hash);
     // SELECT + UPDATE for onLoginFailure
     expect(mockedPoolQuery).toHaveBeenCalledTimes(2);
     expect(mockedJwtSign).not.toHaveBeenCalled();
@@ -146,18 +144,25 @@ describe("loginAdmin", () => {
 
     const result = await loginAdmin({ usernameOrEmail: " admin ", password: "secret12345" });
 
-    expect(mockedBcryptCompare).toHaveBeenCalledWith("secret12345", "hashed-password");
+    expect(mockedBcryptCompare).toHaveBeenCalledWith("secret12345", baseUserRow.password_hash);
 
     expect(mockedJwtSign).toHaveBeenCalledWith(
       {
         sub: "user-1",
-        username: "admin",
-        email: "admin@example.com",
-        role: "admin",
         tv: 1,
       },
       TEST_SECRET,
-      { expiresIn: "8h" }
+      {
+        algorithm: "HS256",
+        issuer: "mapa-ito-api",
+        audience: "mapa-ito-admin",
+        expiresIn: "8h",
+      }
+    );
+
+    expect(mockedArgonHash).toHaveBeenCalledWith(
+      "secret12345",
+      expect.objectContaining({ memoryCost: 19_456, timeCost: 2, parallelism: 1 })
     );
 
     expect(result).toEqual({

@@ -60,6 +60,14 @@ export class ProceduresService {
       }
     }
 
+    if (input.building_id) {
+      const buildingExists = await this.repository.buildingExists(input.building_id);
+      if (!buildingExists) throw new ApiError(404, "El edificio indicado no existe");
+    }
+
+    const validationStatus = input.validation_status ??
+      (input.department_id && input.building_id ? "confirmed" : "pending_validation");
+
     const id = await this.repository.create({
       name: input.name,
       slug: input.slug,
@@ -69,8 +77,13 @@ export class ProceduresService {
       department_id: input.department_id ?? null,
       internal_location: input.internal_location ?? null,
       schedule_text: input.schedule_text ?? null,
+      validation_status: validationStatus,
       is_active: input.is_active ?? true,
     });
+
+    if (input.building_id) {
+      await this.repository.linkBuilding(input.building_id, id, null);
+    }
 
     if (input.requirements && input.requirements.length > 0) {
       await this.repository.createRequirements(id, input.requirements);
@@ -119,6 +132,10 @@ export class ProceduresService {
           : current.internal_location,
       schedule_text:
         input.schedule_text !== undefined ? input.schedule_text : current.schedule_text,
+      validation_status:
+        input.validation_status !== undefined
+          ? input.validation_status
+          : current.validation_status,
       is_active:
         input.is_active !== undefined ? input.is_active : Boolean(current.is_active),
     });
@@ -128,6 +145,12 @@ export class ProceduresService {
     }
 
     return this.getById(id);
+  }
+
+  async getServicesByBuilding(buildingId: string) {
+    return (await this.getByBuilding(buildingId)).filter(
+      (procedure) => procedure.kind === "servicio"
+    );
   }
 
   async updateStatus(id: string, isActive: boolean) {

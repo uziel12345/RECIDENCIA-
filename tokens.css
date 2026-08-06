@@ -1,0 +1,78 @@
+:root {
+  --color-student-paper: oklch(98.5% 0.006 55);
+  --color-student-paper-2: oklch(95.5% 0.01 50);
+  --color-student-paper-3: oklch(92% 0.014 45);
+  --color-student-rule: oklch(65% 0.018 42);
+  --color-student-rule-strong: oklch(52% 0.03 38);
+  --color-student-muted: oklch(43% 0.018 40);
+  --color-student-ink: oklch(20% 0.014 40);
+  --color-student-accent: oklch(50% 0.145 34);
+  --color-student-accent-deep: oklch(40% 0.12 32);
+  --color-student-accent-soft: oklch(94% 0.035 38);
+  --color-student-accent-ink: oklch(98.5% 0.006 55);
+  --color-student-focus: oklch(36% 0.13 245);
+  --color-student-error: oklch(48% 0.17 25);
+  --color-student-error-soft: oklch(94% 0.035 25);
+  --color-student-success: oklch(42% 0.1 150);
+  --color-student-success-soft: oklch(94% 0.03 150);
+
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "Public Sans", sans-serif;
+
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+
+  --text-xs: 0.64rem;
+  --text-sm: 0.8rem;
+  --text-base: 1rem;
+  --text-md: 1.25rem;
+  --text-lg: 1.5625rem;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 120ms;
+  --dur-short: 200ms;
+  --dur-long: 420ms;
+
+  --rule-student: 0.0625rem;
+  --rule-student-focus: 0.125rem;
+  --radius-student-input: 0.75rem;
+  --radius-student-button: 0.75rem;
+  --radius-student-panel: 1rem;
+  --radius-student-pill: 999rem;
+  --control-student-height: 2.75rem;
+  --shadow-student-panel: 0 0.75rem 2rem oklch(20% 0.014 40 / 0.14);
+  --shadow-student-dropdown: 0 0.5rem 1.5rem oklch(20% 0.014 40 / 0.18);
+
+  --z-student-dropdown: 100;
+  --z-student-sticky: 200;
+}
+
+html.dark {
+  --color-student-paper: oklch(18% 0.012 40);
+  --color-student-paper-2: oklch(22% 0.014 40);
+  --color-student-paper-3: oklch(27% 0.016 40);
+  --color-student-rule: oklch(53% 0.02 40);
+  --color-student-rule-strong: oklch(68% 0.022 45);
+  --color-student-muted: oklch(76% 0.018 50);
+  --color-student-ink: oklch(95% 0.008 55);
+  --color-student-accent: oklch(70% 0.13 35);
+  --color-student-accent-deep: oklch(80% 0.1 38);
+  --color-student-accent-soft: oklch(27% 0.045 35);
+  --color-student-accent-ink: oklch(16% 0.012 40);
+  --color-student-focus: oklch(80% 0.13 90);
+  --color-student-error: oklch(72% 0.15 25);
+  --color-student-error-soft: oklch(27% 0.045 25);
+  --color-student-success: oklch(75% 0.1 150);
+  --color-student-success-soft: oklch(27% 0.035 150);
+  --shadow-student-panel: 0 0.75rem 2rem oklch(5% 0.01 40 / 0.42);
+  --shadow-student-dropdown: 0 0.5rem 1.5rem oklch(5% 0.01 40 / 0.5);
+}

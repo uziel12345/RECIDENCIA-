@@ -159,7 +159,7 @@ export function WelcomePage() {
   };
 
   return (
-    <div className="theme-light-lock relative flex min-h-screen items-center justify-center overflow-hidden bg-[url('/Portada.jpeg')] bg-cover bg-center p-5 sm:p-8">
+    <div className="theme-light-lock relative flex min-h-screen items-center justify-center overflow-hidden bg-[url('/Portada.webp')] bg-cover bg-center p-5 sm:p-8">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(74,28,19,0.96)_0%,rgba(74,28,19,0.9)_18%,rgba(131,51,35,0.72)_40%,rgba(168,68,46,0.36)_58%,rgba(251,238,233,0.08)_78%,transparent_100%),linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.12))]" />
       <TopographicPattern />
 

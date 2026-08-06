@@ -117,7 +117,9 @@ try {
       _dz = p.dz;
     }
   }
-} catch {}
+} catch {
+  // localStorage puede no estar disponible; se conserva el valor por defecto.
+}
 
 export function getCalibOffset(): { dx: number; dz: number } {
   return { dx: _dx, dz: _dz };
@@ -126,13 +128,21 @@ export function getCalibOffset(): { dx: number; dz: number } {
 export function saveCalibOffset(dx: number, dz: number): void {
   _dx = dx;
   _dz = dz;
-  try { localStorage.setItem(CALIB_KEY, JSON.stringify({ dx, dz })); } catch {}
+  try {
+    localStorage.setItem(CALIB_KEY, JSON.stringify({ dx, dz }));
+  } catch {
+    // La calibración sigue activa en memoria aunque no pueda persistirse.
+  }
 }
 
 export function clearCalibOffset(): void {
   _dx = 0;
   _dz = 0;
-  try { localStorage.removeItem(CALIB_KEY); } catch {}
+  try {
+    localStorage.removeItem(CALIB_KEY);
+  } catch {
+    // El estado en memoria ya fue limpiado.
+  }
 }
 
 // ── Transform functions ──────────────────────────────────────────────────────

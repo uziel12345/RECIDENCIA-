@@ -119,6 +119,17 @@ describe("ProfessorsService import/search", () => {
 });
 
 describe("parseProfessorScheduleWorkbook", () => {
+  it("rejects malformed and oversized ZIP metadata before decompression", () => {
+    expect(() => parseProfessorScheduleWorkbook(Buffer.from("not-a-zip"))).toThrow(
+      "no es válido"
+    );
+
+    const forged = Buffer.from(zipStore({ "xl/worksheets/sheet1.xml": createValidSheetXml() }));
+    const centralOffset = forged.indexOf(Buffer.from([0x50, 0x4b, 0x01, 0x02]));
+    forged.writeUInt32LE(11 * 1024 * 1024, centralOffset + 24);
+    expect(() => parseProfessorScheduleWorkbook(forged)).toThrow("excede los límites");
+  });
+
   it("falls back to sheet1 when sheet2 has no required columns", () => {
     const rows = parseProfessorScheduleWorkbook(
       zipStore({

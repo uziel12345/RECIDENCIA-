@@ -4,6 +4,10 @@ import { getCategoryAccent } from "../../../components/ui/categoryAccent";
 import { Icon } from "../../../components/ui/Icons";
 import { resolveBuildingImageUrl } from "../../../utils/resolve-api-asset-url";
 import type { Building } from "../types/building";
+import {
+  formatBuildingDisplayCode,
+  formatBuildingDisplayName,
+} from "../utils/building-display-name";
 
 type BuildingQuickCardProps = {
   building: Building;
@@ -18,6 +22,8 @@ export function BuildingQuickCard({
 
   const accent = getCategoryAccent(building.category_name);
   const accentColor = building.category_color || accent.fg;
+  const displayName = formatBuildingDisplayName(building.name, building.code);
+  const displayCode = formatBuildingDisplayCode(building.code, building.name);
 
   const coverUrl = resolveBuildingImageUrl(building.cover_image_url);
 
@@ -27,10 +33,10 @@ export function BuildingQuickCard({
       initial={{ y: 24, opacity: 0, scale: 0.96 }}
       animate={{ y: 0, opacity: 1, scale: 1 }}
       exit={{ y: 24, opacity: 0, scale: 0.96 }}
-      transition={{ type: "spring", stiffness: 320, damping: 28 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
       className="ito-quick-card"
       role="dialog"
-      aria-label={`Acciones rápidas para ${building.name}`}
+      aria-label={`Acciones rápidas para ${displayName}`}
     >
       <div
         className="ito-quick-card__rail"
@@ -78,7 +84,7 @@ export function BuildingQuickCard({
               />
               {building.category_name}
             </span>
-            <div className="ito-quick-card__code">EDIFICIO {building.code}</div>
+            <div className="ito-quick-card__code">EDIFICIO {displayCode}</div>
           </div>
 
           <button
@@ -91,7 +97,7 @@ export function BuildingQuickCard({
           </button>
         </div>
 
-        <h3 className="ito-quick-card__title">{building.name}</h3>
+        <h3 className="ito-quick-card__title">{displayName}</h3>
 
         <div className="ito-quick-card__actions">
           <button

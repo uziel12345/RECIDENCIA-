@@ -7,6 +7,7 @@ import {
   getProcedureById,
   getProcedures,
   getProceduresByBuilding,
+  getServicesByBuilding,
   getProceduresForAdmin,
   linkProcedureToBuilding,
   unlinkProcedureFromBuilding,
@@ -127,6 +128,12 @@ buildingProceduresRouter.get(
   "/:id/procedures",
   validateParams(buildingIdParamsSchema),
   getProceduresByBuilding
+);
+
+buildingProceduresRouter.get(
+  "/:id/services",
+  validateParams(buildingIdParamsSchema),
+  getServicesByBuilding
 );
 
 buildingProceduresRouter.post(

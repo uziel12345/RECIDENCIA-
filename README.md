@@ -53,12 +53,12 @@ Sistema web para visualizar y administrar un mapa 3D interactivo del campus del 
 ### Backend (`apps/api`)
 
 - Node.js + Express + TypeScript
-- MySQL 8 con `mysql2/promise` (pool lazy)
-- JWT en cookie `httpOnly` + CSRF Double Submit
+- PostgreSQL con `pg` (pool lazy)
+- JWT en cookie `httpOnly` + CSRF Double Submit + Argon2id
 - Zod (validación de esquemas)
-- Multer (upload de imágenes)
+- Multer + Sharp (carga acotada y redecodificación de imágenes)
 - Helmet + CORS + Express Rate Limit
-- Vitest (381 tests, 26 suites)
+- Vitest + ESLint + CodeQL
 
 ### Paquete compartido (`packages/shared`)
 
@@ -149,11 +149,11 @@ Los datos de prueba (seed mínimo) se encuentran en [`docs/seed.sql`](docs/seed.
 | Permiso | viewer | servicios_escolares | recursos_humanos | admin | superadmin |
 |---|:---:|:---:|:---:|:---:|:---:|
 | `can_view_buildings` | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `can_manage_buildings` | — | — | — | ✓ | ✓ |
-| `can_manage_users` | — | — | — | ✓ | ✓ |
-| `can_view_audit_log` | — | — | — | — | ✓ |
-| `can_manage_procedures` | — | — | — | ✓ | ✓ |
-| `can_manage_navigation` | — | — | — | ✓ | ✓ |
+| `can_edit_buildings` | — | — | — | ✓ | ✓ |
+| `can_edit_photos` | — | — | — | ✓ | ✓ |
+| `can_manage_admin_users` | — | — | — | — | ✓ |
+| `can_manage_users` | — | — | — | — | ✓ |
+| `can_view_audit_logs` | — | — | — | ✓ | ✓ |
 | `can_view_student_location` | — | ✓ | — | ✓ | ✓ |
 | `can_manage_students` | — | ✓ | — | ✓ | ✓ |
 | `can_view_professor_location` | — | — | ✓ | ✓ | ✓ |
@@ -165,7 +165,7 @@ Los datos de prueba (seed mínimo) se encuentran en [`docs/seed.sql`](docs/seed.
 
 - Node.js ≥ 20
 - pnpm ≥ 9
-- MySQL 8
+- PostgreSQL
 
 ### Configuración
 
@@ -174,9 +174,9 @@ Los datos de prueba (seed mínimo) se encuentran en [`docs/seed.sql`](docs/seed.
 pnpm install
 
 # 2. Crear base de datos
-mysql -u root -p -e "CREATE DATABASE mapa_ito CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-mysql -u root -p mapa_ito < docs/schema.sql
-mysql -u root -p mapa_ito < docs/seed.sql
+createdb -U postgres mapa_ito
+psql -U postgres -d mapa_ito -f docs/schema.sql
+psql -U postgres -d mapa_ito -f docs/seed.sql
 
 # 3. Variables de entorno
 cp apps/api/.env.example apps/api/.env
@@ -184,11 +184,44 @@ cp apps/web/.env.example apps/web/.env
 # Editar ambos archivos con tus credenciales
 
 # 4. Arrancar en desarrollo
-pnpm --filter api dev
-pnpm --filter web dev
+pnpm dev
 ```
 
-### Verificación
+## Producción
+
+La guía operativa completa del servidor, releases, almacenamiento persistente,
+verificación y rollback está en
+[`docs/PRODUCTION-DEPLOYMENT.md`](docs/PRODUCTION-DEPLOYMENT.md).
+
+La API sirve tanto `/api` y `/uploads` como el build estático del frontend,
+por lo que sólo se necesita exponer un proceso Node en el puerto configurado.
+
+```bash
+corepack enable
+pnpm install --frozen-lockfile
+pnpm build
+pnpm start
+```
+
+Antes de arrancar, configura en el servidor las variables descritas en
+[`apps/api/.env.example`](apps/api/.env.example). Como mínimo se requieren
+la conexión PostgreSQL, `JWT_SECRET`, `JWT_EXPIRES_IN` y el dominio HTTPS en
+`CORS_ORIGIN`. El comando `pnpm start` fuerza `NODE_ENV=production`; el puerto
+por defecto es `3001`. Si el frontend y la API usan el mismo dominio, no es
+necesario definir `VITE_API_URL`. Detrás de Nginx u otro proxy inverso,
+configura `HOST=127.0.0.1` para no exponer directamente el proceso Node.
+
+La configuración de referencia en
+[`deploy/nginx/mapa-ito.conf`](deploy/nginx/mapa-ito.conf) sirve directamente
+los bundles versionados y el modelo 3D, activa gzip para recursos de texto y
+mantiene Express como origen de la API y de las rutas dinámicas. Si se publica
+con Tailscale Funnel, apunta Funnel al puerto `80` de Nginx, no directamente al
+puerto `3001` de Node.
+
+El directorio `apps/api/uploads` debe montarse como almacenamiento persistente
+si se despliega en un contenedor o en un servicio con disco efímero.
+
+## Verificación
 
 ```bash
 # Typecheck completo del monorepo

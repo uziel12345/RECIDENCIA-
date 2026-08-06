@@ -22,6 +22,18 @@ const locationRateLimit = rateLimit({
     message: "Límite de consultas de ubicación alcanzado. Intenta en 15 minutos.",
   },
 });
+
+const importRateLimit = rateLimit({
+  windowMs: 60 * 60_000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `professor-import:${req.authUser?.id ?? "unknown"}`,
+  message: {
+    success: false,
+    message: "Límite de importaciones alcanzado. Intenta más tarde.",
+  },
+});
 import {
   createProfessorSchema,
   updateProfessorSchema,
@@ -85,6 +97,7 @@ router.post(
   "/import-schedules",
   authenticate,
   authorizePermission("can_manage_professors"),
+  importRateLimit,
   upload.single("file"),
   importProfessorSchedules
 );

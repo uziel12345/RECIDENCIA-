@@ -40,6 +40,12 @@ export function getProceduresByBuildingApi(
   return apiGet<ProcedureForBuilding[]>(`/buildings/${buildingId}/procedures`);
 }
 
+export function getServicesByBuildingApi(
+  buildingId: string
+): Promise<ProcedureForBuilding[]> {
+  return apiGet<ProcedureForBuilding[]>(`/buildings/${buildingId}/services`);
+}
+
 export function createProcedureApi(
   input: CreateProcedureInput
 ): Promise<ProcedureWithDetails> {

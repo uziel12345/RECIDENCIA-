@@ -28,12 +28,16 @@ export function configureApiClient(nextConfig: ApiClientConfig): void {
   };
 }
 
-export async function apiGet<T>(endpoint: string): Promise<T> {
+export async function apiGet<T>(
+  endpoint: string,
+  options?: { signal?: AbortSignal; cache?: RequestCache }
+): Promise<T> {
   const response = await fetch(`${config.baseUrl}${endpoint}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    cache: "no-store",
+    cache: options?.cache ?? "no-store",
+    signal: options?.signal,
   });
 
   return parseApiResponse<T>(response);

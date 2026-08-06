@@ -1,0 +1,46 @@
+[Unit]
+Description=API y aplicacion web de Mapa ITO
+After=network-online.target postgresql.service
+Wants=network-online.target
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=mapaito
+Group=mapaito
+WorkingDirectory=/var/www/mapa-ito
+Environment=NODE_ENV=production
+EnvironmentFile=/etc/mapa-ito/api.env
+ExecStart=/usr/bin/node apps/api/scripts/start-production.mjs
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+UMask=0077
+LimitNOFILE=65535
+
+NoNewPrivileges=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectHostname=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+RemoveIPC=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+SystemCallFilter=~@clock @cpu-emulation @debug @module @mount @obsolete @privileged @raw-io @reboot @swap
+SystemCallErrorNumber=EPERM
+ReadWritePaths=/var/lib/mapa-ito/uploads
+
+[Install]
+WantedBy=multi-user.target

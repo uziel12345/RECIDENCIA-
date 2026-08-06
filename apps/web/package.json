@@ -10,6 +10,7 @@
     "cap:sync": "npm run build:capacitor && cap sync android",
     "typecheck": "tsc --noEmit --project tsconfig.app.json",
     "lint": "eslint .",
+    "audit:model-coordinates": "node --experimental-strip-types scripts/audit-building-model-coordinates.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -21,11 +22,10 @@
     "@ito-map/shared": "workspace:*",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
-    "@tailwindcss/vite": "^4.2.1",
     "framer-motion": "^12.36.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-router-dom": "^7.14.2",
+    "react-router-dom": "^7.18.2",
     "tailwindcss": "^4.2.1",
     "three": "^0.183.2",
     "three-stdlib": "2.36.1",
@@ -35,6 +35,10 @@
     "@capacitor/cli": "^8.4.1",
     "@eslint/js": "^9.39.4",
     "@gltf-transform/cli": "^4.4.1",
+    "@gltf-transform/core": "4.4.1",
+    "@gltf-transform/extensions": "4.4.1",
+    "@gltf-transform/functions": "4.4.1",
+    "@tailwindcss/vite": "^4.2.1",
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -47,7 +51,7 @@
     "ktx2tools": "^1.1.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.56.1",
-    "vite": "^7.3.1",
+    "vite": "^7.3.5",
     "vitest": "^4.1.5"
   }
 }

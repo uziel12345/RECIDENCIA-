@@ -1,5 +1,6 @@
 export type ProcedureKind = "tramite" | "servicio";
 export type ProcedureRequirementType = "requisito" | "documento";
+export type ProcedureValidationStatus = "confirmed" | "pending_validation";
 
 export type ProcedureRequirement = {
   id: string;
@@ -21,6 +22,7 @@ export type Procedure = {
   department_name: string | null;
   internal_location: string | null;
   schedule_text: string | null;
+  validation_status: ProcedureValidationStatus;
   is_active: boolean;
 };
 
@@ -54,6 +56,8 @@ export type CreateProcedureInput = {
   department_id?: string | null;
   internal_location?: string | null;
   schedule_text?: string | null;
+  building_id?: string | null;
+  validation_status?: ProcedureValidationStatus;
   is_active?: boolean;
   requirements?: Array<{
     description: string;

@@ -34,5 +34,14 @@ export const buildingIdSchema = z.object({
   id: z.string({ required_error: "El ID del edificio es obligatorio" }).uuid("El ID debe ser un UUID válido"),
 });
 
+export const buildingStatusSchema = z.object({
+  is_active: z.boolean({ required_error: "El campo is_active es obligatorio" }),
+});
+
+export const buildingsPaginationSchema = z.object({
+  page: z.coerce.number().int().min(1).max(100_000).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
 export type CreateBuildingInput = z.infer<typeof createBuildingSchema>;
 export type UpdateBuildingInput = z.infer<typeof updateBuildingSchema>;

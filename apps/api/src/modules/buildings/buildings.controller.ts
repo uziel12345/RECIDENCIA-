@@ -14,20 +14,6 @@ function getSingleParam(param: string | string[] | undefined): string {
   return param ?? "";
 }
 
-function parseBoolean(value: unknown): boolean {
-  if (typeof value === "boolean") return value;
-
-  if (typeof value === "string") {
-    return value.toLowerCase() === "true" || value === "1";
-  }
-
-  if (typeof value === "number") {
-    return value === 1;
-  }
-
-  return false;
-}
-
 export const getBuildings = asyncHandler(async (_req: Request, res: Response) => {
   const data = await buildingsService.getAll();
   return sendSuccess(res, data);
@@ -42,12 +28,8 @@ export const getBuildingsForAdmin = asyncHandler(
 
 export const getBuildingsForAdminPaginated = asyncHandler(
   async (req: Request, res: Response) => {
-    const page = parseInt(String(req.query.page), 10);
-    const limit = parseInt(String(req.query.limit), 10);
-
-    const safePage = Number.isFinite(page) && page > 0 ? page : 1;
-    const safeLimit =
-      Number.isFinite(limit) && limit > 0 && limit <= 100 ? limit : 20;
+    const safePage = Number(req.query.page);
+    const safeLimit = Number(req.query.limit);
 
     const { rows, total } = await buildingsService.getAllForAdminPaginated(
       safePage,
@@ -110,7 +92,7 @@ export const updateBuilding = asyncHandler(
 export const updateBuildingStatus = asyncHandler(
   async (req: Request, res: Response) => {
     const id = getSingleParam(req.params.id);
-    const isActive = parseBoolean(req.body?.is_active);
+    const isActive = req.body.is_active as boolean;
 
     const data = await buildingsService.updateStatus(id, isActive);
     auditLog({

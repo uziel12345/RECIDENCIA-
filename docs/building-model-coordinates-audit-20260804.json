@@ -1,0 +1,1406 @@
+{
+  "generated_at": "2026-08-04T21:44:51.907Z",
+  "glb_path": "public/models/campus.glb",
+  "summary": {
+    "total": 78,
+    "active": 57,
+    "matched": 64,
+    "missing": 14,
+    "changed_over_1_unit": 64,
+    "changed_over_25_units": 60
+  },
+  "rows": [
+    {
+      "id": "75a93b7d-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "1007",
+      "name": "AULA 1007",
+      "active": false,
+      "model_node_name": "Edificio 3D 1.007",
+      "status": "missing-node"
+    },
+    {
+      "id": "75a93e30-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "1008",
+      "name": "AULA 1008",
+      "active": false,
+      "model_node_name": "Edificio 3D 1.008",
+      "status": "missing-node"
+    },
+    {
+      "id": "75a940da-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "1009",
+      "name": "AULA 1009",
+      "active": false,
+      "model_node_name": "Edificio 3D 1.009",
+      "status": "missing-node"
+    },
+    {
+      "id": "7ede66d9-6436-11f1-9da2-d843ae05cb18",
+      "code": "A",
+      "name": "EDIF. A",
+      "active": true,
+      "model_node_name": "Edificio_A",
+      "status": "matched",
+      "glb_node_name": "Edificio_A",
+      "old_x": -147.5869,
+      "old_z": -58.058,
+      "current_x": -57.6729,
+      "current_z": -86.4886,
+      "delta": 94.3018,
+      "bounds": {
+        "min_x": -72.0342,
+        "max_x": -43.3116,
+        "min_z": -100.3117,
+        "max_z": -72.6656
+      }
+    },
+    {
+      "id": "75a95e64-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "ASE",
+      "name": "ASESORÍAS",
+      "active": true,
+      "model_node_name": "Asesorias",
+      "status": "matched",
+      "glb_node_name": "Asesorias",
+      "old_x": 12,
+      "old_z": -4,
+      "current_x": 100.4604,
+      "current_z": -112.8155,
+      "delta": 140.2357,
+      "bounds": {
+        "min_x": 93.0618,
+        "max_x": 107.8589,
+        "min_z": -120.1704,
+        "max_z": -105.4607
+      }
+    },
+    {
+      "id": "7ede6894-6436-11f1-9da2-d843ae05cb18",
+      "code": "AUD-ING",
+      "name": "AUDIOVISUAL DE ING.- BAÑOS",
+      "active": true,
+      "model_node_name": "Audiovisual_de_Ingeneria",
+      "status": "matched",
+      "glb_node_name": "Audiovisual_de_Ingeneria",
+      "old_x": -168.4785,
+      "old_z": -40.3551,
+      "current_x": -81.3508,
+      "current_z": -83.443,
+      "delta": 97.1998,
+      "bounds": {
+        "min_x": -96.0219,
+        "max_x": -66.6797,
+        "min_z": -97.6928,
+        "max_z": -69.1933
+      }
+    },
+    {
+      "id": "a374c9d7-3f3a-11f1-b497-d843ae05cb18",
+      "code": "AUD-LIC",
+      "name": "AUDIOVISUAL DE LICENCIATURA",
+      "active": true,
+      "model_node_name": "Audiovisual_de_Lic",
+      "status": "matched",
+      "glb_node_name": "Audiovisual_de_Lic",
+      "old_x": -47.0252,
+      "old_z": 142.6178,
+      "current_x": -62.1717,
+      "current_z": 91.2728,
+      "delta": 53.5325,
+      "bounds": {
+        "min_x": -74.8182,
+        "max_x": -49.5252,
+        "min_z": 78.9708,
+        "max_z": 103.5747
+      }
+    },
+    {
+      "id": "75a96085-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "AUD-POS",
+      "name": "AUDIOVISUAL DE POSGRADO",
+      "active": true,
+      "model_node_name": "Matria_Docencia_Sala_Educacion_distancia",
+      "status": "matched",
+      "glb_node_name": "Matria_Docencia_Sala_Educacion_distancia",
+      "old_x": -88.5102,
+      "old_z": -85.5915,
+      "current_x": -0.969,
+      "current_z": -87.6481,
+      "delta": 87.5654,
+      "bounds": {
+        "min_x": -19.6818,
+        "max_x": 17.7438,
+        "min_z": -106.2507,
+        "max_z": -69.0454
+      }
+    },
+    {
+      "id": "7ede6929-6436-11f1-9da2-d843ae05cb18",
+      "code": "AUL-AC",
+      "name": "AULAS AC",
+      "active": true,
+      "model_node_name": "Aula_AC",
+      "status": "matched",
+      "glb_node_name": "Aula_AC",
+      "old_x": -38.1821,
+      "old_z": -130.671,
+      "current_x": 68.4692,
+      "current_z": -42.3353,
+      "delta": 138.4836,
+      "bounds": {
+        "min_x": 63.4374,
+        "max_x": 73.5009,
+        "min_z": -47.2949,
+        "max_z": -37.3756
+      }
+    },
+    {
+      "id": "7ede697e-6436-11f1-9da2-d843ae05cb18",
+      "code": "AUL-DOC",
+      "name": "AULAS DE DOCTORADO",
+      "active": true,
+      "model_node_name": "Aulas_Cubiculos_de_Doctorado",
+      "status": "matched",
+      "glb_node_name": "Aulas_Cubiculos_de_Doctorado",
+      "old_x": 30.2059,
+      "old_z": -127.1841,
+      "current_x": 92.0937,
+      "current_z": -68.6609,
+      "delta": 85.1767,
+      "bounds": {
+        "min_x": 80.5741,
+        "max_x": 103.6133,
+        "min_z": -80.1805,
+        "max_z": -57.1413
+      }
+    },
+    {
+      "id": "c0b580af-6687-11f1-9d41-d843ae05cb18",
+      "code": "AUL-P",
+      "name": "AULAS P",
+      "active": true,
+      "model_node_name": "Aula_P",
+      "status": "matched",
+      "glb_node_name": "Aula_P",
+      "old_x": 96.394,
+      "old_z": -29.0863,
+      "current_x": 95.4357,
+      "current_z": 25.1444,
+      "delta": 54.2392,
+      "bounds": {
+        "min_x": 87.906,
+        "max_x": 102.9654,
+        "min_z": 17.6966,
+        "max_z": 32.5922
+      }
+    },
+    {
+      "id": "a374ca59-3f3a-11f1-b497-d843ae05cb18",
+      "code": "AUL-S",
+      "name": "EDIF. S",
+      "active": true,
+      "model_node_name": "Edificio_S",
+      "status": "matched",
+      "glb_node_name": "Edificio_S",
+      "old_x": 63.6454,
+      "old_z": 162.0398,
+      "current_x": 1.7978,
+      "current_z": 140.1738,
+      "delta": 65.5991,
+      "bounds": {
+        "min_x": -6.7697,
+        "max_x": 10.3654,
+        "min_z": 131.4585,
+        "max_z": 148.8891
+      }
+    },
+    {
+      "id": "75a9394c-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "B",
+      "name": "EDIF. B",
+      "active": true,
+      "model_node_name": "Edificio_B",
+      "status": "matched",
+      "glb_node_name": "Edificio_B",
+      "old_x": -52,
+      "old_z": -48,
+      "current_x": -0.2882,
+      "current_z": -48.1009,
+      "delta": 51.7119,
+      "bounds": {
+        "min_x": -15.9597,
+        "max_x": 15.3833,
+        "min_z": -63.3547,
+        "max_z": -32.8472
+      }
+    },
+    {
+      "id": "ee10ec94-74b0-11f1-8da2-d843ae05cb18",
+      "code": "BOD1",
+      "name": "BODEGA 1",
+      "active": false,
+      "model_node_name": "Bodega_1",
+      "status": "matched",
+      "glb_node_name": "Bodega_1",
+      "old_x": null,
+      "old_z": null,
+      "current_x": 109.8102,
+      "current_z": -10.6058,
+      "delta": null,
+      "bounds": {
+        "min_x": 104.1653,
+        "max_x": 115.455,
+        "min_z": -17.0211,
+        "max_z": -4.1906
+      }
+    },
+    {
+      "id": "ee11c0dd-74b0-11f1-8da2-d843ae05cb18",
+      "code": "BOD2",
+      "name": "BODEGA 2",
+      "active": false,
+      "model_node_name": "Bodega_2",
+      "status": "matched",
+      "glb_node_name": "Bodega_2",
+      "old_x": null,
+      "old_z": null,
+      "current_x": 105.3231,
+      "current_z": -0.4078,
+      "delta": null,
+      "bounds": {
+        "min_x": 100.122,
+        "max_x": 110.5242,
+        "min_z": -6.033,
+        "max_z": 5.2174
+      }
+    },
+    {
+      "id": "75a93569-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "C",
+      "name": "EDIF. C",
+      "active": true,
+      "model_node_name": "Edificio_C",
+      "status": "matched",
+      "glb_node_name": "Edificio_C",
+      "old_x": -58,
+      "old_z": -14,
+      "current_x": -16.3646,
+      "current_z": -32.9542,
+      "delta": 45.7468,
+      "bounds": {
+        "min_x": -31.7174,
+        "max_x": -1.0118,
+        "min_z": -47.6974,
+        "max_z": -18.2109
+      }
+    },
+    {
+      "id": "a374ca07-3f3a-11f1-b497-d843ae05cb18",
+      "code": "CAF",
+      "name": "CAFETERÍA",
+      "active": true,
+      "model_node_name": "Cafeteria",
+      "status": "matched",
+      "glb_node_name": "Cafeteria",
+      "old_x": 23.6417,
+      "old_z": 63.3715,
+      "current_x": 7.5663,
+      "current_z": 57.906,
+      "delta": 16.9791,
+      "bounds": {
+        "min_x": -6.0072,
+        "max_x": 21.1398,
+        "min_z": 45.1266,
+        "max_z": 70.6854
+      }
+    },
+    {
+      "id": "7ede6c61-6436-11f1-9da2-d843ae05cb18",
+      "code": "CAL",
+      "name": "CALDERA",
+      "active": true,
+      "model_node_name": "Caldera",
+      "status": "matched",
+      "glb_node_name": "Caldera",
+      "old_x": -38.1821,
+      "old_z": -130.671,
+      "current_x": 46.429,
+      "current_z": -92.8671,
+      "delta": 92.6724,
+      "bounds": {
+        "min_x": 41.5508,
+        "max_x": 51.3073,
+        "min_z": -97.789,
+        "max_z": -87.9452
+      }
+    },
+    {
+      "id": "7ede6d43-6436-11f1-9da2-d843ae05cb18",
+      "code": "CB",
+      "name": "CIENCIAS BÁSICAS - BAÑOS",
+      "active": true,
+      "model_node_name": "Depto_Ciencias_Basicas",
+      "status": "matched",
+      "glb_node_name": "Depto_Ciencias_Basicas",
+      "old_x": -32.0686,
+      "old_z": 103.747,
+      "current_x": -39.9973,
+      "current_z": 65.9275,
+      "delta": 38.6417,
+      "bounds": {
+        "min_x": -51.5169,
+        "max_x": -28.4777,
+        "min_z": 54.4079,
+        "max_z": 77.4471
+      }
+    },
+    {
+      "id": "a374c93e-3f3a-11f1-b497-d843ae05cb18",
+      "code": "CC",
+      "name": "CENTRO DE CÓMPUTO",
+      "active": true,
+      "model_node_name": "Centro_computo_Sistemas_Computacionales",
+      "status": "matched",
+      "glb_node_name": "Centro_computo_Sistemas_Computacionales",
+      "old_x": 0.7661,
+      "old_z": -126.9385,
+      "current_x": 63.2534,
+      "current_z": -81.7292,
+      "delta": 77.1268,
+      "bounds": {
+        "min_x": 46.8808,
+        "max_x": 79.6261,
+        "min_z": -98.1013,
+        "max_z": -65.3571
+      }
+    },
+    {
+      "id": "7ede6e23-6436-11f1-9da2-d843ae05cb18",
+      "code": "CEA",
+      "name": "DPTO. CIENCIAS ECON.- ADMVAS.",
+      "active": true,
+      "model_node_name": "Depto_ciencias_Economico_Admin",
+      "status": "matched",
+      "glb_node_name": "Depto_ciencias_Economico_Admin",
+      "old_x": -27.0091,
+      "old_z": 172.1009,
+      "current_x": -57.9878,
+      "current_z": 114.851,
+      "delta": 65.094,
+      "bounds": {
+        "min_x": -71.1849,
+        "max_x": -44.7908,
+        "min_z": 101.6539,
+        "max_z": 128.0481
+      }
+    },
+    {
+      "id": "a374c922-3f3a-11f1-b497-d843ae05cb18",
+      "code": "Centro",
+      "name": "CENTRO DE INFORMACIÓN (BIBLIOTECA)",
+      "active": true,
+      "model_node_name": "Centro_informacion",
+      "status": "matched",
+      "glb_node_name": "Centro_informacion",
+      "old_x": 16.3803,
+      "old_z": 12.3014,
+      "current_x": 20.0716,
+      "current_z": 20.5676,
+      "delta": 9.0529,
+      "bounds": {
+        "min_x": 2.5129,
+        "max_x": 37.6304,
+        "min_z": 2.7729,
+        "max_z": 38.3622
+      }
+    },
+    {
+      "id": "ee0ff11d-74b0-11f1-8da2-d843ae05cb18",
+      "code": "CI",
+      "name": "CENTRO DE INFORMACI??N",
+      "active": false,
+      "model_node_name": "Centro_informacion",
+      "status": "matched",
+      "glb_node_name": "Centro_informacion",
+      "old_x": null,
+      "old_z": null,
+      "current_x": 20.0716,
+      "current_z": 20.5676,
+      "delta": null,
+      "bounds": {
+        "min_x": 2.5129,
+        "max_x": 37.6304,
+        "min_z": 2.7729,
+        "max_z": 38.3622
+      }
+    },
+    {
+      "id": "7ede6e81-6436-11f1-9da2-d843ae05cb18",
+      "code": "CONACYT",
+      "name": "CONACYT",
+      "active": true,
+      "model_node_name": "Edificio_Conacyt",
+      "status": "matched",
+      "glb_node_name": "Edificio_Conacyt",
+      "old_x": -183.5494,
+      "old_z": -89.9616,
+      "current_x": -66.0583,
+      "current_z": -123.0124,
+      "delta": 122.0513,
+      "bounds": {
+        "min_x": -71.6695,
+        "max_x": -60.4472,
+        "min_z": -127.2524,
+        "max_z": -118.7724
+      }
+    },
+    {
+      "id": "7ede6ed0-6436-11f1-9da2-d843ae05cb18",
+      "code": "COPIAS",
+      "name": "COPIAS",
+      "active": false,
+      "model_node_name": "Lab_Microscopia_Sala_Titulacion_Aula_Dibujo",
+      "status": "matched",
+      "glb_node_name": "Lab_Microscopia_Sala_Titulacion_Aula_Dibujo",
+      "old_x": -107.8888,
+      "old_z": -37.3687,
+      "current_x": -34.0998,
+      "current_z": -58.4886,
+      "delta": 76.752,
+      "bounds": {
+        "min_x": -48.4744,
+        "max_x": -19.7252,
+        "min_z": -72.4433,
+        "max_z": -44.5339
+      }
+    },
+    {
+      "id": "7ede6f19-6436-11f1-9da2-d843ae05cb18",
+      "code": "CTIER",
+      "name": "DPTO. CIENCIAS DE LA TIERRA",
+      "active": true,
+      "model_node_name": "Depto_Ciencias_la_tierra",
+      "status": "matched",
+      "glb_node_name": "Depto_Ciencias_la_tierra",
+      "old_x": 6.5388,
+      "old_z": -61.1999,
+      "current_x": 44.5914,
+      "current_z": -34.4464,
+      "delta": 46.5161,
+      "bounds": {
+        "min_x": 37.269,
+        "max_x": 51.9137,
+        "min_z": -47.0823,
+        "max_z": -21.8105
+      }
+    },
+    {
+      "id": "75a95a0a-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "CUB-DOC",
+      "name": "Cubículos Doctorado",
+      "active": true,
+      "model_node_name": "Aulas_Cubiculos_de_Doctorado",
+      "status": "matched",
+      "glb_node_name": "Aulas_Cubiculos_de_Doctorado",
+      "old_x": 30.2059,
+      "old_z": -127.1841,
+      "current_x": 92.0937,
+      "current_z": -68.6609,
+      "delta": 85.1767,
+      "bounds": {
+        "min_x": 80.5741,
+        "max_x": 103.6133,
+        "min_z": -80.1805,
+        "max_z": -57.1413
+      }
+    },
+    {
+      "id": "7ede705d-6436-11f1-9da2-d843ae05cb18",
+      "code": "CUB-MAE",
+      "name": "CUBÍCULO DE MAESTROS",
+      "active": true,
+      "model_node_name": "Cubiculos_Maestros",
+      "status": "matched",
+      "glb_node_name": "Cubiculos_Maestros",
+      "old_x": -35.2104,
+      "old_z": 18.0883,
+      "current_x": -7.5412,
+      "current_z": 7.8105,
+      "delta": 29.5164,
+      "bounds": {
+        "min_x": -14.4998,
+        "max_x": -0.5825,
+        "min_z": 0.8,
+        "max_z": 14.821
+      }
+    },
+    {
+      "id": "7ede70bc-6436-11f1-9da2-d843ae05cb18",
+      "code": "D",
+      "name": "EDIF. D",
+      "active": false,
+      "model_node_name": "Aulas D ",
+      "status": "missing-node"
+    },
+    {
+      "id": "7ede7106-6436-11f1-9da2-d843ae05cb18",
+      "code": "DA",
+      "name": "DESARROLLO ACADÉMICO",
+      "active": true,
+      "model_node_name": "Depto_desarrollo_academico",
+      "status": "matched",
+      "glb_node_name": "Depto_desarrollo_academico",
+      "old_x": -134.3633,
+      "old_z": -2.2849,
+      "current_x": -69.2501,
+      "current_z": -46.867,
+      "delta": 78.9132,
+      "bounds": {
+        "min_x": -83.1483,
+        "max_x": -55.3519,
+        "min_z": -60.3864,
+        "max_z": -33.3475
+      }
+    },
+    {
+      "id": "75a95c2e-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "DEL",
+      "name": "DPTO. ING. ELECTRÓNICA",
+      "active": true,
+      "model_node_name": "Edif y Depto de Ing. Electronica",
+      "status": "matched",
+      "glb_node_name": "Edif y Depto de Ing. Electronica",
+      "old_x": 54,
+      "old_z": -50,
+      "current_x": 88.3022,
+      "current_z": -32.9104,
+      "delta": 38.3236,
+      "bounds": {
+        "min_x": 72.5726,
+        "max_x": 104.0317,
+        "min_z": -48.617,
+        "max_z": -17.2038
+      }
+    },
+    {
+      "id": "7ede7187-6436-11f1-9da2-d843ae05cb18",
+      "code": "DEPI",
+      "name": "D.E.P.I.",
+      "active": true,
+      "model_node_name": "D.P.I",
+      "status": "matched",
+      "glb_node_name": "D.P.I",
+      "old_x": 71.8895,
+      "old_z": -114.9923,
+      "current_x": 117.0276,
+      "current_z": -45.5772,
+      "delta": 82.8004,
+      "bounds": {
+        "min_x": 105.9179,
+        "max_x": 128.1373,
+        "min_z": -56.7894,
+        "max_z": -34.3649
+      }
+    },
+    {
+      "id": "7ede71d4-6436-11f1-9da2-d843ae05cb18",
+      "code": "DIE",
+      "name": "DPTO. DE ING. ELÉCTRICA",
+      "active": true,
+      "model_node_name": "Depto_Ing_Electrica",
+      "status": "matched",
+      "glb_node_name": "Depto_Ing_Electrica",
+      "old_x": -120.004,
+      "old_z": -96.8323,
+      "current_x": -23.2238,
+      "current_z": -100.961,
+      "delta": 96.8682,
+      "bounds": {
+        "min_x": -37.0628,
+        "max_x": -9.3847,
+        "min_z": -114.7818,
+        "max_z": -87.1402
+      }
+    },
+    {
+      "id": "a374c8c9-3f3a-11f1-b497-d843ae05cb18",
+      "code": "DIR",
+      "name": "DIRECCIÓN",
+      "active": true,
+      "model_node_name": "Depto_servico_escolares_Div_estudios_profecionales_Direccion",
+      "status": "matched",
+      "glb_node_name": "Depto_servico_escolares_Div_estudios_profecionales_Direccion",
+      "old_x": -86.2153,
+      "old_z": 38.0304,
+      "current_x": -52.0612,
+      "current_z": 0.0448,
+      "delta": 51.0824,
+      "bounds": {
+        "min_x": -74.4316,
+        "max_x": -29.6908,
+        "min_z": -21.2393,
+        "max_z": 21.329
+      }
+    },
+    {
+      "id": "75a95801-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "DQB",
+      "name": "Depto. Química y Bioquímica",
+      "active": true,
+      "model_node_name": "Depto_Quimica_Bioquimica_Depto_Ing_Industrial",
+      "status": "matched",
+      "glb_node_name": "Depto_Quimica_Bioquimica_Depto_Ing_Industrial",
+      "old_x": 26,
+      "old_z": -127,
+      "current_x": 106.8369,
+      "current_z": -92.356,
+      "delta": 87.9478,
+      "bounds": {
+        "min_x": 91.0949,
+        "max_x": 122.5789,
+        "min_z": -108.1179,
+        "max_z": -76.5941
+      }
+    },
+    {
+      "id": "7ede72a6-6436-11f1-9da2-d843ae05cb18",
+      "code": "DQI-DII",
+      "name": "DPTO. DE ING. QUÍMICA - DPTO. ING. INDUSTRIAL",
+      "active": true,
+      "model_node_name": "Depto_Quimica_Bioquimica_Depto_Ing_Industrial",
+      "status": "matched",
+      "glb_node_name": "Depto_Quimica_Bioquimica_Depto_Ing_Industrial",
+      "old_x": 26,
+      "old_z": -127,
+      "current_x": 106.8369,
+      "current_z": -92.356,
+      "delta": 87.9478,
+      "bounds": {
+        "min_x": 91.0949,
+        "max_x": 122.5789,
+        "min_z": -108.1179,
+        "max_z": -76.5941
+      }
+    },
+    {
+      "id": "a374c992-3f3a-11f1-b497-d843ae05cb18",
+      "code": "E",
+      "name": "EDIF. E",
+      "active": true,
+      "model_node_name": "Edificio_E",
+      "status": "matched",
+      "glb_node_name": "Edificio_E",
+      "old_x": 12.0946,
+      "old_z": 95.3105,
+      "current_x": -3.2243,
+      "current_z": 74.7988,
+      "delta": 25.6008,
+      "bounds": {
+        "min_x": -17.2827,
+        "max_x": 10.8341,
+        "min_z": 61.3339,
+        "max_z": 88.2637
+      }
+    },
+    {
+      "id": "75a94357-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "ENIE",
+      "name": "Aulas ENIE",
+      "active": false,
+      "model_node_name": "Aula_Ñ",
+      "status": "matched",
+      "glb_node_name": "Aula_Ñ",
+      "old_x": 54,
+      "old_z": -107,
+      "current_x": 116.7182,
+      "current_z": -75.4928,
+      "delta": 70.1874,
+      "bounds": {
+        "min_x": 111.84,
+        "max_x": 121.5964,
+        "min_z": -80.4147,
+        "max_z": -70.5708
+      }
+    },
+    {
+      "id": "7ede742d-6436-11f1-9da2-d843ae05cb18",
+      "code": "EXTRA",
+      "name": "EXTRAESCOLARES",
+      "active": true,
+      "model_node_name": "Extra_escolares",
+      "status": "matched",
+      "glb_node_name": "Extra_escolares",
+      "old_x": 95.9161,
+      "old_z": -4.2166,
+      "current_x": 93.8987,
+      "current_z": 43.3742,
+      "delta": 47.6335,
+      "bounds": {
+        "min_x": 88.7278,
+        "max_x": 99.0696,
+        "min_z": 37.7594,
+        "max_z": 48.9889
+      }
+    },
+    {
+      "id": "a374c9a4-3f3a-11f1-b497-d843ae05cb18",
+      "code": "F",
+      "name": "EDIF. F",
+      "active": true,
+      "model_node_name": "Edificio_F",
+      "status": "matched",
+      "glb_node_name": "Edificio_F",
+      "old_x": 9.7073,
+      "old_z": 118.4428,
+      "current_x": -17.3545,
+      "current_z": 95.7133,
+      "delta": 35.3408,
+      "bounds": {
+        "min_x": -31.5358,
+        "max_x": -3.1732,
+        "min_z": 82.0955,
+        "max_z": 109.3311
+      }
+    },
+    {
+      "id": "75a946e3-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "FQ",
+      "name": "LAB. DE FÍSICO QUÍMICA",
+      "active": true,
+      "model_node_name": "Laboratorio_Fisico_Quimica",
+      "status": "matched",
+      "glb_node_name": "Laboratorio_Fisico_Quimica",
+      "old_x": -22,
+      "old_z": -18,
+      "current_x": 16.2681,
+      "current_z": -18.1562,
+      "delta": 38.2684,
+      "bounds": {
+        "min_x": 0.9286,
+        "max_x": 31.6077,
+        "min_z": -33.4957,
+        "max_z": -2.8167
+      }
+    },
+    {
+      "id": "a374c9b6-3f3a-11f1-b497-d843ae05cb18",
+      "code": "G",
+      "name": "EDIF. G",
+      "active": true,
+      "model_node_name": "Edificio_G",
+      "status": "matched",
+      "glb_node_name": "Edificio_G",
+      "old_x": 8.4006,
+      "old_z": 150.592,
+      "current_x": -31.5576,
+      "current_z": 112.3083,
+      "delta": 55.338,
+      "bounds": {
+        "min_x": -44.8787,
+        "max_x": -18.2366,
+        "min_z": 99.416,
+        "max_z": 125.2006
+      }
+    },
+    {
+      "id": "75a9492b-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "GEO",
+      "name": "Geolocalización",
+      "active": false,
+      "model_node_name": "Contenido de geolocalización",
+      "status": "missing-node"
+    },
+    {
+      "id": "a374ca1b-3f3a-11f1-b497-d843ae05cb18",
+      "code": "GIM",
+      "name": "GIMNASIO",
+      "active": true,
+      "model_node_name": "Gimnacio",
+      "status": "matched",
+      "glb_node_name": "Gimnacio",
+      "old_x": 61.2421,
+      "old_z": 17.1434,
+      "current_x": 56.6284,
+      "current_z": 43.2168,
+      "delta": 26.4785,
+      "bounds": {
+        "min_x": 33.7173,
+        "max_x": 79.5396,
+        "min_z": 20.604,
+        "max_z": 65.8295
+      }
+    },
+    {
+      "id": "a374c957-3f3a-11f1-b497-d843ae05cb18",
+      "code": "H",
+      "name": "EDIF. H",
+      "active": true,
+      "model_node_name": "Edificio_H_Servicio_Medico",
+      "status": "matched",
+      "glb_node_name": "Edificio_H_Servicio_Medico",
+      "old_x": -44.2055,
+      "old_z": 122.9823,
+      "current_x": -53.8696,
+      "current_z": 79.0223,
+      "delta": 45.0097,
+      "bounds": {
+        "min_x": -69.9664,
+        "max_x": -37.7728,
+        "min_z": 63.7908,
+        "max_z": 94.2538
+      }
+    },
+    {
+      "id": "a374c96b-3f3a-11f1-b497-d843ae05cb18",
+      "code": "I",
+      "name": "EDIF. I",
+      "active": true,
+      "model_node_name": "Edificio_I",
+      "status": "matched",
+      "glb_node_name": "Edificio_I",
+      "old_x": -59.7816,
+      "old_z": 172.2834,
+      "current_x": -83.214,
+      "current_z": 125.3034,
+      "delta": 52.4995,
+      "bounds": {
+        "min_x": -92.1318,
+        "max_x": -74.2961,
+        "min_z": 109.9727,
+        "max_z": 140.6341
+      }
+    },
+    {
+      "id": "a374c97e-3f3a-11f1-b497-d843ae05cb18",
+      "code": "J",
+      "name": "Edificio J",
+      "active": false,
+      "model_node_name": "Edificio J",
+      "status": "missing-node"
+    },
+    {
+      "id": "a374ca70-3f3a-11f1-b497-d843ae05cb18",
+      "code": "K",
+      "name": "EDIF. K - BAÑOS",
+      "active": true,
+      "model_node_name": "Edificio_K",
+      "status": "matched",
+      "glb_node_name": "Edificio_K",
+      "old_x": 47.8697,
+      "old_z": 148.8787,
+      "current_x": -2.2033,
+      "current_z": 129.4134,
+      "delta": 53.7234,
+      "bounds": {
+        "min_x": -15.8492,
+        "max_x": 11.4426,
+        "min_z": 115.493,
+        "max_z": 143.3338
+      }
+    },
+    {
+      "id": "75a92791-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "L",
+      "name": "Edificio L",
+      "active": true,
+      "model_node_name": "Edificio_L",
+      "status": "matched",
+      "glb_node_name": "Edificio_L",
+      "old_x": 22,
+      "old_z": -18,
+      "current_x": 42.9656,
+      "current_z": 2.4637,
+      "delta": 29.2971,
+      "bounds": {
+        "min_x": 26.2901,
+        "max_x": 59.641,
+        "min_z": -14.3273,
+        "max_z": 19.2546
+      }
+    },
+    {
+      "id": "75a950bd-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "LAB-CIV",
+      "name": "LAB. ING. CIVIL",
+      "active": true,
+      "model_node_name": "Lab_Ing_Civil",
+      "status": "matched",
+      "glb_node_name": "Lab_Ing_Civil",
+      "old_x": 20,
+      "old_z": -95,
+      "current_x": 55.9127,
+      "current_z": -47.0509,
+      "delta": 59.9069,
+      "bounds": {
+        "min_x": 42.3704,
+        "max_x": 69.4551,
+        "min_z": -60.5857,
+        "max_z": -33.5161
+      }
+    },
+    {
+      "id": "75a94e80-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "LAB-ELE",
+      "name": "LAB. ING. ELÉCTRICA",
+      "active": true,
+      "model_node_name": "Lab_Ing_Electrica",
+      "status": "matched",
+      "glb_node_name": "Lab_Ing_Electrica",
+      "old_x": -72,
+      "old_z": -116,
+      "current_x": 20.0459,
+      "current_z": -109.5484,
+      "delta": 92.2717,
+      "bounds": {
+        "min_x": 3.9294,
+        "max_x": 36.1624,
+        "min_z": -125.5124,
+        "max_z": -93.5845
+      }
+    },
+    {
+      "id": "a374ca43-3f3a-11f1-b497-d843ae05cb18",
+      "code": "LAB-IND",
+      "name": "LAB. ING. INDUSTRIAL",
+      "active": true,
+      "model_node_name": "Laboratorio_Ing_Industrial",
+      "status": "matched",
+      "glb_node_name": "Laboratorio_Ing_Industrial",
+      "old_x": 74.776,
+      "old_z": 114.2696,
+      "current_x": 33.655,
+      "current_z": 117.937,
+      "delta": 41.2842,
+      "bounds": {
+        "min_x": 17.0311,
+        "max_x": 50.279,
+        "min_z": 101.1985,
+        "max_z": 134.6754
+      }
+    },
+    {
+      "id": "7ede7760-6436-11f1-9da2-d843ae05cb18",
+      "code": "LAB-MEC",
+      "name": "DPTO. LAB. ING. MECÁNICA",
+      "active": true,
+      "model_node_name": "Lab_Depto_Ing_Mecanica_Lab_Quimaca_Pesada",
+      "status": "matched",
+      "glb_node_name": "Lab_Depto_Ing_Mecanica_Lab_Quimaca_Pesada",
+      "old_x": -42.2376,
+      "old_z": -90.0708,
+      "current_x": 26.9331,
+      "current_z": -68.1119,
+      "delta": 72.5726,
+      "bounds": {
+        "min_x": 5.643,
+        "max_x": 48.2233,
+        "min_z": -88.6435,
+        "max_z": -47.5803
+      }
+    },
+    {
+      "id": "7ede77d3-6436-11f1-9da2-d843ae05cb18",
+      "code": "LAB-MICR",
+      "name": "LAB. MICR.- TITULACIÓN - AULA DIBUJO - BAÑOS",
+      "active": true,
+      "model_node_name": "Lab_Microscopia_Sala_Titulacion_Aula_Dibujo",
+      "status": "matched",
+      "glb_node_name": "Lab_Microscopia_Sala_Titulacion_Aula_Dibujo",
+      "old_x": -107.8888,
+      "old_z": -37.3687,
+      "current_x": -34.0998,
+      "current_z": -58.4886,
+      "delta": 76.752,
+      "bounds": {
+        "min_x": -48.4744,
+        "max_x": -19.7252,
+        "min_z": -72.4433,
+        "max_z": -44.5339
+      }
+    },
+    {
+      "id": "7ede7867-6436-11f1-9da2-d843ae05cb18",
+      "code": "LAB-QP",
+      "name": "LAB. QUÍMICA PESADA",
+      "active": true,
+      "model_node_name": "Lab_Depto_Ing_Mecanica_Lab_Quimaca_Pesada",
+      "status": "matched",
+      "glb_node_name": "Lab_Depto_Ing_Mecanica_Lab_Quimaca_Pesada",
+      "old_x": -42.2376,
+      "old_z": -90.0708,
+      "current_x": 26.9331,
+      "current_z": -68.1119,
+      "delta": 72.5726,
+      "bounds": {
+        "min_x": 5.643,
+        "max_x": 48.2233,
+        "min_z": -88.6435,
+        "max_z": -47.5803
+      }
+    },
+    {
+      "id": "75a94c1b-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "LAB-QUI",
+      "name": "Laboratorio de Química",
+      "active": true,
+      "model_node_name": "Laboratorio_Fisico_Quimica",
+      "status": "matched",
+      "glb_node_name": "Laboratorio_Fisico_Quimica",
+      "old_x": -22,
+      "old_z": -18,
+      "current_x": 16.2681,
+      "current_z": -18.1562,
+      "delta": 38.2684,
+      "bounds": {
+        "min_x": 0.9286,
+        "max_x": 31.6077,
+        "min_z": -33.4957,
+        "max_z": -2.8167
+      }
+    },
+    {
+      "id": "7ede78c3-6436-11f1-9da2-d843ae05cb18",
+      "code": "LAB-SIM",
+      "name": "LAB. DE SIMULACIÓN",
+      "active": true,
+      "model_node_name": "Lab_Simulacion",
+      "status": "matched",
+      "glb_node_name": "Lab_Simulacion",
+      "old_x": -54.3715,
+      "old_z": -148.9236,
+      "current_x": 42.6357,
+      "current_z": -106.7305,
+      "delta": 105.7859,
+      "bounds": {
+        "min_x": 37.23,
+        "max_x": 48.0414,
+        "min_z": -112.136,
+        "max_z": -101.3249
+      }
+    },
+    {
+      "id": "4eb17a7e-7ef8-11f1-8a16-d0460c699407",
+      "code": "M",
+      "name": "Edificio M",
+      "active": true,
+      "model_node_name": "Aula_M",
+      "status": "matched",
+      "glb_node_name": "Aula_M",
+      "old_x": 74,
+      "old_z": 10,
+      "current_x": 73.6617,
+      "current_z": 16.0164,
+      "delta": 6.0259,
+      "bounds": {
+        "min_x": 68.0786,
+        "max_x": 79.2448,
+        "min_z": 10.3653,
+        "max_z": 21.6675
+      }
+    },
+    {
+      "id": "7ede796d-6436-11f1-9da2-d843ae05cb18",
+      "code": "MAE-ADM",
+      "name": "M. ADMINISTRACIÓN",
+      "active": true,
+      "model_node_name": "Maestria_Administracion",
+      "status": "matched",
+      "glb_node_name": "Maestria_Administracion",
+      "old_x": 20.8673,
+      "old_z": 173.4258,
+      "current_x": -28.0887,
+      "current_z": 129.4412,
+      "delta": 65.8129,
+      "bounds": {
+        "min_x": -35.21,
+        "max_x": -20.9675,
+        "min_z": 122.4628,
+        "max_z": 136.4197
+      }
+    },
+    {
+      "id": "7ede79c3-6436-11f1-9da2-d843ae05cb18",
+      "code": "MAE-CON",
+      "name": "MAESTRÍA EN CONSTRUCCIÓN",
+      "active": true,
+      "model_node_name": "Maestria_cosntruccion",
+      "status": "matched",
+      "glb_node_name": "Maestria_cosntruccion",
+      "old_x": -164.2005,
+      "old_z": -100.3312,
+      "current_x": -46.211,
+      "current_z": -123.1921,
+      "delta": 120.1838,
+      "bounds": {
+        "min_x": -57.1307,
+        "max_x": -35.2913,
+        "min_z": -127.0972,
+        "max_z": -119.287
+      }
+    },
+    {
+      "id": "7ede7a15-6436-11f1-9da2-d843ae05cb18",
+      "code": "MAE-DOC",
+      "name": "MAESTRÍA EN DOCENCIA",
+      "active": true,
+      "model_node_name": "Matria_Docencia_Sala_Educacion_distancia",
+      "status": "matched",
+      "glb_node_name": "Matria_Docencia_Sala_Educacion_distancia",
+      "old_x": -88.5102,
+      "old_z": -85.5915,
+      "current_x": -0.969,
+      "current_z": -87.6481,
+      "delta": 87.5654,
+      "bounds": {
+        "min_x": -19.6818,
+        "max_x": 17.7438,
+        "min_z": -106.2507,
+        "max_z": -69.0454
+      }
+    },
+    {
+      "id": "7ede7a69-6436-11f1-9da2-d843ae05cb18",
+      "code": "MC",
+      "name": "EDIFICIO MULTICARRERA",
+      "active": false,
+      "model_node_name": "Edificios 3D 16 en emplazamiento plano",
+      "status": "missing-node"
+    },
+    {
+      "id": "7ede7aba-6436-11f1-9da2-d843ae05cb18",
+      "code": "N",
+      "name": "AULA Ñ",
+      "active": true,
+      "model_node_name": "Aula_Ñ",
+      "status": "matched",
+      "glb_node_name": "Aula_Ñ",
+      "old_x": 57.6345,
+      "old_z": -151.0679,
+      "current_x": 116.7182,
+      "current_z": -75.4928,
+      "delta": 95.9296,
+      "bounds": {
+        "min_x": 111.84,
+        "max_x": 121.5964,
+        "min_z": -80.4147,
+        "max_z": -70.5708
+      }
+    },
+    {
+      "id": "a374c9ee-3f3a-11f1-b497-d843ae05cb18",
+      "code": "NEW",
+      "name": "Edificio Nuevo",
+      "active": true,
+      "model_node_name": "Edificio_Nuevo",
+      "status": "matched",
+      "glb_node_name": "Edificio_Nuevo",
+      "old_x": -65.6091,
+      "old_z": 152.9491,
+      "current_x": -84.739,
+      "current_z": 88.1865,
+      "delta": 67.5289,
+      "bounds": {
+        "min_x": -93.6569,
+        "max_x": -75.8211,
+        "min_z": 72.8558,
+        "max_z": 103.5172
+      }
+    },
+    {
+      "id": "7ede7b10-6436-11f1-9da2-d843ae05cb18",
+      "code": "O",
+      "name": "AULA O",
+      "active": false,
+      "model_node_name": "Edificios 3D 18 en emplazamiento plano",
+      "status": "missing-node"
+    },
+    {
+      "id": "75a955eb-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "POS",
+      "name": "Posgrado",
+      "active": false,
+      "model_node_name": "Edificio de Postgrado.001",
+      "status": "missing-node"
+    },
+    {
+      "id": "7ede7b96-6436-11f1-9da2-d843ae05cb18",
+      "code": "PTR",
+      "name": "PLANTA DE TRATAM. DE AGUAS RESID.",
+      "active": false,
+      "model_node_name": "Edificios 3D 10 en emplazamiento plano",
+      "status": "missing-node"
+    },
+    {
+      "id": "a374ca2e-3f3a-11f1-b497-d843ae05cb18",
+      "code": "Q",
+      "name": "Edificio Q",
+      "active": true,
+      "model_node_name": "Edificio_Q",
+      "status": "matched",
+      "glb_node_name": "Edificio_Q",
+      "old_x": 66.3532,
+      "old_z": 80.9748,
+      "current_x": 46.6227,
+      "current_z": 83.7022,
+      "delta": 19.9181,
+      "bounds": {
+        "min_x": 26.6835,
+        "max_x": 66.5619,
+        "min_z": 66.8331,
+        "max_z": 100.5712
+      }
+    },
+    {
+      "id": "ee0e59f4-74b0-11f1-8da2-d843ae05cb18",
+      "code": "S",
+      "name": "EDIF. S",
+      "active": false,
+      "model_node_name": "Edificio_S",
+      "status": "matched",
+      "glb_node_name": "Edificio_S",
+      "old_x": null,
+      "old_z": null,
+      "current_x": 1.7978,
+      "current_z": 140.1738,
+      "delta": null,
+      "bounds": {
+        "min_x": -6.7697,
+        "max_x": 10.3654,
+        "min_z": 131.4585,
+        "max_z": 148.8891
+      }
+    },
+    {
+      "id": "75a952fa-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "SAL",
+      "name": "Sala de Titulación",
+      "active": true,
+      "model_node_name": "Lab_Microscopia_Sala_Titulacion_Aula_Dibujo",
+      "status": "matched",
+      "glb_node_name": "Lab_Microscopia_Sala_Titulacion_Aula_Dibujo",
+      "old_x": -107.8888,
+      "old_z": -37.3687,
+      "current_x": -34.0998,
+      "current_z": -58.4886,
+      "delta": 76.752,
+      "bounds": {
+        "min_x": -48.4744,
+        "max_x": -19.7252,
+        "min_z": -72.4433,
+        "max_z": -44.5339
+      }
+    },
+    {
+      "id": "7ede7bfb-6436-11f1-9da2-d843ae05cb18",
+      "code": "SAL-MAE",
+      "name": "TITULACIÓN DE M. EN ADMÓN.,",
+      "active": true,
+      "model_node_name": "Sala_Titulacion_Maestria-Admon",
+      "status": "matched",
+      "glb_node_name": "Sala_Titulacion_Maestria-Admon",
+      "old_x": 95.9161,
+      "old_z": -4.2166,
+      "current_x": -39.9488,
+      "current_z": 132.1912,
+      "delta": 192.5263,
+      "bounds": {
+        "min_x": -49.2787,
+        "max_x": -30.6189,
+        "min_z": 123.0993,
+        "max_z": 141.2832
+      }
+    },
+    {
+      "id": "7ede790e-6436-11f1-9da2-d843ae05cb18",
+      "code": "Sec-61",
+      "name": "SECCIÓN 61",
+      "active": false,
+      "model_node_name": "Seccion_61",
+      "status": "matched",
+      "glb_node_name": "Seccion_61",
+      "old_x": -176.5824,
+      "old_z": -67.1432,
+      "current_x": -77.2152,
+      "current_z": -105.03,
+      "delta": 106.345,
+      "bounds": {
+        "min_x": -85.3742,
+        "max_x": -69.0562,
+        "min_z": -113.1891,
+        "max_z": -96.871
+      }
+    },
+    {
+      "id": "c0b5c72d-6687-11f1-9d41-d843ae05cb18",
+      "code": "SECCIÓN 61",
+      "name": "SECCIÓN 61",
+      "active": true,
+      "model_node_name": "Seccion_61",
+      "status": "matched",
+      "glb_node_name": "Seccion_61",
+      "old_x": -176.5824,
+      "old_z": -67.1432,
+      "current_x": -77.2152,
+      "current_z": -105.03,
+      "delta": 106.345,
+      "bounds": {
+        "min_x": -85.3742,
+        "max_x": -69.0562,
+        "min_z": -113.1891,
+        "max_z": -96.871
+      }
+    },
+    {
+      "id": "7ede7c5b-6436-11f1-9da2-d843ae05cb18",
+      "code": "SERV-ESC",
+      "name": "SERV. ESCOLARES - DIV. EST. PROF.",
+      "active": true,
+      "model_node_name": "Depto_servico_escolares_Div_estudios_profecionales_Direccion",
+      "status": "matched",
+      "glb_node_name": "Depto_servico_escolares_Div_estudios_profecionales_Direccion",
+      "old_x": -89.8816,
+      "old_z": 37.9362,
+      "current_x": -52.0612,
+      "current_z": 0.0448,
+      "delta": 53.5364,
+      "bounds": {
+        "min_x": -74.4316,
+        "max_x": -29.6908,
+        "min_z": -21.2393,
+        "max_z": 21.329
+      }
+    },
+    {
+      "id": "d7a1ac1a-bb3b-45b3-a5e3-d85d387ced83",
+      "code": "TEMP-DEL",
+      "name": "Edificio Temporal Delete",
+      "active": false,
+      "model_node_name": "Edificio_Temporal_Delete",
+      "status": "missing-node"
+    },
+    {
+      "id": "a08c0a4a-5a39-4a6d-a5a9-6ecea216577f",
+      "code": "TMP-20260430124616",
+      "name": "Edificio Temporal Delete 20260430124616",
+      "active": false,
+      "model_node_name": "Edificio_Temporal_Delete_20260430124616",
+      "status": "missing-node"
+    },
+    {
+      "id": "75a92fb7-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "X",
+      "name": "Edificio X",
+      "active": false,
+      "model_node_name": "Edificio_X",
+      "status": "missing-node"
+    },
+    {
+      "id": "75a932df-52ec-11f1-a7fc-d843ae05cb18",
+      "code": "X001",
+      "name": "Edificio X001",
+      "active": false,
+      "model_node_name": "Edificio_X001",
+      "status": "missing-node"
+    }
+  ]
+}

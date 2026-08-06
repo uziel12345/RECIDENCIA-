@@ -3,8 +3,9 @@ import { z } from "zod";
 export const searchQuerySchema = z.object({
   q: z
     .string({ required_error: "El parámetro q es obligatorio" })
-    .min(2, "La búsqueda debe tener al menos 2 caracteres")
-    .max(100),
+    .trim()
+    .min(1, "Escribe algo para buscar")
+    .max(120, "La búsqueda no puede superar 120 caracteres"),
   type: z
     .enum([
       "all",
@@ -16,6 +17,10 @@ export const searchQuerySchema = z.object({
       "cubicle",
       "headquarters",
       "gate",
+      "position",
+      "street",
+      "person",
+      "office",
     ])
     .optional()
     .default("all"),
@@ -31,4 +36,8 @@ export type SearchType =
   | "department"
   | "cubicle"
   | "headquarters"
-  | "gate";
+  | "gate"
+  | "position"
+  | "street"
+  | "person"
+  | "office";

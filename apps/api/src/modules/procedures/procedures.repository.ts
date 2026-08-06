@@ -22,6 +22,7 @@ export class ProceduresRepository {
     const PROCEDURE_COLUMNS_NO_DEPT_JOIN = `
       p.id, p.name, p.slug, p.description, p.resource_url, p.kind,
       p.department_id, NULL AS department_name, p.internal_location, p.schedule_text,
+      p.validation_status,
       p.is_active, p.deleted_at
     `;
 
@@ -57,6 +58,7 @@ export class ProceduresRepository {
     let sql = `
       SELECT p.id, p.name, p.slug, p.description, p.resource_url, p.kind,
         p.department_id, NULL AS department_name, p.internal_location, p.schedule_text,
+        p.validation_status,
         p.is_active, p.deleted_at,
         (SELECT COUNT(*) FROM building_procedures bp WHERE bp.procedure_id = p.id) AS building_count
       FROM procedures p
@@ -78,6 +80,7 @@ export class ProceduresRepository {
     const [rows] = await this.db.query<ProcedureRow[]>(
       `SELECT p.id, p.name, p.slug, p.description, p.resource_url, p.kind,
               p.department_id, dep.name AS department_name, p.internal_location, p.schedule_text,
+              p.validation_status,
               p.is_active, p.deleted_at
        FROM procedures p
        LEFT JOIN departments dep ON dep.id = p.department_id AND dep.deleted_at IS NULL
@@ -90,6 +93,7 @@ export class ProceduresRepository {
   async findBySlug(slug: string, excludeId?: string): Promise<ProcedureRow | null> {
     let sql = `SELECT id, name, slug, description, resource_url, kind,
                       department_id, NULL AS department_name, internal_location, schedule_text,
+                      validation_status,
                       is_active, deleted_at
                FROM procedures WHERE slug = ? AND deleted_at IS NULL`;
     const params: unknown[] = [slug];
@@ -147,6 +151,7 @@ export class ProceduresRepository {
     const [rows] = await this.db.query<ProcedureForBuildingRow[]>(
       `SELECT p.id, p.name, p.slug, p.description, p.resource_url, p.kind,
               p.department_id, dep.name AS department_name, p.internal_location, p.schedule_text,
+              p.validation_status,
               p.is_active, bp.notes
        FROM building_procedures bp
        INNER JOIN procedures p ON bp.procedure_id = p.id
@@ -167,13 +172,14 @@ export class ProceduresRepository {
     department_id: string | null;
     internal_location: string | null;
     schedule_text: string | null;
+    validation_status: "confirmed" | "pending_validation";
     is_active: boolean;
   }): Promise<string> {
     const id = crypto.randomUUID();
     await this.db.query(
       `INSERT INTO procedures
-         (id, name, slug, description, resource_url, kind, department_id, internal_location, schedule_text, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (id, name, slug, description, resource_url, kind, department_id, internal_location, schedule_text, validation_status, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.name,
@@ -184,6 +190,7 @@ export class ProceduresRepository {
         input.department_id,
         input.internal_location,
         input.schedule_text,
+        input.validation_status,
         input.is_active,
       ]
     );
@@ -226,13 +233,14 @@ export class ProceduresRepository {
       department_id: string | null;
       internal_location: string | null;
       schedule_text: string | null;
+      validation_status: "confirmed" | "pending_validation";
       is_active: boolean;
     }
   ): Promise<void> {
     await this.db.query(
       `UPDATE procedures
        SET name = ?, slug = ?, description = ?, resource_url = ?, kind = ?,
-           department_id = ?, internal_location = ?, schedule_text = ?, is_active = ?
+           department_id = ?, internal_location = ?, schedule_text = ?, validation_status = ?, is_active = ?
        WHERE id = ? AND deleted_at IS NULL`,
       [
         input.name,
@@ -243,6 +251,7 @@ export class ProceduresRepository {
         input.department_id,
         input.internal_location,
         input.schedule_text,
+        input.validation_status,
         input.is_active,
         id,
       ]

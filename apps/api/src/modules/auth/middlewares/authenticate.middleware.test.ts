@@ -13,7 +13,11 @@ vi.mock("../../../db/connection.js", () => ({
 }));
 
 vi.mock("../../../config/env.js", () => ({
-  env: { jwtSecret: "test-secret-that-is-at-least-32chars-long!!" },
+  env: {
+    jwtSecret: "test-secret-that-is-at-least-32chars-long!!",
+    jwtIssuer: "mapa-ito-api",
+    jwtAudience: "mapa-ito-admin",
+  },
 }));
 
 // Must match the literal in the vi.mock factory above
@@ -110,7 +114,9 @@ describe("authenticate middleware", () => {
 
     await authenticate(req, res, next);
 
-    expect(mockedJwtVerify).toHaveBeenCalledWith("valid-token", TEST_SECRET);
+    expect(mockedJwtVerify).toHaveBeenCalledWith("valid-token", TEST_SECRET, {
+      algorithms: ["HS256"], issuer: "mapa-ito-api", audience: "mapa-ito-admin",
+    });
     expect(next).toHaveBeenCalledTimes(1);
   });
 
@@ -124,7 +130,9 @@ describe("authenticate middleware", () => {
 
     await authenticate(req, res, next);
 
-    expect(mockedJwtVerify).toHaveBeenCalledWith("cookie-token", TEST_SECRET);
+    expect(mockedJwtVerify).toHaveBeenCalledWith("cookie-token", TEST_SECRET, {
+      algorithms: ["HS256"], issuer: "mapa-ito-api", audience: "mapa-ito-admin",
+    });
     expect(next).toHaveBeenCalledTimes(1);
   });
 
@@ -141,7 +149,9 @@ describe("authenticate middleware", () => {
 
     await authenticate(req, res, next);
 
-    expect(mockedJwtVerify).toHaveBeenCalledWith("cookie-token", TEST_SECRET);
+    expect(mockedJwtVerify).toHaveBeenCalledWith("cookie-token", TEST_SECRET, {
+      algorithms: ["HS256"], issuer: "mapa-ito-api", audience: "mapa-ito-admin",
+    });
   });
 
   // ── Token validation ───────────────────────────────────────────────────────

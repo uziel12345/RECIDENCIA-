@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import type { Pool, RowDataPacket } from "../../db/mysql-compat-types.js";
+import type { Pool } from "../../db/mysql-compat-types.js";
 import { pool } from "../../db/connection.js";
 import type { StudentRow, StudentLocationRow, StudentScheduleRow } from "./students.types.js";
 

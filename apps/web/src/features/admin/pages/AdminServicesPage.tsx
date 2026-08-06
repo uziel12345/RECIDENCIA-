@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import type { ProcedureForAdmin, ProcedureBuilding } from "@ito-map/shared";
+import type { Building, Department, ProcedureForAdmin, ProcedureBuilding } from "@ito-map/shared";
 import {
   createProcedureApi,
   deleteProcedureApi,
   getProcedureByIdApi,
   getProceduresForAdminApi,
+  getBuildingsApi,
+  getDepartmentsApi,
   updateProcedureApi,
   updateProcedureStatusApi,
 } from "@ito-map/shared";
@@ -31,6 +33,10 @@ export function AdminServicesPage() {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
+  const [newBuildingId, setNewBuildingId] = useState("");
+  const [newDepartmentId, setNewDepartmentId] = useState("");
+  const [buildings, setBuildings] = useState<Building[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [createSaving, setCreateSaving] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
@@ -64,6 +70,15 @@ export function AdminServicesPage() {
 
   useEffect(() => { void load(); }, [load]);
 
+  useEffect(() => {
+    Promise.all([getBuildingsApi(), getDepartmentsApi()])
+      .then(([buildingRows, departmentRows]) => {
+        setBuildings(buildingRows.filter((item) => item.is_active));
+        setDepartments(departmentRows.filter((item) => item.is_active));
+      })
+      .catch(() => undefined);
+  }, []);
+
   async function handleCreate() {
     const name = newName.trim();
     if (!name) return;
@@ -75,10 +90,16 @@ export function AdminServicesPage() {
         slug: slugify(name),
         kind: "servicio",
         description: newDescription.trim() || null,
+        building_id: newBuildingId || null,
+        department_id: newDepartmentId || null,
+        validation_status:
+          newBuildingId && newDepartmentId ? "confirmed" : "pending_validation",
         is_active: true,
       });
       setNewName("");
       setNewDescription("");
+      setNewBuildingId("");
+      setNewDepartmentId("");
       setCreating(false);
       await load();
     } catch (err) {
@@ -223,6 +244,30 @@ export function AdminServicesPage() {
                 disabled={createSaving}
                 className={fieldCls}
               />
+              <select
+                value={newDepartmentId}
+                onChange={(event) => setNewDepartmentId(event.target.value)}
+                disabled={createSaving}
+                className={fieldCls}
+                aria-label="Departamento o área responsable"
+              >
+                <option value="">Área pendiente de validación</option>
+                {departments.map((department) => (
+                  <option key={department.id} value={department.id}>{department.name}</option>
+                ))}
+              </select>
+              <select
+                value={newBuildingId}
+                onChange={(event) => setNewBuildingId(event.target.value)}
+                disabled={createSaving}
+                className={fieldCls}
+                aria-label="Edificio donde se realiza"
+              >
+                <option value="">Edificio pendiente de validación</option>
+                {buildings.map((building) => (
+                  <option key={building.id} value={building.id}>{building.name}</option>
+                ))}
+              </select>
               <input
                 value={newDescription}
                 onChange={(e) => setNewDescription(e.target.value)}
@@ -253,7 +298,8 @@ export function AdminServicesPage() {
               </button>
             </div>
             <p className="m-0 mt-3 text-[11.5px] text-[#475569]">
-              Después de crearlo, asígnalo a edificios desde la pestaña "Servicios" del editor de cada edificio.
+              Sólo el nombre es obligatorio. Si aún no se confirma el área o edificio,
+              el servicio quedará marcado como pendiente de validación.
             </p>
           </div>
         ) : null}
@@ -327,6 +373,11 @@ export function AdminServicesPage() {
                           >
                             {service.is_active ? "Activo" : "Inactivo"}
                           </span>
+                          {service.validation_status === "pending_validation" && (
+                            <span className="inline-block rounded-full border border-amber-700/40 bg-amber-500/10 px-2.5 py-[2px] text-[11px] font-semibold text-amber-300">
+                              Pendiente de validación
+                            </span>
+                          )}
                         </div>
                         {service.description ? (
                           <p className="m-0 mt-0.5 truncate text-[12.5px] text-[#64748b]">{service.description}</p>

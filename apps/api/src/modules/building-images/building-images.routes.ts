@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import { Router } from "express";
 import type { Request, Response, NextFunction } from "express";
 import multer from "multer";
+import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import {
   deleteBuildingImage,
@@ -13,9 +14,14 @@ import {
 } from "./building-images.controller.js";
 import { authenticate } from "../auth/middlewares/authenticate.middleware.js";
 import { authorizePermission } from "../auth/middlewares/authorize.middleware.js";
-import { validateParams } from "../../shared/middlewares/validator.js";
+import { validateBody, validateParams, validateQuery } from "../../shared/middlewares/validator.js";
 import { ApiError } from "../../shared/errors/api-error.js";
-import { hasValidImageSignature } from "./building-images.utils.js";
+import {
+  buildingImageStatusSchema,
+  buildingImagesQuerySchema,
+  buildingImageUploadSchema,
+} from "./building-images.schema.js";
+import { sanitizeUploadedImage } from "./building-images.security.js";
 
 type UploadedFileInfo = {
   originalname: string;
@@ -32,22 +38,12 @@ async function verifyMagicBytes(req: Request, res: Response, next: NextFunction)
   if (!file) return next();
 
   try {
-    const handle = await fs.open(file.path, "r");
-    const buf = Buffer.alloc(12);
-    await handle.read(buf, 0, 12, 0);
-    await handle.close();
-
-    if (!hasValidImageSignature(buf)) {
-      await fs.unlink(file.path).catch(() => undefined);
-      return res.status(400).json({
-        success: false,
-        message: "El archivo no es una imagen válida (JPG, PNG o WEBP).",
-      });
-    }
+    await sanitizeUploadedImage(file.path, file.mimetype);
 
     return next();
   } catch {
     await fs.unlink(file.path).catch(() => undefined);
+    await fs.unlink(`${file.path}.sanitized`).catch(() => undefined);
     return res.status(400).json({
       success: false,
       message: "No se pudo verificar el archivo subido.",
@@ -114,7 +110,7 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   limits: {
-    fileSize: 30 * 1024 * 1024,
+    fileSize: 10 * 1024 * 1024,
   },
   fileFilter: (
     _req: Request,
@@ -132,19 +128,50 @@ const upload = multer({
   },
 });
 
+const uploadRateLimit = rateLimit({
+  windowMs: 15 * 60_000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `building-image:${req.authUser?.id ?? "unknown"}`,
+  message: { success: false, message: "Límite de cargas alcanzado. Intenta más tarde." },
+});
+
+async function validateUploadedImageBody(req: Request, res: Response, next: NextFunction) {
+  const result = buildingImageUploadSchema.safeParse(req.body);
+  if (result.success) {
+    req.body = result.data;
+    next();
+    return;
+  }
+
+  if (req.file?.path) await fs.unlink(req.file.path).catch(() => undefined);
+  res.status(400).json({
+    success: false,
+    message: "Datos de imagen inválidos",
+    errors: result.error.issues.map((issue) => ({
+      field: issue.path.join("."),
+      message: issue.message,
+    })),
+  });
+}
+
 router.get(
   "/buildings/:buildingId/images",
   authorizePermission("can_view_buildings"),
   validateParams(buildingImagesParamsSchema),
+  validateQuery(buildingImagesQuerySchema),
   getBuildingImagesForAdmin
 );
 
 router.post(
   "/buildings/:buildingId/images",
   authorizePermission("can_edit_photos"),
+  uploadRateLimit,
   validateParams(buildingImagesParamsSchema),
   upload.single("image"),
   verifyMagicBytes,
+  validateUploadedImageBody,
   uploadBuildingImage
 );
 
@@ -152,6 +179,7 @@ router.patch(
   "/images/:imageId/status",
   authorizePermission("can_edit_photos"),
   validateParams(imageParamsSchema),
+  validateBody(buildingImageStatusSchema),
   updateBuildingImageStatus
 );
 

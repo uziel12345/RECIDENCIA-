@@ -42,6 +42,13 @@ export const getProceduresByBuilding = asyncHandler(
   }
 );
 
+export const getServicesByBuilding = asyncHandler(
+  async (req: Request, res: Response) => {
+    const buildingId = getSingleParam(req.params.id);
+    return sendSuccess(res, await proceduresService.getServicesByBuilding(buildingId));
+  }
+);
+
 // ── Protected: procedure CRUD ─────────────────────────────────
 
 export const createProcedure = asyncHandler(async (req: Request, res: Response) => {

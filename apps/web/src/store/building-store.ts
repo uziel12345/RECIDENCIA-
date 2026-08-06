@@ -15,11 +15,14 @@ const SECTION_BY_KIND: Partial<Record<SearchResultKind, SectionKind>> = {
   department: "departamentos",
   cubicle: "cubiculos",
   headquarters: "jefaturas",
+  person: "cubiculos",
+  office: "aulas",
 };
 
 type BuildingStore = {
   selectedBuilding: Building | null;
   selectedGate: Gate | null;
+  selectedMapPoint: { id: string; x: number; z: number } | null;
   searchTerm: string;
   activeCategory: string | null;
   selectedSearchResult: SearchResult | null;
@@ -38,6 +41,7 @@ type BuildingStore = {
 export const useBuildingStore = create<BuildingStore>((set) => ({
   selectedBuilding: null,
   selectedGate: null,
+  selectedMapPoint: null,
   searchTerm: "",
   activeCategory: null,
   selectedSearchResult: null,
@@ -50,6 +54,8 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
         : {
             selectedBuilding: building,
             selectedGate: null,
+            selectedMapPoint: null,
+            selectedSearchResult: null,
             highlightedSection: null,
           }
     ),
@@ -61,6 +67,8 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
         : {
             selectedGate: gate,
             selectedBuilding: null,
+            selectedMapPoint: null,
+            selectedSearchResult: null,
             highlightedSection: null,
           }
     ),
@@ -112,8 +120,23 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
         return {
           selectedGate: gate,
           selectedBuilding: null,
+          selectedMapPoint: null,
           highlightedSection: null,
-          selectedSearchResult: null,
+          selectedSearchResult: result,
+        };
+      }
+
+      if (result.kind === "street" && result.coordinates) {
+        return {
+          selectedGate: null,
+          selectedBuilding: null,
+          selectedMapPoint: {
+            id: result.id,
+            x: result.coordinates.x,
+            z: result.coordinates.z,
+          },
+          highlightedSection: null,
+          selectedSearchResult: result,
         };
       }
 
@@ -124,6 +147,7 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
         return {
           selectedBuilding: building,
           selectedGate: null,
+          selectedMapPoint: null,
           highlightedSection: null,
           selectedSearchResult: null,
         };
@@ -132,13 +156,22 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
       const building = result.buildingId
         ? buildings.find((b) => b.id === result.buildingId)
         : undefined;
-      if (!building) return state;
+      if (!building) {
+        return {
+          selectedBuilding: null,
+          selectedGate: null,
+          selectedMapPoint: null,
+          selectedSearchResult: result,
+          highlightedSection: null,
+        };
+      }
 
       const section = SECTION_BY_KIND[result.kind];
 
       return {
         selectedBuilding: building,
         selectedGate: null,
+        selectedMapPoint: null,
         selectedSearchResult: result,
         highlightedSection: section ? { section, targetId: result.id } : null,
       };
@@ -148,6 +181,8 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
     set({
       selectedBuilding: null,
       selectedGate: null,
+      selectedMapPoint: null,
+      selectedSearchResult: null,
       highlightedSection: null,
     }),
 
@@ -155,6 +190,7 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
     set({
       selectedBuilding: null,
       selectedGate: null,
+      selectedMapPoint: null,
       searchTerm: "",
       activeCategory: null,
       selectedSearchResult: null,

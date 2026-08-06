@@ -56,7 +56,9 @@ export const useAuthStore = create<AuthState>()(
 
       selectRole: (role: PublicRole, userData?: Partial<User>) => {
         const user: User = {
-          id: crypto.randomUUID(),
+          id:
+            globalThis.crypto?.randomUUID?.() ??
+            `session-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`,
           name: userData?.name || (role === "student" ? "Estudiante" : "Visitante"),
           email: userData?.email || "",
           role,

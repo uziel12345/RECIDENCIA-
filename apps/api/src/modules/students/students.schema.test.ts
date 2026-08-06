@@ -4,7 +4,6 @@ import {
   updateStudentSchema,
   studentIdSchema,
   studentStatusSchema,
-  studentControlNumberSchema,
   locationQuerySchema,
 } from "./students.schema.js";
 

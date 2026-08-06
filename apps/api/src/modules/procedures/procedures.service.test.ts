@@ -188,6 +188,7 @@ describe("ProceduresService", () => {
         department_id: null,
         internal_location: null,
         schedule_text: null,
+        validation_status: "pending_validation",
         is_active: true,
       });
       expect(repository.createRequirements).not.toHaveBeenCalled();
@@ -260,6 +261,7 @@ describe("ProceduresService", () => {
         department_id: "dept-1",
         internal_location: "Planta baja, oficina 3",
         schedule_text: "Lunes a viernes 9:00-14:00",
+        validation_status: "pending_validation",
         is_active: true,
       });
     });

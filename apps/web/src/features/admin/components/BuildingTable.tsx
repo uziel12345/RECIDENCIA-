@@ -1,5 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { Building } from "@ito-map/shared";
+import { Link } from "react-router-dom";
+import { ROUTES } from "../../../types/routes";
 import type { AdminBuildingStatusFilter } from "../hooks/useAdminBuildings";
 import { safeText } from "../hooks/useBuildingForm";
 
@@ -71,12 +73,12 @@ export function BuildingTable({
 
         <div className="flex flex-wrap items-center justify-end gap-2.5 max-[640px]:w-full max-[640px]:justify-stretch">
           {canEditNavigation ? (
-            <a
-              href="/admin/navigation"
+            <Link
+              to={ROUTES.ADMIN_MAP}
               className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-[10px] border border-[rgba(168,68,46,0.4)] bg-[rgba(168,68,46,0.15)] px-3.5 text-[13px] font-bold text-[#c56b52] no-underline transition-[background-color,transform] duration-[180ms] hover:-translate-y-px hover:bg-[rgba(168,68,46,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(168,68,46,0.45)] max-[640px]:flex-1"
             >
               Mapa de navegación
-            </a>
+            </Link>
           ) : null}
 
           <button

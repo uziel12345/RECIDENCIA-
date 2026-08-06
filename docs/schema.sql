@@ -187,6 +187,9 @@ CREATE TABLE IF NOT EXISTS procedures (
   department_id     VARCHAR(36)   NULL,
   internal_location VARCHAR(255)  NULL,
   schedule_text     VARCHAR(255)  NULL,
+  validation_status VARCHAR(24)   NOT NULL DEFAULT 'confirmed'
+    CONSTRAINT chk_procedures_validation_status
+      CHECK (validation_status IN ('confirmed','pending_validation')),
   is_active         BOOLEAN       NOT NULL DEFAULT TRUE,
   created_at        TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at        TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -527,7 +530,107 @@ CREATE TRIGGER trg_gates_updated_at
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- ============================================================
--- 22. campus_calibration_points
+-- 22. institutional_positions
+-- Cargos institucionales públicos; person_name siempre es opcional.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS institutional_positions (
+  id              VARCHAR(36)  NOT NULL,
+  title           VARCHAR(255) NOT NULL,
+  person_name     VARCHAR(255) NULL,
+  department_id   VARCHAR(36)  NULL,
+  building_id     VARCHAR(36)  NULL,
+  office_name     VARCHAR(255) NULL,
+  search_keywords TEXT[]       NOT NULL DEFAULT '{}',
+  is_public       BOOLEAN      NOT NULL DEFAULT TRUE,
+  is_active       BOOLEAN      NOT NULL DEFAULT TRUE,
+  deleted_at      TIMESTAMP    NULL DEFAULT NULL,
+  created_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT pk_institutional_positions PRIMARY KEY (id),
+  CONSTRAINT fk_positions_department
+    FOREIGN KEY (department_id) REFERENCES departments (id) ON DELETE SET NULL,
+  CONSTRAINT fk_positions_building
+    FOREIGN KEY (building_id) REFERENCES buildings (id) ON DELETE SET NULL
+);
+CREATE INDEX idx_positions_building ON institutional_positions (building_id);
+CREATE INDEX idx_positions_department ON institutional_positions (department_id);
+CREATE INDEX idx_positions_public_active ON institutional_positions (is_public, is_active);
+CREATE TRIGGER trg_institutional_positions_updated_at
+  BEFORE UPDATE ON institutional_positions
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ============================================================
+-- 23. campus_streets
+-- Coordenadas locales verificables para rótulos de calles cercanas.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS campus_streets (
+  id            VARCHAR(36)      NOT NULL,
+  name          VARCHAR(255)     NOT NULL,
+  description   TEXT             NULL,
+  x             DOUBLE PRECISION NOT NULL,
+  y             DOUBLE PRECISION NOT NULL DEFAULT 1,
+  z             DOUBLE PRECISION NOT NULL,
+  rotation      DOUBLE PRECISION NULL,
+  display_order INTEGER          NOT NULL DEFAULT 0,
+  is_visible    BOOLEAN          NOT NULL DEFAULT TRUE,
+  is_active     BOOLEAN          NOT NULL DEFAULT TRUE,
+  created_at    TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT pk_campus_streets PRIMARY KEY (id),
+  CONSTRAINT uq_campus_streets_name UNIQUE (name)
+);
+CREATE INDEX idx_campus_streets_visible ON campus_streets (is_active, is_visible);
+CREATE TRIGGER trg_campus_streets_updated_at
+  BEFORE UPDATE ON campus_streets
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ============================================================
+-- 24. quick_queries
+-- ============================================================
+CREATE TABLE IF NOT EXISTS quick_queries (
+  id         VARCHAR(36)  NOT NULL,
+  label      VARCHAR(255) NOT NULL,
+  query      VARCHAR(255) NOT NULL,
+  category   VARCHAR(24)  NOT NULL
+    CONSTRAINT chk_quick_queries_category CHECK (
+      category IN ('building','department','service','procedure','person','position','classroom')
+    ),
+  icon       VARCHAR(64)  NULL,
+  priority   INTEGER      NOT NULL DEFAULT 0,
+  is_active  BOOLEAN      NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT pk_quick_queries PRIMARY KEY (id)
+);
+CREATE INDEX idx_quick_queries_priority ON quick_queries (is_active, priority DESC);
+CREATE TRIGGER trg_quick_queries_updated_at
+  BEFORE UPDATE ON quick_queries
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- Alias polimórficos: entity_type está restringido y entity_id conserva el
+-- UUID de la entidad. No se usa una FK imposible hacia varias tablas.
+CREATE TABLE IF NOT EXISTS search_aliases (
+  id          VARCHAR(36)  NOT NULL,
+  entity_type VARCHAR(24)  NOT NULL
+    CONSTRAINT chk_search_aliases_entity_type CHECK (
+      entity_type IN ('building','classroom','procedure','department','cubicle','headquarters','gate','position','street')
+    ),
+  entity_id   VARCHAR(36)  NOT NULL,
+  alias       VARCHAR(255) NOT NULL,
+  is_active   BOOLEAN      NOT NULL DEFAULT TRUE,
+  created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT pk_search_aliases PRIMARY KEY (id),
+  CONSTRAINT uq_search_alias UNIQUE (entity_type, entity_id, alias)
+);
+CREATE INDEX idx_search_aliases_entity ON search_aliases (entity_type, entity_id, is_active);
+CREATE INDEX idx_search_aliases_text ON search_aliases (LOWER(alias));
+
+-- ============================================================
+-- 25. campus_calibration_points
 -- Puntos GPS reales tomados caminando el campus.
 -- (de migration-geolocation-calibration-geofences-20260702.sql)
 -- ============================================================
@@ -551,7 +654,7 @@ CREATE INDEX idx_calib_points_building ON campus_calibration_points (building_id
 CREATE INDEX idx_calib_points_active   ON campus_calibration_points (is_active);
 
 -- ============================================================
--- 23. campus_calibration_profiles
+-- 26. campus_calibration_profiles
 -- Transformacion afin vigente GPS -> modelo 3D.
 -- (de migration-geolocation-calibration-geofences-20260702.sql)
 -- ============================================================
@@ -578,7 +681,7 @@ CREATE TABLE IF NOT EXISTS campus_calibration_profiles (
 CREATE INDEX idx_calib_profiles_active ON campus_calibration_profiles (is_active);
 
 -- ============================================================
--- 24. building_geofences
+-- 27. building_geofences
 -- Poligonos por edificio para detectar "estoy dentro" en vez de
 -- depender solo del centro del edificio mas cercano.
 -- (de migration-geolocation-calibration-geofences-20260702.sql)

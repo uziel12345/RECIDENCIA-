@@ -1,0 +1,11 @@
+[Unit]
+Description=Respaldo diario de Mapa ITO
+
+[Timer]
+OnCalendar=*-*-* 03:15:00
+RandomizedDelaySec=30m
+Persistent=true
+Unit=mapa-ito-backup.service
+
+[Install]
+WantedBy=timers.target

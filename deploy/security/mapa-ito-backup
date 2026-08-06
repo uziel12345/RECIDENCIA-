@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+umask 077
+
+BACKUP_DIR=/var/backups/mapa-ito
+DATABASE_NAME=${MAPA_DATABASE_NAME:-campus_3d}
+TIMESTAMP=$(date -u +%Y%m%dT%H%M%SZ)
+
+install -d -m 0700 "$BACKUP_DIR"
+STAGING_DIR=$(mktemp -d "$BACKUP_DIR/.tmp-${TIMESTAMP}-XXXXXX")
+
+cleanup() {
+  rm -rf -- "$STAGING_DIR"
+}
+trap cleanup EXIT
+
+runuser -u postgres -- pg_dump \
+  --format=custom \
+  --no-owner \
+  "$DATABASE_NAME" > "$STAGING_DIR/database.dump"
+
+if [[ -d /var/lib/mapa-ito/uploads ]]; then
+  tar -C /var/lib/mapa-ito -czf "$STAGING_DIR/uploads.tar.gz" uploads
+else
+  tar -czf "$STAGING_DIR/uploads.tar.gz" --files-from /dev/null
+fi
+
+install -m 0600 /etc/mapa-ito/api.env "$STAGING_DIR/api.env"
+install -m 0600 /etc/nginx/sites-available/mapa-ito "$STAGING_DIR/nginx.conf"
+
+(
+  cd "$STAGING_DIR"
+  sha256sum database.dump uploads.tar.gz api.env nginx.conf > SHA256SUMS
+)
+
+FINAL_FILE="$BACKUP_DIR/mapa-ito-${TIMESTAMP}.tar.gz"
+tar -C "$STAGING_DIR" -czf "$FINAL_FILE" \
+  database.dump uploads.tar.gz api.env nginx.conf SHA256SUMS
+chmod 0600 "$FINAL_FILE"
+
+# Conserva dos semanas de respaldos diarios en el servidor.
+find "$BACKUP_DIR" -maxdepth 1 -type f -name 'mapa-ito-*.tar.gz' -mtime +13 -delete
+
+echo "Backup creado: $FINAL_FILE"

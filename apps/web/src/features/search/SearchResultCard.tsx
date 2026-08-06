@@ -17,6 +17,10 @@ const KIND_BADGE: Record<SearchResult["kind"], string> = {
   cubicle: "bg-[#db27771a] text-[#db2777]",
   headquarters: "bg-[#d977061a] text-[#d97706]",
   gate: "bg-[#0d94881a] text-[#0d9488]",
+  position: "bg-[#7c3aed1a] text-[#6d28d9]",
+  street: "bg-[#0369a11a] text-[#0369a1]",
+  person: "bg-[#db27771a] text-[#be185d]",
+  office: "bg-[#4755691a] text-[#334155]",
 };
 
 const KIND_LABEL: Record<SearchResult["kind"], string> = {
@@ -28,6 +32,10 @@ const KIND_LABEL: Record<SearchResult["kind"], string> = {
   cubicle: "Cubículo",
   headquarters: "Jefatura",
   gate: "Acceso",
+  position: "Cargo institucional",
+  street: "Calle",
+  person: "Persona",
+  office: "Oficina",
 };
 
 export function SearchResultCard({ result, onClose }: SearchResultCardProps) {
@@ -83,9 +91,28 @@ export function SearchResultCard({ result, onClose }: SearchResultCardProps) {
       </div>
 
       <div className="px-3.5 pb-3.5 pt-2.5">
+        <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-subtle)]">
+          Buscaste
+        </p>
+        <p className="mb-2 text-[14px] font-bold text-[var(--color-text)]">
+          {result.title}
+        </p>
         <p className="mb-2 text-[12px] leading-relaxed text-[var(--color-text-muted)]">
           {result.subtitle}
         </p>
+
+        {result.validationStatus === "pending_validation" && (
+          <div className="mb-2.5 rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-2 text-[12px] leading-relaxed text-amber-900" role="status">
+            <strong>Información pendiente de validación.</strong>{" "}
+            Aún no se ha confirmado el área o edificio donde se realiza este servicio.
+          </div>
+        )}
+
+        {result.departmentName && (
+          <p className="mb-2 text-[12px] text-[var(--color-text-muted)]">
+            <strong>Departamento o área:</strong> {result.departmentName}
+          </p>
+        )}
 
         {result.buildingName && (
           <div className="mb-2.5 flex w-fit items-center gap-1.5 rounded-lg bg-[var(--color-brand-50)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--color-brand-700)]">
@@ -146,19 +173,21 @@ export function SearchResultCard({ result, onClose }: SearchResultCardProps) {
           </div>
         )}
 
-        {(result.kind === "classroom" ||
-          result.kind === "department" ||
-          result.kind === "cubicle" ||
-          result.kind === "headquarters") && (
-          <p className="m-0 text-[12px] leading-relaxed text-[var(--color-text-muted)]">
-            Selecciona "Como llegar" en el edificio para navegar hasta este
-            espacio.
-          </p>
-        )}
-
         {result.kind === "gate" && (
           <p className="m-0 text-[12px] leading-relaxed text-[var(--color-text-muted)]">
             El mapa enfocará este acceso al campus.
+          </p>
+        )}
+
+        {result.kind === "street" && (
+          <p className="m-0 text-[12px] leading-relaxed text-[var(--color-text-muted)]">
+            El mapa enfocará esta referencia vial cercana al campus.
+          </p>
+        )}
+
+        {result.kind === "position" && result.buildingName && (
+          <p className="m-0 text-[12px] leading-relaxed text-[var(--color-text-muted)]">
+            ¿Dónde lo encuentro? Este cargo institucional se encuentra en {result.buildingName}.
           </p>
         )}
       </div>

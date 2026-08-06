@@ -11,6 +11,8 @@ import { csrfProtection } from "./shared/middlewares/csrf.middleware.js";
 import { notFoundHandler } from "./shared/middlewares/not-found.js";
 import { errorHandler } from "./shared/middlewares/error-handler.js";
 import { env } from "./config/env.js";
+import { ApiError } from "./shared/errors/api-error.js";
+import { requestLogger } from "./shared/middlewares/request-logger.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const webDist = path.resolve(__dirname, "../../web/dist");
@@ -18,6 +20,7 @@ const webDist = path.resolve(__dirname, "../../web/dist");
 const app = express();
 
 app.set("trust proxy", 1);
+app.use(requestLogger);
 
 const allowedOrigins = env.corsOrigin
   .split(",")
@@ -55,6 +58,17 @@ app.use(
   })
 );
 
+// El mapa solicita la ubicación únicamente desde su propio origen. Declarar
+// esta política evita bloqueos ambiguos del navegador y mantiene desactivados
+// sensores que la aplicación no utiliza.
+app.use((_req, res, next) => {
+  res.setHeader(
+    "Permissions-Policy",
+    "geolocation=(self), camera=(), microphone=()"
+  );
+  next();
+});
+
 app.use(
   cors({
     origin(origin, callback) {
@@ -68,13 +82,21 @@ app.use(
         return;
       }
 
-      callback(null, false);
+      callback(new ApiError(403, "Origen no permitido por CORS"));
     },
     credentials: true,
   })
 );
 
 app.use(cookieParser());
+
+// Las respuestas de autenticacion pueden contener datos de sesion. Evita que
+// navegadores o proxies compartidos las persistan en cache.
+app.use("/api/auth", (_req, res, next) => {
+  res.setHeader("Cache-Control", "no-store");
+  next();
+});
+
 app.use(express.json({ limit: "2mb" }));
 
 app.use(

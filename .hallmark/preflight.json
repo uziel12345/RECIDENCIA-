@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "scannedAt": "2026-08-05T00:00:00-06:00",
+  "project": {
+    "root": ".",
+    "framework": "React 19 + TypeScript + Vite 7",
+    "styling": "Tailwind CSS 4 plus a shared global stylesheet",
+    "packageManifest": "apps/web/package.json"
+  },
+  "signals": {
+    "designSystem": {
+      "status": "implicit",
+      "finding": "No design.md, DESIGN.md, tokens.css, tokens.json, or Tailwind config was found. The active design system lives primarily in apps/web/src/styles/index.css."
+    },
+    "fonts": {
+      "display": "Space Grotesk",
+      "body": "Public Sans",
+      "source": "apps/web/index.html:22",
+      "tokens": "apps/web/src/styles/index.css:91"
+    },
+    "palette": {
+      "status": "established",
+      "finding": "Terracotta brand colors, forest structural colors, neutrals, semantic states, gradients, shadows, and radii are already defined as CSS custom properties.",
+      "source": "apps/web/src/styles/index.css:8"
+    },
+    "motion": {
+      "classification": "motion-on",
+      "finding": "Framer Motion is installed and used in welcome, onboarding, campus, building, visitor, student, and tutorial interfaces. A reduced-motion rule exists for global button feedback.",
+      "dependency": "apps/web/package.json:25",
+      "reducedMotion": "apps/web/src/styles/index.css:116"
+    },
+    "spacing": {
+      "status": "mixed-and-untokenized",
+      "finding": "The UI uses Tailwind's spacing scale together with many arbitrary pixel and fractional values; no shared --space-* token scale was found."
+    },
+    "colorFormat": {
+      "status": "legacy-hex-rgb",
+      "finding": "The shared stylesheet contains hex and rgb/rgba colors and no OKLCH tokens. Preserve existing values unless a scoped redesign introduces additive Hallmark tokens."
+    }
+  },
+  "constraints": [
+    "Preserve existing routes, components, information architecture, and terracotta/forest brand identity.",
+    "Prefer scoped, additive changes over replacing the large shared stylesheet.",
+    "Keep reduced-motion support and avoid layout-affecting animation in the 3D viewer.",
+    "Do not normalize the full legacy color or spacing system as part of a small visual improvement."
+  ]
+}
