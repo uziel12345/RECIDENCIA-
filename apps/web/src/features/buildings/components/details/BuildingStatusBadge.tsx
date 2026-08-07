@@ -1,5 +1,5 @@
-import { Icon } from "../../../../components/ui/Icons";
 import type { BuildingSchedule, BuildingScheduleStatus } from "@ito-map/shared";
+import { InfoSection } from "./InfoSection";
 
 const DAY_LABELS: Record<number, string> = {
   1: "Lun",
@@ -43,12 +43,7 @@ export function BuildingStatusBadge({ status, week }: BuildingStatusBadgeProps) 
   }
 
   return (
-    <div className="ito-building-detail-section ito-building-status flex flex-col gap-1.5">
-      <span className="ito-building-detail-section__heading flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
-        <Icon name="clock" size={13} />
-        Estado
-      </span>
-
+    <InfoSection title="Estado" icon="clock" tone="slate">
       <div
         className={`ito-building-status__badge inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12.5px] font-bold ${STATUS_CLASSES[status.status]}`}
       >
@@ -88,6 +83,6 @@ export function BuildingStatusBadge({ status, week }: BuildingStatusBadgeProps) 
             ))}
         </ul>
       )}
-    </div>
+    </InfoSection>
   );
 }

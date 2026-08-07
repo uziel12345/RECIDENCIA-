@@ -13,13 +13,13 @@ export function BuildingHeadquartersInfo({ headquarters, highlightId }: Building
   if (headquarters.length === 0) return null;
 
   return (
-    <InfoSection title="Jefaturas" icon="shield">
+    <InfoSection title="Jefaturas" icon="shield" tone="slate" count={headquarters.length}>
       <ul className="m-0 flex flex-col gap-2 p-0">
         {headquarters.map((hq) => (
           <li
             key={hq.id}
             id={`search-target-${hq.id}`}
-            className={`list-none rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-2.5 transition-colors duration-500 ${flashId === hq.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
+            className={`list-none rounded-xl border p-2.5 transition-colors duration-500 border-[var(--tone-slate-border)] bg-[var(--tone-slate-bg)] ${flashId === hq.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
           >
             <span className="text-[13px] font-bold text-[var(--color-text)]">
               {normalizeDisplayText(hq.name)}

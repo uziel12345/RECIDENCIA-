@@ -54,6 +54,7 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
   const [galleryImages, setGalleryImages] = useState<BuildingImage[]>([]);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const [coverFailedForId, setCoverFailedForId] = useState<string | null>(null);
+  const [coverLoaded, setCoverLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,7 +71,12 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
     };
   }, [building.id]);
 
+  useEffect(() => {
+    setCoverLoaded(false);
+  }, [building.id]);
+
   const visibleImages = galleryImages.filter((img) => !failedImages.has(img.id));
+  const galleryLoadFailed = galleryImages.length > 0 && visibleImages.length === 0;
   const { data: details, loading: detailsLoading, error: detailsError } =
     useBuildingFullDetails(building.id);
 
@@ -97,12 +103,19 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
       aria-label={`Información de ${buildingName}`}
     >
       {showCover ? (
-        <div className="ito-bic-cover relative w-full overflow-hidden">
+        <div className="ito-bic-cover relative w-full overflow-hidden bg-[var(--color-surface-muted)]">
+          {!coverLoaded && (
+            <div
+              className="absolute inset-0 animate-pulse bg-gradient-to-br from-[var(--color-surface-muted)] to-[var(--color-border)]"
+              aria-hidden="true"
+            />
+          )}
           <img
             src={coverUrl}
-            alt=""
-            className="h-full w-full object-cover"
-            loading="lazy"
+            alt={`Fotografía real de ${buildingName}`}
+            className={`h-full w-full object-cover transition-opacity duration-300 ${coverLoaded ? "opacity-100" : "opacity-0"}`}
+            loading="eager"
+            onLoad={() => setCoverLoaded(true)}
             onError={() => setCoverFailedForId(building.id)}
           />
           <div className="ito-building-info-card__cover-copy pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-4 pt-10">
@@ -186,6 +199,38 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
           </div>
         )}
 
+        {visibleImages.length > 0 && (
+          <div className="ito-building-info-card__field flex flex-col gap-1.5">
+            <span className="ito-building-info-card__label text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
+              Fotos del edificio
+            </span>
+            <div
+              className="ito-b-gallery grid grid-cols-2 gap-2"
+              aria-label="Galería de imágenes del edificio"
+            >
+              {visibleImages.slice(0, 6).map((img) => (
+                <img
+                  key={img.id}
+                  src={resolveApiAssetUrl(img.image_url) ?? undefined}
+                  alt={normalizeDisplayText(img.title ?? buildingName)}
+                  loading="lazy"
+                  onError={() =>
+                    setFailedImages((prev) => new Set([...prev, img.id]))
+                  }
+                  className="ito-b-gallery__image aspect-[4/3] w-full rounded-xl border border-[var(--color-border)] object-cover shadow-[var(--shadow-xs)] transition-transform duration-200 hover:scale-[1.03]"
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {galleryLoadFailed && (
+          <div className="ito-building-info-card__field flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-2.5 text-[12px] text-[var(--color-text-subtle)]">
+            <Icon name="alert" size={14} />
+            <span>No se pudieron cargar las fotos de este edificio.</span>
+          </div>
+        )}
+
         {detailsLoading && !details && (
           <div className="flex items-center justify-center gap-2 py-3 text-[12.5px] text-[var(--color-text-muted)]">
             <div
@@ -203,38 +248,13 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
         )}
 
         {details && (
-          <>
+          <div className="flex flex-col gap-2.5">
             <BuildingStatusBadge status={details.status} week={details.schedule.week} />
             <BuildingClassroomsInfo classrooms={details.classrooms} highlightId={highlightFor("aulas")} />
             <BuildingDepartmentsInfo departments={details.departments} highlightId={highlightFor("departamentos")} />
             <BuildingCubiclesInfo cubicles={details.teacherCubicles} highlightId={highlightFor("cubiculos")} />
             <BuildingHeadquartersInfo headquarters={details.headquarters} highlightId={highlightFor("jefaturas")} />
             <BuildingProceduresInfo procedures={details.procedures} highlightId={highlightFor("tramites")} />
-          </>
-        )}
-
-        {visibleImages.length > 0 && (
-          <div className="ito-building-info-card__field flex flex-col gap-1.5">
-            <span className="ito-building-info-card__label text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
-              Imágenes
-            </span>
-            <div
-              className="ito-building-gallery flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-              aria-label="Galería de imágenes del edificio"
-            >
-              {visibleImages.slice(0, 6).map((img) => (
-                <img
-                  key={img.id}
-                  src={resolveApiAssetUrl(img.image_url) ?? undefined}
-                  alt={normalizeDisplayText(img.title ?? buildingName)}
-                  loading="lazy"
-                  onError={() =>
-                    setFailedImages((prev) => new Set([...prev, img.id]))
-                  }
-                  className="ito-building-gallery__image h-[60px] w-20 flex-shrink-0 rounded-lg object-cover ring-1 ring-inset ring-black/5"
-                />
-              ))}
-            </div>
           </div>
         )}
 

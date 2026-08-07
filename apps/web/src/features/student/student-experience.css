@@ -1,4 +1,4 @@
-/* Hallmark · macrostructure: Map/Diagram · genre: modern-minimal · theme: Coral · tone: institutional-modern-minimal · variation: search=input-only, rail=single-surface/grouped-rows, labels=full-name, overlays=protected, camera=bounded, map-controls=individual · pre-emit critique: P5 H5 E5 S5 R5 V5 · contrast: pass (40–41) · nav: N13 · footer: none · slop: pass (42–45) · honest: pass (46) · chrome: pass (47) · tokens: pass (48) · responsive: pass (49) · icons: pass (30) · mobile: pass (34, 49, 50–57) · QA: 58/58 pass */
+/* Hallmark · macrostructure: Map/Diagram · genre: modern-minimal · theme: Coral · tone: institutional-modern-minimal · variation: search=input-only, rail=single-surface/grouped-rows, labels=full-name/instant-hover, overlays=protected, camera=bounded, map-controls=individual · pre-emit critique: P5 H5 E5 S5 R5 V5 · contrast: pass (40–41) · nav: N13 · footer: none · slop: pass (42–45) · honest: pass (46) · chrome: pass (47) · tokens: pass (48) · responsive: pass (49) · icons: pass (30) · mobile: pass (34, 49, 50–57) · QA: 58/58 pass */
 @import "../../../../../tokens.css";
 
 html,
@@ -725,8 +725,7 @@ body {
 .student-page .ito-building-detail-section,
 .student-mobile .ito-building-detail-section {
   gap: var(--space-xs);
-  padding-block-start: var(--space-md);
-  border-block-start: var(--rule-student) solid var(--color-student-rule);
+  color: var(--color-student-ink);
 }
 
 .student-page .ito-building-detail-section__heading svg,
@@ -734,30 +733,20 @@ body {
   color: var(--color-student-accent-deep);
 }
 
+/* Cada bloque (aulas, departamentos, cubículos, jefaturas, trámites) y cada
+   elemento de sus listas conserva su propio tono de color y sus bordes
+   redondeados finos (definidos por Tailwind en InfoSection/los detalles) en
+   vez del estilo de líneas de regla plano de antes — así se distinguen a
+   simple vista sin apilarse unos sobre otros. */
 .student-page .ito-building-detail-section > ul,
 .student-mobile .ito-building-detail-section > ul {
-  gap: 0;
-  overflow: hidden;
-  border: var(--rule-student) solid var(--color-student-rule);
-  border-radius: var(--radius-student-input);
-  background: var(--color-student-paper-2);
   color: var(--color-student-ink);
 }
 
 .student-page .ito-building-detail-section > ul > li,
 .student-mobile .ito-building-detail-section > ul > li {
-  padding: var(--space-sm);
-  border: 0;
-  border-block-end: var(--rule-student) solid var(--color-student-rule);
-  border-radius: 0;
-  background: transparent;
   color: var(--color-student-ink);
   transition: background-color var(--dur-short) var(--ease-out);
-}
-
-.student-page .ito-building-detail-section > ul > li:last-child,
-.student-mobile .ito-building-detail-section > ul > li:last-child {
-  border-block-end: 0;
 }
 
 .student-page .ito-building-status__badge,
@@ -889,8 +878,8 @@ body {
   white-space: nowrap;
 }
 
-.student-page .ito-building-gallery__image,
-.student-mobile .ito-building-gallery__image {
+.student-page .ito-b-gallery__image,
+.student-mobile .ito-b-gallery__image {
   border: var(--rule-student) solid var(--color-student-rule);
   border-radius: var(--radius-student-button);
 }
@@ -953,8 +942,6 @@ html.dark .student-mobile .ito-building-info-card__fallback .ito-building-info-c
   backdrop-filter: none;
 }
 
-html.dark .student-page .ito-building-detail-section > ul,
-html.dark .student-mobile .ito-building-detail-section > ul,
 html.dark .student-page .ito-building-panel__featured-item,
 html.dark .student-page .ito-building-panel__show-all,
 html.dark .student-page .ito-building-panel__list-item,
@@ -965,6 +952,11 @@ html.dark .student-mobile .ito-building-panel__list-item {
   background: var(--color-student-paper-2);
   color: var(--color-student-ink);
   box-shadow: none;
+}
+
+html.dark .student-page .ito-building-detail-section > ul,
+html.dark .student-mobile .ito-building-detail-section > ul {
+  color: var(--color-student-ink);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -1013,11 +1005,6 @@ html.dark .student-mobile .ito-building-panel__list-item {
     background: var(--color-student-paper-2);
     color: var(--color-student-ink);
     transform: none;
-  }
-
-  .student-page .ito-building-detail-section > ul > li:hover,
-  .student-mobile .ito-building-detail-section > ul > li:hover {
-    background: var(--color-student-paper-3);
   }
 }
 

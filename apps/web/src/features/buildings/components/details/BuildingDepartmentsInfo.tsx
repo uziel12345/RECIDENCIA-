@@ -13,13 +13,13 @@ export function BuildingDepartmentsInfo({ departments, highlightId }: BuildingDe
   if (departments.length === 0) return null;
 
   return (
-    <InfoSection title="Departamentos" icon="users">
+    <InfoSection title="Departamentos" icon="users" tone="violet" count={departments.length}>
       <ul className="m-0 flex flex-col gap-2 p-0">
         {departments.map((department) => (
           <li
             key={department.id}
             id={`search-target-${department.id}`}
-            className={`list-none rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-2.5 transition-colors duration-500 ${flashId === department.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
+            className={`list-none rounded-xl border p-2.5 transition-colors duration-500 border-[var(--tone-violet-border)] bg-[var(--tone-violet-bg)] ${flashId === department.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
           >
             <span className="text-[13px] font-bold text-[var(--color-text)]">
               {normalizeDisplayText(department.name)}

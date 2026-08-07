@@ -15,8 +15,8 @@ export function BuildingProceduresInfo({ procedures, highlightId }: BuildingProc
   if (procedures.length === 0) return null;
 
   return (
-    <InfoSection title="Trámites y servicios" icon="list">
-      <ul className="m-0 flex flex-col gap-2 p-0">
+    <InfoSection title="Trámites y servicios" icon="list" tone="amber" count={procedures.length}>
+      <ul className="m-0 flex flex-col gap-2.5 p-0">
         {procedures.map((procedure) => {
           const requisitos = procedure.requirements.filter((r) => r.type === "requisito");
           const documentos = procedure.requirements.filter((r) => r.type === "documento");
@@ -26,7 +26,7 @@ export function BuildingProceduresInfo({ procedures, highlightId }: BuildingProc
             <li
               key={procedure.id}
               id={`search-target-${procedure.id}`}
-              className={`list-none rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-2.5 transition-colors duration-500 ${flashId === procedure.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
+              className={`list-none rounded-xl border p-2.5 transition-colors duration-500 border-[var(--tone-amber-border)] bg-[var(--tone-amber-bg)] ${flashId === procedure.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[13px] font-bold text-[var(--color-text)]">
@@ -56,11 +56,11 @@ export function BuildingProceduresInfo({ procedures, highlightId }: BuildingProc
               )}
 
               {requisitos.length > 0 && (
-                <div className="mt-1.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
+                <div className="mt-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-2">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
                     Requisitos
                   </span>
-                  <ul className="m-0 mt-0.5 flex list-disc flex-col gap-0.5 pl-4 text-[12.5px] text-[var(--color-text)]">
+                  <ul className="m-0 mt-1 flex list-disc flex-col gap-1 pl-4 text-[12.5px] text-[var(--color-text)]">
                     {requisitos.map((r) => (
                       <li key={r.id}>{normalizeDisplayText(r.description)}</li>
                     ))}
@@ -69,11 +69,11 @@ export function BuildingProceduresInfo({ procedures, highlightId }: BuildingProc
               )}
 
               {documentos.length > 0 && (
-                <div className="mt-1.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
+                <div className="mt-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-2">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
                     Documentos necesarios
                   </span>
-                  <ul className="m-0 mt-0.5 flex list-disc flex-col gap-0.5 pl-4 text-[12.5px] text-[var(--color-text)]">
+                  <ul className="m-0 mt-1 flex list-disc flex-col gap-1 pl-4 text-[12.5px] text-[var(--color-text)]">
                     {documentos.map((r) => (
                       <li key={r.id}>{normalizeDisplayText(r.description)}</li>
                     ))}

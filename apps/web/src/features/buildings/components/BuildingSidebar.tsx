@@ -64,7 +64,11 @@ function getBuildingSearchAliases(building: Building): string {
 type BuildingSidebarProps = {
   isMobile?: boolean;
   onItemSelected?: () => void;
-  onClearSelection?: () => void;
+  // Se dispara cuando el usuario cierra la tarjeta de información del
+  // edificio (X / "Seguir buscando"), NO cuando se borra la selección — el
+  // padre lo usa para colapsar el contenedor visual (ej. el bottom sheet en
+  // móvil), sin tocar el edificio seleccionado.
+  onPanelClosed?: () => void;
   showGreeting?: boolean;
   showSearchPanel?: boolean;
   browseOnly?: boolean;
@@ -76,16 +80,18 @@ const SECTION = "flex flex-col gap-2.5";
 export function BuildingSidebar({
   isMobile = false,
   onItemSelected,
-  onClearSelection,
+  onPanelClosed,
   showGreeting = false,
   showSearchPanel = true,
   browseOnly = false,
   userName,
 }: BuildingSidebarProps) {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
+  const isBuildingPanelOpen = useBuildingStore((state) => state.isBuildingPanelOpen);
   const setSelectedBuilding = useBuildingStore(
     (state) => state.setSelectedBuilding
   );
+  const closeBuildingPanel = useBuildingStore((state) => state.closeBuildingPanel);
   const searchTerm = useBuildingStore((state) => state.searchTerm);
   const activeCategory = useBuildingStore((state) => state.activeCategory);
   const setActiveCategory = useBuildingStore((state) => state.setActiveCategory);
@@ -152,19 +158,47 @@ export function BuildingSidebar({
   const hasLocation = permission === "granted" && mapPosition !== null;
   const hasSearchTerm = !browseOnly && searchTerm.trim().length > 0;
 
+  // Verdadero mientras se muestra CUALQUIER tarjeta de detalle (edificio, o
+  // resultado de búsqueda sin edificio asociado — ej. un trámite que aún no
+  // tiene ubicación confirmada). Mientras una esté abierta, la lista de
+  // resultados/edificios se oculta por completo en vez de quedar apilada
+  // debajo: antes, cerrar la tarjeta o cambiar de búsqueda no limpiaba la
+  // lista anterior, así que quedaban dos cosas sin relación mostrándose a
+  // la vez en el mismo scroll, sin ninguna separación visual entre ellas.
+  const hasDetailOpen =
+    (selectedBuilding !== null && isBuildingPanelOpen) ||
+    (!browseOnly && selectedSearchResult !== null && selectedBuilding === null);
+
   const showList =
-    hasSearchTerm ||
-    (!browseOnly && activeCategory !== null) ||
-    !isPublicDesktop ||
-    showAllBuildings;
+    !hasDetailOpen &&
+    (hasSearchTerm ||
+      (!browseOnly && activeCategory !== null) ||
+      !isPublicDesktop ||
+      showAllBuildings);
+
+  const backLabel = hasSearchTerm
+    ? `Volver a resultados (${filteredBuildings.length})`
+    : activeCategory
+      ? `Volver a ${activeCategory}`
+      : "Volver a edificios";
 
   function handleSelectBuilding(building: Building) {
     setSelectedBuilding(building);
     onItemSelected?.();
   }
-  function handleClearSelection() {
-    setSelectedBuilding(null);
-    onClearSelection?.();
+  function handleCloseBuildingPanel() {
+    closeBuildingPanel();
+    onPanelClosed?.();
+  }
+  // Punto único para "salir de la vista de detalle", sin importar cuál de
+  // las dos tarjetas esté abierta (resultado de búsqueda o edificio) — deja
+  // ver de nuevo la lista/categoría/destacados de la que venía el usuario,
+  // que sigue siendo válida porque nunca se tocó el término de búsqueda.
+  function handleBackToResults() {
+    setSelectedSearchResult(null);
+    if (isBuildingPanelOpen) {
+      handleCloseBuildingPanel();
+    }
   }
   function handleSelectSearchResult() {
     // La selección (edificio/puerta, ruta, sección a resaltar) ya la resolvió
@@ -178,8 +212,8 @@ export function BuildingSidebar({
     <aside
       className={`ito-building-panel ${
         isMobile
-          ? "ito-building-panel--mobile flex h-auto w-full flex-col gap-4 px-1 pb-6 pt-1"
-          : "ito-building-panel--desktop flex h-full w-full flex-col gap-4 overflow-y-auto bg-[var(--color-surface)] p-[18px] pt-5"
+          ? "ito-building-panel--mobile flex h-auto w-full flex-col gap-5 px-1 pb-6 pt-1"
+          : "ito-building-panel--desktop flex h-full w-full flex-col gap-5 overflow-y-auto bg-[var(--color-surface)] p-[18px] pt-5"
       }`}
     >
       {canUseRoutes && !isMobile && (
@@ -235,7 +269,7 @@ export function BuildingSidebar({
           ].map((stat) => (
             <div
               key={stat.label}
-              className="flex flex-col items-start rounded-xl border border-[var(--color-border)] bg-[var(--gradient-surface)] px-3 py-2.5"
+              className="flex flex-col items-start rounded-xl border border-[var(--color-border)] bg-[var(--gradient-surface)] px-3 py-2.5 backdrop-blur-sm"
               role="listitem"
             >
               <span className="text-[20px] font-extrabold leading-none text-[var(--color-text)]">
@@ -267,7 +301,7 @@ export function BuildingSidebar({
       )}
 
       {showSearchPanel && (
-      <div className="ito-building-panel__search flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5 shadow-[var(--shadow-xs)]">
+      <div className="ito-building-panel__search flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/85 p-3.5 shadow-[var(--shadow-xs)] backdrop-blur-md">
         {isPublicDesktop && showGreeting && (
           <div className="flex flex-col gap-1 px-0.5">
             <span className="text-balance text-[15px] font-bold leading-tight tracking-tight text-[var(--color-text)]">
@@ -355,25 +389,37 @@ export function BuildingSidebar({
       </div>
       )}
 
-      {!browseOnly && selectedSearchResult && (
-        <div className={`${SECTION} ito-building-panel__selection`}>
-          <SearchResultCard
-            result={selectedSearchResult}
-            onClose={() => setSelectedSearchResult(null)}
-          />
-        </div>
-      )}
-
-      {selectedBuilding && (
+      {hasDetailOpen && (
         <div className={SECTION}>
-          <BuildingInfoCard
-            building={selectedBuilding}
-            onClose={handleClearSelection}
-          />
+          <button
+            type="button"
+            className="ito-building-panel__back inline-flex w-fit items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-muted)] transition hover:border-[var(--color-border-strong)] hover:text-[var(--color-text)]"
+            onClick={handleBackToResults}
+          >
+            <Icon name="chevron-left" size={14} aria-hidden="true" />
+            <span>{backLabel}</span>
+          </button>
+
+          {/* Las dos tarjetas son mutuamente excluyentes: selectSearchResult()
+              (building-store.ts) solo deja selectedSearchResult sin edificio
+              asociado cuando el trámite/servicio no tiene ubicación
+              confirmada. Si sí la tiene, ya viene con selectedBuilding
+              también, y ahí se prefiere la tarjeta completa del edificio
+              (BuildingInfoCard ya resalta el trámite/aula buscado dentro de
+              su propia info vía highlightedSection) en vez de mostrar dos
+              tarjetas de detalle apiladas para una sola selección. */}
+          {!browseOnly && selectedSearchResult && !selectedBuilding && (
+            <SearchResultCard result={selectedSearchResult} onClose={handleBackToResults} />
+          )}
+
+          {selectedBuilding && isBuildingPanelOpen && (
+            <BuildingInfoCard building={selectedBuilding} onClose={handleBackToResults} />
+          )}
         </div>
       )}
 
       {isPublicDesktop &&
+        !hasDetailOpen &&
         !showList &&
         !loading &&
         recommendedBuildings.length > 0 && (
@@ -392,7 +438,7 @@ export function BuildingSidebar({
                   <button
                     key={building.id}
                     type="button"
-                    className="ito-building-panel__featured-item group flex min-h-11 w-full items-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-left"
+                    className="ito-building-panel__featured-item group flex min-h-11 w-full items-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-left transition-all duration-150 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] hover:shadow-[var(--shadow-sm)]"
                     onClick={() => handleSelectBuilding(building)}
                   >
                     <span
@@ -496,10 +542,10 @@ export function BuildingSidebar({
                   <button
                     key={building.id}
                     type="button"
-                    className={`ito-building-panel__list-item group grid w-full grid-cols-[8px_minmax(0,1fr)_24px] items-center gap-x-3 rounded-2xl border bg-[var(--color-surface)] p-3.5 text-left ${
+                    className={`ito-building-panel__list-item group grid w-full grid-cols-[8px_minmax(0,1fr)_24px] items-center gap-x-3 rounded-2xl border bg-[var(--color-surface)] p-3.5 text-left transition-all duration-150 ${
                       isSelected
-                        ? "border-transparent"
-                        : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
+                        ? "border-transparent shadow-[var(--shadow-sm)]"
+                        : "border-[var(--color-border)] hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] hover:shadow-[var(--shadow-sm)]"
                     }`}
                     onClick={() => handleSelectBuilding(building)}
                     aria-pressed={isSelected}

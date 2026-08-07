@@ -13,13 +13,13 @@ export function BuildingCubiclesInfo({ cubicles, highlightId }: BuildingCubicles
   if (cubicles.length === 0) return null;
 
   return (
-    <InfoSection title="Cubículos de maestros" icon="user">
+    <InfoSection title="Cubículos de maestros" icon="user" tone="cyan" count={cubicles.length}>
       <ul className="m-0 flex flex-col gap-2 p-0">
         {cubicles.map((cubicle) => (
           <li
             key={cubicle.id}
             id={`search-target-${cubicle.id}`}
-            className={`list-none rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-2.5 transition-colors duration-500 ${flashId === cubicle.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
+            className={`list-none rounded-xl border p-2.5 transition-colors duration-500 border-[var(--tone-cyan-border)] bg-[var(--tone-cyan-bg)] ${flashId === cubicle.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-[13px] font-bold text-[var(--color-text)]">

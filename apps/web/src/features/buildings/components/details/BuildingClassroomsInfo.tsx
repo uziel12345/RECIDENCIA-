@@ -19,13 +19,13 @@ export function BuildingClassroomsInfo({ classrooms, highlightId }: BuildingClas
   if (classrooms.length === 0) return null;
 
   return (
-    <InfoSection title="Aulas" icon="book-open">
+    <InfoSection title="Aulas" icon="book-open" tone="orange" count={classrooms.length}>
       <ul className="m-0 flex flex-col gap-2 p-0">
         {classrooms.map((classroom) => (
           <li
             key={classroom.id}
             id={`search-target-${classroom.id}`}
-            className={`list-none rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-2.5 transition-colors duration-500 ${flashId === classroom.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
+            className={`list-none rounded-xl border p-2.5 transition-colors duration-500 border-[var(--tone-orange-border)] bg-[var(--tone-orange-bg)] ${flashId === classroom.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-[13px] font-bold text-[var(--color-text)]">
