@@ -1266,6 +1266,15 @@ html.dark .student-mobile .ito-building-detail-section > ul {
   left: var(--space-md);
 }
 
+/* La brújula quedó anclada abajo aquí — su guía de destino debe crecer
+   hacia arriba (no hacia abajo, que la sacaría del visor) para seguir sin
+   recortarse. Ver el comentario de `.ito-destination-guide` en
+   styles/index.css sobre por qué ya no se centra verticalmente. */
+.student-page--fullmap .ito-destination-guide {
+  top: auto;
+  bottom: 0;
+}
+
 @media (orientation: landscape) and (max-height: 37.5rem) {
   .student-mobile .ito-toolbar--mobile-compact {
     top: var(--mobile-floating-top);

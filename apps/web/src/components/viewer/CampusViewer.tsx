@@ -2130,6 +2130,12 @@ export function CampusViewer({
         compassRotation,
       ),
       label: formatBuildingDisplayName(selectedBuilding.name, selectedBuilding.code),
+      accuracyMeters: LOCATION_FEATURE_FLAGS.enableDeviceLocationV2
+        ? deviceAccuracyMeters
+        : null,
+      accuracyQuality: LOCATION_FEATURE_FLAGS.enableDeviceLocationV2
+        ? deviceLocation.accuracyQuality
+        : null,
     };
   })();
 

@@ -5959,29 +5959,44 @@ svg {
    sí varían de posición según la página. */
 .ito-destination-guide {
   position: absolute;
-  top: 50%;
+  /* Alineada al borde SUPERIOR de la brújula (no centrada verticalmente):
+     centrar hacía que, al crecer el contenido (ej. el aviso de precisión
+     aproximada agregado más abajo), la tarjeta se extendiera tanto hacia
+     arriba como hacia abajo desde el centro — y como la brújula suele
+     anclarse cerca del borde superior del visor, la mitad de arriba de la
+     tarjeta terminaba recortada por el `overflow: hidden` del contenedor.
+     Alineada arriba, solo crece hacia abajo, dentro del visor. Los
+     contextos donde la brújula se reubica abajo (ver
+     `.student-page--fullmap`/`.visitor-page--fullmap` más abajo) invierten
+     esto a `bottom: 0` para que, ahí, crezca hacia arriba en vez de
+     salirse por el borde inferior. */
+  top: 0;
   left: 100%;
-  transform: translateY(-50%);
   z-index: 15;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
-  max-width: 220px;
-  margin-left: 10px;
-  padding: 8px 14px 9px;
+  gap: 3px;
+  /* Nunca más ancho que lo que realmente cabe entre la brújula y el borde
+     del viewport — evita que la tarjeta invada el toolbar u otros controles
+     anclados al borde opuesto en pantallas angostas, sin tener que conocer
+     aquí la posición exacta de esos otros elementos. */
+  max-width: min(240px, calc(100vw - 132px));
+  margin-left: 12px;
+  padding: 10px 16px 11px;
   border-radius: 14px;
-  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-md);
+  background: color-mix(in srgb, var(--color-surface) 98%, transparent);
+  border: 1px solid var(--color-border-strong);
+  border-left: 3px solid #2563eb;
+  box-shadow: var(--shadow-lg), 0 0 0 1px color-mix(in srgb, #2563eb 12%, transparent);
   pointer-events: none;
   text-align: left;
 }
 
 .ito-destination-guide--mobile {
-  max-width: 170px;
+  max-width: min(190px, calc(100vw - 100px));
   margin-left: 8px;
-  padding: 6px 10px 7px;
+  padding: 8px 12px 9px;
 }
 
 .ito-destination-guide__label {
@@ -6000,41 +6015,70 @@ svg {
 .ito-destination-guide__main {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .ito-destination-guide__arrow {
   flex-shrink: 0;
   width: 0;
   height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-bottom: 22px solid #2563eb;
-  filter: drop-shadow(0 1px 1px rgba(15, 23, 42, 0.3));
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;
+  border-bottom: 26px solid #2563eb;
+  filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.35));
   transition: transform 120ms linear;
 }
 
 .ito-destination-guide--mobile .ito-destination-guide__arrow {
-  border-left-width: 8px;
-  border-right-width: 8px;
-  border-bottom-width: 17px;
+  border-left-width: 9px;
+  border-right-width: 9px;
+  border-bottom-width: 20px;
 }
 
 .ito-destination-guide__phrase {
   color: var(--color-text);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 800;
   line-height: 1.15;
+  letter-spacing: -0.01em;
 }
 
 .ito-destination-guide--mobile .ito-destination-guide__phrase {
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .ito-destination-guide__distance {
   color: #2563eb;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* Aviso de precisión aproximada — solo aparece con GPS/WiFi de baja
+   precisión (típico en computadoras sin GPS real, ver
+   needsApproximateNotice en DestinationGuideBanner.tsx). Separado del
+   resto con su propia línea superior para que se lea como una aclaración,
+   no como parte de la instrucción principal. */
+.ito-destination-guide__approx {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin-top: 3px;
+  padding-top: 6px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.ito-destination-guide__approx-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  margin-top: 3px;
+  border-radius: 50%;
+  background: #d97706;
 }
 
 .ito-layer-controls {
@@ -7295,6 +7339,15 @@ svg {
   top: auto;
   bottom: 16px;
   left: calc(var(--desktop-sidebar-width) + 16px);
+}
+
+/* La brújula quedó anclada abajo aquí — su guía de destino debe crecer
+   hacia arriba (no hacia abajo, que la sacaría del visor) para seguir sin
+   recortarse. Ver el comentario de `.ito-destination-guide` (arriba) sobre
+   por qué ya no se centra verticalmente. */
+.visitor-page--fullmap .ito-destination-guide {
+  top: auto;
+  bottom: 0;
 }
 
 .visitor-page--fullmap.is-sidebar-collapsed .ito-compass {

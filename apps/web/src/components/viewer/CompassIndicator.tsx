@@ -1,6 +1,7 @@
 import { memo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Vector3 } from "three";
+import type { LocationQuality } from "../../features/device-location";
 import { getCompassRotationDegrees } from "./compass-orientation";
 import { DestinationGuideBanner } from "./DestinationGuideBanner";
 
@@ -36,6 +37,13 @@ export type CompassDestination = {
   // mapa que se está viendo ahora mismo, no requiere saber qué es "noreste".
   directionLabel: string;
   label: string;
+  // Precisión reportada del GPS/WiFi en el momento del cálculo — `null`
+  // cuando no hay lectura de precisión disponible (ej. sistema legado).
+  // DestinationGuideBanner la usa para avisar cuando la posición es solo
+  // aproximada, en vez de dejar que el usuario asuma una precisión que el
+  // dispositivo no tiene (típico en computadoras sin GPS real).
+  accuracyMeters: number | null;
+  accuracyQuality: LocationQuality | null;
 };
 
 export const CompassIndicator = memo(function CompassIndicator({
