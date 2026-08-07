@@ -442,7 +442,7 @@ export function BuildingSidebar({
                   <button
                     key={building.id}
                     type="button"
-                    className="ito-building-panel__featured-item group flex min-h-11 w-full items-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-left transition-all duration-150 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] hover:shadow-[var(--shadow-sm)]"
+                    className="ito-building-panel__featured-item group flex min-h-11 w-full shrink-0 items-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-left transition-all duration-150 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] hover:shadow-[var(--shadow-sm)]"
                     onClick={() => handleSelectBuilding(building)}
                   >
                     <span
@@ -470,7 +470,7 @@ export function BuildingSidebar({
 
               <button
                 type="button"
-                className="ito-building-panel__show-all mt-1 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--color-border-strong)] bg-transparent px-3.5 text-[13px] font-semibold text-[var(--color-text-muted)]"
+                className="ito-building-panel__show-all mt-1 flex min-h-11 w-full shrink-0 items-center justify-center gap-1.5 rounded-xl border border-[var(--color-border-strong)] bg-transparent px-3.5 text-[13px] font-semibold text-[var(--color-text-muted)]"
                 onClick={() => setShowAllBuildings(true)}
               >
                 <span>Ver todos los edificios ({totalActive})</span>
@@ -546,7 +546,7 @@ export function BuildingSidebar({
                   <button
                     key={building.id}
                     type="button"
-                    className={`ito-building-panel__list-item group grid w-full grid-cols-[8px_minmax(0,1fr)_24px] items-center gap-x-3 rounded-2xl border bg-[var(--color-surface)] p-3.5 text-left transition-all duration-150 ${
+                    className={`ito-building-panel__list-item group grid w-full shrink-0 grid-cols-[8px_minmax(0,1fr)_24px] items-start gap-x-3 rounded-2xl border bg-[var(--color-surface)] p-3.5 text-left transition-all duration-150 ${
                       isSelected
                         ? "border-transparent shadow-[var(--shadow-sm)]"
                         : "border-[var(--color-border)] hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] hover:shadow-[var(--shadow-sm)]"
@@ -567,14 +567,14 @@ export function BuildingSidebar({
                       aria-hidden="true"
                       style={{ backgroundColor: accent.fg }}
                     />
-                    <div className="flex min-w-0 flex-col gap-2">
-                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <div className="ito-building-panel__list-copy flex min-w-0 flex-col gap-2">
+                      <div className="ito-building-panel__list-meta flex min-w-0 flex-wrap items-center gap-2">
                         <span className="inline-flex items-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-2 py-[3px] text-[11px] font-extrabold uppercase leading-none tracking-wide text-[var(--color-text-muted)]">
                           {building.code}
                         </span>
                         <CategoryBadge name={normalizeDisplayText(building.category_name)} size="sm" />
                       </div>
-                      <div className="text-[15px] font-bold leading-snug tracking-tight text-[var(--color-text)] [overflow-wrap:anywhere]">
+                      <div className="ito-building-panel__list-name text-[15px] font-bold leading-snug tracking-tight text-[var(--color-text)] [overflow-wrap:anywhere]">
                         {formatBuildingDisplayName(building.name, building.code)}
                       </div>
                     </div>

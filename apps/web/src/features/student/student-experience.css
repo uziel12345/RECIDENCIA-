@@ -853,6 +853,36 @@ body {
 .student-page .ito-building-panel__list-item,
 .student-mobile .ito-building-panel__list-item {
   grid-template-columns: var(--space-xs) minmax(0, 1fr) var(--space-lg);
+  align-items: start;
+  height: auto;
+  min-height: 4.75rem;
+  overflow: hidden;
+}
+
+.student-page .ito-building-panel__list-accent,
+.student-mobile .ito-building-panel__list-accent {
+  align-self: center;
+}
+
+.student-page .ito-building-panel__list-copy,
+.student-mobile .ito-building-panel__list-copy {
+  min-width: 0;
+  align-self: center;
+}
+
+.student-page .ito-building-panel__list-meta,
+.student-mobile .ito-building-panel__list-meta {
+  max-width: 100%;
+}
+
+.student-page .ito-building-panel__list-name,
+.student-mobile .ito-building-panel__list-name {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  line-height: 1.25;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .student-page .ito-building-panel__featured-arrow,
