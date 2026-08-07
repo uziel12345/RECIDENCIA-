@@ -2,8 +2,11 @@ import type { ProcedureForBuilding } from "@ito-map/shared";
 import { Icon } from "../../../../components/ui/Icons";
 import { normalizeDisplayText } from "../../../../utils/text";
 import { InfoSection } from "./InfoSection";
+import { getSectionToneClasses } from "./section-tone";
 import { HIGHLIGHT_FLASH_CLASS, useHighlightFlash } from "./useHighlightFlash";
 import { safeHttpUrl } from "../../../../utils/safe-url";
+
+const { item: ITEM_TONE } = getSectionToneClasses("amber");
 
 type BuildingProceduresInfoProps = {
   procedures: ProcedureForBuilding[];
@@ -26,7 +29,7 @@ export function BuildingProceduresInfo({ procedures, highlightId }: BuildingProc
             <li
               key={procedure.id}
               id={`search-target-${procedure.id}`}
-              className={`list-none rounded-xl border p-2.5 transition-colors duration-500 border-[var(--tone-amber-border)] bg-[var(--tone-amber-bg)] ${flashId === procedure.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
+              className={`list-none rounded-xl border p-2.5 transition-colors duration-500 ${ITEM_TONE} ${flashId === procedure.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[13px] font-bold text-[var(--color-text)]">

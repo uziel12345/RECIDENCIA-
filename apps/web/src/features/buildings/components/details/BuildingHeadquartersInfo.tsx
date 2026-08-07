@@ -1,7 +1,10 @@
 import type { Headquarters } from "@ito-map/shared";
 import { normalizeDisplayText } from "../../../../utils/text";
 import { InfoSection } from "./InfoSection";
+import { getSectionToneClasses } from "./section-tone";
 import { HIGHLIGHT_FLASH_CLASS, useHighlightFlash } from "./useHighlightFlash";
+
+const { item: ITEM_TONE } = getSectionToneClasses("slate");
 
 type BuildingHeadquartersInfoProps = {
   headquarters: Headquarters[];
@@ -19,7 +22,7 @@ export function BuildingHeadquartersInfo({ headquarters, highlightId }: Building
           <li
             key={hq.id}
             id={`search-target-${hq.id}`}
-            className={`list-none rounded-xl border p-2.5 transition-colors duration-500 border-[var(--tone-slate-border)] bg-[var(--tone-slate-bg)] ${flashId === hq.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
+            className={`list-none rounded-xl border p-2.5 transition-colors duration-500 ${ITEM_TONE} ${flashId === hq.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
           >
             <span className="text-[13px] font-bold text-[var(--color-text)]">
               {normalizeDisplayText(hq.name)}

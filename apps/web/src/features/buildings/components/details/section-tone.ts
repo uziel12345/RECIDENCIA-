@@ -10,23 +10,23 @@ type ToneClasses = {
 const TONE_CLASSES: Record<SectionTone, ToneClasses> = {
   orange: {
     chip: "bg-[var(--tone-orange-bg)] text-[var(--tone-orange-text)]",
-    item: "border-[var(--tone-orange-border)] bg-[var(--tone-orange-bg)]",
+    item: "border-[var(--tone-orange-border)] bg-[var(--tone-orange-bg)] border-l-4 border-l-[var(--tone-orange-text)]",
   },
   violet: {
     chip: "bg-[var(--tone-violet-bg)] text-[var(--tone-violet-text)]",
-    item: "border-[var(--tone-violet-border)] bg-[var(--tone-violet-bg)]",
+    item: "border-[var(--tone-violet-border)] bg-[var(--tone-violet-bg)] border-l-4 border-l-[var(--tone-violet-text)]",
   },
   cyan: {
     chip: "bg-[var(--tone-cyan-bg)] text-[var(--tone-cyan-text)]",
-    item: "border-[var(--tone-cyan-border)] bg-[var(--tone-cyan-bg)]",
+    item: "border-[var(--tone-cyan-border)] bg-[var(--tone-cyan-bg)] border-l-4 border-l-[var(--tone-cyan-text)]",
   },
   slate: {
     chip: "bg-[var(--tone-slate-bg)] text-[var(--tone-slate-text)]",
-    item: "border-[var(--tone-slate-border)] bg-[var(--tone-slate-bg)]",
+    item: "border-[var(--tone-slate-border)] bg-[var(--tone-slate-bg)] border-l-4 border-l-[var(--tone-slate-text)]",
   },
   amber: {
     chip: "bg-[var(--tone-amber-bg)] text-[var(--tone-amber-text)]",
-    item: "border-[var(--tone-amber-border)] bg-[var(--tone-amber-bg)]",
+    item: "border-[var(--tone-amber-border)] bg-[var(--tone-amber-bg)] border-l-4 border-l-[var(--tone-amber-text)]",
   },
 };
 

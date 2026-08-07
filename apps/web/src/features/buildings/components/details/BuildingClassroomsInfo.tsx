@@ -1,7 +1,10 @@
 import type { Classroom } from "@ito-map/shared";
 import { normalizeDisplayText } from "../../../../utils/text";
 import { InfoSection } from "./InfoSection";
+import { getSectionToneClasses } from "./section-tone";
 import { HIGHLIGHT_FLASH_CLASS, useHighlightFlash } from "./useHighlightFlash";
+
+const { item: ITEM_TONE } = getSectionToneClasses("orange");
 
 function floorLabel(floor: number): string {
   if (floor === 0) return "Planta baja";
@@ -25,7 +28,7 @@ export function BuildingClassroomsInfo({ classrooms, highlightId }: BuildingClas
           <li
             key={classroom.id}
             id={`search-target-${classroom.id}`}
-            className={`list-none rounded-xl border p-2.5 transition-colors duration-500 border-[var(--tone-orange-border)] bg-[var(--tone-orange-bg)] ${flashId === classroom.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
+            className={`list-none rounded-xl border p-2.5 transition-colors duration-500 ${ITEM_TONE} ${flashId === classroom.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-[13px] font-bold text-[var(--color-text)]">

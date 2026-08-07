@@ -1,7 +1,10 @@
 import type { Department } from "@ito-map/shared";
 import { normalizeDisplayText } from "../../../../utils/text";
 import { InfoSection } from "./InfoSection";
+import { getSectionToneClasses } from "./section-tone";
 import { HIGHLIGHT_FLASH_CLASS, useHighlightFlash } from "./useHighlightFlash";
+
+const { item: ITEM_TONE } = getSectionToneClasses("violet");
 
 type BuildingDepartmentsInfoProps = {
   departments: Department[];
@@ -19,7 +22,7 @@ export function BuildingDepartmentsInfo({ departments, highlightId }: BuildingDe
           <li
             key={department.id}
             id={`search-target-${department.id}`}
-            className={`list-none rounded-xl border p-2.5 transition-colors duration-500 border-[var(--tone-violet-border)] bg-[var(--tone-violet-bg)] ${flashId === department.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
+            className={`list-none rounded-xl border p-2.5 transition-colors duration-500 ${ITEM_TONE} ${flashId === department.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
           >
             <span className="text-[13px] font-bold text-[var(--color-text)]">
               {normalizeDisplayText(department.name)}

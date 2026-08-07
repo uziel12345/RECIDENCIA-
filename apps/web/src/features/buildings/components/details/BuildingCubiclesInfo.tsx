@@ -1,7 +1,10 @@
 import type { TeacherCubicle } from "@ito-map/shared";
 import { normalizeDisplayText } from "../../../../utils/text";
 import { InfoSection } from "./InfoSection";
+import { getSectionToneClasses } from "./section-tone";
 import { HIGHLIGHT_FLASH_CLASS, useHighlightFlash } from "./useHighlightFlash";
+
+const { item: ITEM_TONE } = getSectionToneClasses("cyan");
 
 type BuildingCubiclesInfoProps = {
   cubicles: TeacherCubicle[];
@@ -19,7 +22,7 @@ export function BuildingCubiclesInfo({ cubicles, highlightId }: BuildingCubicles
           <li
             key={cubicle.id}
             id={`search-target-${cubicle.id}`}
-            className={`list-none rounded-xl border p-2.5 transition-colors duration-500 border-[var(--tone-cyan-border)] bg-[var(--tone-cyan-bg)] ${flashId === cubicle.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
+            className={`list-none rounded-xl border p-2.5 transition-colors duration-500 ${ITEM_TONE} ${flashId === cubicle.id ? HIGHLIGHT_FLASH_CLASS : ""}`}
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-[13px] font-bold text-[var(--color-text)]">

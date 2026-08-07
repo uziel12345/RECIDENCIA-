@@ -56,21 +56,21 @@
   /* ── Tonos de sección (ficha de edificio) — cada bloque de información
      (aulas, departamentos, cubículos, jefaturas, trámites) usa un tono
      propio para que no se confundan visualmente entre sí. ── */
-  --tone-orange-bg:     #fff7ed;
-  --tone-orange-border: #fed7aa;
-  --tone-orange-text:   #c2410c;
-  --tone-violet-bg:     #fdf4ff;
-  --tone-violet-border: #f5d0fe;
-  --tone-violet-text:   #a21caf;
-  --tone-cyan-bg:       #ecfeff;
-  --tone-cyan-border:   #a5f3fc;
-  --tone-cyan-text:     #0e7490;
-  --tone-slate-bg:      #f1f5f9;
-  --tone-slate-border:  #cbd5e1;
-  --tone-slate-text:    #475569;
-  --tone-amber-bg:      #fffbeb;
-  --tone-amber-border:  #fde68a;
-  --tone-amber-text:    #b45309;
+  --tone-orange-bg:     #ffe3c2;
+  --tone-orange-border: #fb923c;
+  --tone-orange-text:   #9a3412;
+  --tone-violet-bg:     #f6d3fb;
+  --tone-violet-border: #d946ef;
+  --tone-violet-text:   #86198f;
+  --tone-cyan-bg:       #b8f3fa;
+  --tone-cyan-border:   #22d3ee;
+  --tone-cyan-text:     #0e5e6f;
+  --tone-slate-bg:      #dbe3ee;
+  --tone-slate-border:  #94a3b8;
+  --tone-slate-text:    #334155;
+  --tone-amber-bg:      #fde9a8;
+  --tone-amber-border:  #f59e0b;
+  --tone-amber-text:    #7c3e07;
 
   /* ── Sombras ── */
   --shadow-xs:   0 1px 2px rgba(10, 10, 10, 0.04);
@@ -7918,21 +7918,21 @@ html.dark {
   --color-danger-bg:      rgba(127, 29, 29, 0.28);
   --color-danger-border:  rgba(239, 68, 68, 0.25);
   --color-danger-text:    #f87171;
-  --tone-orange-bg:     rgba(194, 65, 12, 0.16);
-  --tone-orange-border: rgba(251, 146, 60, 0.30);
-  --tone-orange-text:   #fb923c;
-  --tone-violet-bg:     rgba(162, 28, 175, 0.16);
-  --tone-violet-border: rgba(232, 121, 249, 0.28);
-  --tone-violet-text:   #e879f9;
-  --tone-cyan-bg:       rgba(14, 116, 144, 0.18);
-  --tone-cyan-border:   rgba(34, 211, 238, 0.28);
-  --tone-cyan-text:     #22d3ee;
-  --tone-slate-bg:      rgba(148, 163, 184, 0.14);
-  --tone-slate-border:  rgba(148, 163, 184, 0.26);
-  --tone-slate-text:    #cbd5e1;
-  --tone-amber-bg:      rgba(180, 83, 9, 0.18);
-  --tone-amber-border:  rgba(251, 191, 36, 0.28);
-  --tone-amber-text:    #fbbf24;
+  --tone-orange-bg:     rgba(194, 65, 12, 0.26);
+  --tone-orange-border: rgba(251, 146, 60, 0.48);
+  --tone-orange-text:   #fdba74;
+  --tone-violet-bg:     rgba(162, 28, 175, 0.26);
+  --tone-violet-border: rgba(232, 121, 249, 0.48);
+  --tone-violet-text:   #f0abfc;
+  --tone-cyan-bg:       rgba(14, 116, 144, 0.28);
+  --tone-cyan-border:   rgba(34, 211, 238, 0.48);
+  --tone-cyan-text:     #67e8f9;
+  --tone-slate-bg:      rgba(148, 163, 184, 0.22);
+  --tone-slate-border:  rgba(148, 163, 184, 0.42);
+  --tone-slate-text:    #e2e8f0;
+  --tone-amber-bg:      rgba(180, 83, 9, 0.28);
+  --tone-amber-border:  rgba(251, 191, 36, 0.48);
+  --tone-amber-text:    #fcd34d;
   --shadow-xs:   0 1px 2px rgba(0, 0, 0, 0.40);
   --shadow-sm:   0 1px 4px rgba(0, 0, 0, 0.50), 0 1px 2px rgba(0, 0, 0, 0.30);
   --shadow-md:   0 4px 16px rgba(0, 0, 0, 0.55), 0 1px 4px rgba(0, 0, 0, 0.30);
