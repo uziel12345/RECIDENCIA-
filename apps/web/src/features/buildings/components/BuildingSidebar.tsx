@@ -413,7 +413,11 @@ export function BuildingSidebar({
           )}
 
           {selectedBuilding && isBuildingPanelOpen && (
-            <BuildingInfoCard building={selectedBuilding} onClose={handleBackToResults} />
+            <BuildingInfoCard
+              key={selectedBuilding.id}
+              building={selectedBuilding}
+              onClose={handleBackToResults}
+            />
           )}
         </div>
       )}

@@ -71,10 +71,6 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
     };
   }, [building.id]);
 
-  useEffect(() => {
-    setCoverLoaded(false);
-  }, [building.id]);
-
   const visibleImages = galleryImages.filter((img) => !failedImages.has(img.id));
   const galleryLoadFailed = galleryImages.length > 0 && visibleImages.length === 0;
   const { data: details, loading: detailsLoading, error: detailsError } =
