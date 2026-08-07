@@ -26,6 +26,27 @@ export const LOCATION_FILTER_CONFIG = {
 } as const;
 
 /**
+ * Promedio móvil exponencial ponderado por precisión (ver
+ * location-smoothing.service.ts) — reduce el "movimiento fantasma": el
+ * marcador ya no salta a cada lectura ruidosa que pasa el filtro de saltos,
+ * sino que se mueve hacia ella proporcionalmente a qué tan confiable es.
+ *
+ * - referenceAccuracyMeters: precisión (m) a la que una lectura se confía
+ *   casi por completo (alpha ≈ maxAlpha). Una lectura con esta precisión o
+ *   mejor apenas se suaviza.
+ * - minAlpha: piso — incluso una lectura muy imprecisa mueve algo la
+ *   posición, para no quedar "pegada" para siempre si la precisión real
+ *   del dispositivo es consistentemente mala.
+ * - maxAlpha: techo — ni la lectura más precisa reemplaza la posición de
+ *   un solo salto; conserva algo de continuidad entre lecturas.
+ */
+export const LOCATION_SMOOTHING_CONFIG = {
+  referenceAccuracyMeters: 8,
+  minAlpha: 0.15,
+  maxAlpha: 0.9,
+} as const;
+
+/**
  * Si hay calibración válida, el punto A será la referencia geográfica.
  * Mientras esté pendiente, el hook usa la primera lectura de cada sesión
  * únicamente para mostrar desplazamientos locales; eso no calibra el modelo.
@@ -115,6 +136,19 @@ export const USER_MARKER_HEIGHT = 2;
 export const ACCURACY_CIRCLE_HEIGHT = 0.08;
 export const MAX_ACCURACY_RADIUS_MODEL_UNITS = 60;
 export const MARKER_SMOOTHING_SPEED = 8;
+
+/**
+ * Una computadora normalmente no tiene GPS real: estima la ubicación por
+ * WiFi/IP, con error de cientos o miles de metros — muy por encima de lo que
+ * sirve para señalar un edificio en un campus de ~300 m. Antes el radio del
+ * círculo de precisión se recortaba SIEMPRE a 60 unidades sin importar el
+ * error real, así que una lectura pésima se veía igual de "confiada" que una
+ * excelente. Por encima de este umbral (metros reales del GPS/WiFi, no
+ * unidades de mundo) ya no se muestra el punto ni el círculo — es más
+ * honesto no mostrar nada que mostrar una ubicación que puede estar a
+ * kilómetros de distancia con apariencia precisa.
+ */
+export const MAX_USEFUL_ACCURACY_METERS = 150;
 
 export const LOCATION_FEATURE_FLAGS = {
   enableLegacyLocation: false,

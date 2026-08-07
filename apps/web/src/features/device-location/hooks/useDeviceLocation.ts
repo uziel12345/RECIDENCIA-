@@ -19,6 +19,7 @@ import {
 } from "../services/device-geolocation.service";
 import { gpsToLocalMeters } from "../services/gps-to-local.service";
 import { filterDeviceLocation } from "../services/location-filter.service";
+import { smoothGeoPosition } from "../services/location-smoothing.service";
 import { useDeviceLocationStore } from "../store/device-location.store";
 import type {
   DeviceGeoPosition,
@@ -59,27 +60,32 @@ function processDevicePosition(
     return;
   }
 
-  store.setFilteredPosition(filtered.position);
+  // El filtro de saltos ya descartó lecturas imposibles, pero una lectura
+  // ruidosa que sigue dentro de límites razonables (el GPS oscila unos
+  // metros estando quieto, típico cerca de edificios) se aceptaba tal cual
+  // como la nueva posición — el marcador "perseguía" cada bandazo con una
+  // animación suave en vez de quedarse quieto ("movimiento fantasma").
+  // Suavizar aquí, ponderando por la precisión reportada, corrige eso en el
+  // dato mismo, no solo en cómo se anima.
+  const smoothed = smoothGeoPosition(filtered.position, store.filteredPosition);
+  store.setFilteredPosition(smoothed);
   store.setErrorMessage(null);
 
   if (!sessionReference.current) {
     sessionReference.current = {
-      latitude: filtered.position.latitude,
-      longitude: filtered.position.longitude,
+      latitude: smoothed.latitude,
+      longitude: smoothed.longitude,
     };
   }
   const reference =
     calibration.transform?.reference ??
     CAMPUS_GEO_REFERENCE ??
     sessionReference.current;
-  const localPosition = gpsToLocalMeters(filtered.position, reference);
+  const localPosition = gpsToLocalMeters(smoothed, reference);
   store.setLocalPosition(localPosition);
   store.setCampusPosition(
     localPosition && calibration.transform
-      ? gpsToLocallyCorrectedCampusPosition(
-          filtered.position,
-          calibration.transform,
-        )
+      ? gpsToLocallyCorrectedCampusPosition(smoothed, calibration.transform)
       : null,
   );
 }

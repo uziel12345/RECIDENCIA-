@@ -2,6 +2,7 @@ import { memo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Vector3 } from "three";
 import { getCompassRotationDegrees } from "./compass-orientation";
+import { DestinationGuideBanner } from "./DestinationGuideBanner";
 
 export function CompassCameraSync({
   onRotationChange,
@@ -23,12 +24,28 @@ export function CompassCameraSync({
   return null;
 }
 
+export type CompassDestination = {
+  bearingDegrees: number;
+  // Rumbo ya compuesto con la rotación de cámara: dónde aparece el destino
+  // EN PANTALLA. Lo usa DestinationGuideBanner (fuera de la brújula, así que
+  // no puede apoyarse en el truco de rotación anidada que sí usa la flecha
+  // interna de la brújula con `bearingDegrees`).
+  screenBearingDegrees: number;
+  distanceMeters: number;
+  // Frase simple ("a tu derecha") en vez de puntos cardinales — describe el
+  // mapa que se está viendo ahora mismo, no requiere saber qué es "noreste".
+  directionLabel: string;
+  label: string;
+};
+
 export const CompassIndicator = memo(function CompassIndicator({
   rotationDegrees,
   isMobile = false,
+  destination = null,
 }: {
   rotationDegrees: number;
   isMobile?: boolean;
+  destination?: CompassDestination | null;
 }) {
   return (
     <div
@@ -45,7 +62,25 @@ export const CompassIndicator = memo(function CompassIndicator({
         <span className="ito-compass__direction ito-compass__direction--south">S</span>
         <span className="ito-compass__direction ito-compass__direction--west">O</span>
         <span className="ito-compass__needle" aria-hidden="true" />
+        {destination && (
+          // Anidada dentro de la rosa que ya rota para compensar la cámara:
+          // solo se le suma la rotación del rumbo al destino, así el
+          // resultado en pantalla es la suma correcta de ambas sin tener
+          // que resolver esa composición a mano.
+          <span
+            className="ito-compass__destination-arrow"
+            style={{ transform: `rotate(${destination.bearingDegrees}deg)` }}
+            aria-hidden="true"
+          />
+        )}
       </div>
+      {/* Anclada al propio contenedor de la brújula (no al viewport): así
+          hereda automáticamente su posición correcta en cada variante de
+          página (escritorio, móvil, modo de mapa completo con sidebar
+          flotante...) sin tener que duplicar esa lógica de posicionamiento
+          aquí. Sigue siendo una guía visualmente aparte de la rosa N/E/S/O,
+          solo comparte el mismo "punto de anclaje" en pantalla. */}
+      <DestinationGuideBanner destination={destination} isMobile={isMobile} />
     </div>
   );
 });

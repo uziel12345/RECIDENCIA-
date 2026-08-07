@@ -1,0 +1,328 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1700" viewBox="0 0 2400 1700" role="img" aria-labelledby="title desc">
+  <title id="title">Diagrama Entidad-Relacion - Base de datos Mapa ITO</title>
+  <desc id="desc">Diagrama ER de la base de datos PostgreSQL del mapa 3D del Instituto Tecnologico de Oaxaca.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f8fafc; }
+      .panel { fill: #ffffff; stroke: #cbd5e1; stroke-width: 2; rx: 16; }
+      .panel-title { font: 700 24px Arial, sans-serif; fill: #0f172a; }
+      .entity { fill: #ffffff; stroke: #475569; stroke-width: 2; rx: 10; filter: url(#shadow); }
+      .entity-main { fill: #fff7ed; stroke: #c2410c; stroke-width: 3; rx: 10; filter: url(#shadow); }
+      .header { fill: #1f2937; rx: 10; }
+      .header-main { fill: #c2410c; rx: 10; }
+      .name { font: 700 17px Arial, sans-serif; fill: #ffffff; }
+      .field { font: 14px Consolas, monospace; fill: #1e293b; }
+      .pk { fill: #dc2626; font-weight: 700; }
+      .fk { fill: #2563eb; font-weight: 700; }
+      .note { font: 17px Arial, sans-serif; fill: #475569; }
+      .caption { font: 15px Arial, sans-serif; fill: #64748b; }
+      .line { fill: none; stroke: #64748b; stroke-width: 2.5; }
+      .line-strong { fill: none; stroke: #c2410c; stroke-width: 3; }
+      .line-soft { fill: none; stroke: #94a3b8; stroke-width: 2; stroke-dasharray: 8 6; }
+      .rel { font: 13px Arial, sans-serif; fill: #334155; }
+    </style>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#0f172a" flood-opacity="0.13"/>
+    </filter>
+    <marker id="crow" markerWidth="18" markerHeight="18" refX="15" refY="9" orient="auto">
+      <path d="M2,2 L15,9 L2,16 M15,9 L2,9" fill="none" stroke="#64748b" stroke-width="2"/>
+    </marker>
+    <marker id="crowStrong" markerWidth="18" markerHeight="18" refX="15" refY="9" orient="auto">
+      <path d="M2,2 L15,9 L2,16 M15,9 L2,9" fill="none" stroke="#c2410c" stroke-width="2.2"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="2400" height="1700"/>
+  <text x="80" y="70" style="font: 800 38px Arial, sans-serif; fill:#0f172a;">Diagrama Entidad-Relacion de la base de datos</text>
+  <text x="80" y="108" class="note">Sistema de mapa 3D del Instituto Tecnologico de Oaxaca - PostgreSQL</text>
+  <text x="80" y="138" class="caption">PK = llave primaria, FK = llave foranea, UK = valor unico. Lineas continuas = relaciones declaradas; lineas punteadas = referencia logica sin FK directa.</text>
+
+  <!-- Panels -->
+  <rect class="panel" x="50" y="180" width="520" height="370"/>
+  <text class="panel-title" x="80" y="220">Administracion y busqueda</text>
+  <rect class="panel" x="620" y="180" width="760" height="670"/>
+  <text class="panel-title" x="650" y="220">Catalogo del campus</text>
+  <rect class="panel" x="1430" y="180" width="860" height="670"/>
+  <text class="panel-title" x="1460" y="220">Tramites, departamentos y cargos</text>
+  <rect class="panel" x="50" y="900" width="900" height="640"/>
+  <text class="panel-title" x="80" y="940">Area academica</text>
+  <rect class="panel" x="1000" y="900" width="1290" height="640"/>
+  <text class="panel-title" x="1030" y="940">Geolocalizacion, horarios y referencias del mapa</text>
+
+  <!-- Relationship lines under entities -->
+  <path class="line-strong" marker-end="url(#crowStrong)" d="M1000 285 L1000 370"/>
+  <path class="line" marker-end="url(#crow)" d="M860 485 L740 485"/>
+  <path class="line" marker-end="url(#crow)" d="M860 535 L735 685"/>
+  <path class="line" marker-end="url(#crow)" d="M1140 485 L1540 485"/>
+  <path class="line" marker-end="url(#crow)" d="M1140 535 L1550 680"/>
+  <path class="line" marker-end="url(#crow)" d="M1000 580 L1000 990"/>
+  <path class="line" marker-end="url(#crow)" d="M1120 580 L1220 1040"/>
+  <path class="line" marker-end="url(#crow)" d="M1130 500 L1400 1110"/>
+  <path class="line" marker-end="url(#crow)" d="M1130 520 L1545 1110"/>
+  <path class="line" marker-end="url(#crow)" d="M1120 560 L1785 1110"/>
+  <path class="line" marker-end="url(#crow)" d="M1120 540 L2060 1110"/>
+
+  <path class="line" marker-end="url(#crow)" d="M1750 485 L1750 610"/>
+  <path class="line" marker-end="url(#crow)" d="M1750 485 L1915 610"/>
+  <path class="line" marker-end="url(#crow)" d="M1605 485 L1240 485"/>
+  <path class="line" marker-end="url(#crow)" d="M1840 725 L1750 520"/>
+  <path class="line" marker-end="url(#crow)" d="M1840 725 L1690 1110"/>
+  <path class="line" marker-end="url(#crow)" d="M1840 725 L1920 1110"/>
+
+  <path class="line" marker-end="url(#crow)" d="M360 1110 L560 1110"/>
+  <path class="line" marker-end="url(#crow)" d="M735 1110 L650 1110"/>
+  <path class="line" marker-end="url(#crow)" d="M650 1040 L650 990"/>
+  <path class="line" marker-end="url(#crow)" d="M740 485 L740 990"/>
+  <path class="line" marker-end="url(#crow)" d="M660 1245 L360 1245"/>
+  <path class="line" marker-end="url(#crow)" d="M650 1190 L650 1320"/>
+
+  <path class="line-soft" marker-end="url(#crow)" d="M400 420 C520 610 520 820 900 900"/>
+  <path class="line-soft" marker-end="url(#crow)" d="M400 420 C850 650 1450 780 2010 1010"/>
+
+  <!-- Entity helper: x y width height header text fields -->
+  <!-- Administration -->
+  <g transform="translate(80 250)">
+    <rect class="entity" width="220" height="118"/>
+    <rect class="header" width="220" height="34"/>
+    <text class="name" x="14" y="23">ADMIN_USERS</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field" x="14" y="80">username UK</text>
+    <text class="field" x="14" y="102">role, is_active</text>
+  </g>
+  <g transform="translate(320 250)">
+    <rect class="entity" width="220" height="118"/>
+    <rect class="header" width="220" height="34"/>
+    <text class="name" x="14" y="23">AUDIT_LOGS</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field" x="14" y="80">admin_user_id</text>
+    <text class="field" x="14" y="102">action, details</text>
+  </g>
+  <g transform="translate(80 400)">
+    <rect class="entity" width="220" height="118"/>
+    <rect class="header" width="220" height="34"/>
+    <text class="name" x="14" y="23">QUICK_QUERIES</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field" x="14" y="80">label, query</text>
+    <text class="field" x="14" y="102">category, priority</text>
+  </g>
+  <g transform="translate(320 400)">
+    <rect class="entity" width="220" height="118"/>
+    <rect class="header" width="220" height="34"/>
+    <text class="name" x="14" y="23">SEARCH_ALIASES</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field" x="14" y="80">entity_type</text>
+    <text class="field" x="14" y="102">entity_id, alias UK</text>
+  </g>
+
+  <!-- Campus catalog -->
+  <g transform="translate(850 245)">
+    <rect class="entity" width="300" height="120"/>
+    <rect class="header" width="300" height="34"/>
+    <text class="name" x="14" y="23">BUILDING_CATEGORIES</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field" x="14" y="80">code UK, name UK</text>
+    <text class="field" x="14" y="102">color_hex, icon_name</text>
+  </g>
+  <g transform="translate(860 390)">
+    <rect class="entity-main" width="280" height="190"/>
+    <rect class="header-main" width="280" height="38"/>
+    <text class="name" x="14" y="25">BUILDINGS</text>
+    <text class="field pk" x="14" y="64">PK id</text>
+    <text class="field fk" x="14" y="86">FK category_id</text>
+    <text class="field" x="14" y="108">code UK, slug UK</text>
+    <text class="field" x="14" y="130">name, description</text>
+    <text class="field" x="14" y="152">x, y, z</text>
+    <text class="field" x="14" y="174">latitude, longitude</text>
+  </g>
+  <g transform="translate(650 425)">
+    <rect class="entity" width="210" height="118"/>
+    <rect class="header" width="210" height="34"/>
+    <text class="name" x="14" y="23">BUILDING_IMAGES</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field fk" x="14" y="80">FK building_id</text>
+    <text class="field" x="14" y="102">image_url, is_cover</text>
+  </g>
+  <g transform="translate(650 630)">
+    <rect class="entity" width="210" height="130"/>
+    <rect class="header" width="210" height="34"/>
+    <text class="name" x="14" y="23">CLASSROOMS</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field fk" x="14" y="80">FK building_id</text>
+    <text class="field" x="14" y="102">code, name, floor</text>
+    <text class="field" x="14" y="124">capacity, type</text>
+  </g>
+  <g transform="translate(1160 425)">
+    <rect class="entity" width="210" height="118"/>
+    <rect class="header" width="210" height="34"/>
+    <text class="name" x="14" y="23">BUILDING_PROC.</text>
+    <text class="field pk" x="14" y="58">PK building_id</text>
+    <text class="field pk" x="14" y="80">PK procedure_id</text>
+    <text class="field" x="14" y="102">notes</text>
+  </g>
+
+  <!-- Procedures and institutional -->
+  <g transform="translate(1605 390)">
+    <rect class="entity" width="290" height="180"/>
+    <rect class="header" width="290" height="34"/>
+    <text class="name" x="14" y="23">PROCEDURES</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field fk" x="14" y="80">FK department_id</text>
+    <text class="field" x="14" y="102">name, slug UK</text>
+    <text class="field" x="14" y="124">kind, resource_url</text>
+    <text class="field" x="14" y="146">internal_location</text>
+    <text class="field" x="14" y="168">validation_status</text>
+  </g>
+  <g transform="translate(1605 610)">
+    <rect class="entity" width="290" height="118"/>
+    <rect class="header" width="290" height="34"/>
+    <text class="name" x="14" y="23">PROCEDURE_REQUIREMENTS</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field fk" x="14" y="80">FK procedure_id</text>
+    <text class="field" x="14" y="102">description, type</text>
+  </g>
+  <g transform="translate(1935 610)">
+    <rect class="entity" width="290" height="138"/>
+    <rect class="header" width="290" height="34"/>
+    <text class="name" x="14" y="23">DEPARTMENTS</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field fk" x="14" y="80">FK building_id</text>
+    <text class="field" x="14" y="102">name, head_name</text>
+    <text class="field" x="14" y="124">schedule_text, contact</text>
+  </g>
+  <g transform="translate(1470 750)">
+    <rect class="entity" width="270" height="118"/>
+    <rect class="header" width="270" height="34"/>
+    <text class="name" x="14" y="23">TEACHER_CUBICLES</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field fk" x="14" y="80">FK building/prof/dep</text>
+    <text class="field" x="14" y="102">code UK, notes</text>
+  </g>
+  <g transform="translate(1760 750)">
+    <rect class="entity" width="240" height="118"/>
+    <rect class="header" width="240" height="34"/>
+    <text class="name" x="14" y="23">HEADQUARTERS</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field fk" x="14" y="80">FK building_id</text>
+    <text class="field fk" x="14" y="102">FK department_id</text>
+  </g>
+  <g transform="translate(2020 750)">
+    <rect class="entity" width="240" height="118"/>
+    <rect class="header" width="240" height="34"/>
+    <text class="name" x="14" y="23">INST_POSITIONS</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field fk" x="14" y="80">FK dept/building</text>
+    <text class="field" x="14" y="102">title, person_name</text>
+  </g>
+
+  <!-- Academic -->
+  <g transform="translate(100 1040)">
+    <rect class="entity" width="260" height="140"/>
+    <rect class="header" width="260" height="34"/>
+    <text class="name" x="14" y="23">STUDENTS</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field" x="14" y="80">control_number UK</text>
+    <text class="field" x="14" y="102">full_name, email</text>
+    <text class="field" x="14" y="124">program, semester</text>
+  </g>
+  <g transform="translate(560 1040)">
+    <rect class="entity" width="180" height="118"/>
+    <rect class="header" width="180" height="34"/>
+    <text class="name" x="14" y="23">STUDENT_SCH.</text>
+    <text class="field pk" x="14" y="58">PK student_id</text>
+    <text class="field pk" x="14" y="80">PK schedule_id</text>
+    <text class="field fk" x="14" y="102">FK both</text>
+  </g>
+  <g transform="translate(735 990)">
+    <rect class="entity" width="200" height="170"/>
+    <rect class="header" width="200" height="34"/>
+    <text class="name" x="14" y="23">SCHEDULES</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field fk" x="14" y="80">FK professor_id</text>
+    <text class="field fk" x="14" y="102">FK classroom_id</text>
+    <text class="field" x="14" y="124">subject, period</text>
+    <text class="field" x="14" y="146">day, start/end</text>
+  </g>
+  <g transform="translate(100 1215)">
+    <rect class="entity" width="260" height="140"/>
+    <rect class="header" width="260" height="34"/>
+    <text class="name" x="14" y="23">PROFESSORS</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field" x="14" y="80">employee_number UK</text>
+    <text class="field" x="14" y="102">rfc, full_name</text>
+    <text class="field" x="14" y="124">department</text>
+  </g>
+
+  <!-- Geolocation and references -->
+  <g transform="translate(1040 990)">
+    <rect class="entity" width="260" height="138"/>
+    <rect class="header" width="260" height="34"/>
+    <text class="name" x="14" y="23">BUILDING_SCHEDULES</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field fk" x="14" y="80">FK building_id</text>
+    <text class="field" x="14" y="102">day, open/close</text>
+    <text class="field" x="14" y="124">is_active</text>
+  </g>
+  <g transform="translate(1330 990)">
+    <rect class="entity" width="260" height="138"/>
+    <rect class="header" width="260" height="34"/>
+    <text class="name" x="14" y="23">CALIBRATION_POINTS</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field fk" x="14" y="80">FK building_id</text>
+    <text class="field" x="14" y="102">lat, lng, accuracy</text>
+    <text class="field" x="14" y="124">model_x, model_z</text>
+  </g>
+  <g transform="translate(1620 990)">
+    <rect class="entity" width="260" height="160"/>
+    <rect class="header" width="260" height="34"/>
+    <text class="name" x="14" y="23">CALIBRATION_PROFILES</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field" x="14" y="80">ref_lat, ref_lng</text>
+    <text class="field" x="14" y="102">meters_lat/lng</text>
+    <text class="field" x="14" y="124">a_x,b_x,c_x</text>
+    <text class="field" x="14" y="146">residuals, active</text>
+  </g>
+  <g transform="translate(1910 990)">
+    <rect class="entity" width="260" height="138"/>
+    <rect class="header" width="260" height="34"/>
+    <text class="name" x="14" y="23">BUILDING_GEOFENCES</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field fk" x="14" y="80">FK building_id</text>
+    <text class="field" x="14" y="102">polygon JSONB</text>
+    <text class="field" x="14" y="124">priority, active</text>
+  </g>
+  <g transform="translate(1040 1230)">
+    <rect class="entity" width="260" height="138"/>
+    <rect class="header" width="260" height="34"/>
+    <text class="name" x="14" y="23">GATES</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field" x="14" y="80">name, access_type</text>
+    <text class="field" x="14" y="102">status</text>
+    <text class="field" x="14" y="124">x, y, z</text>
+  </g>
+  <g transform="translate(1330 1230)">
+    <rect class="entity" width="260" height="138"/>
+    <rect class="header" width="260" height="34"/>
+    <text class="name" x="14" y="23">CAMPUS_STREETS</text>
+    <text class="field pk" x="14" y="58">PK id</text>
+    <text class="field" x="14" y="80">name UK</text>
+    <text class="field" x="14" y="102">x, y, z, rotation</text>
+    <text class="field" x="14" y="124">display_order</text>
+  </g>
+
+  <!-- Labels -->
+  <text class="rel" x="1010" y="335">1 categoria - muchos edificios</text>
+  <text class="rel" x="755" y="470">imagenes</text>
+  <text class="rel" x="765" y="660">aulas</text>
+  <text class="rel" x="1265" y="472">N:M edificios-tramites</text>
+  <text class="rel" x="1748" y="597">requisitos</text>
+  <text class="rel" x="1930" y="598">departamento</text>
+  <text class="rel" x="580" y="1028">inscripcion</text>
+  <text class="rel" x="692" y="1240">profesor</text>
+  <text class="rel" x="1008" y="965">horario edificio</text>
+  <text class="rel" x="1305" y="940">calibracion</text>
+  <text class="rel" x="1990" y="965">geocercas</text>
+
+  <!-- Footer -->
+  <rect x="80" y="1585" width="2240" height="70" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" rx="12"/>
+  <text x="110" y="1625" class="note">Notas: SEARCH_ALIASES guarda referencias polimorficas por entity_type/entity_id y no tiene FK directa. AUDIT_LOGS conserva admin_user_id como referencia operativa sin FK declarada en el esquema actual.</text>
+</svg>

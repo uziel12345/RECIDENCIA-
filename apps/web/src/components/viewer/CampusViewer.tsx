@@ -42,8 +42,17 @@ import {
   BUILDING_HIT_TARGET_KEY,
   buildNameToBuildingMap,
   findExactBuildingFromIntersections,
+  groupActiveBuildingsByModelNode,
+  pickPrimaryBuilding,
   shouldClearHoverOnPointerOut,
+  shouldHideBuildingLabel,
 } from "./building-picking";
+import {
+  resolveNonOverlappingLabelOffsets,
+  shiftLabelRect,
+  type LabelOffset,
+  type LabelRect,
+} from "./building-label-layout";
 import { useCampusGltf } from "./useCampusGltf";
 import { useSharedPointerDownTracker } from "./useDragAwareClick";
 import { CategoryLegend } from "./CategoryLegend";
@@ -66,13 +75,21 @@ import {
   DeviceLocationLayer,
   LOCATION_FEATURE_FLAGS,
   LocationDebugPanel,
+  MAX_USEFUL_ACCURACY_METERS,
+  useDeviceLocation,
   useDeviceLocationStore,
 } from "../../features/device-location";
 import { CAMPUS_MODEL_ROTATION_Y } from "./map-orientation.config";
 import { CompassCameraSync, CompassIndicator } from "./CompassIndicator";
+import {
+  getDestinationBearing,
+  getScreenRelativeBearing,
+  getScreenRelativeDirectionLabel,
+} from "./destination-bearing";
 import { StreetLabelCameraSync } from "./CampusStreetLabels";
 import { CampusStreetLabels } from "./CampusStreetLabels";
 import { MapLayerControls } from "./MapLayerControls";
+import { BUILDING_LABEL_POSITION_OVERRIDES } from "./building-label-overrides";
 import {
   formatBuildingDisplayCode,
   formatBuildingDisplayName,
@@ -521,6 +538,11 @@ type BuildingLabelEntry = {
   worldZ: number;
   isPriority: boolean;
   departmentNames: string[];
+  // Otros edificios activos que comparten este mismo nodo GLB (una sola
+  // malla física, ej. Dirección y Servicios Escolares). Un edificio nunca
+  // muestra dos etiquetas apiladas sobre sí mismo — se revela el resto por
+  // nombre solo al pasar el mouse/seleccionar, igual que `departmentNames`.
+  siblingNames: string[];
 };
 
 function getBuildingAlias(building: Building): string {
@@ -569,24 +591,51 @@ function findSceneObjectByModelName(scene: Object3D, modelName: string) {
 }
 
 // Umbral de distancia: por encima de este Y la cámara está "lejos" del campus.
-// 400 = el usuario aún puede leer etiquetas; 560 = vista general inicial.
-const LABEL_LOD_FAR_Y = 400;
+// Histéresis con dos límites (no uno solo) para que oscilar la cámara cerca
+// del umbral no encienda/apague el atenuado en cada frame: hay que subir
+// hasta ENTER para atenuar, y bajar hasta EXIT (más abajo) para recuperar
+// opacidad plena — un solo cruce nunca alcanza a "rebotar".
+
+// Se probó "nunca ocultar, reposicionar en su lugar" (búsqueda en espiral de
+// un hueco libre) para garantizar una etiqueta por edificio. El resultado
+// real: al rotar/mover la cámara, las etiquetas se desplazan de un hueco a
+// otro — se sienten "flotando"/inestables, y con todas visibles a la vez la
+// pantalla se satura. Se vuelve al modelo estable: la etiqueta nunca cambia
+// de posición (solo aparece/desaparece), y la del edificio seleccionado o en
+// hover siempre gana la colisión (ver `protectedLabelIds` más abajo).
+const BUILDING_LABELS_ALWAYS_VISIBLE = false;
+const BUILDING_LABELS_FIXED_SIZE = false;
+const LABEL_LOD_FAR_ENTER_Y = 400;
+const LABEL_LOD_FAR_EXIT_Y = 340;
+
+// Decisión de producto: los códigos de edificio son referencias permanentes
+// del mapa. No aplicarles decluttering, fade por distancia ni expansión por
+// hover; deben conservar tamaño y opacidad mientras su ancla esté en cámara.
 
 // Recalcular la distribución de etiquetas solo al mover suficientemente la
 // cámara; el hover y la selección disparan su propia revisión inmediata.
-const LABEL_LAYOUT_RECHECK_DISTANCE = 3;
+const LABEL_LAYOUT_RECHECK_DISTANCE = 1;
+const LABEL_LAYOUT_RECHECK_ROTATION = 0.00002;
+const LABEL_LAYOUT_MOVING_THROTTLE_MS = 90;
+const BUILDING_HOVER_CLEAR_GRACE_MS = 80;
 
 // Solo recalcula el set de "cercanos" si la cámara se movió al menos esto
 // desde la última revisión — evita recorrer todas las etiquetas cada frame
 // mientras la cámara está quieta o se mueve por debajo del umbral útil.
 // Aire mínimo (px) entre dos etiquetas expandidas para que no se sientan
 // pegadas, además de no solaparse literalmente.
-const LABEL_COLLISION_MARGIN = 16;
+const LABEL_COLLISION_MARGIN = 6;
 const LABEL_OVERLAY_MARGIN = 8;
 
-// Compara los rects REALES del DOM (no una estimación de tamaño) — así se
-// adapta automáticamente a nombres largos que rompen en 2-3 líneas.
-type ScreenRect = Pick<DOMRect, "left" | "right" | "top" | "bottom">;
+// Histéresis para la colisión entre etiquetas: sin esto, dos edificios
+// cercanos con etiquetas casi al límite del margen normal se turnan cuál
+// "gana" en cada recálculo (una diferencia de un par de píxeles al mover la
+// cámara basta para invertir el resultado) — eso se percibe como parpadeo.
+// Una etiqueta que estaba oculta necesita este espacio EXTRA de despeje
+// antes de poder reaparecer, así que el resultado no rebota en el límite.
+const LABEL_COLLISION_HYSTERESIS = 10;
+
+type ScreenRect = LabelRect;
 
 function rectsCollide(a: ScreenRect, b: ScreenRect, margin: number): boolean {
   return !(
@@ -596,6 +645,9 @@ function rectsCollide(a: ScreenRect, b: ScreenRect, margin: number): boolean {
     a.top - margin > b.bottom
   );
 }
+
+// Compara los rects REALES del DOM (no una estimación de tamaño) — así se
+// adapta automáticamente a nombres largos que rompen en 2-3 líneas.
 
 // Las etiquetas 3D se renderizan en portales HTML y no participan en el flujo
 // de los paneles del visor. Esta lista convierte cada control o ventana visible
@@ -618,7 +670,7 @@ const MAP_OVERLAY_EXCLUSION_SELECTOR = [
   ".visitor-mobile__search-result",
 ].join(",");
 
-function getVisibleMapOverlayRects(): ScreenRect[] {
+function getVisibleMapOverlayRects(): LabelRect[] {
   if (typeof document === "undefined" || typeof window === "undefined") {
     return [];
   }
@@ -626,7 +678,7 @@ function getVisibleMapOverlayRects(): ScreenRect[] {
   const overlays = document.querySelectorAll<HTMLElement>(
     MAP_OVERLAY_EXCLUSION_SELECTOR,
   );
-  const rects: ScreenRect[] = [];
+  const rects: LabelRect[] = [];
 
   for (const overlay of overlays) {
     const style = window.getComputedStyle(overlay);
@@ -666,7 +718,6 @@ const BuildingLabels = memo(function BuildingLabels({
   isAerial = false,
   layoutFrozen = false,
   hoveredBuildingId = null,
-  onSelectBuilding,
 }: {
   buildings: Building[];
   departments: Department[];
@@ -675,7 +726,6 @@ const BuildingLabels = memo(function BuildingLabels({
   isAerial?: boolean;
   layoutFrozen?: boolean;
   hoveredBuildingId?: string | null;
-  onSelectBuilding: (building: Building) => void;
 }) {
   const selectedBuilding = useBuildingStore((s) => s.selectedBuilding);
   const setGlbPositions = useBuildingGlbStore((s) => s.setPositions);
@@ -749,65 +799,80 @@ const BuildingLabels = memo(function BuildingLabels({
 
     scene.updateMatrixWorld(true);
     const result: BuildingLabelEntry[] = [];
-    const nodeWinner = new Map<string, string>();
+
+    // Varios edificios pueden compartir un solo nodo físico del GLB (una
+    // misma malla real, ej. Dirección y Servicios Escolares son el mismo
+    // edificio en el modelo). Un edificio nunca debe mostrar dos etiquetas
+    // apiladas sobre sí mismo — eso confunde a un visitante que no sabe si
+    // son uno o dos edificios. Se agrupan por nodo y se genera UNA sola
+    // etiqueta por grupo (el edificio prioritario, o el de código menor si
+    // ninguno lo es); el resto de nombres del grupo se revela como texto
+    // adicional solo al pasar el mouse/seleccionar — igual que
+    // `departmentNames` — así siguen siendo descubribles sin duplicar la pill.
+    const buildingsByNode = groupActiveBuildingsByModelNode(buildings);
 
     // Reusar objetos Three.js en el loop para evitar allocations por edificio
     const _box = new Box3();
     const _topWorld = new Vector3();
 
-    // Paso 1: decidir qué edificio "gana" la etiqueta de cada nodo GLB.
-    for (const building of buildings) {
-      if (!building.is_active || !building.model_node_name) continue;
-      const glbName = resolveGlbName(building.model_node_name);
-      const existing = nodeWinner.get(glbName);
-      if (!existing) {
-        nodeWinner.set(glbName, building.id);
-      } else if (building.is_priority) {
-        const prevBuilding = buildings.find((b) => b.id === existing);
-        if (!prevBuilding?.is_priority) nodeWinner.set(glbName, building.id);
+    for (const [glbName, group] of buildingsByNode) {
+      // Mismo criterio que decide a quién selecciona el hover/clic 3D sobre
+      // este nodo (ver `pickPrimaryBuilding` en building-picking.ts) — si
+      // difirieran, seleccionarías un edificio pero verías la etiqueta del
+      // otro miembro del grupo.
+      const primary = pickPrimaryBuilding(group);
+      const siblings = group.filter((building) => building.id !== primary.id);
+      const positionOverride = BUILDING_LABEL_POSITION_OVERRIDES[primary.id];
+
+      if (positionOverride?.position) {
+        // Override completo: coordenadas ya en el espacio local del visor
+        // (mismas campus_x/y/campus_z que building.x/z) — se convierten a
+        // mundo para que el resto del pipeline (LOD por distancia real)
+        // siga funcionando igual que con la posición calculada automática.
+        const [overrideX, overrideY, overrideZ] = positionOverride.position;
+        _topWorld.set(overrideX, overrideY, overrideZ);
+        scene.localToWorld(_topWorld);
+      } else {
+        const node = findSceneObjectByModelName(scene, glbName);
+        if (!node) continue;
+
+        _box.setFromObject(node);
+        if (_box.isEmpty()) continue;
+
+        _topWorld.set(
+          (_box.min.x + _box.max.x) / 2,
+          _box.max.y,
+          (_box.min.z + _box.max.z) / 2,
+        );
       }
-    }
 
-    // Paso 2: generar solo la etiqueta del edificio ganador por nodo GLB
-    for (const building of buildings) {
-      if (!building.is_active || !building.model_node_name) continue;
+      if (positionOverride?.offsetY) _topWorld.y += positionOverride.offsetY;
 
-      const glbName = resolveGlbName(building.model_node_name);
-      if (nodeWinner.get(glbName) !== building.id) continue;
-
-      const node = findSceneObjectByModelName(scene, glbName);
-      if (!node) continue;
-
-      _box.setFromObject(node);
-      if (_box.isEmpty()) continue;
-
-      _topWorld.set(
-        (_box.min.x + _box.max.x) / 2,
-        _box.max.y,
-        (_box.min.z + _box.max.z) / 2,
-      );
       // Capturar coords de mundo ANTES de worldToLocal, que muta _topWorld in-place.
       const worldX = _topWorld.x;
       const worldY = _topWorld.y;
       const worldZ = _topWorld.z;
       const local = scene.worldToLocal(_topWorld);
-      const accent = getCategoryAccent(building.category_name);
+      const accent = getCategoryAccent(primary.category_name);
 
       result.push({
-        buildingId: building.id,
-        name: formatBuildingDisplayName(building.name, building.code),
-        alias: getBuildingAlias(building),
-        accentColor: building.category_color || accent.fg,
+        buildingId: primary.id,
+        name: formatBuildingDisplayName(primary.name, primary.code),
+        alias: getBuildingAlias(primary),
+        accentColor: primary.category_color || accent.fg,
         worldX,
         worldY,
         worldZ,
         x: local.x,
         y: local.y + 4,
         z: local.z,
-        isPriority: building.is_priority,
+        isPriority: primary.is_priority,
         departmentNames: departments
-          .filter((department) => department.building_id === building.id && department.is_active)
+          .filter((department) => department.building_id === primary.id && department.is_active)
           .map((department) => department.name),
+        siblingNames: siblings.map((sibling) =>
+          formatBuildingDisplayName(sibling.name, sibling.code),
+        ),
       });
     }
 
@@ -824,9 +889,17 @@ const BuildingLabels = memo(function BuildingLabels({
   const [labelLayoutRevision, setLabelLayoutRevision] = useState(0);
   const lastNearCheckPosRef = useRef<Vector3 | null>(null);
   useFrame(() => {
+    if (BUILDING_LABELS_ALWAYS_VISIBLE) return;
+
     // En móvil no atenuar todas las etiquetas al entrar en aérea: el cambio
     // masivo de opacidad durante la animación se percibía como parpadeo.
-    const isFar = !isMobile && (isAerial || camera.position.y > LABEL_LOD_FAR_Y);
+    // Histéresis: el umbral para "volver a verse nítido" es más bajo que el
+    // umbral para "empezar a atenuarse", así que una cámara que oscila cerca
+    // del límite no hace parpadear la opacidad en cada frame.
+    const farThreshold = prevFadedRef.current
+      ? LABEL_LOD_FAR_EXIT_Y
+      : LABEL_LOD_FAR_ENTER_Y;
+    const isFar = !isMobile && (isAerial || camera.position.y > farThreshold);
     if (isFar !== prevFadedRef.current) {
       prevFadedRef.current = isFar;
       setLabelsFaded(isFar);
@@ -862,6 +935,19 @@ const BuildingLabels = memo(function BuildingLabels({
     // del DOM (ver el useLayoutEffect de abajo), no con una estimación.
   });
 
+  // Al terminar una rotación/zoom, medir de nuevo en el siguiente frame.
+  // El efecto de layout también reacciona a `layoutFrozen`, pero esa primera
+  // medición puede ocurrir antes de que <Html> haya aplicado su transform final
+  // de cámara. Esta segunda pasada evita conservar colisiones de la vista
+  // anterior y hace que los rótulos disponibles reaparezcan inmediatamente.
+  useEffect(() => {
+    if (BUILDING_LABELS_ALWAYS_VISIBLE || layoutFrozen) return;
+    const frame = window.requestAnimationFrame(() => {
+      setLabelLayoutRevision((revision) => revision + 1);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [layoutFrozen, isAerial]);
+
   // Segunda pasada: se miden los rectángulos reales del DOM. La etiqueta
   // expandida (selección o hover) conserva prioridad y las que se solapan se
   // ocultan temporalmente. Nunca se desplazan: cada etiqueta permanece
@@ -876,7 +962,7 @@ const BuildingLabels = memo(function BuildingLabels({
   const hiddenLabelIdsRef = useRef<Set<string>>(new Set());
   const overlayHiddenLabelIdsRef = useRef<Set<string>>(new Set());
   useLayoutEffect(() => {
-    if (layoutFrozen) return;
+    if (BUILDING_LABELS_ALWAYS_VISIBLE || layoutFrozen) return;
 
     if (labels.length === 0) {
       hiddenLabelIdsRef.current = new Set();
@@ -911,6 +997,14 @@ const BuildingLabels = memo(function BuildingLabels({
       const aExpanded = a.buildingId === expandedBuildingId;
       const bExpanded = b.buildingId === expandedBuildingId;
       if (aExpanded !== bExpanded) return aExpanded ? -1 : 1;
+      // La etiqueta que ya estaba visible conserva su lugar en el orden de
+      // prioridad. Sin esto, dos edificios a distancias casi iguales pueden
+      // intercambiar cuál "gana" la colisión de un recálculo a otro por una
+      // diferencia mínima de distSq — el ganador visual saltaría entre uno y
+      // otro en vez de quedarse estable.
+      const aWasHidden = hiddenLabelIdsRef.current.has(a.buildingId);
+      const bWasHidden = hiddenLabelIdsRef.current.has(b.buildingId);
+      if (aWasHidden !== bWasHidden) return aWasHidden ? 1 : -1;
       if (a.isPriority !== b.isPriority) return a.isPriority ? -1 : 1;
       return a.distSq - b.distSq;
     });
@@ -919,26 +1013,44 @@ const BuildingLabels = memo(function BuildingLabels({
     const accepted: ScreenRect[] = [];
     const hidden = new Set<string>();
     const overlayHidden = new Set<string>();
+    // El edificio seleccionado (y el que está en hover/preview) nunca debe
+    // desaparecer: ni por chocar con otra etiqueta ni por quedar detrás de un
+    // panel/control. Sigue "ocupando" su rect para que las DEMÁS etiquetas lo
+    // esquiven, pero él mismo jamás entra a `hidden`/`overlayHidden`.
+    const protectedLabelIds = new Set<string>(
+      [selectedBuilding?.id, expandedBuildingId].filter(
+        (id): id is string => !!id,
+      ),
+    );
     for (const m of measured) {
+      const isProtected = protectedLabelIds.has(m.buildingId);
       const outsideSafeViewport =
         m.rect.left < LABEL_OVERLAY_MARGIN ||
         m.rect.top < LABEL_OVERLAY_MARGIN ||
         m.rect.right > window.innerWidth - LABEL_OVERLAY_MARGIN ||
         m.rect.bottom > window.innerHeight - LABEL_OVERLAY_MARGIN;
       if (
-        outsideSafeViewport ||
-        overlayRects.some((overlayRect) =>
-          rectsCollide(overlayRect, m.rect, LABEL_OVERLAY_MARGIN),
-        )
+        !isProtected &&
+        (outsideSafeViewport ||
+          overlayRects.some((overlayRect) =>
+            rectsCollide(overlayRect, m.rect, LABEL_OVERLAY_MARGIN),
+          ))
       ) {
         overlayHidden.add(m.buildingId);
         continue;
       }
 
+      // Una etiqueta que ya estaba oculta necesita un despeje mayor para
+      // volver a mostrarse — evita que rebote entre visible/oculta cuando
+      // apenas alcanza el margen normal en cada recálculo.
+      const wasHidden = hiddenLabelIdsRef.current.has(m.buildingId);
+      const effectiveMargin = wasHidden
+        ? LABEL_COLLISION_MARGIN + LABEL_COLLISION_HYSTERESIS
+        : LABEL_COLLISION_MARGIN;
+
       if (
-        accepted.some((other) =>
-          rectsCollide(other, m.rect, LABEL_COLLISION_MARGIN),
-        )
+        !isProtected &&
+        accepted.some((other) => rectsCollide(other, m.rect, effectiveMargin))
       ) {
         hidden.add(m.buildingId);
       } else {
@@ -980,7 +1092,148 @@ const BuildingLabels = memo(function BuildingLabels({
     camera,
     labelLayoutRevision,
     expandedBuildingId,
+    selectedBuilding?.id,
     layoutFrozen,
+  ]);
+
+  const labelOffsetsRef = useRef<Map<string, LabelOffset>>(new Map());
+  const [labelOffsets, setLabelOffsets] = useState<Map<string, LabelOffset>>(
+    () => new Map(),
+  );
+  const lastLayoutPositionRef = useRef(camera.position.clone());
+  const lastLayoutQuaternionRef = useRef(camera.quaternion.clone());
+  const lastLayoutAtRef = useRef(0);
+
+  useFrame(() => {
+    if (!BUILDING_LABELS_ALWAYS_VISIBLE) return;
+
+    const moved =
+      lastLayoutPositionRef.current.distanceToSquared(camera.position) >=
+      LABEL_LAYOUT_RECHECK_DISTANCE * LABEL_LAYOUT_RECHECK_DISTANCE;
+    const rotated =
+      1 -
+        Math.abs(lastLayoutQuaternionRef.current.dot(camera.quaternion)) >=
+      LABEL_LAYOUT_RECHECK_ROTATION;
+    if (!moved && !rotated) return;
+
+    const now = performance.now();
+    if (
+      layoutFrozen &&
+      now - lastLayoutAtRef.current < LABEL_LAYOUT_MOVING_THROTTLE_MS
+    ) {
+      return;
+    }
+
+    lastLayoutAtRef.current = now;
+    lastLayoutPositionRef.current.copy(camera.position);
+    lastLayoutQuaternionRef.current.copy(camera.quaternion);
+    setLabelLayoutRevision((revision) => revision + 1);
+  });
+
+  useEffect(() => {
+    if (layoutFrozen) return;
+    const frame = window.requestAnimationFrame(() => {
+      setLabelLayoutRevision((revision) => revision + 1);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [layoutFrozen]);
+
+  useEffect(() => {
+    // Los portales <Html> de Drei terminan de aplicar el nuevo ancho del
+    // rótulo expandido después del commit del componente padre. Medir solo en
+    // ese commit puede conservar temporalmente el rectángulo compacto y dejar
+    // que sus vecinos ocupen el espacio del nombre completo. Dos frames
+    // después ya existe la geometría DOM definitiva; esta pasada vuelve a
+    // distribuir alrededor de ella tanto con mouse como con toque.
+    const firstFrame = window.requestAnimationFrame(() => {
+      const secondFrame = window.requestAnimationFrame(() => {
+        setLabelLayoutRevision((revision) => revision + 1);
+      });
+      expandedLayoutFrameRef.current = secondFrame;
+    });
+    const expandedLayoutFrameRef = { current: firstFrame };
+    return () => window.cancelAnimationFrame(expandedLayoutFrameRef.current);
+  }, [expandedBuildingId, isMobile]);
+
+  useLayoutEffect(() => {
+    if (!BUILDING_LABELS_ALWAYS_VISIBLE || labels.length === 0) {
+      if (labelOffsetsRef.current.size === 0) return;
+      labelOffsetsRef.current = new Map();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLabelOffsets(new Map());
+      return;
+    }
+
+    const items = labels.flatMap((label) => {
+      const element = labelElsRef.current.get(label.buildingId);
+      if (!element) return [];
+      const previousOffset = labelOffsetsRef.current.get(label.buildingId) ?? {
+        x: 0,
+        y: 0,
+      };
+      const measuredRect = element.getBoundingClientRect();
+      const baseRect = shiftLabelRect(measuredRect, {
+        x: -previousOffset.x,
+        y: -previousOffset.y,
+      });
+      const dx = camera.position.x - label.worldX;
+      const dy = camera.position.y - label.worldY;
+      const dz = camera.position.z - label.worldZ;
+
+      return [
+        {
+          id: label.buildingId,
+          rect: baseRect,
+          priority:
+            label.buildingId === expandedBuildingId
+              ? 0
+              : label.isPriority
+                ? 1
+                : 2,
+          distance: dx * dx + dy * dy + dz * dz,
+          previousOffset,
+        },
+      ];
+    });
+
+    const nextOffsets = resolveNonOverlappingLabelOffsets(
+      items,
+      getVisibleMapOverlayRects(),
+      {
+        left: 0,
+        top: 0,
+        right: window.innerWidth,
+        bottom: window.innerHeight,
+      },
+      {
+        collisionMargin: LABEL_COLLISION_MARGIN,
+        viewportMargin: LABEL_OVERLAY_MARGIN,
+        gridStep: isMobile ? 14 : 18,
+      },
+    );
+
+    const previous = labelOffsetsRef.current;
+    let changed = previous.size !== nextOffsets.size;
+    if (!changed) {
+      for (const [id, offset] of nextOffsets) {
+        const old = previous.get(id);
+        if (!old || old.x !== offset.x || old.y !== offset.y) {
+          changed = true;
+          break;
+        }
+      }
+    }
+    if (!changed) return;
+
+    labelOffsetsRef.current = nextOffsets;
+    setLabelOffsets(nextOffsets);
+  }, [
+    labels,
+    camera,
+    labelLayoutRevision,
+    expandedBuildingId,
+    selectedBuilding?.id,
+    isMobile,
   ]);
 
   // Publica las posiciones GLB (centro real del mesh) al store compartido —
@@ -1038,15 +1291,31 @@ const BuildingLabels = memo(function BuildingLabels({
     <>
       {labels.map((label) => {
         const isSelected = selectedBuilding?.id === label.buildingId;
-        const isActivelyExpanded = expandedBuildingId === label.buildingId;
+        const isActivelyExpanded =
+          !BUILDING_LABELS_FIXED_SIZE &&
+          expandedBuildingId === label.buildingId;
         const isExpanded = isActivelyExpanded;
+        const layoutOffset = labelOffsets.get(label.buildingId) ?? {
+          x: 0,
+          y: 0,
+        };
         // Todas las etiquetas muestran el nombre completo. La activa conserva
-        // prioridad frente a otros rótulos, pero no puede atravesar una ventana
-        // o control reservado del visor.
-        const isCollisionHidden =
-          layoutFrozen ||
-          overlayHiddenLabelIds.has(label.buildingId) ||
-          (!isExpanded && hiddenLabelIds.has(label.buildingId));
+        // prioridad frente a otros rótulos y se revela de inmediato; la pasada
+        // siguiente vuelve a reservar su rect para que las demás la esquiven.
+        // `layoutFrozen` (cámara en movimiento) NO debe forzar el ocultamiento
+        // aquí: el useLayoutEffect de abajo ya deja de recalcular mientras está
+        // congelado, así que `hiddenLabelIds`/`overlayHiddenLabelIds` conservan
+        // el último resultado estable. Antes este OR apagaba TODAS las
+        // etiquetas en cada frame de arrastre/zoom (OrbitControls dispara
+        // onChange constantemente) y las volvía a mostrar ~180ms después de
+        // soltar — eso era el parpadeo real reportado, no un problema de
+        // umbrales de distancia.
+        const isCollisionHidden = shouldHideBuildingLabel(
+          isExpanded,
+          hiddenLabelIds.has(label.buildingId),
+          overlayHiddenLabelIds.has(label.buildingId),
+          BUILDING_LABELS_ALWAYS_VISIBLE,
+        );
 
         // Código del edificio: cortar si es muy largo para que nunca rompa en la pill
         const displayCode = label.alias.length > 16
@@ -1071,6 +1340,7 @@ const BuildingLabels = memo(function BuildingLabels({
                 else labelElsRef.current.delete(label.buildingId);
               }}
               className={`ito-building-label has-name${isSelected ? " is-selected" : ""}${isExpanded ? " is-expanded" : ""}`}
+              data-building-id={label.buildingId}
               role="button"
               tabIndex={isCollisionHidden ? -1 : 0}
               aria-label={label.name}
@@ -1083,11 +1353,18 @@ const BuildingLabels = memo(function BuildingLabels({
                 if (event.pointerType === "touch") return;
                 scheduleLabelPreviewClose(label.buildingId);
               }}
-              onPointerUp={(event) => {
-                if (event.pointerType !== "touch") return;
+              onPointerDown={(event) => {
+                // La etiqueta es informativa. Capturar el gesto evita que el
+                // Canvas seleccione la geometría que está justo debajo.
                 event.stopPropagation();
-                const building = buildings.find((item) => item.id === label.buildingId);
-                if (building) onSelectBuilding(building);
+              }}
+              onPointerUp={(event) => {
+                event.stopPropagation();
+                // En táctil el primer toque solo revela el nombre; nunca
+                // selecciona, enfoca ni desplaza la cámara hacia el edificio.
+                if (event.pointerType === "touch") {
+                  openLabelPreview(label.buildingId);
+                }
               }}
               // Sin esto, un clic de mouse que no muevas (no es "drag") sigue
               // el bubbling nativo del DOM hasta el contenedor del Canvas de
@@ -1102,29 +1379,28 @@ const BuildingLabels = memo(function BuildingLabels({
               // también para mouse/pointer fino.
               onClick={(event) => {
                 event.stopPropagation();
-                const building = buildings.find((item) => item.id === label.buildingId);
-                if (building) onSelectBuilding(building);
               }}
               onFocus={() => openLabelPreview(label.buildingId)}
               onBlur={() => scheduleLabelPreviewClose(label.buildingId)}
               onKeyDown={(event) => {
                 if (event.key !== "Enter" && event.key !== " ") return;
                 event.preventDefault();
-                const building = buildings.find((item) => item.id === label.buildingId);
-                if (building) onSelectBuilding(building);
+                openLabelPreview(label.buildingId);
               }}
               style={{
-                transform: "translateX(-50%) translateY(-100%)",
+                transform: `translate(calc(-50% + ${layoutOffset.x}px), calc(-100% + ${layoutOffset.y}px))`,
                 display: "inline-flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: 4,
+                gap: isExpanded ? 4 : 0,
                 position: "relative",
-                // El nombre completo forma parte de cada rótulo; un ancho
-                // estable permite medir colisiones sin saltos por hover.
-                width: isMobile ? 164 : 188,
+                // Contraída solo ocupa el ancho real del código. Antes todas
+                // reservaban 164/188 px aunque visualmente mostraran una pill
+                // pequeña; el detector de colisiones ocultaba así edificios
+                // que en realidad cabían perfectamente en pantalla.
+                width: isExpanded ? (isMobile ? 164 : 188) : "max-content",
                 maxWidth: "calc(100vw - 24px)",
-                padding: "7px 11px",
+                padding: isExpanded ? "7px 11px" : "5px 8px",
                 borderRadius: 10,
                 border: `1.5px solid ${
                   isSelected ? label.accentColor : "rgba(148,163,184,0.32)"
@@ -1138,7 +1414,7 @@ const BuildingLabels = memo(function BuildingLabels({
                 backdropFilter: "none",
                 WebkitBackdropFilter: "none",
                 color: "#111827",
-                cursor: "pointer",
+                cursor: "default",
                 boxShadow: isSelected
                   ? `0 10px 28px ${label.accentColor}24, 0 0 0 3px ${label.accentColor}18`
                   : isAerial
@@ -1148,17 +1424,26 @@ const BuildingLabels = memo(function BuildingLabels({
                 userSelect: "none",
                 // `isCollisionHidden` usa opacity (no `visibility:hidden`/`display:none`) para
                 // que la transición de aparición/desaparición sea suave en vez de un corte brusco.
-                opacity: isCollisionHidden ? 0 : labelsFaded && !isSelected ? 0.38 : 1,
+                opacity: BUILDING_LABELS_ALWAYS_VISIBLE
+                  ? 1
+                  : isCollisionHidden
+                    ? 0
+                    : labelsFaded && !isSelected
+                      ? 0.38
+                      : 1,
                 // Solo las etiquetas que ganaron la colisión reciben eventos.
                 // Así el nombre se revela sobre la misma pill sin reactivar
                 // rótulos transparentes que están ocultos debajo de otros.
                 // Una etiqueta expandida en móvil sigue visible pero deja
                 // pasar el siguiente gesto al canvas. Así el rótulo grande del
                 // edificio enfocado no bloquea el primer intento de rotación.
+                // Incluso expandida debe capturar el toque. Dejarla en
+                // `pointer-events:none` lo enviaba al edificio bajo la pill y
+                // terminaba enfocando la cámara, justo lo que no se desea.
                 pointerEvents:
-                  isCollisionHidden || (isMobile && isExpanded)
-                    ? "none"
-                    : "auto",
+                  BUILDING_LABELS_ALWAYS_VISIBLE || !isCollisionHidden
+                    ? "auto"
+                    : "none",
                 touchAction: "manipulation",
                 outline: "none",
                 transition:
@@ -1183,27 +1468,37 @@ const BuildingLabels = memo(function BuildingLabels({
                 {displayCode}
               </span>
 
-              {/* Nombre completo en la misma etiqueta: hover/foco en escritorio
-                  y toque o selección sobre dispositivos táctiles. */}
-              <span
-                style={{
-                  display: "block",
-                  fontSize: isMobile ? 10 : 10.5,
-                  fontWeight: 600,
-                  lineHeight: 1.28,
-                  textAlign: "center",
-                  opacity: 0.92,
-                  whiteSpace: "normal",
-                  wordBreak: "normal",
-                  overflowWrap: "anywhere",
-                  width: "100%",
-                }}
-              >
-                {label.name}
-              </span>
+              {/* Nombre completo: oculto por defecto (la etiqueta solo muestra
+                  la abreviatura/código) y se revela con transición suave al
+                  pasar el mouse, enfocar o seleccionar el edificio — mismo
+                  criterio `isExpanded` que ya gobierna hover/selección. */}
+              {isExpanded && (
+                <span
+                  style={{
+                    display: "block",
+                    fontSize: isMobile ? 10 : 10.5,
+                    fontWeight: 600,
+                    lineHeight: 1.28,
+                    textAlign: "center",
+                    whiteSpace: "normal",
+                    wordBreak: "normal",
+                    overflowWrap: "anywhere",
+                    width: "100%",
+                    marginTop: 2,
+                    opacity: 0.92,
+                  }}
+                >
+                  {label.name}
+                </span>
+              )}
               {isActivelyExpanded && label.departmentNames.length > 0 && (
                 <span className="ito-building-label__departments">
                   {label.departmentNames.slice(0, 2).join(" · ")}
+                </span>
+              )}
+              {isActivelyExpanded && label.siblingNames.length > 0 && (
+                <span className="ito-building-label__departments">
+                  También aquí: {label.siblingNames.slice(0, 2).join(" · ")}
                 </span>
               )}
             </div>
@@ -1239,8 +1534,6 @@ function BuildingInteractionLayer({
   const { camera, gl } = useThree();
   const { handlePointerDown, wasDrag } = useSharedPointerDownTracker();
   const hoveredBuildingIdRef = useRef<string | null>(null);
-  const pendingHoverRef = useRef<HoveredBuilding | null>(null);
-  const hoverSwitchTimerRef = useRef<number | null>(null);
   const hoverClearTimerRef = useRef<number | null>(null);
   const projectedCenterRef = useRef(new Vector3());
   const nameToBuilding = useMemo(
@@ -1257,28 +1550,21 @@ function BuildingInteractionLayer({
 
     scene.updateMatrixWorld(true);
     const result: BuildingInteractionTarget[] = [];
-    const nodeWinner = new Map<string, string>();
+    // Mismo "ganador" que el hover/clic exacto (buildNameToBuildingMap) y la
+    // etiqueta 2D (label loop de arriba) — ver pickPrimaryBuilding. Esta caja
+    // invisible es el respaldo táctil que responde cuando el toque cae cerca
+    // pero no exactamente sobre la malla; si usara un criterio de desempate
+    // distinto a los otros dos, ese respaldo podía identificar un edificio
+    // distinto al que en realidad se resalta/selecciona — igual síntoma que
+    // el bug ya corregido, pero disparado desde esta ruta en vez de la del
+    // mesh exacto.
     const worldBox = new Box3();
     const worldCenter = new Vector3();
     const localCenter = new Vector3();
     const worldSize = new Vector3();
 
-    for (const building of buildings) {
-      if (!building.is_active || !building.model_node_name) continue;
-      const glbName = resolveGlbName(building.model_node_name);
-      const existing = nodeWinner.get(glbName);
-      if (!existing) {
-        nodeWinner.set(glbName, building.id);
-      } else if (building.is_priority) {
-        const prevBuilding = buildings.find((b) => b.id === existing);
-        if (!prevBuilding?.is_priority) nodeWinner.set(glbName, building.id);
-      }
-    }
-
-    for (const building of buildings) {
-      if (!building.is_active || !building.model_node_name) continue;
-      const glbName = resolveGlbName(building.model_node_name);
-      if (nodeWinner.get(glbName) !== building.id) continue;
+    for (const [glbName, group] of groupActiveBuildingsByModelNode(buildings)) {
+      const building = pickPrimaryBuilding(group);
 
       const node = findSceneObjectByModelName(scene, glbName);
       if (!node) continue;
@@ -1371,17 +1657,10 @@ function BuildingInteractionLayer({
         !shouldClearHoverOnPointerOut(
           leavingBuildingId,
           hoveredBuildingIdRef.current,
-          pendingHoverRef.current?.buildingId ?? null,
         )
       ) {
         return;
       }
-
-      if (hoverSwitchTimerRef.current !== null) {
-        window.clearTimeout(hoverSwitchTimerRef.current);
-        hoverSwitchTimerRef.current = null;
-      }
-      pendingHoverRef.current = null;
 
       if (hoverClearTimerRef.current !== null) {
         window.clearTimeout(hoverClearTimerRef.current);
@@ -1391,7 +1670,7 @@ function BuildingInteractionLayer({
       hoverClearTimerRef.current = window.setTimeout(() => {
         hoverClearTimerRef.current = null;
         commitHover(null);
-      }, 150);
+      }, BUILDING_HOVER_CLEAR_GRACE_MS);
     },
     [commitHover],
   );
@@ -1406,30 +1685,12 @@ function BuildingInteractionLayer({
       }
 
       const nextId = building.id;
-      if (hoveredBuildingIdRef.current === nextId) {
-        if (hoverSwitchTimerRef.current !== null) {
-          window.clearTimeout(hoverSwitchTimerRef.current);
-          hoverSwitchTimerRef.current = null;
-        }
-        pendingHoverRef.current = null;
-        return;
-      }
-      if (pendingHoverRef.current?.buildingId === nextId) return;
+      if (hoveredBuildingIdRef.current === nextId) return;
 
-      if (hoverSwitchTimerRef.current !== null) {
-        window.clearTimeout(hoverSwitchTimerRef.current);
-      }
-      const pending = { buildingId: nextId };
-      pendingHoverRef.current = pending;
-      // La primera apertura responde rápido; cambiar entre vecinos exige que
-      // el puntero permanezca brevemente sobre el nuevo edificio.
-      const delay = hoveredBuildingIdRef.current === null ? 70 : 115;
-      hoverSwitchTimerRef.current = window.setTimeout(() => {
-        hoverSwitchTimerRef.current = null;
-        if (pendingHoverRef.current?.buildingId !== nextId) return;
-        pendingHoverRef.current = null;
-        commitHover(pending);
-      }, delay);
+      // El raycast ya resolvió el edificio correcto. Confirmarlo en el mismo
+      // evento evita que cajas vecinas reinicien un temporizador y que algunas
+      // etiquetas se sientan tardías o no alcancen a abrirse.
+      commitHover({ buildingId: nextId });
     },
     [active, commitHover, hoverEnabled],
   );
@@ -1437,23 +1698,15 @@ function BuildingInteractionLayer({
   useEffect(() => {
     if (active && hoverEnabled) return;
 
-    if (hoverSwitchTimerRef.current !== null) {
-      window.clearTimeout(hoverSwitchTimerRef.current);
-      hoverSwitchTimerRef.current = null;
-    }
     if (hoverClearTimerRef.current !== null) {
       window.clearTimeout(hoverClearTimerRef.current);
       hoverClearTimerRef.current = null;
     }
-    pendingHoverRef.current = null;
     commitHover(null);
   }, [active, commitHover, hoverEnabled]);
 
   useEffect(() => {
     return () => {
-      if (hoverSwitchTimerRef.current !== null) {
-        window.clearTimeout(hoverSwitchTimerRef.current);
-      }
       if (hoverClearTimerRef.current !== null) {
         window.clearTimeout(hoverClearTimerRef.current);
       }
@@ -1549,9 +1802,28 @@ export function CampusViewer({
   const deviceMapPosition = useDeviceLocationStore(
     (state) => state.campusPosition,
   );
+  const deviceAccuracyMeters = useDeviceLocationStore(
+    (state) => state.filteredPosition?.accuracy ?? null,
+  );
+  // Sin GPS real (típico en computadora, que solo estima por WiFi/IP), la
+  // lectura puede estar a cientos o miles de metros — ofrecer "centrar" ahí
+  // sería llevar la cámara a un punto sin relación real con el usuario.
+  const isDeviceAccuracyUseful =
+    deviceAccuracyMeters === null ||
+    deviceAccuracyMeters <= MAX_USEFUL_ACCURACY_METERS;
   const mapPosition = LOCATION_FEATURE_FLAGS.enableDeviceLocationV2
-    ? deviceMapPosition
+    ? (isDeviceAccuracyUseful ? deviceMapPosition : null)
     : legacyMapPosition;
+
+  // El sistema de geolocalización v2 (features/device-location) ya está
+  // calibrado y validado en campo (ver su README), pero nada lo activaba
+  // nunca para un usuario público — solo el panel de diagnóstico (oculto en
+  // producción) llamaba a startTracking(). El botón "Centrar en mi
+  // ubicación" del toolbar existía, pero quedaba permanentemente deshabilitado
+  // porque jamás llegaba a haber una posición. Ahora ese mismo botón, si aún
+  // no hay ubicación, dispara el permiso + rastreo; si ya la hay, enfoca la
+  // cámara como antes.
+  const deviceLocation = useDeviceLocation();
 
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const selectedGate = useBuildingStore((state) => state.selectedGate);
@@ -1649,12 +1921,19 @@ export function CampusViewer({
     if (cameraSettleTimerRef.current !== null) {
       window.clearTimeout(cameraSettleTimerRef.current);
     }
+    // OrbitControls tiene inercia (enableDamping) — el deslizamiento tras
+    // soltar ya sigue disparando onChange y reiniciando este temporizador
+    // mientras la cámara realmente se sigue moviendo. Este valor solo se
+    // suma DESPUÉS de que la cámara ya está quieta de verdad; 180ms hacía
+    // que las etiquetas se sintieran "tardías" en asentarse tras cada
+    // gesto — se reporta como carga lenta aunque no sea un problema de
+    // rendimiento, sino de este retraso deliberado.
     cameraSettleTimerRef.current = window.setTimeout(() => {
       cameraSettleTimerRef.current = null;
       if (cameraAnimatingRef.current) return;
       cameraMovingRef.current = false;
       setCameraMoving(false);
-    }, 180);
+    }, 70);
   }, []);
 
   const handleCameraMotion = useCallback(() => {
@@ -1816,6 +2095,44 @@ export function CampusViewer({
     ? glbPositions[selectedBuilding.id]
     : undefined;
 
+  // Guía tipo brújula hacia el edificio seleccionado — rumbo y distancia en
+  // línea recta, no una ruta trazada (el proyecto no calcula caminos, solo
+  // localización). Solo se muestra con una posición del usuario realmente
+  // útil (mapPosition ya está en null si la precisión es mala, ver
+  // isDeviceAccuracyUseful más arriba) y un edificio seleccionado.
+  const compassDestination = (() => {
+    if (!selectedBuilding || !mapPosition) return null;
+    const buildingX = selectedGlbPosition?.x ?? Number(selectedBuilding.x);
+    const buildingZ = selectedGlbPosition?.z ?? Number(selectedBuilding.z);
+    if (!Number.isFinite(buildingX) || !Number.isFinite(buildingZ)) return null;
+
+    const bearing = getDestinationBearing(
+      { x: mapPosition.x, z: mapPosition.z },
+      { x: buildingX, z: buildingZ },
+    );
+    if (!bearing) return null;
+
+    const scale = deviceLocation.calibrationScale;
+    const distanceMeters =
+      scale && scale > 0
+        ? bearing.distanceModelUnits / scale
+        : bearing.distanceModelUnits;
+
+    return {
+      bearingDegrees: bearing.bearingDegrees,
+      screenBearingDegrees: getScreenRelativeBearing(bearing.bearingDegrees, compassRotation),
+      distanceMeters,
+      // Frase en lenguaje simple ("a tu derecha") en vez de exigir que el
+      // usuario entienda puntos cardinales — describe el mapa que está
+      // viendo ahora mismo, corrigiendo por hacia dónde apunta la cámara.
+      directionLabel: getScreenRelativeDirectionLabel(
+        bearing.bearingDegrees,
+        compassRotation,
+      ),
+      label: formatBuildingDisplayName(selectedBuilding.name, selectedBuilding.code),
+    };
+  })();
+
   useEffect(() => {
     if (!selectedBuilding) {
       lastSelectedFocusRef.current = null;
@@ -1892,6 +2209,24 @@ export function CampusViewer({
     focusFromAerialRef.current = viewMode === "aerial";
     setViewMode("immersive");
     setFocus(createFocusPoint(mapPosition.x, mapPosition.z, campusPosition));
+  };
+
+  // Handler real del botón del toolbar: si todavía no hay ubicación, primera
+  // pulsación pide permiso e inicia el rastreo (acción explícita del usuario,
+  // como exige el diseño de features/device-location); una vez hay posición,
+  // pulsaciones siguientes solo reenfocan la cámara ahí.
+  const handleLocateOrFocusUser = () => {
+    if (mapPosition) {
+      handleFocusUser();
+      return;
+    }
+    if (
+      deviceLocation.status === "requesting-permission" ||
+      deviceLocation.status === "unsupported"
+    ) {
+      return;
+    }
+    void deviceLocation.startTracking();
   };
 
   const handleResetView = () => {
@@ -2053,8 +2388,21 @@ export function CampusViewer({
 
       {!mobilePanelOpen && (
         <>
-          <CompassIndicator rotationDegrees={compassRotation} isMobile={isMobile} />
-          {!(isMobile && selectedSearchResult) && (
+          {/* CompassIndicator también renderiza la guía grande de destino
+              (DestinationGuideBanner) anclada a su propio contenedor, para
+              heredar la posición correcta en cada variante de página sin
+              duplicar esa lógica aquí. */}
+          <CompassIndicator
+            rotationDegrees={compassRotation}
+            isMobile={isMobile}
+            destination={compassDestination}
+          />
+          {/* Activar/desactivar etiquetas y calles es una herramienta técnica,
+              no algo que un visitante primerizo necesite decidir — las
+              etiquetas ya se muestran u ocultan automáticamente (LOD +
+              anti-colisión). Se retiró de la interfaz pública; sigue
+              disponible para superadmin como ayuda de calibración/depuración. */}
+          {canUseAdvancedTools && !(isMobile && selectedSearchResult) && (
             <MapLayerControls
               showBuildingLabels={showBuildingLabels}
               showStreetLabels={showStreetLabels}
@@ -2103,8 +2451,25 @@ export function CampusViewer({
       {!mobilePanelOpen && (
         <ViewerToolbar
           hasLocation={hasLocation}
+          isLocating={
+            deviceLocation.status === "requesting-permission" ||
+            (deviceLocation.status === "tracking" &&
+              !hasLocation &&
+              deviceAccuracyMeters === null)
+          }
+          locationUnavailable={deviceLocation.status === "unsupported"}
+          locationErrorMessage={
+            deviceLocation.status === "permission-denied" ||
+            deviceLocation.status === "error"
+              ? deviceLocation.errorMessage
+              : !hasLocation &&
+                  deviceAccuracyMeters !== null &&
+                  !isDeviceAccuracyUseful
+                ? `Tu ubicación es poco precisa aquí (±${Math.round(deviceAccuracyMeters)} m) — en computadora suele ser así; un celular con GPS da mejor precisión.`
+                : null
+          }
           calibrationOpen={calibrationOpen}
-          onFocusUser={handleFocusUser}
+          onFocusUser={handleLocateOrFocusUser}
           onResetView={handleResetView}
           onZoom={handleZoom}
           viewMode={viewMode}
@@ -2261,7 +2626,6 @@ export function CampusViewer({
               isAerial={viewMode === "aerial"}
               layoutFrozen={cameraMoving}
               hoveredBuildingId={hoveredBuilding?.buildingId ?? null}
-              onSelectBuilding={handleSelectBuilding}
             />
             <CampusStreetLabels
               streets={streets}

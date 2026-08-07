@@ -3,6 +3,15 @@ import type { ViewMode } from "./CampusViewer";
 
 export type ViewerToolbarProps = {
   hasLocation: boolean;
+  // true mientras se solicita permiso/se espera la primera lectura GPS —
+  // desactiva el botón para no lanzar dos solicitudes en paralelo.
+  isLocating?: boolean;
+  // true si el dispositivo no soporta geolocalización — el botón no tiene
+  // nada que hacer en ese caso.
+  locationUnavailable?: boolean;
+  // Mensaje a mostrar cuando algo salió mal (permiso denegado, error del
+  // GPS) — sin esto el botón fallaba en silencio para el usuario.
+  locationErrorMessage?: string | null;
   calibrationOpen: boolean;
   onFocusUser: () => void;
   onResetView: () => void;
@@ -17,6 +26,9 @@ export type ViewerToolbarProps = {
 
 export function ViewerToolbar({
   hasLocation,
+  isLocating = false,
+  locationUnavailable = false,
+  locationErrorMessage = null,
   calibrationOpen,
   onFocusUser,
   onResetView,
@@ -29,6 +41,14 @@ export function ViewerToolbar({
   isMobile = false,
 }: ViewerToolbarProps) {
   const isAerial = viewMode === "aerial";
+  const locationButtonDisabled = !hasLocation && (isLocating || locationUnavailable);
+  const locationButtonTitle = hasLocation
+    ? "Centrar en mi ubicación"
+    : locationUnavailable
+      ? "Ubicación no disponible en este dispositivo"
+      : isLocating
+        ? "Buscando tu ubicación…"
+        : (locationErrorMessage ?? "Buscar mi ubicación");
 
   if (isMobile) {
     return (
@@ -43,9 +63,10 @@ export function ViewerToolbar({
             hasLocation ? "ito-toolbar__btn--accent" : ""
           }`}
           onClick={onFocusUser}
-          aria-label="Centrar en mi ubicación"
-          title={hasLocation ? "Centrar en mi ubicación" : "Esperando ubicación…"}
-          disabled={!hasLocation}
+          aria-label={locationButtonTitle}
+          aria-busy={isLocating}
+          title={locationButtonTitle}
+          disabled={locationButtonDisabled}
         >
           <Icon name="crosshair" size={18} />
         </button>
@@ -133,9 +154,10 @@ export function ViewerToolbar({
           hasLocation ? "ito-toolbar__btn--accent" : ""
         }`}
         onClick={onFocusUser}
-        aria-label="Centrar en mi ubicación"
-        title={hasLocation ? "Centrar en mi ubicación" : "Esperando ubicación…"}
-        disabled={!hasLocation}
+        aria-label={locationButtonTitle}
+        aria-busy={isLocating}
+        title={locationButtonTitle}
+        disabled={locationButtonDisabled}
       >
         <Icon name="crosshair" size={18} />
       </button>

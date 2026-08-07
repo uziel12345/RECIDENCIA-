@@ -6,7 +6,10 @@ import {
   buildNameToBuildingMap,
   findBuildingForObject,
   findExactBuildingFromIntersections,
+  groupActiveBuildingsByModelNode,
+  pickPrimaryBuilding,
   shouldClearHoverOnPointerOut,
+  shouldHideBuildingLabel,
 } from "./building-picking";
 
 function building(input: Partial<Building> & Pick<Building, "id" | "model_node_name">): Building {
@@ -58,6 +61,20 @@ describe("building picking", () => {
     expect(findBuildingForObject(mesh, index)).toBe(priority);
   });
 
+  it("conserva todas las etiquetas cuando varios edificios comparten nodo", () => {
+    const first = building({ id: "first", model_node_name: "Edificio_A" });
+    const second = building({ id: "second", model_node_name: "Edificio_A" });
+    const inactive = building({
+      id: "inactive",
+      model_node_name: "Edificio_A",
+      is_active: false,
+    });
+
+    const groups = groupActiveBuildingsByModelNode([first, second, inactive]);
+
+    expect([...groups.values()]).toEqual([[first, second]]);
+  });
+
   it("prefiere la geometría real aunque una ayuda táctil aparezca primero", () => {
     const intended = building({ id: "intended", model_node_name: "Edificio_B" });
     const index = buildNameToBuildingMap([intended]);
@@ -74,9 +91,43 @@ describe("building picking", () => {
     ).toBe(intended);
   });
 
+  it("el ganador del hover 3D es siempre el mismo que el de la etiqueta 2D, sin importar el orden de llegada", () => {
+    // Bug real: seleccionabas un edificio tocando su malla y la etiqueta
+    // visible mostraba el nombre del OTRO edificio que comparte el mismo
+    // nodo — buildNameToBuildingMap elegía "el primero del arreglo" cuando
+    // ninguno era prioritario, mientras la etiqueta 2D siempre eligió por
+    // código alfabético. Con datos reales el orden de la API no coincide
+    // con el alfabético, así que discrepaban. Aquí "zzz-later" llega
+    // primero en el arreglo pero "aaa-first" debe ganar en ambos lugares.
+    const later = building({ id: "later", code: "zzz-later", model_node_name: "Nodo_Compartido" });
+    const first = building({ id: "first", code: "aaa-first", model_node_name: "Nodo_Compartido" });
+
+    const group = [later, first];
+    const hoverIndex = buildNameToBuildingMap(group);
+    const mesh = new Object3D();
+    mesh.name = "Nodo_Compartido";
+
+    expect(pickPrimaryBuilding(group)).toBe(first);
+    expect(findBuildingForObject(mesh, hoverIndex)).toBe(first);
+  });
+
   it("no limpia el hover nuevo cuando sale una caja vecina solapada", () => {
-    expect(shouldClearHoverOnPointerOut("a", "a", "b")).toBe(false);
-    expect(shouldClearHoverOnPointerOut("a", "a", null)).toBe(true);
-    expect(shouldClearHoverOnPointerOut("b", "a", "b")).toBe(true);
+    expect(shouldClearHoverOnPointerOut("a", "b")).toBe(false);
+    expect(shouldClearHoverOnPointerOut("a", "a")).toBe(true);
+    expect(shouldClearHoverOnPointerOut("b", null)).toBe(false);
+  });
+
+  it("muestra inmediatamente la etiqueta activa aunque el layout anterior la ocultara", () => {
+    expect(shouldHideBuildingLabel(true, true, false)).toBe(false);
+    expect(shouldHideBuildingLabel(true, false, true)).toBe(false);
+    expect(shouldHideBuildingLabel(false, true, false)).toBe(true);
+    expect(shouldHideBuildingLabel(false, false, true)).toBe(true);
+    expect(shouldHideBuildingLabel(false, false, false)).toBe(false);
+  });
+
+  it("mantiene fija una etiqueta aunque exista colisión u overlay", () => {
+    expect(shouldHideBuildingLabel(false, true, false, true)).toBe(false);
+    expect(shouldHideBuildingLabel(false, false, true, true)).toBe(false);
+    expect(shouldHideBuildingLabel(false, true, true, true)).toBe(false);
   });
 });
