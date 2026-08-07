@@ -21,6 +21,10 @@ const SECTION_BY_KIND: Partial<Record<SearchResultKind, SectionKind>> = {
 
 type BuildingStore = {
   selectedBuilding: Building | null;
+  // Visibilidad de la tarjeta/panel de información — independiente de cuál
+  // edificio está seleccionado. Cerrar el panel (X, "Seguir buscando") NO
+  // debe borrar el pin/resaltado del edificio en el mapa 3D.
+  isBuildingPanelOpen: boolean;
   selectedGate: Gate | null;
   selectedMapPoint: { id: string; x: number; z: number } | null;
   searchTerm: string;
@@ -29,6 +33,7 @@ type BuildingStore = {
   highlightedSection: HighlightedSection | null;
 
   setSelectedBuilding: (building: Building | null) => void;
+  closeBuildingPanel: () => void;
   setSelectedGate: (gate: Gate | null) => void;
   setSearchTerm: (value: string) => void;
   setActiveCategory: (category: string | null) => void;
@@ -40,6 +45,7 @@ type BuildingStore = {
 
 export const useBuildingStore = create<BuildingStore>((set) => ({
   selectedBuilding: null,
+  isBuildingPanelOpen: false,
   selectedGate: null,
   selectedMapPoint: null,
   searchTerm: "",
@@ -48,17 +54,45 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
   highlightedSection: null,
 
   setSelectedBuilding: (building) =>
-    set((state) =>
-      state.selectedBuilding?.id === building?.id && !state.selectedGate && !state.highlightedSection
-        ? state
-        : {
-            selectedBuilding: building,
-            selectedGate: null,
-            selectedMapPoint: null,
-            selectedSearchResult: null,
-            highlightedSection: null,
-          }
-    ),
+    set((state) => {
+      if (building === null) {
+        return state.selectedBuilding === null && !state.isBuildingPanelOpen
+          ? state
+          : {
+              selectedBuilding: null,
+              isBuildingPanelOpen: false,
+              selectedGate: null,
+              selectedMapPoint: null,
+              selectedSearchResult: null,
+              highlightedSection: null,
+            };
+      }
+
+      // Volver a tocar el mismo edificio ya seleccionado con el panel ya
+      // abierto no debe generar un nuevo estado (evita renders de más), pero
+      // si el panel estaba cerrado sí debe reabrirlo — es la forma en que el
+      // usuario "recupera" la información tras haberla ocultado.
+      const alreadyOpenSameBuilding =
+        state.selectedBuilding?.id === building.id &&
+        state.isBuildingPanelOpen &&
+        !state.selectedGate &&
+        !state.highlightedSection;
+      if (alreadyOpenSameBuilding) return state;
+
+      return {
+        selectedBuilding: building,
+        isBuildingPanelOpen: true,
+        selectedGate: null,
+        selectedMapPoint: null,
+        selectedSearchResult: null,
+        highlightedSection: null,
+      };
+    }),
+
+  // Oculta la tarjeta/panel de información sin tocar selectedBuilding — el
+  // pin y el resaltado del edificio en el mapa 3D siguen visibles.
+  closeBuildingPanel: () =>
+    set((state) => (state.isBuildingPanelOpen ? { isBuildingPanelOpen: false } : state)),
 
   setSelectedGate: (gate) =>
     set((state) =>
@@ -67,6 +101,7 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
         : {
             selectedGate: gate,
             selectedBuilding: null,
+            isBuildingPanelOpen: false,
             selectedMapPoint: null,
             selectedSearchResult: null,
             highlightedSection: null,
@@ -120,6 +155,7 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
         return {
           selectedGate: gate,
           selectedBuilding: null,
+          isBuildingPanelOpen: false,
           selectedMapPoint: null,
           highlightedSection: null,
           selectedSearchResult: result,
@@ -130,6 +166,7 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
         return {
           selectedGate: null,
           selectedBuilding: null,
+          isBuildingPanelOpen: false,
           selectedMapPoint: {
             id: result.id,
             x: result.coordinates.x,
@@ -146,6 +183,7 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
 
         return {
           selectedBuilding: building,
+          isBuildingPanelOpen: true,
           selectedGate: null,
           selectedMapPoint: null,
           highlightedSection: null,
@@ -159,6 +197,7 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
       if (!building) {
         return {
           selectedBuilding: null,
+          isBuildingPanelOpen: false,
           selectedGate: null,
           selectedMapPoint: null,
           selectedSearchResult: result,
@@ -170,6 +209,7 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
 
       return {
         selectedBuilding: building,
+        isBuildingPanelOpen: true,
         selectedGate: null,
         selectedMapPoint: null,
         selectedSearchResult: result,
@@ -180,6 +220,7 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
   clearSelection: () =>
     set({
       selectedBuilding: null,
+      isBuildingPanelOpen: false,
       selectedGate: null,
       selectedMapPoint: null,
       selectedSearchResult: null,
@@ -189,6 +230,7 @@ export const useBuildingStore = create<BuildingStore>((set) => ({
   resetBuildingState: () =>
     set({
       selectedBuilding: null,
+      isBuildingPanelOpen: false,
       selectedGate: null,
       selectedMapPoint: null,
       searchTerm: "",

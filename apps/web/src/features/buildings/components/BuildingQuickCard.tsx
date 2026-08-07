@@ -18,7 +18,7 @@ export function BuildingQuickCard({
   building,
   onOpenDetails,
 }: BuildingQuickCardProps) {
-  const setSelectedBuilding = useBuildingStore((s) => s.setSelectedBuilding);
+  const closeBuildingPanel = useBuildingStore((s) => s.closeBuildingPanel);
 
   const accent = getCategoryAccent(building.category_name);
   const accentColor = building.category_color || accent.fg;
@@ -89,7 +89,7 @@ export function BuildingQuickCard({
 
           <button
             type="button"
-            onClick={() => setSelectedBuilding(null)}
+            onClick={() => closeBuildingPanel()}
             className="ito-quick-card__close"
             aria-label="Cerrar tarjeta"
           >

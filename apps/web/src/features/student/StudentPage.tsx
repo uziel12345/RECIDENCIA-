@@ -42,9 +42,7 @@ export function StudentPage() {
   const { logout, user } = useAuthStore();
 
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
-  const setSelectedBuilding = useBuildingStore(
-    (state) => state.setSelectedBuilding
-  );
+  const isBuildingPanelOpen = useBuildingStore((state) => state.isBuildingPanelOpen);
   const setSearchTerm = useBuildingStore((state) => state.setSearchTerm);
 
   const [sheetState, setSheetState] = useState<SheetState>("closed");
@@ -299,6 +297,7 @@ export function StudentPage() {
 
   const showQuickCard =
     !!selectedBuilding &&
+    isBuildingPanelOpen &&
     sheetState === "closed" &&
     !showSearch &&
     !showQuickDest &&
@@ -359,7 +358,7 @@ export function StudentPage() {
           showSearchPanel={false}
           browseOnly
           onItemSelected={() => setSheetState("closed")}
-          onClearSelection={() => setSelectedBuilding(null)}
+          onPanelClosed={() => setSheetState("closed")}
         />
       </MobileBottomSheet>
     </div>

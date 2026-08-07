@@ -56,3 +56,49 @@ describe("building search selection", () => {
     );
   });
 });
+
+describe("building panel visibility is independent from selection", () => {
+  beforeEach(() => useBuildingStore.getState().resetBuildingState());
+
+  it("opens the panel automatically when a building is selected", () => {
+    useBuildingStore.getState().setSelectedBuilding(building);
+    expect(useBuildingStore.getState().isBuildingPanelOpen).toBe(true);
+  });
+
+  it("closeBuildingPanel hides the panel but keeps the building selected (the pin/highlight stays)", () => {
+    useBuildingStore.getState().setSelectedBuilding(building);
+    useBuildingStore.getState().closeBuildingPanel();
+
+    const state = useBuildingStore.getState();
+    expect(state.selectedBuilding?.id).toBe("building-i");
+    expect(state.isBuildingPanelOpen).toBe(false);
+  });
+
+  it("re-selecting the same building reopens the panel", () => {
+    useBuildingStore.getState().setSelectedBuilding(building);
+    useBuildingStore.getState().closeBuildingPanel();
+    useBuildingStore.getState().setSelectedBuilding(building);
+
+    expect(useBuildingStore.getState().isBuildingPanelOpen).toBe(true);
+  });
+
+  it("setSelectedBuilding(null) clears both the selection and the panel", () => {
+    useBuildingStore.getState().setSelectedBuilding(building);
+    useBuildingStore.getState().setSelectedBuilding(null);
+
+    const state = useBuildingStore.getState();
+    expect(state.selectedBuilding).toBeNull();
+    expect(state.isBuildingPanelOpen).toBe(false);
+  });
+
+  it("selecting a building via search opens the panel", () => {
+    useBuildingStore.getState().selectSearchResult(classroomResult, [building], []);
+    expect(useBuildingStore.getState().isBuildingPanelOpen).toBe(true);
+  });
+
+  it("clearSelection resets the panel flag too", () => {
+    useBuildingStore.getState().setSelectedBuilding(building);
+    useBuildingStore.getState().clearSelection();
+    expect(useBuildingStore.getState().isBuildingPanelOpen).toBe(false);
+  });
+});

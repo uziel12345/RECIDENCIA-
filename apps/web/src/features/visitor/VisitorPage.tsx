@@ -43,9 +43,7 @@ export function VisitorPage() {
   const { logout } = useAuthStore();
 
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
-  const setSelectedBuilding = useBuildingStore(
-    (state) => state.setSelectedBuilding
-  );
+  const isBuildingPanelOpen = useBuildingStore((state) => state.isBuildingPanelOpen);
   const setSearchTerm = useBuildingStore((state) => state.setSearchTerm);
   const selectedSearchResult = useBuildingStore((state) => state.selectedSearchResult);
   const setSelectedSearchResult = useBuildingStore((state) => state.setSelectedSearchResult);
@@ -294,6 +292,7 @@ export function VisitorPage() {
 
   const showQuickCard =
     !!selectedBuilding &&
+    isBuildingPanelOpen &&
     !selectedSearchResult &&
     sheetState === "closed" &&
     !showSearch &&
@@ -361,7 +360,7 @@ export function VisitorPage() {
           showSearchPanel={false}
           browseOnly
           onItemSelected={() => setSheetState("closed")}
-          onClearSelection={() => setSelectedBuilding(null)}
+          onPanelClosed={() => setSheetState("closed")}
         />
       </MobileBottomSheet>
     </div>
