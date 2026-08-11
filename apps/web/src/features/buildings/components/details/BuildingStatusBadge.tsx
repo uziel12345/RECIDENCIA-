@@ -1,5 +1,6 @@
 import type { BuildingSchedule, BuildingScheduleStatus } from "@ito-map/shared";
 import { InfoSection } from "./InfoSection";
+import { getBuildingStatusLabel } from "./building-status-label";
 
 const DAY_LABELS: Record<number, string> = {
   1: "Lun",
@@ -15,12 +16,6 @@ function formatTime(time: string): string {
   return time.slice(0, 5);
 }
 
-const STATUS_COPY: Record<BuildingScheduleStatus["status"], string> = {
-  abierto: "Abierto",
-  cerrado: "Cerrado",
-  sin_horario: "Sin horario registrado",
-};
-
 const STATUS_CLASSES: Record<BuildingScheduleStatus["status"], string> = {
   abierto:
     "border-[var(--color-success-border)] bg-[var(--color-success-bg)] text-[var(--color-success-text)]",
@@ -28,14 +23,6 @@ const STATUS_CLASSES: Record<BuildingScheduleStatus["status"], string> = {
   sin_horario:
     "border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-subtle)]",
 };
-
-export function getBuildingStatusLabel(status: BuildingScheduleStatus): string {
-  const base = STATUS_COPY[status.status];
-  if (status.status === "abierto" && status.until) {
-    return `${base} · Cierra ${formatTime(status.until)}`;
-  }
-  return base;
-}
 
 type BuildingStatusBadgeProps = {
   status: BuildingScheduleStatus;
@@ -65,10 +52,7 @@ export function BuildingStatusBadge({ status, week }: BuildingStatusBadgeProps) 
             aria-hidden="true"
           />
         )}
-        <span>
-          {STATUS_COPY[status.status]}
-          {status.status === "abierto" && status.until ? ` · Cierra ${formatTime(status.until)}` : ""}
-        </span>
+        <span>{getBuildingStatusLabel(status)}</span>
       </div>
 
       {groupedByDay.size > 0 && (
