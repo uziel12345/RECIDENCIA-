@@ -527,6 +527,41 @@ function getBuildingFocusPose(
   );
 }
 
+// Vista al enfocar al usuario (auto-centrado inicial y botón de ubicación,
+// ver focusCameraOnUser más abajo). En escritorio es idéntica a la de un
+// edificio (BUILDING_FOCUS_DESKTOP_*, ya funciona bien — no se toca). En
+// móvil, la misma vista de "edificio" queda demasiado cerrada para
+// orientarse (solo se ve el marcador y una franja del edificio debajo):
+// se escala distancia Y altura por el mismo factor para alejar la cámara
+// sin cambiar su ángulo de picado, mostrando varios edificios alrededor.
+const USER_FOCUS_MOBILE_SCALE = 1.4;
+const USER_FOCUS_CONFIG = {
+  desktop: {
+    distance: BUILDING_FOCUS_DESKTOP_DISTANCE,
+    height: BUILDING_FOCUS_DESKTOP_HEIGHT,
+  },
+  mobile: {
+    distance: Math.round(BUILDING_FOCUS_MOBILE_DISTANCE * USER_FOCUS_MOBILE_SCALE),
+    height: Math.round(BUILDING_FOCUS_MOBILE_HEIGHT * USER_FOCUS_MOBILE_SCALE),
+  },
+} as const;
+
+function getUserFocusPose(
+  focus: FocusPoint,
+  isMobile: boolean,
+  controls: { object?: { position: Vector3 }; target?: Vector3 } | null | undefined,
+) {
+  const config = isMobile ? USER_FOCUS_CONFIG.mobile : USER_FOCUS_CONFIG.desktop;
+  return getPointFocusPose(
+    focus.worldX,
+    focus.worldZ,
+    BUILDING_FOCUS_LOOK_HEIGHT,
+    config.distance,
+    config.height,
+    controls,
+  );
+}
+
 type BuildingLabelEntry = {
   buildingId: string;
   name: string;
@@ -2231,12 +2266,30 @@ export function CampusViewer({
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [isContentReady]);
 
-  const handleFocusUser = () => {
-    if (!mapPosition) return;
+  // Único punto que mueve la cámara hacia el usuario — lo usan tanto el
+  // auto-centrado (una vez, al llegar la primera posición válida) como el
+  // botón de ubicación y el atajo "l" (todas las veces que se activen). Los
+  // tres deben verse idénticos: no hay una versión "auto" y otra "manual"
+  // de esta vista. A diferencia del enfoque de edificios (que pasa por el
+  // estado `focus` y su efecto — ver getBuildingFocusPose), este calcula la
+  // pose directamente con getUserFocusPose y escribe cameraAnimRef una sola
+  // vez, igual que ya hacía handleResetView: getUserFocusPose necesita su
+  // propia distancia/altura en móvil (más alejada que la de un edificio),
+  // así que no puede compartir el mismo camino sin filtrar esa diferencia a
+  // la selección de edificios, que debe quedar intacta.
+  const focusCameraOnUser = (position: { x: number; z: number }) => {
     lastSelectedFocusRef.current = null;
     focusFromAerialRef.current = viewMode === "aerial";
     setViewMode("immersive");
-    setFocus(createFocusPoint(mapPosition.x, mapPosition.z, campusPosition));
+    setFocus(null);
+    const point = createFocusPoint(position.x, position.z, campusPosition);
+    const poseSource = focusFromAerialRef.current ? null : controlsRef.current;
+    const target = getUserFocusPose(point, isMobile, poseSource);
+    cameraAnimRef.current = {
+      pos: target.pos,
+      look: target.look,
+      duration: getCameraMoveDuration(controlsRef.current?.object?.position, target.pos),
+    };
   };
 
   // Auto-centrado: en cuanto exista la PRIMERA posición GPS válida de la
@@ -2248,13 +2301,11 @@ export function CampusViewer({
   // usuario mueve la cámara manualmente más tarde (esas actualizaciones
   // solo mueven el marcador — DeviceLocationMarker ya interpola eso por su
   // cuenta, sin tocar la cámara). No crea ningún watcher ni toca la
-  // geolocalización: reutiliza exactamente el mismo mecanismo que ya usan
-  // handleFocusUser y la selección de edificios (setFocus →
-  // getBuildingFocusPose → cameraAnimRef → CameraAnimator), así que si el
-  // usuario interactúa mientras la cámara viaja, esa nueva acción
-  // reemplaza el destino en curso sin ningún manejo especial (ver
-  // CameraAnimator: lee animRef.current en cada frame y redirige desde la
-  // posición actual en cuanto cambia).
+  // geolocalización: reutiliza focusCameraOnUser, así que si el usuario
+  // interactúa mientras la cámara viaja, esa nueva acción reemplaza el
+  // destino en curso sin ningún manejo especial (ver CameraAnimator: lee
+  // animRef.current en cada frame y redirige desde la posición actual en
+  // cuanto cambia).
   useEffect(() => {
     if (hasAutoCenteredRef.current || !mapPosition) return;
     // Blindaje explícito antes de mover la cámara: aunque la conversión
@@ -2269,10 +2320,7 @@ export function CampusViewer({
     // de la animación automática).
     hasAutoCenteredRef.current = true;
     if (selectedBuilding) return;
-    lastSelectedFocusRef.current = null;
-    focusFromAerialRef.current = viewMode === "aerial";
-    setViewMode("immersive");
-    setFocus(createFocusPoint(mapPosition.x, mapPosition.z, campusPosition));
+    focusCameraOnUser(mapPosition);
   // Debe reaccionar únicamente a que exista una posición válida; viewMode,
   // campusPosition y selectedBuilding se leen en el instante del evento
   // (mismo patrón que el resto de los efectos de foco de este componente).
@@ -2287,7 +2335,7 @@ export function CampusViewer({
   // cámara ahí de inmediato; puede pulsarse todas las veces que haga falta.
   const handleLocateOrFocusUser = () => {
     if (mapPosition) {
-      handleFocusUser();
+      focusCameraOnUser(mapPosition);
       return;
     }
     if (
@@ -2407,9 +2455,9 @@ export function CampusViewer({
         handleToggleViewMode();
         return;
       }
-      if (key === "l" && hasLocation) {
+      if (key === "l" && hasLocation && mapPosition) {
         event.preventDefault();
-        handleFocusUser();
+        focusCameraOnUser(mapPosition);
         return;
       }
       if (key === "escape") {
