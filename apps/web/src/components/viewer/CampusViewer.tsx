@@ -76,6 +76,7 @@ import {
   LOCATION_FEATURE_FLAGS,
   LocationDebugPanel,
   MAX_USEFUL_ACCURACY_METERS,
+  useBuildingPresence,
   useDeviceLocation,
   useDeviceLocationStore,
 } from "../../features/device-location";
@@ -1843,8 +1844,24 @@ export function CampusViewer({
   const deviceMapPosition = useDeviceLocationStore(
     (state) => state.campusPosition,
   );
+  // Precisión de la ÚLTIMA lectura cruda — se usa solo para explicar por qué
+  // todavía no hay ninguna posición confirmada (ver locationErrorMessage más
+  // abajo), NUNCA para decidir si mostrar o esconder mapPosition: ese filtro
+  // ya se aplicó UNA vez, al confirmar la posición (position-stability
+  // service.ts) — repetirlo aquí contra el dato más reciente era lo que
+  // hacía que el marcador y la cámara "perdieran" al usuario ante una sola
+  // lectura mala aislada, aunque ya hubiera una posición confiable.
   const deviceAccuracyMeters = useDeviceLocationStore(
     (state) => state.filteredPosition?.accuracy ?? null,
+  );
+  // Precisión/calidad de la posición CONFIRMADA — la que realmente describe
+  // lo que se está mostrando (marcador, guía de destino). Distinta de
+  // deviceAccuracyMeters a propósito: ver comentario de arriba.
+  const confirmedAccuracyMeters = useDeviceLocationStore(
+    (state) => state.confirmedPosition?.accuracy ?? null,
+  );
+  const confirmedAccuracyQuality = useDeviceLocationStore(
+    (state) => state.confirmedAccuracyQuality,
   );
   // Rumbo REAL de desplazamiento (GPS, no cámara) — null hasta que el
   // usuario se haya movido lo suficiente para calcularlo (ver
@@ -1853,14 +1870,8 @@ export function CampusViewer({
   const smoothedHeadingDegrees = useDeviceLocationStore(
     (state) => state.smoothedHeadingDegrees,
   );
-  // Sin GPS real (típico en computadora, que solo estima por WiFi/IP), la
-  // lectura puede estar a cientos o miles de metros — ofrecer "centrar" ahí
-  // sería llevar la cámara a un punto sin relación real con el usuario.
-  const isDeviceAccuracyUseful =
-    deviceAccuracyMeters === null ||
-    deviceAccuracyMeters <= MAX_USEFUL_ACCURACY_METERS;
   const mapPosition = LOCATION_FEATURE_FLAGS.enableDeviceLocationV2
-    ? (isDeviceAccuracyUseful ? deviceMapPosition : null)
+    ? deviceMapPosition
     : legacyMapPosition;
 
   // El sistema de geolocalización v2 (features/device-location) ya está
@@ -1902,6 +1913,11 @@ export function CampusViewer({
 
   const [buildingsVersion, setBuildingsVersion] = useState(0);
   const { buildings } = useBuildings({ admin: canUseAdvancedTools, version: buildingsVersion });
+  // Fuera/cerca/dentro de un edificio, con estabilidad temporal — reacciona
+  // solo a la posición GPS CONFIRMADA (nunca a una lectura cruda aislada),
+  // así que hereda la misma persistencia que el marcador. Ver
+  // useBuildingPresence.ts y building-presence-tracker.service.ts.
+  const buildingPresence = useBuildingPresence(buildings);
   const [focus, setFocus] = useState<FocusPoint | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("immersive");
   const [cameraMoving, setCameraMoving] = useState(false);
@@ -2146,10 +2162,40 @@ export function CampusViewer({
   // Guía tipo brújula hacia el edificio seleccionado — rumbo y distancia en
   // línea recta, no una ruta trazada (el proyecto no calcula caminos, solo
   // localización). Solo se muestra con una posición del usuario realmente
-  // útil (mapPosition ya está en null si la precisión es mala, ver
-  // isDeviceAccuracyUseful más arriba) y un edificio seleccionado.
+  // útil (mapPosition ya está en null hasta que exista una primera posición
+  // confirmada, ver position-stability.service.ts) y un edificio seleccionado.
   const compassDestination = (() => {
     if (!selectedBuilding || !mapPosition) return null;
+
+    const label = formatBuildingDisplayName(selectedBuilding.name, selectedBuilding.code);
+    const accuracyMeters = LOCATION_FEATURE_FLAGS.enableDeviceLocationV2
+      ? confirmedAccuracyMeters
+      : null;
+    const accuracyQuality = LOCATION_FEATURE_FLAGS.enableDeviceLocationV2
+      ? confirmedAccuracyQuality
+      : null;
+
+    // Llegada: el usuario ya está confirmado dentro del edificio destino
+    // (buildingPresence, con su propia histéresis — ver
+    // building-presence-tracker.service.ts). No tiene sentido seguir
+    // calculando/mostrando rumbo o distancia hacia algo en lo que ya se
+    // está parado; la navegación se da por completada.
+    if (
+      buildingPresence.status === "inside" &&
+      buildingPresence.buildingId === selectedBuilding.id
+    ) {
+      return {
+        bearingDegrees: 0,
+        screenBearingDegrees: 0,
+        distanceMeters: 0,
+        directionLabel: "",
+        label,
+        accuracyMeters,
+        accuracyQuality,
+        arrived: true as const,
+      };
+    }
+
     const buildingX = selectedGlbPosition?.x ?? Number(selectedBuilding.x);
     const buildingZ = selectedGlbPosition?.z ?? Number(selectedBuilding.z);
     if (!Number.isFinite(buildingX) || !Number.isFinite(buildingZ)) return null;
@@ -2186,15 +2232,29 @@ export function CampusViewer({
       screenBearingDegrees,
       distanceMeters,
       directionLabel,
-      label: formatBuildingDisplayName(selectedBuilding.name, selectedBuilding.code),
-      accuracyMeters: LOCATION_FEATURE_FLAGS.enableDeviceLocationV2
-        ? deviceAccuracyMeters
-        : null,
-      accuracyQuality: LOCATION_FEATURE_FLAGS.enableDeviceLocationV2
-        ? deviceLocation.accuracyQuality
-        : null,
+      label,
+      // Precisión de la posición CONFIRMADA (la que efectivamente ubica
+      // `mapPosition` en el mapa), no de la última lectura cruda — deben
+      // describir lo mismo que se está mostrando, nunca un dato más nuevo
+      // que quizás fue descartado por el filtro de estabilidad.
+      accuracyMeters,
+      accuracyQuality,
+      arrived: false as const,
     };
   })();
+
+  // Ubicación ambiente: cuando el usuario NO está navegando hacia un
+  // edificio en particular pero sí está dentro/cerca de alguno, se
+  // reutiliza la misma tarjeta de guía (nunca se abre una ventana nueva)
+  // para mostrarlo de forma discreta. Se apaga apenas hay un destino activo
+  // (compassDestination ya cubre ese caso con más detalle).
+  const ambientPresence =
+    !selectedBuilding &&
+    buildingPresence.status !== "outside" &&
+    buildingPresence.buildingId &&
+    buildingPresence.buildingName
+      ? { buildingName: buildingPresence.buildingName, status: buildingPresence.status }
+      : null;
 
   useEffect(() => {
     if (!selectedBuilding) {
@@ -2514,6 +2574,7 @@ export function CampusViewer({
             rotationDegrees={compassRotation}
             isMobile={isMobile}
             destination={compassDestination}
+            ambientPresence={ambientPresence}
           />
           {/* Activar/desactivar etiquetas y calles es una herramienta técnica,
               no algo que un visitante primerizo necesite decidir — las
@@ -2582,7 +2643,7 @@ export function CampusViewer({
               ? deviceLocation.errorMessage
               : !hasLocation &&
                   deviceAccuracyMeters !== null &&
-                  !isDeviceAccuracyUseful
+                  deviceAccuracyMeters > MAX_USEFUL_ACCURACY_METERS
                 ? `Tu ubicación es poco precisa aquí (±${Math.round(deviceAccuracyMeters)} m) — en computadora suele ser así; un celular con GPS da mejor precisión.`
                 : null
           }

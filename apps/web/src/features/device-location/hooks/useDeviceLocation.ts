@@ -25,6 +25,11 @@ import {
 } from "../services/heading-tracker.service";
 import { filterDeviceLocation } from "../services/location-filter.service";
 import { smoothGeoPosition } from "../services/location-smoothing.service";
+import {
+  INITIAL_POSITION_STABILITY_STATE,
+  updatePositionStability,
+  type PositionStabilityState,
+} from "../services/position-stability.service";
 import { useDeviceLocationStore } from "../store/device-location.store";
 import type {
   DeviceGeoPosition,
@@ -44,6 +49,7 @@ function processDevicePosition(
   received: DeviceGeoPosition,
   sessionReference: { current: GeoReferencePoint | null },
   headingTracker: { current: HeadingTrackerState },
+  positionStability: { current: PositionStabilityState },
 ) {
   const store = useDeviceLocationStore.getState();
   store.setStatus("tracking");
@@ -89,21 +95,50 @@ function processDevicePosition(
     store.setSmoothedHeadingDegrees(headingResult.smoothedHeadingDegrees);
   }
 
+  // Posición CONFIRMADA: lo que realmente se muestra (marcador, cámara,
+  // edificio actual) nunca se deriva de `smoothed` directamente — una sola
+  // lectura con precisión mala haría que localPosition/campusPosition se
+  // volvieran null o saltaran, aunque ya hubiera una posición confiable
+  // conocida (la causa exacta de que "el marcador desaparezca"). En vez de
+  // eso, se deriva de la última posición que superó el filtro de
+  // estabilidad (position-stability.service.ts): se conserva tal cual ante
+  // una lectura mala o un desplazamiento indistinguible del ruido del GPS.
+  const stabilityResult = updatePositionStability(smoothed, positionStability.current);
+  positionStability.current = stabilityResult.state;
+  const confirmed = stabilityResult.confirmedPosition;
+
+  if (!confirmed) {
+    // Todavía no hay ninguna posición confiable esta sesión (arrancando con
+    // precisión mala) — no hay nada que mostrar aún, pero tampoco nada que
+    // "borrar": localPosition/campusPosition ya empiezan en null.
+    return;
+  }
+
+  store.setConfirmedPosition(confirmed);
+
   if (!sessionReference.current) {
     sessionReference.current = {
-      latitude: smoothed.latitude,
-      longitude: smoothed.longitude,
+      latitude: confirmed.latitude,
+      longitude: confirmed.longitude,
     };
   }
+
+  if (!stabilityResult.updated) {
+    // La posición confirmada no cambió este tick: localPosition/campusPosition
+    // ya reflejan este mismo punto, recalcularlos sería trabajo repetido y un
+    // set() (con su re-render) por nada.
+    return;
+  }
+
   const reference =
     calibration.transform?.reference ??
     CAMPUS_GEO_REFERENCE ??
     sessionReference.current;
-  const localPosition = gpsToLocalMeters(smoothed, reference);
+  const localPosition = gpsToLocalMeters(confirmed, reference);
   store.setLocalPosition(localPosition);
   store.setCampusPosition(
     localPosition && calibration.transform
-      ? gpsToLocallyCorrectedCampusPosition(smoothed, calibration.transform)
+      ? gpsToLocallyCorrectedCampusPosition(confirmed, calibration.transform)
       : null,
   );
 }
@@ -122,6 +157,12 @@ export function useDeviceLocation() {
   const rawPosition = useDeviceLocationStore((state) => state.rawPosition);
   const filteredPosition = useDeviceLocationStore(
     (state) => state.filteredPosition,
+  );
+  const confirmedPosition = useDeviceLocationStore(
+    (state) => state.confirmedPosition,
+  );
+  const confirmedAccuracyQuality = useDeviceLocationStore(
+    (state) => state.confirmedAccuracyQuality,
   );
   const localPosition = useDeviceLocationStore((state) => state.localPosition);
   const campusPosition = useDeviceLocationStore(
@@ -160,6 +201,9 @@ export function useDeviceLocation() {
   const sessionReferenceRef = useRef<GeoReferencePoint | null>(null);
   const headingTrackerRef = useRef<HeadingTrackerState>(
     INITIAL_HEADING_TRACKER_STATE,
+  );
+  const positionStabilityRef = useRef<PositionStabilityState>(
+    INITIAL_POSITION_STABILITY_STATE,
   );
   const ownsWatchRef = useRef(false);
   const startInProgressRef = useRef(false);
@@ -229,7 +273,12 @@ export function useDeviceLocation() {
 
       const started = await startDeviceLocationWatch(
         (position) =>
-          processDevicePosition(position, sessionReferenceRef, headingTrackerRef),
+          processDevicePosition(
+            position,
+            sessionReferenceRef,
+            headingTrackerRef,
+            positionStabilityRef,
+          ),
         (message) => {
           const currentStore = useDeviceLocationStore.getState();
           currentStore.setStatus("error");
@@ -258,6 +307,7 @@ export function useDeviceLocation() {
     ownsWatchRef.current = false;
     sessionReferenceRef.current = null;
     headingTrackerRef.current = INITIAL_HEADING_TRACKER_STATE;
+    positionStabilityRef.current = INITIAL_POSITION_STABILITY_STATE;
     const store = useDeviceLocationStore.getState();
     store.resetLocation();
     store.setCalibrationResult(getCalibration());
@@ -303,6 +353,8 @@ export function useDeviceLocation() {
     permission,
     rawPosition,
     filteredPosition,
+    confirmedPosition,
+    confirmedAccuracyQuality,
     localPosition,
     campusPosition,
     accuracyQuality,

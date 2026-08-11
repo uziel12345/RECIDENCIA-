@@ -1,5 +1,5 @@
 import { memo } from "react";
-import type { CompassDestination } from "./CompassIndicator";
+import type { AmbientBuildingPresence, CompassDestination } from "./CompassIndicator";
 
 function formatDistance(distanceMeters: number): string {
   if (distanceMeters < 1_000) return `${Math.round(distanceMeters)} m`;
@@ -23,12 +23,51 @@ function needsApproximateNotice(quality: CompassDestination["accuracyQuality"]):
  */
 export const DestinationGuideBanner = memo(function DestinationGuideBanner({
   destination,
+  ambientPresence = null,
   isMobile = false,
 }: {
   destination: CompassDestination | null;
+  ambientPresence?: AmbientBuildingPresence | null;
   isMobile?: boolean;
 }) {
-  if (!destination) return null;
+  if (destination?.arrived) {
+    return (
+      <div
+        className={`ito-destination-guide${isMobile ? " ito-destination-guide--mobile" : ""}`}
+        role="group"
+        aria-label={`Has llegado. Te encuentras en ${destination.label}.`}
+      >
+        <span className="ito-destination-guide__label">Has llegado</span>
+        <div className="ito-destination-guide__main">
+          <span className="ito-destination-guide__phrase">{destination.label}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!destination) {
+    if (!ambientPresence) return null;
+    // Sin destino activo, pero el usuario está dentro/cerca de algún
+    // edificio — se avisa de forma discreta, reutilizando la misma tarjeta
+    // en vez de abrir un elemento de interfaz nuevo. "near" nunca afirma
+    // "estás en": no hay suficiente confianza para eso todavía (ver
+    // building-presence-tracker.service.ts).
+    const isInside = ambientPresence.status === "inside";
+    return (
+      <div
+        className={`ito-destination-guide${isMobile ? " ito-destination-guide--mobile" : ""}`}
+        role="group"
+        aria-label={`${isInside ? "Estás en" : "Cerca de"} ${ambientPresence.buildingName}`}
+      >
+        <span className="ito-destination-guide__label">
+          {isInside ? "Ubicación actual" : "Cerca de"}
+        </span>
+        <div className="ito-destination-guide__main">
+          <span className="ito-destination-guide__phrase">{ambientPresence.buildingName}</span>
+        </div>
+      </div>
+    );
+  }
 
   const isApproximate = needsApproximateNotice(destination.accuracyQuality);
   const approximateLabel =

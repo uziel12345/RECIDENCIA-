@@ -48,16 +48,30 @@ export type CompassDestination = {
   // dispositivo no tiene (típico en computadoras sin GPS real).
   accuracyMeters: number | null;
   accuracyQuality: LocationQuality | null;
+  /** true cuando la posición confirmada del usuario ya cayó dentro del
+   *  edificio destino (ver useBuildingPresence) — la guía muestra "Has
+   *  llegado" en vez de rumbo/distancia, y la brújula no dibuja la flecha. */
+  arrived: boolean;
+};
+
+/** Ubicación actual del usuario cuando NO hay un destino activo — ver
+ *  ambientPresence en CampusViewer.tsx. Reutiliza la misma tarjeta de guía,
+ *  solo con un contenido más discreto (sin flecha ni distancia). */
+export type AmbientBuildingPresence = {
+  buildingName: string;
+  status: "inside" | "near";
 };
 
 export const CompassIndicator = memo(function CompassIndicator({
   rotationDegrees,
   isMobile = false,
   destination = null,
+  ambientPresence = null,
 }: {
   rotationDegrees: number;
   isMobile?: boolean;
   destination?: CompassDestination | null;
+  ambientPresence?: AmbientBuildingPresence | null;
 }) {
   return (
     <div
@@ -74,11 +88,12 @@ export const CompassIndicator = memo(function CompassIndicator({
         <span className="ito-compass__direction ito-compass__direction--south">S</span>
         <span className="ito-compass__direction ito-compass__direction--west">O</span>
         <span className="ito-compass__needle" aria-hidden="true" />
-        {destination && (
+        {destination && !destination.arrived && (
           // Anidada dentro de la rosa que ya rota para compensar la cámara:
           // solo se le suma la rotación del rumbo al destino, así el
           // resultado en pantalla es la suma correcta de ambas sin tener
-          // que resolver esa composición a mano.
+          // que resolver esa composición a mano. No tiene sentido señalar
+          // una dirección una vez que ya se llegó al destino.
           <span
             className="ito-compass__destination-arrow"
             style={{ transform: `rotate(${destination.bearingDegrees}deg)` }}
@@ -92,7 +107,11 @@ export const CompassIndicator = memo(function CompassIndicator({
           flotante...) sin tener que duplicar esa lógica de posicionamiento
           aquí. Sigue siendo una guía visualmente aparte de la rosa N/E/S/O,
           solo comparte el mismo "punto de anclaje" en pantalla. */}
-      <DestinationGuideBanner destination={destination} isMobile={isMobile} />
+      <DestinationGuideBanner
+        destination={destination}
+        ambientPresence={ambientPresence}
+        isMobile={isMobile}
+      />
     </div>
   );
 });

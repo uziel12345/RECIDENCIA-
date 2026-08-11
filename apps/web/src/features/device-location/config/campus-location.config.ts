@@ -168,6 +168,26 @@ export const MARKER_SMOOTHING_SPEED = 8;
  */
 export const MAX_USEFUL_ACCURACY_METERS = 150;
 
+/**
+ * Umbrales de la posición CONFIRMADA (ver position-stability.service.ts) —
+ * distintos de MAX_USEFUL_ACCURACY_METERS, que solo decide si algo se
+ * muestra o no. Estos deciden si una lectura nueva reemplaza a la última
+ * posición confiable, o si se conserva esa última posición tal cual.
+ *
+ * - minPositionChangeMeters: piso absoluto — con la mejor precisión posible,
+ *   igual no vale la pena mover el marcador por menos que esto (ruido normal
+ *   del chip GPS incluso parado).
+ * - accuracyMovementFactor: además del piso, el desplazamiento debe superar
+ *   esta fracción de la precisión reportada de la lectura nueva. Con
+ *   accuracy=18 m y un movimiento de 3 m, 3 &lt; 18*0.5=9 — no hay evidencia
+ *   suficiente de movimiento real, se conserva la posición anterior (mismo
+ *   caso que pide la tarea). Con accuracy=5 m, el umbral efectivo es el piso.
+ */
+export const POSITION_STABILITY_CONFIG = {
+  minPositionChangeMeters: 2.5,
+  accuracyMovementFactor: 0.5,
+} as const;
+
 export const LOCATION_FEATURE_FLAGS = {
   enableLegacyLocation: false,
   enableDeviceLocationV2: true,

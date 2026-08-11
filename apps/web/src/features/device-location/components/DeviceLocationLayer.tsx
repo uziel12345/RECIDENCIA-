@@ -1,7 +1,6 @@
 import {
   LOCATION_FEATURE_FLAGS,
   MAX_ACCURACY_RADIUS_MODEL_UNITS,
-  MAX_USEFUL_ACCURACY_METERS,
 } from "../config/campus-location.config";
 import { metersToModelUnits } from "../services/campus-calibration.service";
 import { useDeviceLocationStore } from "../store/device-location.store";
@@ -12,32 +11,26 @@ export function DeviceLocationLayer() {
   const campusPosition = useDeviceLocationStore(
     (state) => state.campusPosition,
   );
-  const filteredAccuracy = useDeviceLocationStore(
-    (state) => state.filteredPosition?.accuracy ?? null,
+  // Precisión de la posición CONFIRMADA (no de la última lectura cruda): el
+  // filtro de "¿es esto lo bastante bueno para mostrarse?" ya se aplicó UNA
+  // vez, en position-stability.service.ts, al decidir campusPosition. Volver
+  // a filtrar aquí contra la lectura más reciente era exactamente lo que
+  // hacía desaparecer el marcador ante una sola lectura mala aislada, aunque
+  // campusPosition siguiera siendo una posición perfectamente confiable.
+  const confirmedAccuracy = useDeviceLocationStore(
+    (state) => state.confirmedPosition?.accuracy ?? null,
   );
   const calibrationScale = useDeviceLocationStore(
     (state) => state.calibrationScale,
   );
 
-  // Sin GPS real (ej. computadora usando WiFi/IP), el error puede ser de
-  // cientos o miles de metros — inútil, y engañoso, para señalar un edificio
-  // puntual. En vez de dibujar un punto "confiado" en un lugar posiblemente
-  // muy lejano, no se muestra nada hasta que la lectura sea razonablemente
-  // útil para la escala del campus.
-  const isAccuracyUseful =
-    filteredAccuracy === null || filteredAccuracy <= MAX_USEFUL_ACCURACY_METERS;
-
-  if (
-    !LOCATION_FEATURE_FLAGS.enableDeviceLocationV2 ||
-    !campusPosition ||
-    !isAccuracyUseful
-  ) {
+  if (!LOCATION_FEATURE_FLAGS.enableDeviceLocationV2 || !campusPosition) {
     return null;
   }
 
   const convertedRadius =
-    filteredAccuracy !== null && calibrationScale !== null
-      ? metersToModelUnits(filteredAccuracy, calibrationScale)
+    confirmedAccuracy !== null && calibrationScale !== null
+      ? metersToModelUnits(confirmedAccuracy, calibrationScale)
       : null;
   const visibleRadius = convertedRadius === null
     ? null

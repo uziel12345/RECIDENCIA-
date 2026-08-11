@@ -9,13 +9,25 @@ import type {
   LocationFilterReason,
   LocationQuality,
 } from "../types/device-location.types";
-import { angleDifferenceDegrees } from "../utils/location-math";
+import { angleDifferenceDegrees, getLocationQuality } from "../utils/location-math";
 
 export type DeviceLocationStore = {
   status: DeviceLocationStatus;
   permission: DeviceLocationPermission;
   rawPosition: DeviceGeoPosition | null;
   filteredPosition: DeviceGeoPosition | null;
+  /**
+   * Última posición GPS aceptada como confiable (ver
+   * position-stability.service.ts) — nunca se borra por una lectura mala ni
+   * salta por el ruido normal del GPS estando parado. `localPosition` y
+   * `campusPosition` (lo que realmente ve el usuario: marcador, cámara,
+   * edificio actual) se derivan de ESTA posición, no de `filteredPosition`
+   * directamente.
+   */
+  confirmedPosition: DeviceGeoPosition | null;
+  /** Calidad de `confirmedPosition.accuracy` — para mensajes de "ubicación
+   *  aproximada"; `null` mientras no exista ninguna posición confirmada. */
+  confirmedAccuracyQuality: LocationQuality | null;
   localPosition: LocalMetricPosition | null;
   campusPosition: CampusMapPosition | null;
   accuracyQuality: LocationQuality | null;
@@ -43,6 +55,7 @@ export type DeviceLocationStore = {
   setPermission: (permission: DeviceLocationPermission) => void;
   setRawPosition: (position: DeviceGeoPosition | null) => void;
   setFilteredPosition: (position: DeviceGeoPosition | null) => void;
+  setConfirmedPosition: (position: DeviceGeoPosition) => void;
   setLocalPosition: (position: LocalMetricPosition | null) => void;
   setCampusPosition: (position: CampusMapPosition | null) => void;
   setAccuracyQuality: (quality: LocationQuality | null) => void;
@@ -63,6 +76,8 @@ const INITIAL_STATE = {
   permission: "unknown" as const,
   rawPosition: null,
   filteredPosition: null,
+  confirmedPosition: null,
+  confirmedAccuracyQuality: null,
   localPosition: null,
   campusPosition: null,
   accuracyQuality: null,
@@ -86,6 +101,11 @@ export const useDeviceLocationStore = create<DeviceLocationStore>((set) => ({
   setRawPosition: (rawPosition) =>
     set({ rawPosition, lastUpdateAt: rawPosition ? Date.now() : null }),
   setFilteredPosition: (filteredPosition) => set({ filteredPosition }),
+  setConfirmedPosition: (confirmedPosition) =>
+    set({
+      confirmedPosition,
+      confirmedAccuracyQuality: getLocationQuality(confirmedPosition.accuracy),
+    }),
   setLocalPosition: (localPosition) => set({ localPosition }),
   setCampusPosition: (campusPosition) => set({ campusPosition }),
   setAccuracyQuality: (accuracyQuality) => set({ accuracyQuality }),
