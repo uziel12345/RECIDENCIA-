@@ -29,6 +29,14 @@ const STATUS_CLASSES: Record<BuildingScheduleStatus["status"], string> = {
     "border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-subtle)]",
 };
 
+export function getBuildingStatusLabel(status: BuildingScheduleStatus): string {
+  const base = STATUS_COPY[status.status];
+  if (status.status === "abierto" && status.until) {
+    return `${base} · Cierra ${formatTime(status.until)}`;
+  }
+  return base;
+}
+
 type BuildingStatusBadgeProps = {
   status: BuildingScheduleStatus;
   week: BuildingSchedule[];

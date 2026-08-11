@@ -13,7 +13,7 @@ import type { BuildingImage } from "@ito-map/shared";
 import type { Building } from "../types/building";
 import { setSimulatedPosition } from "../../location/services/geolocation";
 import { useBuildingFullDetails } from "../hooks/useBuildingFullDetails";
-import { BuildingStatusBadge } from "./details/BuildingStatusBadge";
+import { BuildingStatusBadge, getBuildingStatusLabel } from "./details/BuildingStatusBadge";
 import { BuildingClassroomsInfo } from "./details/BuildingClassroomsInfo";
 import { BuildingDepartmentsInfo } from "./details/BuildingDepartmentsInfo";
 import { BuildingCubiclesInfo } from "./details/BuildingCubiclesInfo";
@@ -27,6 +27,7 @@ import {
 type BuildingInfoCardProps = {
   building: Building;
   onClose?: () => void;
+  isMobile?: boolean;
 };
 
 function getBuildingDescription(building: Building): string | null {
@@ -38,7 +39,7 @@ function getBuildingDescription(building: Building): string | null {
 
 const closeBtn = "ito-building-info-card__close";
 
-export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
+export function BuildingInfoCard({ building, onClose, isMobile = false }: BuildingInfoCardProps) {
   const highlightedSection = useBuildingStore((state) => state.highlightedSection);
   const glbPosition = useBuildingGlbStore((state) => state.positions[building.id]);
   // "Estoy aquí" depende de x/z calibrados por edificio; mientras el campus
@@ -98,7 +99,42 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
       className="ito-building-info-card flex flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-maps)]"
       aria-label={`Información de ${buildingName}`}
     >
-      {showCover ? (
+      {isMobile ? (
+        <div className="ito-bic-mobile-header flex items-start gap-3 border-b border-[var(--color-student-rule)] px-4 pb-4 pt-1">
+          <span
+            className="grid h-11 shrink-0 place-items-center rounded-xl px-2 text-[13px] font-bold uppercase text-white"
+            style={{ backgroundColor: accent.fgDark, minWidth: "2.75rem" }}
+            aria-hidden="true"
+          >
+            {buildingCode || "—"}
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2
+              className="text-pretty text-[18px] font-bold leading-tight text-[var(--color-student-ink)]"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {buildingName}
+            </h2>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <CategoryBadge name={categoryName} size="sm" />
+              {details && (
+                <span className="flex items-center gap-1 text-[12px] text-[var(--color-student-muted)]">
+                  <Icon name="clock" size={12} />
+                  {getBuildingStatusLabel(details.status)}
+                </span>
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            className={closeBtn}
+            onClick={() => onClose?.()}
+            aria-label="Cerrar información"
+          >
+            <Icon name="close" size={16} />
+          </button>
+        </div>
+      ) : showCover ? (
         <div className="ito-bic-cover relative w-full overflow-hidden bg-[var(--color-surface-muted)]">
           {!coverLoaded && (
             <div
@@ -170,12 +206,23 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
       )}
 
       <div className="ito-building-info-card__body flex flex-col gap-3.5 p-4">
-        <div className="ito-building-info-card__meta-row flex items-center justify-between gap-2.5">
-          <span className="ito-building-info-card__label text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
-            Categoría
-          </span>
-          <CategoryBadge name={categoryName} />
-        </div>
+        {isMobile && showCover && (
+          <img
+            src={coverUrl}
+            alt={`Fotografía real de ${buildingName}`}
+            className="aspect-[16/9] w-full rounded-xl border border-[var(--color-student-rule)] object-cover"
+            loading="eager"
+          />
+        )}
+
+        {!isMobile && (
+          <div className="ito-building-info-card__meta-row flex items-center justify-between gap-2.5">
+            <span className="ito-building-info-card__label text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
+              Categoría
+            </span>
+            <CategoryBadge name={categoryName} />
+          </div>
+        )}
 
         {building.is_priority && (
           <div className="ito-building-info-card__priority flex w-fit items-center gap-1.5 rounded-lg bg-[var(--color-brand-50)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--color-brand-700)]">
@@ -254,7 +301,11 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
           </div>
         )}
 
-        <div className="ito-building-info-card__actions flex flex-col gap-2 pt-1">
+        <div
+          className={`ito-building-info-card__actions flex flex-col gap-2 pt-1 ${
+            isMobile ? "ito-building-info-card__actions--sticky sticky bottom-0 -mx-4 -mb-4 px-4 py-3" : ""
+          }`}
+        >
           {canUseNavTools && (
             <button
               type="button"
@@ -275,14 +326,25 @@ export function BuildingInfoCard({ building, onClose }: BuildingInfoCardProps) {
             </button>
           )}
 
-          <button
-            type="button"
-            className="ito-building-info-card__action inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 text-[13px] font-bold text-[var(--color-text)]"
-            onClick={() => onClose?.()}
-          >
-            <Icon name="search" size={16} />
-            <span>Seguir buscando</span>
-          </button>
+          {isMobile ? (
+            <button
+              type="button"
+              className="ito-building-info-card__cta inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-[13px] font-bold"
+              onClick={() => onClose?.()}
+            >
+              <Icon name="navigation" size={16} />
+              <span>Cómo llegar</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="ito-building-info-card__action inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 text-[13px] font-bold text-[var(--color-text)]"
+              onClick={() => onClose?.()}
+            >
+              <Icon name="search" size={16} />
+              <span>Seguir buscando</span>
+            </button>
+          )}
         </div>
       </div>
     </motion.article>

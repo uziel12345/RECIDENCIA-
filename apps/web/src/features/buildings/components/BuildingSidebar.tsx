@@ -73,6 +73,11 @@ type BuildingSidebarProps = {
   showSearchPanel?: boolean;
   browseOnly?: boolean;
   userName?: string;
+  // Header/CTA compactos del detalle de edificio (badge de código + título +
+  // categoría + horario + "Cómo llegar"), estilizados con los tokens
+  // --color-student-*. Solo el flujo de Alumno lo activa — visitante/admin
+  // siguen con la portada + acciones actuales.
+  useStudentDetailStyle?: boolean;
 };
 
 const SECTION = "flex flex-col gap-2.5";
@@ -85,6 +90,7 @@ export function BuildingSidebar({
   showSearchPanel = true,
   browseOnly = false,
   userName,
+  useStudentDetailStyle = false,
 }: BuildingSidebarProps) {
   const selectedBuilding = useBuildingStore((state) => state.selectedBuilding);
   const isBuildingPanelOpen = useBuildingStore((state) => state.isBuildingPanelOpen);
@@ -417,6 +423,7 @@ export function BuildingSidebar({
               key={selectedBuilding.id}
               building={selectedBuilding}
               onClose={handleBackToResults}
+              isMobile={isMobile && useStudentDetailStyle}
             />
           )}
         </div>

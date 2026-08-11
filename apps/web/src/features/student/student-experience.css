@@ -908,6 +908,38 @@ body {
   white-space: nowrap;
 }
 
+.student-mobile .ito-building-info-card__actions--sticky {
+  border-top: var(--rule-student) solid var(--color-student-rule);
+  background: var(--color-student-paper);
+}
+
+.student-mobile .ito-building-info-card__cta {
+  border: var(--rule-student) solid var(--color-student-accent);
+  outline: var(--rule-student-focus) solid transparent;
+  outline-offset: var(--space-3xs);
+  background: var(--color-student-accent);
+  color: var(--color-student-accent-ink);
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-short) var(--ease-out),
+    transform var(--dur-micro) var(--ease-out);
+}
+
+.student-mobile .ito-building-info-card__cta:focus-visible {
+  outline-color: var(--color-student-focus);
+}
+
+.student-mobile .ito-building-info-card__cta:active {
+  transform: translateY(var(--space-3xs));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .student-mobile .ito-building-info-card__cta:hover {
+    background: var(--color-student-accent-deep);
+    border-color: var(--color-student-accent-deep);
+  }
+}
+
 .student-page .ito-b-gallery__image,
 .student-mobile .ito-b-gallery__image {
   border: var(--rule-student) solid var(--color-student-rule);

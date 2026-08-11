@@ -357,6 +357,7 @@ export function StudentPage() {
           isMobile
           showSearchPanel={false}
           browseOnly
+          useStudentDetailStyle
           onItemSelected={() => setSheetState("closed")}
           onPanelClosed={() => setSheetState("closed")}
         />
