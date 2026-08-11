@@ -52,6 +52,20 @@ const SCREEN_RELATIVE_LABELS = [
 ] as const;
 
 /**
+ * Traduce un rumbo YA relativo (0°=adelante, 90°=derecha, 180°=atrás,
+ * 270°=izquierda — sin importar de qué se compuso) a una de las 8 frases.
+ * Compartida por las dos familias de funciones de este archivo: la relativa
+ * a cámara (getScreenRelative*, de toda la vida) y la relativa al rumbo real
+ * del usuario (getUserRelative*, más abajo) — ambas terminan resolviendo el
+ * mismo tipo de ángulo, solo cambia con qué se compone antes de llegar aquí.
+ */
+function describeRelativeBearing(relativeBearingDegrees: number): string {
+  const normalized = ((relativeBearingDegrees % 360) + 360) % 360;
+  const sector = Math.round(normalized / 45) % 8;
+  return SCREEN_RELATIVE_LABELS[sector];
+}
+
+/**
  * Rumbo al destino compuesto con la rotación de la cámara: dónde aparece el
  * destino EN PANTALLA ahora mismo (0°=arriba/lejos de ti en la vista,
  * 90°=derecha, 180°=abajo/hacia ti, 270°=izquierda). Es la misma composición
@@ -82,7 +96,34 @@ export function getScreenRelativeDirectionLabel(
   bearingDegrees: number,
   cameraRotationDegrees: number,
 ): string {
-  const screenBearing = getScreenRelativeBearing(bearingDegrees, cameraRotationDegrees);
-  const sector = Math.round(screenBearing / 45) % 8;
-  return SCREEN_RELATIVE_LABELS[sector];
+  return describeRelativeBearing(
+    getScreenRelativeBearing(bearingDegrees, cameraRotationDegrees),
+  );
+}
+
+/**
+ * Rumbo al destino relativo a la dirección REAL en la que camina el usuario
+ * (userHeadingDegrees, derivado de posiciones GPS consecutivas — ver
+ * heading-tracker.service.ts), NO a la cámara ni al mapa. Girar el mapa con
+ * el dedo o el mouse no cambia este número; solo caminar físicamente en otra
+ * dirección lo hace. 0°=el destino queda en la dirección en que caminas
+ * (adelante), 90°=a tu derecha, 180°=detrás de ti, 270°=a tu izquierda.
+ */
+export function getUserRelativeBearing(
+  destinationBearingDegrees: number,
+  userHeadingDegrees: number,
+): number {
+  return (
+    ((destinationBearingDegrees - userHeadingDegrees) % 360 + 360) % 360
+  );
+}
+
+/** Misma idea que getScreenRelativeDirectionLabel, pero relativa al rumbo real del usuario en vez de a la cámara. */
+export function getUserRelativeDirectionLabel(
+  destinationBearingDegrees: number,
+  userHeadingDegrees: number,
+): string {
+  return describeRelativeBearing(
+    getUserRelativeBearing(destinationBearingDegrees, userHeadingDegrees),
+  );
 }

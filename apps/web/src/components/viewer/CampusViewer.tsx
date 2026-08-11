@@ -85,6 +85,8 @@ import {
   getDestinationBearing,
   getScreenRelativeBearing,
   getScreenRelativeDirectionLabel,
+  getUserRelativeBearing,
+  getUserRelativeDirectionLabel,
 } from "./destination-bearing";
 import { StreetLabelCameraSync } from "./CampusStreetLabels";
 import { CampusStreetLabels } from "./CampusStreetLabels";
@@ -1795,6 +1797,13 @@ export function CampusViewer({
   const lastSelectedFocusRef = useRef<BuildingFocusSnapshot | null>(null);
   const lastSelectedGateRef = useRef<string | null>(null);
   const lastSelectedMapPointRef = useRef<string | null>(null);
+  // Antes había que pulsar el botón de ubicación dos veces: el primer clic
+  // solo arrancaba el rastreo (sin posición todavía no hay adónde enfocar la
+  // cámara) y nada reaccionaba cuando la posición por fin llegaba. Esta
+  // bandera recuerda que un clic pidió explícitamente centrar la cámara; el
+  // efecto que consume `mapPosition` más abajo la usa UNA sola vez en cuanto
+  // exista una posición útil, sin crear un watcher nuevo ni reiniciar nada.
+  const pendingLocationFocusRef = useRef(false);
   // Congela el offset al montar para no saltar la cámara si cambia el sidebar
   const initialXOffsetRef = useRef(mapXOffset);
 
@@ -1804,6 +1813,13 @@ export function CampusViewer({
   );
   const deviceAccuracyMeters = useDeviceLocationStore(
     (state) => state.filteredPosition?.accuracy ?? null,
+  );
+  // Rumbo REAL de desplazamiento (GPS, no cámara) — null hasta que el
+  // usuario se haya movido lo suficiente para calcularlo (ver
+  // heading-tracker.service.ts). Mientras sea null, compassDestination usa
+  // el rumbo relativo a la cámara como respaldo (ver más abajo).
+  const smoothedHeadingDegrees = useDeviceLocationStore(
+    (state) => state.smoothedHeadingDegrees,
   );
   // Sin GPS real (típico en computadora, que solo estima por WiFi/IP), la
   // lectura puede estar a cientos o miles de metros — ofrecer "centrar" ahí
@@ -2118,17 +2134,26 @@ export function CampusViewer({
         ? bearing.distanceModelUnits / scale
         : bearing.distanceModelUnits;
 
+    // Adelante/atrás/izquierda/derecha DEBE ser relativo a hacia dónde
+    // camina físicamente el usuario, no a cómo esté rotado el mapa —
+    // rotar el mapa con el dedo/mouse no puede cambiar esta indicación.
+    // Mientras todavía no exista un rumbo real (usuario recién llegó y aún
+    // no se desplazó lo suficiente), se usa la rotación de cámara solo como
+    // respaldo temporal, igual que antes.
+    const screenBearingDegrees =
+      smoothedHeadingDegrees !== null
+        ? getUserRelativeBearing(bearing.bearingDegrees, smoothedHeadingDegrees)
+        : getScreenRelativeBearing(bearing.bearingDegrees, compassRotation);
+    const directionLabel =
+      smoothedHeadingDegrees !== null
+        ? getUserRelativeDirectionLabel(bearing.bearingDegrees, smoothedHeadingDegrees)
+        : getScreenRelativeDirectionLabel(bearing.bearingDegrees, compassRotation);
+
     return {
       bearingDegrees: bearing.bearingDegrees,
-      screenBearingDegrees: getScreenRelativeBearing(bearing.bearingDegrees, compassRotation),
+      screenBearingDegrees,
       distanceMeters,
-      // Frase en lenguaje simple ("a tu derecha") en vez de exigir que el
-      // usuario entienda puntos cardinales — describe el mapa que está
-      // viendo ahora mismo, corrigiendo por hacia dónde apunta la cámara.
-      directionLabel: getScreenRelativeDirectionLabel(
-        bearing.bearingDegrees,
-        compassRotation,
-      ),
+      directionLabel,
       label: formatBuildingDisplayName(selectedBuilding.name, selectedBuilding.code),
       accuracyMeters: LOCATION_FEATURE_FLAGS.enableDeviceLocationV2
         ? deviceAccuracyMeters
@@ -2217,10 +2242,33 @@ export function CampusViewer({
     setFocus(createFocusPoint(mapPosition.x, mapPosition.z, campusPosition));
   };
 
-  // Handler real del botón del toolbar: si todavía no hay ubicación, primera
-  // pulsación pide permiso e inicia el rastreo (acción explícita del usuario,
-  // como exige el diseño de features/device-location); una vez hay posición,
-  // pulsaciones siguientes solo reenfocan la cámara ahí.
+  // Consume pendingLocationFocusRef: en cuanto exista una posición útil tras
+  // un clic que pidió explícitamente ubicarse, centra la cámara UNA sola
+  // vez — así ese clic ya no requiere uno segundo. No crea watcher, no
+  // reinicia el rastreo, solo mueve la cámara (mismo efecto que
+  // handleFocusUser). Si el usuario nunca pidió ubicarse (ej. el rumbo ya
+  // estaba concedido y el rastreo arrancó solo al entrar), la bandera nunca
+  // se activa y este efecto no hace nada — el marcador aparece igual, pero
+  // sin mover la cámara del usuario sin que la haya pedido.
+  useEffect(() => {
+    if (!mapPosition || !pendingLocationFocusRef.current) return;
+    pendingLocationFocusRef.current = false;
+    lastSelectedFocusRef.current = null;
+    focusFromAerialRef.current = viewMode === "aerial";
+    setViewMode("immersive");
+    setFocus(createFocusPoint(mapPosition.x, mapPosition.z, campusPosition));
+  // Solo debe reaccionar a que la posición pase a estar disponible; viewMode
+  // y campusPosition se leen en el instante del evento (mismo patrón que el
+  // efecto de selectedBuilding más arriba).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapPosition]);
+
+  // Handler real del botón del toolbar: si todavía no hay ubicación, la
+  // pulsación pide permiso e inicia el rastreo (acción explícita del
+  // usuario, como exige el diseño de features/device-location) y marca que
+  // debe centrar la cámara en cuanto la posición llegue (ver efecto de
+  // arriba) — ya no hace falta una segunda pulsación. Si ya hay posición,
+  // simplemente reenfoca la cámara ahí.
   const handleLocateOrFocusUser = () => {
     if (mapPosition) {
       handleFocusUser();
@@ -2232,6 +2280,7 @@ export function CampusViewer({
     ) {
       return;
     }
+    pendingLocationFocusRef.current = true;
     void deviceLocation.startTracking();
   };
 

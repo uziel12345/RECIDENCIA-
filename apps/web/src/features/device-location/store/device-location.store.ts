@@ -9,6 +9,7 @@ import type {
   LocationFilterReason,
   LocationQuality,
 } from "../types/device-location.types";
+import { angleDifferenceDegrees } from "../utils/location-math";
 
 export type DeviceLocationStore = {
   status: DeviceLocationStatus;
@@ -27,6 +28,16 @@ export type DeviceLocationStore = {
   calibrationRotationRadians: number | null;
   lastFilterReason: LocationFilterReason | null;
   estimatedSpeedMetersPerSecond: number | null;
+  /** Rumbo instantáneo (sin suavizar) del último tramo GPS aceptado. */
+  movementHeadingDegrees: number | null;
+  /**
+   * Rumbo real de desplazamiento del usuario, suavizado — independiente de
+   * la rotación de la cámara/mapa. `null` hasta que exista desplazamiento
+   * suficiente (ver heading-tracker.service.ts); a partir de ahí conserva el
+   * último valor válido en vez de volver a `null`, así sirve como último
+   * rumbo conocido cuando el usuario se detiene.
+   */
+  smoothedHeadingDegrees: number | null;
 
   setStatus: (status: DeviceLocationStatus) => void;
   setPermission: (permission: DeviceLocationPermission) => void;
@@ -42,6 +53,8 @@ export type DeviceLocationStore = {
     reason: LocationFilterReason | null,
     speedMetersPerSecond: number | null,
   ) => void;
+  setMovementHeadingDegrees: (heading: number | null) => void;
+  setSmoothedHeadingDegrees: (heading: number | null) => void;
   resetLocation: () => void;
 };
 
@@ -62,6 +75,8 @@ const INITIAL_STATE = {
   calibrationRotationRadians: null,
   lastFilterReason: null,
   estimatedSpeedMetersPerSecond: null,
+  movementHeadingDegrees: null,
+  smoothedHeadingDegrees: null,
 };
 
 export const useDeviceLocationStore = create<DeviceLocationStore>((set) => ({
@@ -87,5 +102,27 @@ export const useDeviceLocationStore = create<DeviceLocationStore>((set) => ({
     }),
   setFilterMetadata: (lastFilterReason, estimatedSpeedMetersPerSecond) =>
     set({ lastFilterReason, estimatedSpeedMetersPerSecond }),
+  setMovementHeadingDegrees: (movementHeadingDegrees) =>
+    set({ movementHeadingDegrees }),
+  // Guarda de ruido: en cada tick de GPS el rumbo suavizado cambia una
+  // fracción de grado aunque el usuario esté prácticamente detenido. Sin
+  // esto, cada lectura dispara un re-render de todo lo que lee este campo
+  // (la guía de destino, la brújula) por una diferencia imperceptible.
+  setSmoothedHeadingDegrees: (smoothedHeadingDegrees) =>
+    set((state) => {
+      if (
+        state.smoothedHeadingDegrees !== null &&
+        smoothedHeadingDegrees !== null &&
+        Math.abs(
+          angleDifferenceDegrees(
+            smoothedHeadingDegrees,
+            state.smoothedHeadingDegrees,
+          ),
+        ) < 0.05
+      ) {
+        return state;
+      }
+      return { smoothedHeadingDegrees };
+    }),
   resetLocation: () => set(INITIAL_STATE),
 }));

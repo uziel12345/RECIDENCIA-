@@ -26,6 +26,24 @@ export const LOCATION_FILTER_CONFIG = {
 } as const;
 
 /**
+ * El GPS oscila unos metros aunque el usuario esté parado — recalcular el
+ * rumbo con cada lectura produciría un rumbo aleatorio ("adelante" un
+ * segundo, "izquierda" al siguiente). Solo se recalcula el rumbo real de
+ * desplazamiento (heading-tracker.service.ts) cuando el usuario se movió al
+ * menos esta distancia desde la última referencia usada para el cálculo.
+ */
+export const MIN_MOVEMENT_FOR_HEADING_METERS = 3;
+
+/**
+ * Alpha del EMA circular que suaviza el rumbo (ver smoothHeadingDegrees en
+ * location-math.ts). Deliberadamente más conservador que
+ * LOCATION_SMOOTHING_CONFIG de posición: el rumbo alimenta directamente el
+ * texto "adelante/atrás/izquierda/derecha", así que cambiar de golpe se
+ * siente más como un error que un salto de un par de metros en el mapa.
+ */
+export const HEADING_SMOOTHING_ALPHA = 0.35;
+
+/**
  * Promedio móvil exponencial ponderado por precisión (ver
  * location-smoothing.service.ts) — reduce el "movimiento fantasma": el
  * marcador ya no salta a cada lectura ruidosa que pasa el filtro de saltos,

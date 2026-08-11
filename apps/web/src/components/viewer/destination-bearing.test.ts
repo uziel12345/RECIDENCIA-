@@ -4,6 +4,8 @@ import {
   getDestinationBearing,
   getScreenRelativeBearing,
   getScreenRelativeDirectionLabel,
+  getUserRelativeBearing,
+  getUserRelativeDirectionLabel,
 } from "./destination-bearing";
 
 describe("getCompassBearingDegrees", () => {
@@ -103,3 +105,68 @@ const SCREEN_RELATIVE_LABELS_SET = new Set([
   "a tu izquierda",
   "adelante y a la izquierda",
 ]);
+
+describe("getUserRelativeBearing", () => {
+  it("con el rumbo del usuario igual al del destino, da 0° (adelante)", () => {
+    expect(getUserRelativeBearing(0, 0)).toBeCloseTo(0);
+    expect(getUserRelativeBearing(90, 90)).toBeCloseTo(0);
+  });
+
+  it("el destino a la derecha del rumbo del usuario da 90°", () => {
+    expect(getUserRelativeBearing(90, 0)).toBeCloseTo(90);
+  });
+
+  it("el destino detrás del usuario da 180°, sin importar el rumbo absoluto", () => {
+    expect(getUserRelativeBearing(180, 0)).toBeCloseTo(180);
+    expect(getUserRelativeBearing(0, 180)).toBeCloseTo(180);
+  });
+
+  it("NO recibe ningún parámetro de cámara/rotación de mapa — solo rumbos", () => {
+    expect(getUserRelativeBearing.length).toBe(2);
+  });
+
+  it("envuelve correctamente a [0,360) con ángulos extremos", () => {
+    const result = getUserRelativeBearing(-450, 720);
+    expect(result).toBeGreaterThanOrEqual(0);
+    expect(result).toBeLessThan(360);
+  });
+});
+
+describe("getUserRelativeDirectionLabel — independiente de la rotación de cámara/mapa", () => {
+  it("usuario caminando hacia el norte con el destino al norte: adelante", () => {
+    expect(getUserRelativeDirectionLabel(0, 0)).toBe("adelante");
+  });
+
+  it("rotar el mapa 180° NO cambia la indicación mientras el usuario siga caminando igual", () => {
+    // Este es exactamente el escenario reportado como bug: destino al norte
+    // (bearing=0), usuario caminando al norte (heading=0) → "adelante". El
+    // usuario rota el mapa/cámara 180° con el dedo — pero getUserRelative*
+    // no recibe ese dato en absoluto, así que el resultado es idéntico.
+    const beforeRotating = getUserRelativeDirectionLabel(0, 0);
+    const afterRotatingMap180 = getUserRelativeDirectionLabel(0, 0); // compassRotation ni se pasa
+    expect(afterRotatingMap180).toBe(beforeRotating);
+    expect(afterRotatingMap180).toBe("adelante");
+  });
+
+  it("si el usuario físicamente se da vuelta y camina hacia el sur, sí cambia a 'detrás de ti'", () => {
+    // El destino sigue al norte (bearing=0°), pero ahora heading≈180°
+    // (el usuario gira su cuerpo, no el mapa) — el sistema SÍ debe
+    // reconocer el cambio real de dirección.
+    expect(getUserRelativeDirectionLabel(0, 180)).toBe("detrás de ti");
+  });
+
+  it("destino a la derecha del rumbo real: 'a tu derecha'", () => {
+    expect(getUserRelativeDirectionLabel(90, 0)).toBe("a tu derecha");
+  });
+
+  it("destino a la izquierda del rumbo real: 'a tu izquierda'", () => {
+    expect(getUserRelativeDirectionLabel(270, 0)).toBe("a tu izquierda");
+  });
+
+  it("nunca revienta con ángulos negativos o mayores a 360", () => {
+    expect(() => getUserRelativeDirectionLabel(-450, 720)).not.toThrow();
+    expect(
+      SCREEN_RELATIVE_LABELS_SET.has(getUserRelativeDirectionLabel(-450, 720)),
+    ).toBe(true);
+  });
+});

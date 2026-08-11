@@ -27,14 +27,18 @@ export function CompassCameraSync({
 
 export type CompassDestination = {
   bearingDegrees: number;
-  // Rumbo ya compuesto con la rotación de cámara: dónde aparece el destino
-  // EN PANTALLA. Lo usa DestinationGuideBanner (fuera de la brújula, así que
-  // no puede apoyarse en el truco de rotación anidada que sí usa la flecha
-  // interna de la brújula con `bearingDegrees`).
+  // Rumbo ya compuesto, listo para rotar la flecha de DestinationGuideBanner
+  // (fuera de la brújula, así que no puede apoyarse en el truco de rotación
+  // anidada que sí usa la flecha interna de la brújula con `bearingDegrees`).
+  // Relativo al rumbo REAL de desplazamiento del usuario (GPS) cuando ya se
+  // conoce; si todavía no existe (recién llegó, aún sin desplazamiento
+  // suficiente), cae de vuelta a ser relativo a la cámara — ver
+  // CampusViewer.compassDestination para la composición exacta.
   screenBearingDegrees: number;
   distanceMeters: number;
-  // Frase simple ("a tu derecha") en vez de puntos cardinales — describe el
-  // mapa que se está viendo ahora mismo, no requiere saber qué es "noreste".
+  // Frase simple ("a tu derecha") en vez de puntos cardinales — relativa al
+  // mismo rumbo que screenBearingDegrees (real del usuario cuando existe,
+  // cámara como respaldo si no). No requiere saber qué es "noreste".
   directionLabel: string;
   label: string;
   // Precisión reportada del GPS/WiFi en el momento del cálculo — `null`

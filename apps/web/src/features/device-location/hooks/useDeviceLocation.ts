@@ -18,6 +18,11 @@ import {
   translateDeviceLocationError,
 } from "../services/device-geolocation.service";
 import { gpsToLocalMeters } from "../services/gps-to-local.service";
+import {
+  INITIAL_HEADING_TRACKER_STATE,
+  updateHeadingTracker,
+  type HeadingTrackerState,
+} from "../services/heading-tracker.service";
 import { filterDeviceLocation } from "../services/location-filter.service";
 import { smoothGeoPosition } from "../services/location-smoothing.service";
 import { useDeviceLocationStore } from "../store/device-location.store";
@@ -38,6 +43,7 @@ function getCalibration() {
 function processDevicePosition(
   received: DeviceGeoPosition,
   sessionReference: { current: GeoReferencePoint | null },
+  headingTracker: { current: HeadingTrackerState },
 ) {
   const store = useDeviceLocationStore.getState();
   store.setStatus("tracking");
@@ -70,6 +76,18 @@ function processDevicePosition(
   const smoothed = smoothGeoPosition(filtered.position, store.filteredPosition);
   store.setFilteredPosition(smoothed);
   store.setErrorMessage(null);
+
+  // Rumbo REAL de desplazamiento, derivado de posiciones GPS consecutivas —
+  // nunca de la cámara/mapa 3D (ver destination-bearing.ts para esa otra
+  // composición, deliberadamente separada). Solo se actualiza el store
+  // cuando este tick sí calculó un rumbo nuevo; si no, se conserva el
+  // último valor válido tal cual (heading-tracker.service.ts).
+  const headingResult = updateHeadingTracker(smoothed, headingTracker.current);
+  headingTracker.current = headingResult.state;
+  if (headingResult.updated) {
+    store.setMovementHeadingDegrees(headingResult.movementHeadingDegrees);
+    store.setSmoothedHeadingDegrees(headingResult.smoothedHeadingDegrees);
+  }
 
   if (!sessionReference.current) {
     sessionReference.current = {
@@ -133,7 +151,16 @@ export function useDeviceLocation() {
   const estimatedSpeedMetersPerSecond = useDeviceLocationStore(
     (state) => state.estimatedSpeedMetersPerSecond,
   );
+  const movementHeadingDegrees = useDeviceLocationStore(
+    (state) => state.movementHeadingDegrees,
+  );
+  const smoothedHeadingDegrees = useDeviceLocationStore(
+    (state) => state.smoothedHeadingDegrees,
+  );
   const sessionReferenceRef = useRef<GeoReferencePoint | null>(null);
+  const headingTrackerRef = useRef<HeadingTrackerState>(
+    INITIAL_HEADING_TRACKER_STATE,
+  );
   const ownsWatchRef = useRef(false);
   const startInProgressRef = useRef(false);
   const lifecycleGenerationRef = useRef(0);
@@ -201,7 +228,8 @@ export function useDeviceLocation() {
       }
 
       const started = await startDeviceLocationWatch(
-        (position) => processDevicePosition(position, sessionReferenceRef),
+        (position) =>
+          processDevicePosition(position, sessionReferenceRef, headingTrackerRef),
         (message) => {
           const currentStore = useDeviceLocationStore.getState();
           currentStore.setStatus("error");
@@ -229,6 +257,7 @@ export function useDeviceLocation() {
     await stopDeviceLocationWatch();
     ownsWatchRef.current = false;
     sessionReferenceRef.current = null;
+    headingTrackerRef.current = INITIAL_HEADING_TRACKER_STATE;
     const store = useDeviceLocationStore.getState();
     store.resetLocation();
     store.setCalibrationResult(getCalibration());
@@ -244,7 +273,32 @@ export function useDeviceLocation() {
     };
   }, []);
 
+  // Arranque automático: si el navegador ya concedió el permiso en una
+  // sesión anterior, el usuario no debería tener que pulsar el botón de
+  // ubicación para ver su posición — ese clic solo debe hacer falta cuando
+  // el permiso todavía no existe (`prompt`) o el navegador exige un gesto
+  // explícito para pedirlo. checkDeviceLocationPermission() nunca dispara el
+  // diálogo nativo por sí sola (solo lee el estado), así que es seguro
+  // llamarla siempre al montar. startTracking() ya es un no-op seguro si
+  // otra instancia de este hook (ej. el panel de diagnóstico) ya inició el
+  // mismo watch — ver isDeviceLocationWatchActive().
+  useEffect(() => {
+    let cancelled = false;
+    checkDeviceLocationPermission().then((nextPermission) => {
+      if (cancelled) return;
+      useDeviceLocationStore.getState().setPermission(nextPermission);
+      if (nextPermission === "granted") {
+        void startTracking();
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [startTracking]);
+
   return {
+    movementHeadingDegrees,
+    smoothedHeadingDegrees,
     status,
     permission,
     rawPosition,
