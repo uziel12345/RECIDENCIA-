@@ -1797,13 +1797,10 @@ export function CampusViewer({
   const lastSelectedFocusRef = useRef<BuildingFocusSnapshot | null>(null);
   const lastSelectedGateRef = useRef<string | null>(null);
   const lastSelectedMapPointRef = useRef<string | null>(null);
-  // Antes había que pulsar el botón de ubicación dos veces: el primer clic
-  // solo arrancaba el rastreo (sin posición todavía no hay adónde enfocar la
-  // cámara) y nada reaccionaba cuando la posición por fin llegaba. Esta
-  // bandera recuerda que un clic pidió explícitamente centrar la cámara; el
-  // efecto que consume `mapPosition` más abajo la usa UNA sola vez en cuanto
-  // exista una posición útil, sin crear un watcher nuevo ni reiniciar nada.
-  const pendingLocationFocusRef = useRef(false);
+  // Garantiza que la cámara solo viaje sola hacia el usuario UNA vez por
+  // sesión (la primera posición GPS válida) — nunca se reinicia. El efecto
+  // que la consume vive junto a handleFocusUser, más abajo.
+  const hasAutoCenteredRef = useRef(false);
   // Congela el offset al montar para no saltar la cámara si cambia el sidebar
   const initialXOffsetRef = useRef(mapXOffset);
 
@@ -2242,33 +2239,52 @@ export function CampusViewer({
     setFocus(createFocusPoint(mapPosition.x, mapPosition.z, campusPosition));
   };
 
-  // Consume pendingLocationFocusRef: en cuanto exista una posición útil tras
-  // un clic que pidió explícitamente ubicarse, centra la cámara UNA sola
-  // vez — así ese clic ya no requiere uno segundo. No crea watcher, no
-  // reinicia el rastreo, solo mueve la cámara (mismo efecto que
-  // handleFocusUser). Si el usuario nunca pidió ubicarse (ej. el rumbo ya
-  // estaba concedido y el rastreo arrancó solo al entrar), la bandera nunca
-  // se activa y este efecto no hace nada — el marcador aparece igual, pero
-  // sin mover la cámara del usuario sin que la haya pedido.
+  // Auto-centrado: en cuanto exista la PRIMERA posición GPS válida de la
+  // sesión, la cámara viaja sola hacia el usuario — sin necesidad de tocar
+  // el botón (ver flujo pedido: entra al mapa → aparece el marcador → la
+  // cámara viaja). hasAutoCenteredRef es la única guarda y nunca se
+  // reinicia, así que reacciona una sola vez sin importar cuántas
+  // actualizaciones de watchPosition lleguen después (Prueba 8) ni si el
+  // usuario mueve la cámara manualmente más tarde (esas actualizaciones
+  // solo mueven el marcador — DeviceLocationMarker ya interpola eso por su
+  // cuenta, sin tocar la cámara). No crea ningún watcher ni toca la
+  // geolocalización: reutiliza exactamente el mismo mecanismo que ya usan
+  // handleFocusUser y la selección de edificios (setFocus →
+  // getBuildingFocusPose → cameraAnimRef → CameraAnimator), así que si el
+  // usuario interactúa mientras la cámara viaja, esa nueva acción
+  // reemplaza el destino en curso sin ningún manejo especial (ver
+  // CameraAnimator: lee animRef.current en cada frame y redirige desde la
+  // posición actual en cuanto cambia).
   useEffect(() => {
-    if (!mapPosition || !pendingLocationFocusRef.current) return;
-    pendingLocationFocusRef.current = false;
+    if (hasAutoCenteredRef.current || !mapPosition) return;
+    // Blindaje explícito antes de mover la cámara: aunque la conversión
+    // GPS→modelo (gps-to-local.service/campus-calibration.service) ya evita
+    // NaN/Infinity en la práctica, nunca hay que asumirlo en el punto de uso.
+    if (!Number.isFinite(mapPosition.x) || !Number.isFinite(mapPosition.z)) {
+      return;
+    }
+    // Si el usuario ya eligió un edificio antes de que llegara su primera
+    // posición, esa elección tiene prioridad — no arrebatarle la cámara
+    // apenas resuelve el GPS (misma prioridad que si seleccionara a mitad
+    // de la animación automática).
+    hasAutoCenteredRef.current = true;
+    if (selectedBuilding) return;
     lastSelectedFocusRef.current = null;
     focusFromAerialRef.current = viewMode === "aerial";
     setViewMode("immersive");
     setFocus(createFocusPoint(mapPosition.x, mapPosition.z, campusPosition));
-  // Solo debe reaccionar a que la posición pase a estar disponible; viewMode
-  // y campusPosition se leen en el instante del evento (mismo patrón que el
-  // efecto de selectedBuilding más arriba).
+  // Debe reaccionar únicamente a que exista una posición válida; viewMode,
+  // campusPosition y selectedBuilding se leen en el instante del evento
+  // (mismo patrón que el resto de los efectos de foco de este componente).
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapPosition]);
 
-  // Handler real del botón del toolbar: si todavía no hay ubicación, la
+  // Handler del botón del toolbar: si todavía no hay ubicación, la
   // pulsación pide permiso e inicia el rastreo (acción explícita del
-  // usuario, como exige el diseño de features/device-location) y marca que
-  // debe centrar la cámara en cuanto la posición llegue (ver efecto de
-  // arriba) — ya no hace falta una segunda pulsación. Si ya hay posición,
-  // simplemente reenfoca la cámara ahí.
+  // usuario, como exige el diseño de features/device-location) — el efecto
+  // de arriba se encarga de centrar la cámara en cuanto la posición llegue,
+  // sin necesidad de una segunda pulsación. Si ya hay posición, reenfoca la
+  // cámara ahí de inmediato; puede pulsarse todas las veces que haga falta.
   const handleLocateOrFocusUser = () => {
     if (mapPosition) {
       handleFocusUser();
@@ -2280,7 +2296,6 @@ export function CampusViewer({
     ) {
       return;
     }
-    pendingLocationFocusRef.current = true;
     void deviceLocation.startTracking();
   };
 
