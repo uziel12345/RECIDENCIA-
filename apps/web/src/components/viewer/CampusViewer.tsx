@@ -142,7 +142,16 @@ const AERIAL_XOFFSET_SCALE = 1.55;
 // en el área realmente visible, y el contenido importante se recorta bajo
 // esa barra. Calibrado a mano: ~56px de barra sobre 390px de viewport en
 // vista aérea, a una altura de cámara de ~184u con FOV vertical 45°.
-const MOBILE_AERIAL_XOFFSET = 6;
+// Ronda 2026-08-12: el usuario reportó en un teléfono real (viewport ancho,
+// ~720px CSS) que el modelo quedaba corrido hacia la izquierda con mucho
+// espacio vacío a la derecha — más corrimiento del que ~56px de barra
+// justifican. Se redujo el valor (6→3) para recentrar; sigue siendo una
+// calibración a mano (no hay forma de renderizar el visor 3D real para
+// verificar el valor exacto sin probar en el dispositivo) — si tras
+// `pnpm build:web` + probar en el celular todavía se ve corrido hacia un
+// lado, seguir ajustando este número en la misma dirección (bajarlo más
+// si sigue viéndose a la izquierda, subirlo si ahora se pasó a la derecha).
+const MOBILE_AERIAL_XOFFSET = 3;
 // Distancia/altura al enfocar un edificio seleccionado: debe quedar MÁS
 // cerca que la vista inmersiva por defecto (~57u desktop / ~69u móvil) para
 // que seleccionar un edificio se sienta como un acercamiento, no un alejamiento.

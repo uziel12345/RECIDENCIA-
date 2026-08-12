@@ -1,9 +1,15 @@
 ﻿import type { CSSProperties } from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { getStudentLocationApi, type StudentLocation } from "@ito-map/shared";
 import { AdminLayout } from "../components/AdminLayout";
+import { ROUTES } from "../../../types/routes";
 
 export function AdminStudentLocationPage() {
+  const studentUrl = useMemo(
+    () => `${window.location.origin}${ROUTES.STUDENT}`,
+    []
+  );
   const [controlNumber, setControlNumber] = useState("");
   const [period, setPeriod] = useState("");
   const [at, setAt] = useState("");
@@ -57,6 +63,19 @@ export function AdminStudentLocationPage() {
           <span>
             Disponible para usuarios con rol <strong style={{ color: "#c56b52" }}>Servicios Escolares</strong> o superior.
           </span>
+        </div>
+
+        <div style={s.qrCard}>
+          <div style={s.qrCode}>
+            <QRCodeSVG value={studentUrl} size={104} bgColor="#ffffff" fgColor="#0f172a" level="M" />
+          </div>
+          <div style={s.qrInfo}>
+            <p style={s.qrTitle}>Acceso rápido para alumnos</p>
+            <p style={s.qrSubtitle}>
+              Escanea este código para abrir el mapa 3D directamente en modo alumno.
+            </p>
+            <span style={s.qrUrl}>{studentUrl}</span>
+          </div>
         </div>
 
         <div style={s.formCard}>
@@ -206,6 +225,12 @@ const s: Record<string, CSSProperties> = {
   title: { margin: "0 0 5px", fontSize: 26, fontWeight: 700, color: "#f1f5f9", lineHeight: 1.1 },
   subtitle: { margin: 0, fontSize: 14, color: "#64748b" },
   notice: { display: "flex", alignItems: "flex-start", gap: 9, padding: "11px 14px", background: "rgba(168,68,46,0.07)", border: "1px solid rgba(168,68,46,0.15)", borderRadius: 10, fontSize: 13, color: "#94a3b8", lineHeight: 1.5, marginBottom: 22 },
+  qrCard: { display: "flex", alignItems: "center", gap: 18, background: "#1e293b", border: "1px solid #334155", borderRadius: 16, padding: "20px 24px", marginBottom: 20 },
+  qrCode: { background: "#fff", borderRadius: 12, padding: 10, flexShrink: 0, lineHeight: 0 },
+  qrInfo: { display: "flex", flexDirection: "column", gap: 5, minWidth: 0 },
+  qrTitle: { margin: 0, fontSize: 15, fontWeight: 700, color: "#f1f5f9" },
+  qrSubtitle: { margin: 0, fontSize: 13, color: "#94a3b8", lineHeight: 1.5 },
+  qrUrl: { fontSize: 12, color: "#60a5fa", wordBreak: "break-all" },
   formCard: { background: "#1e293b", border: "1px solid #334155", borderRadius: 16, padding: "22px 24px", marginBottom: 20 },
   formBody: { display: "flex", flexDirection: "column", gap: 14 },
   fieldGroup: { display: "flex", flexDirection: "column", gap: 6 },
