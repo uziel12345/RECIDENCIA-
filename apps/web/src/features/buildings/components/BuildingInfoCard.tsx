@@ -295,7 +295,12 @@ export function BuildingInfoCard({ building, onClose, isMobile = false }: Buildi
           <div className="flex flex-col gap-2.5">
             <BuildingStatusBadge status={details.status} week={details.schedule.week} />
             <BuildingClassroomsInfo classrooms={details.classrooms} highlightId={highlightFor("aulas")} />
-            <BuildingDepartmentsInfo departments={details.departments} highlightId={highlightFor("departamentos")} />
+            <BuildingDepartmentsInfo
+              departments={details.departments}
+              procedures={details.procedures}
+              highlightId={highlightFor("departamentos")}
+              procedureHighlightId={highlightFor("tramites")}
+            />
             <BuildingCubiclesInfo cubicles={details.teacherCubicles} highlightId={highlightFor("cubiculos")} />
             <BuildingHeadquartersInfo headquarters={details.headquarters} highlightId={highlightFor("jefaturas")} />
             <BuildingProceduresInfo procedures={details.procedures} highlightId={highlightFor("tramites")} />
