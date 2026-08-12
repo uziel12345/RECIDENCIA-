@@ -148,20 +148,6 @@ export function ViewerToolbar({
       role="toolbar"
       aria-label="Controles del mapa"
     >
-      <button
-        type="button"
-        className={`ito-toolbar__btn ${
-          hasLocation ? "ito-toolbar__btn--accent" : ""
-        }`}
-        onClick={onFocusUser}
-        aria-label={locationButtonTitle}
-        aria-busy={isLocating}
-        title={locationButtonTitle}
-        disabled={locationButtonDisabled}
-      >
-        <Icon name="crosshair" size={18} />
-      </button>
-
       <div className="ito-toolbar__group" role="group" aria-label="Zoom">
         <button
           type="button"
