@@ -79,6 +79,7 @@ cd "$RELEASE_DIR"
 corepack enable
 pnpm install --frozen-lockfile
 
+pnpm --filter @ito-map/shared build
 pnpm -r typecheck
 pnpm --filter api test
 pnpm --filter web test
@@ -86,6 +87,12 @@ pnpm --filter api lint
 pnpm --filter web lint
 pnpm build
 ```
+
+`pnpm --filter @ito-map/shared build` es obligatorio antes de `pnpm -r
+typecheck`: `apps/api` y `apps/web` importan `@ito-map/shared` desde su
+`dist/` compilado (ver `main`/`types` en `packages/shared/package.json`), no
+desde el código fuente. Sin ese paso, `tsc --noEmit` en `apps/api`/`apps/web`
+falla con `Cannot find module '@ito-map/shared'` aunque el código esté bien.
 
 No cambiar TypeScript, ESLint o Vitest para ocultar fallos. Un release con un
 comando fallido no debe activarse.
